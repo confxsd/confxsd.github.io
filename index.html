@@ -1,28 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>confxsd | web3 builder</title>
+    <title>confxsd</title>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Syne+Mono">    
     <style>
         body {
             background: #1a1a1a;
             padding: 16px;
             margin: 0;
             min-height: 100vh;
+            font-family: 'Syne Mono';
         }
-        h1,h2,a,p {
+
+        h1,
+        h2,
+        a,
+        p,
+        li {
             color: #fff;
-            font-family: sans-serif;
+        }
+
+        a {
+            text-decoration: underline;
+        }
+
+        a:hover li{
+            color: orange;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #main ul {
+            display: flex;
+            gap: 1em;
         }
     </style>
 </head>
+
 <body>
-    <main>
+    <header>
         <h1>
-            Hey there!
+            entangling unknowns_
         </h1>
+    </header>
+    <main>
+        <section id="main">
+            <p>> interested in functions & cryptography</p>
+            <p>> comp eng. web3 builder. econ & pols</p>
+            <ul>
+                <a href="https://github.com/confxsd">
+                    <li>github</li>
+                </a>
+                <a href="https://twitter.com/confxsd">
+                    <li>twitter</li>
+                </a>
+                <a href="https://www.linkedin.com/in/itsserhat/">
+                    <li>linkedin</li>
+                </a>
+            </ul>
+        </section>
     </main>
 </body>
+
 </html>
