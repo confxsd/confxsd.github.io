@@ -34,9 +34,12 @@
         }
 
         ul {
-            list-style: lower-greek;
-            padding: 0 0 0 1em;
+            list-style: none;
+            padding: 0 0 0 0em;
             margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5em;
         }
 
         main {
@@ -50,6 +53,7 @@
             display: flex;
             list-style: none;
             gap: 1em;
+            flex-direction: row;
         }
     </style>
 </head>
@@ -57,7 +61,8 @@
 <body>
     <header>
         <div style="position: relative;">
-            <h1 style="white-space: nowrap; letter-spacing: -2px; position: absolute; bottom: 0; color: #00FF41; padding: 0.5em; margin: 0;">
+            <h1
+                style="white-space: nowrap; letter-spacing: -2px; position: absolute; bottom: 0; color: #00FF41; padding: 0.5em; margin: 0;">
                 entangling unknowns_
             </h1>
             <img style="max-width: 480px; width: 100%;" src="metropolis.gif" />
