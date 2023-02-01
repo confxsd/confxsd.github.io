@@ -7,12 +7,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>confxsd</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Mono">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope">
     <style>
         body {
             background: rgb(254, 255, 247);
             padding: 0;
             margin: 0;
             min-height: 100vh;
+            font-family: 'Manrope'
+        }
+
+        h1 {
             font-family: 'Space Mono';
         }
 
@@ -53,7 +58,39 @@
             display: flex;
             list-style: none;
             gap: 1em;
-            flex-direction: row;
+            flex-direction: column;
+        }
+
+
+        @media screen and (min-width: 480px) {
+            main {
+                flex-direction: row;
+                gap: 2em;
+            }
+
+            #main ul {
+                flex-direction: column;
+            }
+
+            #main {
+                flex: 1;
+            }
+
+            #projects,
+            #articles {
+                flex: 1;
+            }
+
+            header img {
+                max-width: unset !important;
+                width: 100%;
+            }
+            header h1 {
+                font-size: 3em !important;
+                left: 0;
+                right: 0;
+            }
+
         }
     </style>
 </head>
@@ -65,16 +102,17 @@
                 style="white-space: nowrap; letter-spacing: -2px; position: absolute; bottom: 0; color: #00FF41; padding: 0.5em; margin: 0;">
                 entangling unknowns_
             </h1>
-            <img style="max-width: 480px; width: 100%;" src="metropolis.gif" />
+            <img style="max-width: 480px; width: 100%;" src="metropolis2.gif" />
         </div>
     </header>
     <main>
         <section id="main">
-            <p>digital entity | econ, pols, art & web3 | softw eng <a href="https://arf.one/">@arf</a></p>
-            <a href="mailto:serhat@bxld.space">
-                <p style="color: green">available for web projects</p>
-            </a>
+            <p>digital entity | softw eng <a href="https://arf.one/">@arf</a></p>
+            <p>econ, pols, art & web3</p>
             <ul style="padding: 0;">
+                <!-- <a href="mailto:serhat@bxld.space">
+                    <p style="color: green">available for web projects</p>
+                </a> -->
                 <a href="https://github.com/confxsd">
                     <li>github</li>
                 </a>
