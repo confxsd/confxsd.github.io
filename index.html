@@ -55,11 +55,15 @@
         main {
             display: flex;
             flex-direction: column;
+            padding-bottom: 0em;
+        }
+
+        #main,
+        #content {
             padding: 1em;
         }
 
         main #content {
-            padding-top: 2em;
             display: flex;
             flex-direction: column;
             gap: 1em;
@@ -79,7 +83,8 @@
         @media screen and (min-width: 480px) {
             main {
                 flex-direction: column;
-                gap: 2em;
+                gap: 0em;
+                padding-bottom: 24em;
             }
 
             #main ul {
@@ -122,16 +127,16 @@
 </head>
 
 <body>
-    <header>
-        <div style="position: relative;">
-            <h1
-                style="white-space: nowrap; letter-spacing: -2px; position: absolute; bottom: 0; color: #00FF41; padding: 0.5em; margin: 0;">
-                entangling unknowns_
-            </h1>
-            <img style="max-width: 480px; width: 100%;" src="metropolis2.gif" />
-        </div>
-    </header>
     <main>
+        <header>
+            <div style="position: relative;">
+                <h1
+                    style="white-space: nowrap; letter-spacing: -2px; position: absolute; bottom: 0; color: #00FF41; padding: 0.5em; margin: 0;">
+                    entangling unknowns_
+                </h1>
+                <img style="max-width: 480px; width: 100%;" src="metropolis2.gif" />
+            </div>
+        </header>
         <section id="main">
             <p>econ, pols, art & web3 | softw eng <a href="https://arf.one/">@arf</a></p>
             <ul style="padding: 0;">
