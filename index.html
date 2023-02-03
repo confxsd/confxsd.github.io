@@ -49,10 +49,17 @@
 
         main {
             display: flex;
-            flex-direction: column;
-            gap: 1em;
+            flex-direction: row;
             padding: 1em;
         }
+
+        main #content {
+            display: flex;
+            flex-direction: column;
+            gap: 1em;
+        }
+
+
 
         #main ul {
             display: flex;
@@ -64,12 +71,12 @@
 
         @media screen and (min-width: 480px) {
             main {
-                flex-direction: row;
+                flex-direction: column;
                 gap: 2em;
             }
 
             #main ul {
-                flex-direction: column;
+                flex-direction: row;
             }
 
             #main {
@@ -92,6 +99,17 @@
                 right: 0;
             }
 
+            main #content {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                gap: 1em;
+            }
+
+            main #content>section {
+                flex: 1;
+            }
+
         }
     </style>
 </head>
@@ -108,8 +126,7 @@
     </header>
     <main>
         <section id="main">
-            <p>digital entity | softw eng <a href="https://arf.one/">@arf</a></p>
-            <p>econ, pols, art & web3</p>
+            <p>econ, pols, art & web3 | softw eng <a href="https://arf.one/">@arf</a></p>
             <ul style="padding: 0;">
                 <!-- <a href="mailto:serhat@bxld.space">
                     <p style="color: green">available for web projects</p>
@@ -132,34 +149,44 @@
             </ul>
 
         </section>
-        <section id="projects">
-            <h2>projects</h2>
-            <ul>
-                <a href="works/1-reality/index.html">
-                    <li>reality</li>
-                </a>
-                <a href="https://github.com/confxsd/alchemy-uni">
-                    <li>alchemy university web3 puzzles</li>
-                </a>
-                <a href="https://github.com/confxsd/buymecoffee-dapp">
-                    <li>buy me a coffee - dapp</li>
-                </a>
-            </ul>
-        </section>
-        <section id="articles">
-            <h2>articles</h2>
-            <ul>
-                <a href="https://confxsd.substack.com/p/web3-from-the-perspective-of-a-computer">
-                    <li>crypto-world from a computer engineer perspective</li>
-                </a>
-                <a href="https://confxsd.substack.com/p/what-is-wrong-with-digital-currencies">
-                    <li>what is Wrong with digital currencies?</li>
-                </a>
-                <a href="https://confxsd.substack.com/p/on-chatgpt-or-conversational-ai">
-                    <li>on ChatGPT or Conversational AI</li>
-                </a>
-            </ul>
-        </section>
+
+        <div id="content">
+            <section id="works">
+                <h2>works</h2>
+                <ul>
+                    <a href="works/1-reality">
+                        <li>reality</li>
+                    </a>
+                </ul>
+            </section>
+
+            <section id="code">
+                <h2>code</h2>
+                <ul>
+                    <a href="https://github.com/confxsd/alchemy-uni">
+                        <li>alchemy university web3 puzzles</li>
+                    </a>
+                    <a href="https://github.com/confxsd/buymecoffee-dapp">
+                        <li>buy me a coffee - dapp</li>
+                    </a>
+                </ul>
+            </section>
+
+            <section id="articles">
+                <h2>articles</h2>
+                <ul>
+                    <a href="https://confxsd.substack.com/p/web3-from-the-perspective-of-a-computer">
+                        <li>crypto-world from a computer engineer perspective</li>
+                    </a>
+                    <a href="https://confxsd.substack.com/p/what-is-wrong-with-digital-currencies">
+                        <li>what is Wrong with digital currencies?</li>
+                    </a>
+                    <a href="https://confxsd.substack.com/p/on-chatgpt-or-conversational-ai">
+                        <li>on ChatGPT or Conversational AI</li>
+                    </a>
+                </ul>
+            </section>
+        </div>
 
         <!-- <section id="personal">
             <h2>personal</h2>
