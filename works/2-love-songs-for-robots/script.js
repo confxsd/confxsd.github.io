@@ -1,7 +1,7 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     window.counter = 0
-    document.addEventListener('click', function() {
-        window.counter++
+    document.addEventListener('click', function () {
+        window.counter += Math.random() * 2 + 1
         type()
     })
 })
@@ -30,7 +30,7 @@ tiny batteries?<br>
 
 
 const type = () => {
-    if (window.counter === poem.length -1) {
+    if (window.counter === poem.length - 1) {
         window.counter = 0
     }
     const content = document.querySelector('#Container p');
