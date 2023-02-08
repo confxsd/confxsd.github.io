@@ -33,5 +33,5 @@ const type = () => {
         window.counter = 0
     }
     const content = document.querySelector('#Container p');
-    content.innerHTML = poem.slice(0, window.counter)
+    content.innerHTML = poem.slice(0, window.counter) + "_"
 }
