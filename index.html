@@ -79,12 +79,15 @@
             font-size: 14px;
         }
 
+        header h1 {
+            bottom: 0
+        }
+
 
         @media screen and (min-width: 480px) {
             main {
-                flex-direction: column;
+                flex-direction: column-reverse;
                 gap: 0em;
-                padding-bottom: 24em;
             }
 
             #main ul {
@@ -122,6 +125,10 @@
                 flex: 1;
             }
 
+            header h1 {
+                top: 0
+            }
+
         }
     </style>
 </head>
@@ -131,76 +138,78 @@
         <header>
             <div style="position: relative;">
                 <h1
-                    style="white-space: nowrap; letter-spacing: -2px; position: absolute; bottom: 0; color: #00FF41; padding: 0.5em; margin: 0;">
+                    style="white-space: nowrap; letter-spacing: -2px; position: absolute; color: #00FF41; padding: 0.5em; margin: 0;">
                     entangling unknowns_
                 </h1>
                 <img style="max-width: 480px; width: 100%;" src="metropolis2.gif" />
             </div>
         </header>
-        <section id="main">
-            <p>econ, pols, art & web3 | softw eng <a href="https://arf.one/">@arf</a></p>
-            <ul style="padding: 0;">
-                <!-- <a href="mailto:serhat@bxld.space">
-                    <p style="color: green">available for web projects</p>
-                </a> -->
-                <a href="https://github.com/confxsd">
-                    <li>github</li>
-                </a>
-                <a href="https://www.linkedin.com/in/itsserhat">
-                    <li>linkedin</li>
-                </a>
-                <a href="https://twitter.com/confxsd">
-                    <li>twitter</li>
-                </a>
-                <a href="https://www.goodreads.com/confxsd">
-                    <li>goodreads</li>
-                </a>
-                <a href="https://confxsd.substack.com">
-                    <li>substack</li>
-                </a>
-            </ul>
-
-        </section>
-
-        <div id="content">
-            <section id="code">
-                <h2>code</h2>
-                <ul>
-                    <a href="https://github.com/confxsd/alchemy-uni">
-                        <li>alchemy university web3 puzzles</li>
+        <div style="padding-bottom: 2em;">
+            <section id="main">
+                <p>econ, pols, art & web3 | softw eng <a href="https://arf.one/">@arf</a></p>
+                <ul style="padding: 0;">
+                    <!-- <a href="mailto:serhat@bxld.space">
+                        <p style="color: green">available for web projects</p>
+                    </a> -->
+                    <a href="https://github.com/confxsd">
+                        <li>github</li>
                     </a>
-                    <a href="https://github.com/confxsd/buymecoffee-dapp">
-                        <li>buy me a coffee - dapp</li>
+                    <a href="https://www.linkedin.com/in/itsserhat">
+                        <li>linkedin</li>
+                    </a>
+                    <a href="https://twitter.com/confxsd">
+                        <li>twitter</li>
+                    </a>
+                    <a href="https://www.goodreads.com/confxsd">
+                        <li>goodreads</li>
+                    </a>
+                    <a href="https://confxsd.substack.com">
+                        <li>substack</li>
                     </a>
                 </ul>
+
             </section>
 
-            <section id="works">
-                <h2>works</h2>
-                <ul>
-                    <a href="works/1-reality">
-                        <li>reality</li>
-                    </a>
-                    <a href="works/2-love-songs-for-robots">
-                        <li>love songs for robots</li>
-                    </a>
-                </ul>
-            </section>
+            <div id="content">
+                <section id="code">
+                    <h2>code</h2>
+                    <ul>
+                        <a href="https://github.com/confxsd/alchemy-uni">
+                            <li>alchemy university web3 puzzles</li>
+                        </a>
+                        <a href="https://github.com/confxsd/buymecoffee-dapp">
+                            <li>buy me a coffee - dapp</li>
+                        </a>
+                    </ul>
+                </section>
 
-            <section id="articles">
-                <h2>articles</h2>
-                <ul>
-                    <a href="https://confxsd.substack.com/p/web3-from-the-perspective-of-a-computer">
-                        <li>crypto-world from a computer engineer perspective</li>
-                    </a>
-                    <a href="https://confxsd.substack.com/p/what-is-wrong-with-digital-currencies">
-                        <li>what is Wrong with digital currencies?</li>
-                    </a>
-                    <a href="https://confxsd.substack.com/p/on-chatgpt-or-conversational-ai">
-                        <li>on ChatGPT or Conversational AI</li>
-                    </a>
-                </ul>
-            </section>
+                <section id="works">
+                    <h2>works</h2>
+                    <ul>
+                        <a href="works/1-reality">
+                            <li>reality</li>
+                        </a>
+                        <a href="works/2-love-songs-for-robots">
+                            <li>love songs for robots</li>
+                        </a>
+                    </ul>
+                </section>
+
+                <section id="articles">
+                    <h2>articles</h2>
+                    <ul>
+                        <a href="https://confxsd.substack.com/p/web3-from-the-perspective-of-a-computer">
+                            <li>crypto-world from a computer engineer perspective</li>
+                        </a>
+                        <a href="https://confxsd.substack.com/p/what-is-wrong-with-digital-currencies">
+                            <li>what is Wrong with digital currencies?</li>
+                        </a>
+                        <a href="https://confxsd.substack.com/p/on-chatgpt-or-conversational-ai">
+                            <li>on ChatGPT or Conversational AI</li>
+                        </a>
+                    </ul>
+                </section>
+            </div>
         </div>
 
         <!-- <section id="personal">
