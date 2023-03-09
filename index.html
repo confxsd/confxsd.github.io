@@ -83,11 +83,20 @@
             bottom: 0
         }
 
+        #container {
+            padding: 1em 2em 8em 0em;
+        }
+
 
         @media screen and (min-width: 480px) {
+            #container {
+                padding: 4em 0em 8em 1em;
+            }
+
             main {
-                flex-direction: column-reverse;
+                flex-direction: column;
                 gap: 0em;
+                /* padding: 5em 5em 0 5em; */
             }
 
             #main ul {
@@ -106,6 +115,7 @@
             header img {
                 max-width: unset !important;
                 width: 100%;
+                display: none;
             }
 
             header h1 {
@@ -116,9 +126,10 @@
 
             main #content {
                 display: flex;
-                flex-direction: row;
+                flex-direction: column;
                 justify-content: space-between;
                 gap: 1em;
+
             }
 
             main #content>section {
@@ -139,14 +150,15 @@
             <div style="position: relative;">
                 <h1
                     style="white-space: nowrap; letter-spacing: -2px; position: absolute; color: #00FF41; padding: 0.5em; margin: 0;">
-                    entangling unknowns_
+                    <!-- entangling unknowns -->
                 </h1>
                 <img style="max-width: 480px; width: 100%;" src="metropolis2.gif" />
             </div>
         </header>
-        <div style="padding: 2em 2em 8em 1em;">
+        <div id="container">
             <section id="main">
-                <p>econ, pols, art & web3 | softw eng <a href="https://arf.one/">@arf</a></p>
+                <p><span style="color: #00FF41; background-color: #1a1a1a;">entangling unknowns </span> softw eng <a
+                        href="https://arf.one/">@arf</a></p>
                 <ul style="padding: 0;">
                     <!-- <a href="mailto:serhat@bxld.space">
                         <p style="color: green">available for web projects</p>
@@ -193,7 +205,8 @@
                             <li>love songs for robots</li>
                         </a> -->
                         <a href="works/3-affirmations">
-                            <li>affirmations <a href="works/3-affirmations/affirmations.apk"><span>(download)</span></a></li>
+                            <li>affirmations <a href="works/3-affirmations/affirmations.apk"><span>(download)</span></a>
+                            </li>
                         </a>
                     </ul>
                 </section>
