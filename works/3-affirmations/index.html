@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>affirmations</title>
+    <title>Unity WebGL Player | affirmations</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
   </head>
@@ -11,14 +11,14 @@
     <div id="unity-container" class="unity-desktop">
       <canvas id="unity-canvas" width=960 height=600></canvas>
       <div id="unity-loading-bar">
-
+        <div id="unity-logo"></div>
         <div id="unity-progress-bar-empty">
           <div id="unity-progress-bar-full"></div>
         </div>
       </div>
       <div id="unity-warning"> </div>
       <div id="unity-footer">
-
+        <div id="unity-webgl-logo"></div>
         <div id="unity-fullscreen-button"></div>
         <div id="unity-build-title">affirmations</div>
       </div>
@@ -56,11 +56,11 @@
       }
 
       var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/zero-web.loader.js";
+      var loaderUrl = buildUrl + "/zero-web2.loader.js";
       var config = {
-        dataUrl: buildUrl + "/zero-web.data",
-        frameworkUrl: buildUrl + "/zero-web.framework.js",
-        codeUrl: buildUrl + "/zero-web.wasm",
+        dataUrl: buildUrl + "/zero-web2.data",
+        frameworkUrl: buildUrl + "/zero-web2.framework.js",
+        codeUrl: buildUrl + "/zero-web2.wasm",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "confxsd",
         productName: "affirmations",
