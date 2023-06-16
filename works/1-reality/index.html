@@ -7,37 +7,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reality</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.5.0/p5.min.js"></script>
-    <script src="script.js"></script>
+    <script src="dist/script.js"></script>
     <style>
-        html {
-            user-select: none;
-        }
-
-        @keyframes fadeOut {
-            0% {
-                opacity: 1;
-            }
-
-            100% {
-                opacity: 0;
-            }
-        }
-
-        #info {
-            opacity: 1;
-            /* animation: fadeOut 4s;
-            animation-delay: 8s; */
-        }
-
-        #info:hover {
-            opacity: 0;
-            animation: none;
+        main {
+            display: flex;
         }
     </style>
 </head>
 
-<body style="padding: 0; margin: 0; overflow: hidden;">
-    <div id="info" style="position: absolute; padding: 1em; bottom: 0; left: 0; max-width: 320px;">
+<body style="padding: 0; margin: 0; overflow: hidden; cursor: none; font-family: sans-serif;">
+    <div style="position: absolute; padding: 2em; bottom: 0; left: 0; max-width: 340px;">
         <p>Reality is perceived as subjective and constructed through language, power, and culture. It is fragmented,
             decentered, and deconstructed, lacking a single overarching narrative or absolute truth. Reality is seen as
             multiple, contingent, and constantly changing, reflecting the multiple perspectives, experiences, and power
