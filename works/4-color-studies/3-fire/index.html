@@ -21,6 +21,11 @@
     main {
       text-align: center;
       overflow: hidden;
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
     }
 
     #title {
@@ -29,13 +34,17 @@
       left: 64px;
       bottom: 64px;
       font-family: sans-serif;
+      position: absolute;
+      z-index: 9;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 0 1em;
+      border-radius: 1em;
     }
 
     @media (max-width: 480px) {
       #title {
         left: 32px;
         bottom: 24px;
-        position: fixed;
       }
     }
 
