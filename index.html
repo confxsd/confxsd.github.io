@@ -2,251 +2,251 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>confxsd</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Mono">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope">
-    <style>
-        body {
-            background: rgb(254, 255, 247);
-            padding: 0;
-            margin: 0;
-            min-height: 100vh;
-            font-family: 'Manrope'
-        }
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>confxsd</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Mono">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope">
+  <style>
+    body {
+      background: rgb(254, 255, 247);
+      padding: 0;
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Manrope'
+    }
 
-        h1 {
-            font-family: 'Space Mono';
-        }
+    h1 {
+      font-family: 'Space Mono';
+    }
 
-        h1,
-        h2,
-        a,
-        p,
-        li {
-            color: #1a1a1a;
-        }
+    h1,
+    h2,
+    a,
+    p,
+    li {
+      color: #1a1a1a;
+    }
 
 
-        h2 {
-            margin: 0.6em 0 0.35em 0;
-        }
+    h2 {
+      margin: 0.6em 0 0.35em 0;
+    }
 
-        a {
-            text-decoration: none;
-        }
+    a {
+      text-decoration: none;
+    }
 
-        /* a:hover *,
+    /* a:hover *,
         a:hover {
             color: orange;
         } */
 
-        ul {
-            list-style: none;
-            padding: 0 0 0 0em;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5em;
-        }
+    ul {
+      list-style: none;
+      padding: 0 0 0 0em;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5em;
+    }
 
-        main {
-            display: flex;
-            flex-direction: column;
-            padding-bottom: 0em;
-        }
+    main {
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 0em;
+    }
 
-        #main,
-        #content {
-            padding: 1em;
-        }
+    #main,
+    #content {
+      padding: 1em;
+    }
 
-        main #content {
-            display: flex;
-            flex-direction: column;
-            gap: 1em;
-        }
-
-
-
-        #main ul {
-            display: flex;
-            list-style: none;
-            gap: 1em;
-            flex-direction: row;
-            font-size: 14px;
-        }
-
-        header h1 {
-            bottom: 0
-        }
-
-        #container {
-            padding: 1em 2em 8em 0em;
-        }
+    main #content {
+      display: flex;
+      flex-direction: column;
+      gap: 1em;
+    }
 
 
-        @media screen and (min-width: 480px) {
-            #container {
-                padding: 4em 0em 8em 1em;
-            }
 
-            main {
-                flex-direction: column;
-                gap: 0em;
-                /* padding: 5em 5em 0 5em; */
-            }
+    #main ul {
+      display: flex;
+      list-style: none;
+      gap: 1em;
+      flex-direction: row;
+      font-size: 14px;
+    }
 
-            #main ul {
-                flex-direction: row;
-            }
+    header h1 {
+      bottom: 0
+    }
 
-            #main {
-                flex: 1;
-            }
+    #container {
+      padding: 1em 2em 8em 0em;
+    }
 
-            #projects,
-            #articles {
-                flex: 1;
-            }
 
-            header img {
-                max-width: unset !important;
-                width: 100%;
-                display: none;
-            }
+    @media screen and (min-width: 480px) {
+      #container {
+        padding: 4em 0em 8em 1em;
+      }
 
-            header h1 {
-                font-size: 3em !important;
-                left: 0;
-                right: 0;
-            }
+      main {
+        flex-direction: column;
+        gap: 0em;
+        /* padding: 5em 5em 0 5em; */
+      }
 
-            main #content {
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-                gap: 1em;
+      #main ul {
+        flex-direction: row;
+      }
 
-            }
+      #main {
+        flex: 1;
+      }
 
-            main #content>section {
-                flex: 1;
-            }
+      #projects,
+      #articles {
+        flex: 1;
+      }
 
-            header h1 {
-                top: 0
-            }
+      header img {
+        max-width: unset !important;
+        width: 100%;
+        display: none;
+      }
 
-        }
-    </style>
+      header h1 {
+        font-size: 3em !important;
+        left: 0;
+        right: 0;
+      }
+
+      main #content {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 1em;
+
+      }
+
+      main #content>section {
+        flex: 1;
+      }
+
+      header h1 {
+        top: 0
+      }
+
+    }
+  </style>
 </head>
 
 <body>
-    <main>
-        <header>
-            <div style="position: relative;">
-                <h1
-                    style="white-space: nowrap; letter-spacing: -2px; position: absolute; color: #00FF41; padding: 0.5em; margin: 0;">
-                    <!-- entangling unknowns -->
-                </h1>
-                <img style="max-width: 480px; width: 100%;" src="metropolis2.gif" />
-            </div>
-        </header>
-        <div id="container">
-            <section id="main">
-                <p><span style="color: #00FF41; background-color: #1a1a1a;">entangling unknowns </span> softw eng <a
-                        href="https://arf.one/">@arf</a></p>
-                <ul style="padding: 0; flex-wrap: wrap;">
-                    <!-- <a href="mailto:serhat@bxld.space">
+  <main>
+    <header>
+      <div style="position: relative;">
+        <h1
+          style="white-space: nowrap; letter-spacing: -2px; position: absolute; color: #00FF41; padding: 0.5em; margin: 0;">
+          <!-- entangling unknowns -->
+        </h1>
+        <img style="max-width: 480px; width: 100%;" src="metropolis2.gif" />
+      </div>
+    </header>
+    <div id="container">
+      <section id="main">
+        <p><span style="color: #00FF41; background-color: #1a1a1a;">entangling unknowns </span> softw eng <a
+            href="https://index.network/">@index</a></p>
+        <ul style="padding: 0; flex-wrap: wrap;">
+          <!-- <a href="mailto:confxsd@gmail.com">
                         <p style="color: green">available for web projects</p>
                     </a> -->
-                    <a href="https://github.com/confxsd">
-                        <li>github</li>
-                    </a>
-                    <a href="https://www.linkedin.com/in/itsserhat">
-                        <li>linkedin</li>
-                    </a>
-                    <a href="https://twitter.com/confxsd">
-                        <li>twitter</li>
-                    </a>
-                    <a href="https://instagram.com/confxsd">
-                        <li>instagram</li>
-                    </a>
-                    <a href="https://www.goodreads.com/confxsd">
-                        <li>goodreads</li>
-                    </a>
-                    <a href="https://confxsd.substack.com">
-                        <li>substack</li>
-                    </a>
-                </ul>
+          <a href="https://github.com/confxsd">
+            <li>github</li>
+          </a>
+          <a href="https://www.linkedin.com/in/itsserhat">
+            <li>linkedin</li>
+          </a>
+          <a href="https://twitter.com/confxsd">
+            <li>twitter</li>
+          </a>
+          <a href="https://instagram.com/confxsd">
+            <li>instagram</li>
+          </a>
+          <a href="https://www.goodreads.com/confxsd">
+            <li>goodreads</li>
+          </a>
+          <a href="https://confxsd.substack.com">
+            <li>substack</li>
+          </a>
+        </ul>
 
-            </section>
+      </section>
 
-            <div id="content">
+      <div id="content">
 
 
-                <section id="works">
-                    <h2>works</h2>
-                    <ul>
-                        <a href="works/1-reality">
-                            <li>reality</li>
-                        </a>
-                        <!-- <a href="works/2-love-songs-for-robots">
+        <section id="works">
+          <h2>works</h2>
+          <ul>
+            <a href="works/1-reality">
+              <li>reality</li>
+            </a>
+            <!-- <a href="works/2-love-songs-for-robots">
                             <li>love songs for robots</li>
                         </a> -->
-                        <a href="works/3-affirmations">
-                            <li>affirmations <a href="works/3-affirmations/affirmations.apk"><span
-                                        style="text-decoration: underline;">(download)</span></a>
-                            </li>
-                        </a>
-                        <a href="works/4-color-studies/2-wound/index.html">
-                            <li>2 Color Study: Wound
-                            </li>
-                        </a>
-                        <a href="works/4-color-studies/3-fire/index.html">
-                            <li>3 Color Study: Fire
-                            </li>
-                        </a>
-                        <a href="works/4-color-studies/4-spring/index.html">
-                            <li>4 Color Study: Spring
-                            </li>
-                        </a>
-                    </ul>
-                </section>
+            <a href="works/3-affirmations">
+              <li>affirmations <a href="works/3-affirmations/affirmations.apk"><span
+                    style="text-decoration: underline;">(download)</span></a>
+              </li>
+            </a>
+            <a href="works/4-color-studies/2-wound/index.html">
+              <li>2 Color Study: Wound
+              </li>
+            </a>
+            <a href="works/4-color-studies/3-fire/index.html">
+              <li>3 Color Study: Fire
+              </li>
+            </a>
+            <a href="works/4-color-studies/4-spring/index.html">
+              <li>4 Color Study: Spring
+              </li>
+            </a>
+          </ul>
+        </section>
 
-                <section id="articles">
-                    <h2>articles</h2>
-                    <ul>
-                        <a href="https://confxsd.substack.com/p/understanding-a-chronic-crisis-last">
-                            <li>Understanding a Chronic Crisis: Last 50 Years of Türkiye's Economy</li>
-                        </a>
-                        <a href="https://confxsd.substack.com/p/web3-from-the-perspective-of-a-computer">
-                            <li>crypto-world from a computer engineer perspective</li>
-                        </a>
-                        <a href="https://confxsd.substack.com/p/what-is-wrong-with-digital-currencies">
-                            <li>what is Wrong with digital currencies?</li>
-                        </a>
-                    </ul>
-                </section>
+        <section id="articles">
+          <h2>articles</h2>
+          <ul>
+            <a href="https://confxsd.substack.com/p/understanding-a-chronic-crisis-last">
+              <li>Understanding a Chronic Crisis: Last 50 Years of Türkiye's Economy</li>
+            </a>
+            <a href="https://confxsd.substack.com/p/web3-from-the-perspective-of-a-computer">
+              <li>crypto-world from a computer engineer perspective</li>
+            </a>
+            <a href="https://confxsd.substack.com/p/what-is-wrong-with-digital-currencies">
+              <li>what is Wrong with digital currencies?</li>
+            </a>
+          </ul>
+        </section>
 
-                <section id="code">
-                    <h2>code</h2>
-                    <ul>
-                        <a href="https://github.com/confxsd/alchemy-uni">
-                            <li>alchemy university web3 puzzles</li>
-                        </a>
-                        <!-- <a href="https://github.com/confxsd/buymecoffee-dapp">
+        <section id="code">
+          <h2>code</h2>
+          <ul>
+            <a href="https://github.com/confxsd/alchemy-uni">
+              <li>alchemy university web3 puzzles</li>
+            </a>
+            <!-- <a href="https://github.com/confxsd/buymecoffee-dapp">
                             <li>buy me a coffee - dapp</li>
                         </a> -->
-                    </ul>
-                </section>
-            </div>
-        </div>
+          </ul>
+        </section>
+      </div>
+    </div>
 
-        <!-- <section id="personal">
+    <!-- <section id="personal">
             <h2>personal</h2>
             <ul style="list-style: none; padding: 0; display: flex; gap: 1em">
                 <a href="https://open.spotify.com/user/risuss">
@@ -257,10 +257,10 @@
                 </a>
             </ul>
         </section> -->
-    </main>
+  </main>
 
-    <script src="script.js"></script>
-    
+  <script src="script.js"></script>
+
 </body>
 
 </html>
