@@ -2,50 +2,52 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3 Color Study: Fire</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.5.0/p5.min.js"></script>
-    <script src="script.js"></script>
-    <style>
-        body {
-            height: 100vh;
-            width: 100vw;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: rgb(10,10,10);
-        }
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3 Color Study: Fire</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.5.0/p5.min.js"></script>
+  <script src="script.js"></script>
+  <style>
+    body {
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgb(10, 10, 10);
+    }
 
-        main {
-            text-align: center;
-        }
+    main {
+      text-align: center;
+      overflow: hidden;
+    }
 
-        #title {
-            color: white;
-            position: absolute;
-            left: 64px;
-            bottom: 64px;
-            font-family: sans-serif;
-        }
-        @media (max-width: 400px) {
-            #title {
-                left: 32px;
-                bottom: 24px;
-                position: fixed;
-            }
-        }
-    </style>
+    #title {
+      color: white;
+      position: absolute;
+      left: 64px;
+      bottom: 64px;
+      font-family: sans-serif;
+    }
+
+    @media (max-width: 480px) {
+      #title {
+        left: 32px;
+        bottom: 24px;
+        position: fixed;
+      }
+    }
+  </style>
 </head>
 
 <body style="padding: 0; margin: 0; overflow: hidden;">
-    <!-- <div style="position: absolute; padding: 1em; bottom: 0; left: 0; max-width: 320px;">
+  <!-- <div style="position: absolute; padding: 1em; bottom: 0; left: 0; max-width: 320px;">
         <p>Reality is perceived as subjective and constructed through language, power, and culture. It is fragmented, decentered, and deconstructed, lacking a single overarching narrative or absolute truth. Reality is seen as multiple, contingent, and constantly changing, reflecting the multiple perspectives, experiences, and power relations of individuals and groups in society. In postmodern art, reality is often portrayed as unstable, ambiguous, and playfully self-referential, blurring the boundaries between art, reality, and representation.</p>
     </div> -->
-    <div id="title">
-        <p>3 Color Study: Fire</p>
-    </div>
+  <div id="title">
+    <p>3 Color Study: Fire</p>
+  </div>
 </body>
 
 </html>

@@ -38,6 +38,10 @@
       text-decoration: none;
     }
 
+    a.line {
+      text-decoration: underline;
+    }
+
     /* a:hover *,
         a:hover {
             color: orange;
@@ -83,19 +87,21 @@
       bottom: 0
     }
 
-    #container {
-      padding: 1em 2em 8em 0em;
-    }
+    /* .container {
+      padding: 1em 2em 0em 0em;
+    } */
 
 
     @media screen and (min-width: 480px) {
-      #container {
-        padding: 4em 0em 8em 1em;
+      .container {
+        padding: 0em 0em 0em 1em;
       }
 
       main {
         flex-direction: column;
         gap: 0em;
+        align-items: center;
+        justify-content: center;
         /* padding: 5em 5em 0 5em; */
       }
 
@@ -113,9 +119,10 @@
       }
 
       header img {
-        max-width: unset !important;
+        /* max-width: unset !important; */
         width: 100%;
-        display: none;
+        max-width: 540px;
+        padding: 2em 0 0 0em;
       }
 
       header h1 {
@@ -146,19 +153,20 @@
 
 <body>
   <main>
-    <header>
+    <header class="container">
       <div style="position: relative;">
         <h1
           style="white-space: nowrap; letter-spacing: -2px; position: absolute; color: #00FF41; padding: 0.5em; margin: 0;">
           <!-- entangling unknowns -->
         </h1>
-        <img style="max-width: 480px; width: 100%;" src="metropolis2.gif" />
+        <img style="max-width: 540px; width: 100%;" src="metropolis2.gif" />
       </div>
     </header>
-    <div id="container">
+    <div class="container">
       <section id="main">
-        <p><span style="color: #00FF41; background-color: #1a1a1a;">entangling unknowns </span> softw eng <a
-            href="https://index.network/">@index</a></p>
+        <p><span style="color: #00FF41; background-color: #1a1a1a; padding: 0 0.25rem; margin-right: 1em">entangling
+            unknowns</span> softw
+          eng <a class="line" style="font-weight: 800" href="https://index.network/">@index</a></p>
         <ul style="padding: 0; flex-wrap: wrap;">
           <!-- <a href="mailto:confxsd@gmail.com">
                         <p style="color: green">available for web projects</p>
@@ -197,23 +205,17 @@
             <!-- <a href="works/2-love-songs-for-robots">
                             <li>love songs for robots</li>
                         </a> -->
-            <a href="works/3-affirmations">
-              <li>affirmations <a href="works/3-affirmations/affirmations.apk"><span
-                    style="text-decoration: underline;">(download)</span></a>
-              </li>
-            </a>
-            <a href="works/4-color-studies/2-wound/index.html">
-              <li>2 Color Study: Wound
-              </li>
-            </a>
-            <a href="works/4-color-studies/3-fire/index.html">
-              <li>3 Color Study: Fire
-              </li>
-            </a>
-            <a href="works/4-color-studies/4-spring/index.html">
-              <li>4 Color Study: Spring
-              </li>
-            </a>
+
+            <li><a href="works/3-affirmations">affirmations</a>
+              <a href="works/3-affirmations/affirmations.apk">
+                <span style="text-decoration: underline;">(download)</span>
+              </a>
+            </li>
+            <li style="display: flex; gap:1em"> Color studies:
+              <a class="line" href="works/4-color-studies/2-wound/index.html">Wound</a>
+              <a class="line" href="works/4-color-studies/3-fire/index.html">Fire</a>
+              <a class="line" href="works/4-color-studies/4-spring/index.html">Spring</a>
+            </li>
           </ul>
         </section>
 
@@ -224,10 +226,10 @@
               <li>Understanding a Chronic Crisis: Last 50 Years of Türkiye's Economy</li>
             </a>
             <a href="https://confxsd.substack.com/p/web3-from-the-perspective-of-a-computer">
-              <li>crypto-world from a computer engineer perspective</li>
+              <li>Crypto-world from a computer engineer perspective</li>
             </a>
             <a href="https://confxsd.substack.com/p/what-is-wrong-with-digital-currencies">
-              <li>what is Wrong with digital currencies?</li>
+              <li>What's wrong with digital currencies?</li>
             </a>
           </ul>
         </section>
