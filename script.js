@@ -1,39 +1,26 @@
+window.onload = function () {
+  const textContainer = document.getElementById('animatedText');
+  let newHTML = '';
+  for (let letter of textContainer.innerText) {
+    if (letter === ' ') {
+      newHTML += '<span class="animate" style="white-space: pre;"> </span>';
+    } else {
+      newHTML += `<span class="animate">${letter}</span>`;
+    }
+  }
+  textContainer.innerHTML = newHTML;
 
+  document.querySelectorAll('.animate').forEach(letter => {
+    letter.onmouseover = () => {
+      const xMove = Math.random() * 40 - 20; // Random movement in X
+      const yMove = Math.random() * 40 - 20; // Random movement in Y
+      letter.style.setProperty('--x-move', `${xMove}px`);
+      letter.style.setProperty('--y-move', `${yMove}px`);
+    };
 
+    letter.onmousedown = () => {
+      letter.classList.toggle('clicked')
+    }
+  });
+};
 
-
-const getTracks = (data) => {
-    return data.items.map(i => {
-        return {
-            title: i.track.name,
-            url: i.track.href
-        }
-    }).slice(0, 10)
-}
-
-
-document.addEventListener('DOMContentLoaded', async () => {
-    // const data = await fetch('https://api.spotify.com/v1/playlists/4t0bBZ7kShPlSfUl1XvPvu/tracks?fields=items(added_by.id%20%2Ctrack(name%2Cexternal_urls(spotify)%2Calbum(name%2Chref)))', {
-    //     headers: {
-    //         'Accept': 'application/json',
-    //         'Content-Type': 'application/json',
-    //         'Authorization': 'Bearer BQAxShot4iWo4lD3i1w9_ewkqJemaWWofk9f4g4yfX4Q6g8eP1dONVC9l5eqqp8kapN6UMLBzd4ppB8wuAV8EXUBGGWrL-GMOqNOn96XYYhucCVsktmuE22M21ZQe15w5r3ez0jlB37_t4xvpumx2z-KKtO9riEjrZtB_pNgEQ'
-    //     }
-    // });
-
-    const data = fetch({
-        method: 'post',
-        url: 'https://accounts.spotify.com/login/password',
-        origin: 'https://accounts.spotify.com/login/password',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-        },
-        body: {
-            username: '',
-            password: ''
-        }
-    })
-
-    console.log(data)
-})
