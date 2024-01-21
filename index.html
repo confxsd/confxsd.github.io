@@ -31,6 +31,13 @@
     }
 
 
+    a:hover {
+      cursor: pointer;
+      text-decoration: underline;
+      color: #00FF41;
+    }
+
+
     h2 {
       margin: 0.6em 0 0.35em 0;
     }
@@ -39,9 +46,9 @@
       text-decoration: none;
     }
 
-    a.line {
+    /* a.line {
       text-decoration: underline;
-    }
+    } */
 
     /* a:hover *,
         a:hover {
@@ -65,7 +72,7 @@
 
     #main,
     #content {
-      padding: 1em;
+      padding: 1em 0;
     }
 
     main #content {
@@ -95,7 +102,7 @@
 
     @media screen and (min-width: 480px) {
       .container {
-        padding: 0em 0em 0em 1em;
+        padding: 0em 0em 0em 0em;
       }
 
       main {
@@ -156,11 +163,12 @@
       cursor: pointer;
       user-select: none;
     }
+
     .animate {
       display: inline-block;
       position: relative;
       transition: transform 0.6s ease-in-out;
-      white-space: pre; 
+      white-space: pre;
       user-select: none;
     }
 
@@ -176,98 +184,102 @@
 
 <body>
   <main>
-    <header class="container">
-      <div style="position: relative;">
-        <h1
-          style="white-space: nowrap; letter-spacing: -2px; position: absolute; color: #00FF41; padding: 0.5em; margin: 0;">
-          <!-- entangling unknowns -->
-        </h1>
-        <img style="max-width: 540px; width: 100%;" src="metropolis2.gif" />
-      </div>
-    </header>
-    <div class="container">
-      <section id="main">
-        <p><span id="animatedText" style="color: #00FF41; background-color: #1a1a1a; padding: 0 0.25rem; margin-right: 1em">entangling
-            unknowns</span> softw
-          eng @<a class="line" style="font-weight: 800" href="https://index.network/">index</a></p>
-        <ul style="padding: 0; flex-wrap: wrap;">
-          <!-- <a href="mailto:confxsd@gmail.com">
-                        <p style="color: green">available for web projects</p>
-                    </a> -->
-          <a href="https://github.com/confxsd">
-            <li>github</li>
-          </a>
-          <a href="https://www.linkedin.com/in/itsserhat">
-            <li>linkedin</li>
-          </a>
-          <a href="https://twitter.com/confxsd">
-            <li>twitter</li>
-          </a>
-          <a href="https://instagram.com/confxsd">
-            <li>instagram</li>
-          </a>
-          <a href="https://www.goodreads.com/confxsd">
-            <li>goodreads</li>
-          </a>
-          <a href="https://confxsd.substack.com">
-            <li>substack</li>
-          </a>
-        </ul>
-
-      </section>
-
-      <div id="content">
-
-
-        <section id="works">
-          <h2>works</h2>
-          <ul>
-            <a href="works/1-reality">
-              <li>reality</li>
+    <!-- <div style="max-width:540px; margin: auto; box-shadow:rgba(149, 157, 165, 0.2) 0px 8px 24px; padding: 0 1em; min-height: 100vh;"> -->
+    <div style="width: fit-content; margin: auto; min-height: 100vh;">
+      <header class="container">
+        <div style="position: relative;">
+          <h1
+            style="white-space: nowrap; letter-spacing: -2px; position: absolute; color: #00FF41; padding: 0.5em; margin: 0;">
+            <!-- entangling unknowns -->
+          </h1>
+          <img style="max-width: 500px; width: 100%;" src="img/cover.gif" />
+        </div>
+      </header>
+      <div class="container">
+        <section id="main">
+          <p><span id="animatedText"
+              style="color: #00FF41; background-color: #1a1a1a; padding: 0 0.25rem; margin-right: 1em">entangling
+              unknowns</span> softw
+            eng @<a class="line" style="font-weight: 800" href="https://index.network/">index</a></p>
+          <ul style="padding: 0; flex-wrap: wrap;">
+            <!-- <a href="mailto:confxsd@gmail.com">
+                          <p style="color: green">available for web projects</p>
+                      </a> -->
+            <a href="https://github.com/confxsd">
+              <li>github</li>
             </a>
-            <!-- <a href="works/2-love-songs-for-robots">
-                            <li>love songs for robots</li>
-                        </a> -->
+            <a href="https://www.linkedin.com/in/itsserhat">
+              <li>linkedin</li>
+            </a>
+            <a href="https://twitter.com/confxsd">
+              <li>twitter</li>
+            </a>
+            <a href="https://instagram.com/confxsd">
+              <li>instagram</li>
+            </a>
+            <a href="https://www.goodreads.com/confxsd">
+              <li>goodreads</li>
+            </a>
+            <a href="https://confxsd.substack.com">
+              <li>substack</li>
+            </a>
+          </ul>
 
-            <li><a href="works/3-affirmations">affirmations</a>
-              <a href="works/3-affirmations/affirmations.apk">
-                <span style="text-decoration: underline;">(download)</span>
+        </section>
+
+        <div id="content">
+
+
+          <section id="works">
+            <h2>works</h2>
+            <ul>
+              <a href="works/1-reality">
+                <li>reality</li>
               </a>
-            </li>
-            <li style="display: flex; gap:1em"> Color studies:
-              <a class="line" href="works/4-color-studies/2-wound/index.html">Wound</a>
-              <a class="line" href="works/4-color-studies/3-fire/index.html">Fire</a>
-              <a class="line" href="works/4-color-studies/4-spring/index.html">Spring</a>
-            </li>
-          </ul>
-        </section>
+              <!-- <a href="works/2-love-songs-for-robots">
+                              <li>love songs for robots</li>
+                          </a> -->
 
-        <section id="articles">
-          <h2>articles</h2>
-          <ul>
-            <a href="https://confxsd.substack.com/p/understanding-a-chronic-crisis-last">
-              <li>Understanding a Chronic Crisis: Last 50 Years of Türkiye's Economy</li>
-            </a>
-            <a href="https://confxsd.substack.com/p/web3-from-the-perspective-of-a-computer">
-              <li>Crypto-world from a computer engineer perspective</li>
-            </a>
-            <a href="https://confxsd.substack.com/p/what-is-wrong-with-digital-currencies">
-              <li>What's wrong with digital currencies?</li>
-            </a>
-          </ul>
-        </section>
+              <li><a href="works/3-affirmations">affirmations</a>
+                <a href="works/3-affirmations/affirmations.apk">
+                  <span">(download)</span>
+                </a>
+              </li>
+              <li style="display: flex; gap:1em"> Color studies:
+                <a class="line" href="works/4-color-studies/2-wound/index.html">Wound</a>
+                <a class="line" href="works/4-color-studies/3-fire/index.html">Fire</a>
+                <a class="line" href="works/4-color-studies/4-spring/index.html">Spring</a>
+              </li>
+            </ul>
+          </section>
 
-        <section id="code">
-          <h2>code</h2>
-          <ul>
-            <a href="https://github.com/confxsd/alchemy-uni">
-              <li>alchemy university web3 puzzles</li>
-            </a>
-            <!-- <a href="https://github.com/confxsd/buymecoffee-dapp">
-                            <li>buy me a coffee - dapp</li>
-                        </a> -->
-          </ul>
-        </section>
+          <section id="articles">
+            <h2>articles</h2>
+            <ul>
+              <a href="https://confxsd.substack.com/p/understanding-a-chronic-crisis-last">
+                <li>Understanding a Chronic Crisis: Last 50 Years of Türkiye's Economy</li>
+              </a>
+              <a href="https://confxsd.substack.com/p/web3-from-the-perspective-of-a-computer">
+                <li>Crypto-world from a computer engineer perspective</li>
+              </a>
+              <a href="https://confxsd.substack.com/p/what-is-wrong-with-digital-currencies">
+                <li>What's wrong with digital currencies?</li>
+              </a>
+            </ul>
+          </section>
+
+          <section id="code">
+            <h2>code</h2>
+            <ul>
+              <a href="https://github.com/confxsd/alchemy-uni">
+                <li>alchemy university web3 puzzles</li>
+              </a>
+              <!-- <a href="https://github.com/confxsd/buymecoffee-dapp">
+                              <li>buy me a coffee - dapp</li>
+                          </a> -->
+            </ul>
+          </section>
+        </div>
       </div>
     </div>
 
