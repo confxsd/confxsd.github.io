@@ -328,7 +328,7 @@
         3: [],
       };
       let stage = 1;
-      const wordsNeeded = [20, 10, 5];
+      const wordsNeeded = [5, 4, 3];
 
       function drawCircle(ctx, x, y, radius, color) {
         ctx.beginPath();
@@ -520,14 +520,23 @@
           stage === 3 &&
           selectedWords["3"].length === wordsNeeded[2]
         ) {
+          console.log("done");
+          console.log(word, selectedWords);
+          // selectedWords[`${stage}`].push(word);
+          selectedWords[`${stage - 1}`] = selectedWords[`${stage - 1}`].filter(
+            (w) => w !== word,
+          );
           document.querySelectorAll(".word p").forEach((el) => {
             if (!el.classList.contains("three")) {
               el.parentElement.style.display = "none";
             }
           });
+
           alert("Done! You can download your values wheel now");
+
           document.getElementById("downloadBtn").style.display = "block";
 
+          const isMobile = window.innerWidth <= 768; // Adjust breakpoint as needed
           if (isMobile) {
             document.getElementById("shareBtn").style.display = "block";
           }
