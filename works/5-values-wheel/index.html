@@ -524,7 +524,10 @@
           });
           alert("Done! You can download your values wheel now");
           document.getElementById("downloadBtn").style.display = "block";
-          document.getElementById("shareBtn").style.display = "block";
+
+          if (isMobile) {
+            document.getElementById("shareBtn").style.display = "block";
+          }
         }
         updateCanvas();
       }
