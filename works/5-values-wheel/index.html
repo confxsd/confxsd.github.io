@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Value Wheels</title>
+    <title>confxsd | Value Wheels</title>
     <style>
       body {
         font-family: Manrope, sans-serif;
@@ -105,8 +105,7 @@
         padding: 1rem 0;
       }
 
-      #downloadBtn {
-        display: none;
+      button {
         padding: 0.5rem 2rem;
         /* margin: 2rem; */
         border-radius: 1rem;
@@ -114,6 +113,17 @@
         background-color: #000;
         color: #fff;
         font-size: 1rem;
+      }
+
+      #downloadBtn,
+      #shareBtn {
+        display: none;
+      }
+
+      #shareBtn {
+        background-color: #8af99d;
+        color: #000;
+        border: none;
       }
 
       .info {
@@ -202,7 +212,8 @@
         values that matter most to you. Then you can download it. Let’s go!
       </p>
       <p>First select 20, then 10, finally 5</p>
-      <button id="downloadBtn">Download Yours</button>
+      <button id="downloadBtn">Download yours</button>
+      <button id="shareBtn">Share with your friends</button>
     </div>
     <div class="container">
       <div class="left" id="word-list">
@@ -513,6 +524,7 @@
           });
           alert("Done! You can download your values wheel now");
           document.getElementById("downloadBtn").style.display = "block";
+          document.getElementById("shareBtn").style.display = "block";
         }
         updateCanvas();
       }
@@ -574,6 +586,26 @@
         });
 
         updateCanvas();
+        document.getElementById("shareBtn").addEventListener("click", () => {
+          if (navigator.share) {
+            navigator
+              .share({
+                title: "Values Wheel",
+                text: "Explore and prioritize the values with your friend!",
+                url: window.location.href, // You can replace this with any URL you want to share
+              })
+              .then(() => {
+                console.log("Thanks for sharing!");
+              })
+              .catch((err) => {
+                console.error("Something went wrong: ", err);
+              });
+          } else {
+            // Fallback if Web Share API is not supported
+            // alert("Web Share API is not supported in your browser.");
+            // Optionally, you can also implement fallback behavior, like copying the link to clipboard
+          }
+        });
       }
 
       window.onload = init;
