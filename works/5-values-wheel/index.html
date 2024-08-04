@@ -189,7 +189,7 @@
         "Humility",
         "Legacy",
         "Loyalty",
-        "Respect for Others",
+        "Respect",
         "Approval",
         "Balance",
         "Belonging",
@@ -447,8 +447,8 @@
         const isMobile = window.innerWidth <= 768; // Adjust breakpoint as needed
 
         if (isMobile) {
-          canvas.width = window.innerWidth * scale; // Mobile width
-          canvas.height = window.innerWidth * scale; // Mobile height
+          canvas.width = (window.innerWidth + 16) * scale; // Mobile width
+          canvas.height = (window.innerWidth + 16) * scale; // Mobile height
           canvas.style.width = "100%";
           canvas.style.height = "100%";
         } else {
