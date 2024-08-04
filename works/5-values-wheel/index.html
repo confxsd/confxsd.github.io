@@ -277,7 +277,7 @@
         3: [],
       };
       let stage = 1;
-      const wordsNeeded = [20, 10, 5];
+      const wordsNeeded = [5, 4, 3];
 
       function drawCircle(ctx, x, y, radius, color) {
         ctx.beginPath();
@@ -409,7 +409,8 @@
           );
           // add to lower stage
           if (stage > 1) {
-            selectedWords[`${stage - 1}`].push(word);
+            //add that word
+            selectedWords[`${stage - 1}`].unshift(word);
           }
 
           //remove selected class
@@ -432,7 +433,12 @@
         }
 
         selectedWords[`${stage}`].push(word);
-        stage > 1 && selectedWords[`${stage - 1}`].pop(word);
+        // remove that word
+        if (stage > 1) {
+          selectedWords[`${stage - 1}`] = selectedWords[`${stage - 1}`].filter(
+            (w) => w !== word,
+          );
+        }
 
         event.target.classList.add("selected");
         event.target.classList.add(selectedClasses[stage - 1]);
