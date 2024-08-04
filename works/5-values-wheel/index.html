@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Value Wheels</title>
+    <style>
+      body {
+        font-family: Manrope, sans-serif;
+        padding: 0;
+        margin: 0;
+      }
+      p {
+        margin: 0;
+        padding: 0;
+      }
+      a,
+      a:visited {
+        color: #000;
+        /* text-decoration: none; */
+      }
+
+      header h1 {
+        text-align: center;
+        margin: 0;
+        padding: 1.5rem 1rem;
+        margin-bottom: 0.5rem;
+      }
+      .container {
+        display: flex;
+        flex-direction: column-reverse;
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .left {
+        width: 100%;
+        padding: 10% 0px;
+        font-size: 0.875rem;
+        overflow-y: auto;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-gap: 10px;
+        height: fit-content;
+      }
+      .right {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .word {
+        padding: 2px 1rem;
+        cursor: pointer;
+        margin: 2px;
+        display: inline-block;
+        font-size: 0.875rem;
+        border-radius: 5px;
+      }
+
+      .word p {
+        width: fit-content;
+        padding: 3px 6px;
+        border-radius: 5px;
+      }
+
+      .word p.selected.one {
+        background-color: #fecb18;
+      }
+      .word p.selected.two {
+        background-color: #fca001;
+      }
+      .word p.selected.three {
+        background-color: #fc8000;
+      }
+      canvas {
+      }
+
+      #downloadBtn {
+        display: none;
+        padding: 0.5rem 2rem;
+        /* margin: 2rem; */
+        border-radius: 1rem;
+        border: 1px solid #000;
+        background-color: #000;
+        color: #fff;
+        font-size: 1rem;
+      }
+
+      .info {
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding: 0 1rem;
+        line-height: 1.5;
+      }
+
+      .info p {
+        text-align: center;
+      }
+
+      @media (min-width: 768px) {
+        .container {
+          flex-direction: row;
+          max-width: 1400px;
+          margin: 0 auto;
+          align-items: center;
+        }
+
+        .left {
+          /* width: 500px; */
+          padding: 0%;
+          grid-template-columns: repeat(3, 1fr);
+          max-height: 50dvh;
+          overflow: auto;
+        }
+
+        .right {
+          padding-right: 0%;
+        }
+
+        .word {
+          font-size: 1rem;
+        }
+
+        header h1 {
+          padding: 1.5rem 1rem;
+          margin-bottom: 0rem;
+        }
+
+        .info {
+          display: flex;
+          justify-content: center;
+          flex-direction: column;
+          align-items: start;
+          gap: 1rem;
+          margin-bottom: 2rem;
+          max-width: 500px;
+          margin: 0 auto;
+        }
+
+        .info p {
+          text-align: start;
+        }
+      }
+    </style>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Manrope"
+    />
+  </head>
+  <body>
+    <header>
+      <h1>Values Wheel</h1>
+    </header>
+    <div class="info">
+      <p>
+        Inspired by
+        <a href="https://www.thenewhappy.com/values-wheel"
+          >Stephanie Harrison’s tool</a
+        >, this interactive Values Wheel helps you explore and prioritize the
+        values that matter most to you. Then you can download it. Let’s get
+        started!
+      </p>
+      <p>First select 20, then 10, finally 5</p>
+      <button id="downloadBtn">Download Yours</button>
+    </div>
+    <div class="container">
+      <div class="left" id="word-list">
+        <!-- Words will be dynamically added here -->
+      </div>
+      <div class="right">
+        <canvas id="canvas"></canvas>
+      </div>
+    </div>
+
+    <script>
+      const words = [
+        "Accountability",
+        "Authority",
+        "Accessibility",
+        "Community",
+        "Health",
+        "Success",
+        "Impact",
+        "Mastery",
+        "Courage",
+        "Love",
+        "Joy",
+        "Wisdom",
+        "Gratitude",
+        "Belonging",
+        "Nature",
+        "Awe",
+        "Pleasure",
+        "Forgiveness",
+        "Politeness",
+        "Legacy",
+        "Wonder",
+        "Stability",
+        "Balance",
+        "Art",
+        "Justice",
+        "Innovation",
+        "Compassion",
+        "Peace",
+        "Selflessness",
+        "Transcendence",
+        "Altruism",
+        "Charity",
+        "Kindness",
+        "Thoughtfulness",
+        "Self-awareness",
+        "Self-respect",
+        "Accountability",
+        "Courtesy",
+        "Obedience",
+        "Politeness",
+        "Self-Discipline",
+        "Authority",
+        "Competition",
+        "Control",
+        "Fame",
+        "Recognition",
+        "Reputation",
+        "Status",
+        "Accessibility",
+        "Acceptance",
+        "Awe",
+        "Consciousness",
+        "Diversity",
+        "Environmentalism",
+        "Heroism",
+        "Inclusion",
+        "Impact",
+        "Interconnectedness",
+        "Joy",
+        "Justice",
+        "Nature",
+        "Peace",
+        "Selflessness",
+        "Transcendence",
+        "Wonder",
+        "Wisdom",
+        "Affection",
+        "Altruism",
+        "Charity",
+        "Compassion",
+        "Forgiveness",
+        "Giving",
+        "Gratitude",
+        "Kindness",
+        "Love",
+        "Teamwork",
+        "Thoughtfulness",
+        "Community",
+        "Faith",
+        "History",
+        "Humility",
+        "Legacy",
+        "Loyalty",
+        "Respect for Others",
+        "Approval",
+        "Balance",
+        "Belonging",
+        "Fairness",
+        "Harmony",
+        "Health",
+        "Stability",
+        "Wealth",
+        "Accomplishment",
+        "Achievement",
+        "Competence",
+        "Mastery",
+        "Success",
+        "Abundance",
+        "Amusement",
+        "Bliss",
+        "Enjoyment",
+        "Pleasure",
+        "Assertiveness",
+        "Autonomy",
+        "Authenticity",
+        "Choice",
+        "Freedom",
+        "Focus",
+        "Honesty",
+        "Imagination",
+        "Independence",
+        "Open-mindedness",
+        "Passion",
+        "Self-awareness",
+        "Self-respect",
+        "Adaptation",
+        "Art",
+        "Boldness",
+        "Challenge",
+        "Confidence",
+        "Courage",
+        "Creativity",
+        "Determination",
+        "Exploration",
+        "Learning",
+        "Novelty",
+        "Vitality",
+        "Zest for life",
+      ];
+
+      let selectedWords = {
+        1: [],
+        2: [],
+        3: [],
+      };
+      let stage = 1;
+
+      function drawCircle(ctx, x, y, radius, color) {
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+        ctx.fillStyle = color;
+        ctx.fill();
+      }
+
+      function drawWordsInCircle(
+        ctx,
+        words,
+        radius,
+        circleCenterX,
+        circleCenterY,
+      ) {
+        const angleIncrement = (2 * Math.PI) / words.length;
+        for (let i = 0; i < words.length; i++) {
+          const angle = i * angleIncrement;
+          const x = circleCenterX + radius * Math.cos(angle);
+          const y = circleCenterY + radius * Math.sin(angle);
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          //color
+          ctx.fillStyle = "black";
+          //weight
+          const isMobile = window.innerWidth <= 768;
+          ctx.font = isMobile ? "10px Arial" : "12px Arial";
+          //anti-aliasing
+          ctx.imageSmoothingEnabled = true;
+          //letter spacing
+          // ctx.letterSpacing = "1px";
+          ctx.letterSpacing = isMobile ? "0px" : "1px";
+
+          //sharper
+          ctx.imageSmoothingQuality = "high";
+          ctx.fillText(words[i], x, y);
+        }
+      }
+
+      function updateCanvas() {
+        console.log(selectedWords);
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const circleCenterX = canvas.width / 2;
+        const circleCenterY = canvas.height / 2;
+
+        const desktopMeasures = {
+          circles: [310, 200, 100],
+          words: [255, 150, 50],
+        };
+
+        const mobileMeasures = {
+          circles: [210, 135, 68],
+          words: [172, 100, 30],
+        };
+
+        let measure = mobileMeasures;
+
+        const isMobile = window.innerWidth <= 768; // Adjust breakpoint as needed
+        if (!isMobile) {
+          measure = desktopMeasures;
+        }
+
+        // if (stage > 3) {
+        drawCircle(
+          ctx,
+          circleCenterX,
+          circleCenterY,
+          measure.circles[0],
+          "#fecb18",
+        );
+        drawWordsInCircle(
+          ctx,
+          selectedWords["1"],
+          measure.words[0],
+          circleCenterX,
+          circleCenterY,
+        );
+        // }
+        // if (stage > 2) {
+        drawCircle(
+          ctx,
+          circleCenterX,
+          circleCenterY,
+          measure.circles[1],
+          "#fca001",
+        );
+        drawWordsInCircle(
+          ctx,
+          selectedWords["2"],
+          measure.words[1],
+          circleCenterX,
+          circleCenterY,
+        );
+        // }
+        // if (stage > 1) {
+        drawCircle(
+          ctx,
+          circleCenterX,
+          circleCenterY,
+          measure.circles[2],
+          "#fc8000",
+        );
+        drawWordsInCircle(
+          ctx,
+          selectedWords["3"],
+          measure.words[2],
+          circleCenterX,
+          circleCenterY,
+        );
+        // }
+      }
+
+      function handleWordClick(event) {
+        //if not div tag, return
+        if (event.target.tagName !== "P") {
+          return;
+        }
+
+        const word = event.target.innerText;
+
+        // console.log(selectedWords[`${stage}`]);
+
+        if (selectedWords[`${stage}`].includes(word)) {
+          return;
+        }
+
+        selectedWords[`${stage}`].push(word);
+        const selectedClasses = ["one", "two", "three"];
+
+        event.target.classList.add("selected");
+        event.target.classList.add(selectedClasses[stage - 1]);
+
+        if (stage === 1 && selectedWords["1"].length === 20) {
+          stage = 2;
+          document.querySelectorAll(".word p").forEach((el) => {
+            if (!el.classList.contains("one")) {
+              // el.style.display = "none";
+              el.parentElement.style.display = "none";
+            }
+          });
+        } else if (stage === 2 && selectedWords["2"].length === 10) {
+          stage = 3;
+          document.querySelectorAll(".word p").forEach((el) => {
+            if (!el.classList.contains("two")) {
+              el.parentElement.style.display = "none";
+            }
+          });
+        } else if (stage === 3 && selectedWords["3"].length === 5) {
+          document.querySelectorAll(".word p").forEach((el) => {
+            if (!el.classList.contains("three")) {
+              el.parentElement.style.display = "none";
+            }
+          });
+          alert("Done! You can download your values wheel now");
+          document.getElementById("downloadBtn").style.display = "block";
+        }
+        updateCanvas();
+      }
+
+      function init() {
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+
+        const isMobile = window.innerWidth <= 768; // Adjust breakpoint as needed
+
+        if (isMobile) {
+          canvas.width = window.innerWidth; // Mobile width
+          canvas.height = window.innerWidth; // Mobile height
+        } else {
+          canvas.width = 700; // Desktop width
+          canvas.height = 700; // Desktop height
+        }
+
+        const downloadBtn = document.getElementById("downloadBtn");
+
+        downloadBtn.addEventListener("click", function () {
+          const dataURL = canvas.toDataURL("image/png");
+
+          const link = document.createElement("a");
+          link.href = dataURL;
+          link.download = "canvas-image.png";
+          link.click();
+        });
+
+        // Scale the canvas according to the device pixel ratio
+        // const dpr = window.devicePixelRatio || 1;
+        // const rect = canvas.getBoundingClientRect();
+        // canvas.width = rect.width * dpr;
+        // canvas.height = rect.height * dpr;
+        // ctx.scale(dpr, dpr);
+
+        const wordList = document.getElementById("word-list");
+        words.forEach((word) => {
+          const wordEl = document.createElement("div");
+          wordEl.className = "word";
+          // wordEl.innerText = word;
+          wordEl.addEventListener("click", handleWordClick);
+
+          const pEl = document.createElement("p");
+          pEl.innerText = word;
+          wordEl.appendChild(pEl);
+
+          wordList.appendChild(wordEl);
+        });
+
+        updateCanvas();
+      }
+
+      window.onload = init;
+    </script>
+  </body>
+</html>
