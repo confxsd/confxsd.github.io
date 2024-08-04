@@ -35,7 +35,7 @@
 
       .left {
         width: 100%;
-        padding: 10% 0px;
+        padding: 0 0 10% 0;
         font-size: 0.875rem;
         overflow-y: auto;
         display: grid;
@@ -92,7 +92,6 @@
         flex-direction: column;
         align-items: center;
         gap: 1rem;
-        margin-bottom: 2rem;
         padding: 0 1rem;
         line-height: 1.5;
       }
@@ -111,10 +110,11 @@
 
         .left {
           /* width: 500px; */
-          padding: 0%;
+          padding: 1rem 0;
           grid-template-columns: repeat(3, 1fr);
           max-height: 50dvh;
           overflow: auto;
+          border-right: 1px solid #ccc;
         }
 
         .right {
@@ -179,46 +179,34 @@
     <script>
       const words = [
         "Accountability",
-        "Authority",
-        "Accessibility",
-        "Community",
-        "Health",
-        "Success",
-        "Impact",
-        "Mastery",
-        "Courage",
-        "Love",
-        "Joy",
-        "Wisdom",
-        "Gratitude",
-        "Belonging",
-        "Nature",
-        "Awe",
-        "Pleasure",
-        "Forgiveness",
-        "Politeness",
-        "Legacy",
-        "Wonder",
-        "Stability",
-        "Balance",
-        "Art",
-        "Justice",
-        "Innovation",
-        "Compassion",
-        "Peace",
-        "Selflessness",
-        "Transcendence",
-        "Altruism",
-        "Charity",
-        "Kindness",
-        "Thoughtfulness",
-        "Self-awareness",
-        "Self-respect",
-        "Accountability",
         "Courtesy",
         "Obedience",
         "Politeness",
         "Self-Discipline",
+        "Community",
+        "Faith",
+        "History",
+        "Humility",
+        "Legacy",
+        "Loyalty",
+        "Respect for Others",
+        "Approval",
+        "Balance",
+        "Belonging",
+        "Fairness",
+        "Harmony",
+        "Health",
+        "Stability",
+        "Wealth",
+        "Accomplishment",
+        "Competence",
+        "Mastery",
+        "Success",
+        "Abundance",
+        "Amusement",
+        "Bliss",
+        "Enjoyment",
+        "Pleasure",
         "Authority",
         "Competition",
         "Control",
@@ -226,6 +214,32 @@
         "Recognition",
         "Reputation",
         "Status",
+        "Adaptation",
+        "Art",
+        "Boldness",
+        "Challenge",
+        "Confidence",
+        "Courage",
+        "Creativity",
+        "Determination",
+        "Exploration",
+        "Learning",
+        "Novelty",
+        "Vitality",
+        "Zest for life",
+        "Assertiveness",
+        "Autonomy",
+        "Authenticity",
+        "Choice",
+        "Freedom",
+        "Focus",
+        "Honesty",
+        "Imagination",
+        "Independence",
+        "Open-mindedness",
+        "Passion",
+        "Self-awareness",
+        "Self-respect",
         "Accessibility",
         "Acceptance",
         "Awe",
@@ -255,57 +269,6 @@
         "Love",
         "Teamwork",
         "Thoughtfulness",
-        "Community",
-        "Faith",
-        "History",
-        "Humility",
-        "Legacy",
-        "Loyalty",
-        "Respect for Others",
-        "Approval",
-        "Balance",
-        "Belonging",
-        "Fairness",
-        "Harmony",
-        "Health",
-        "Stability",
-        "Wealth",
-        "Accomplishment",
-        "Achievement",
-        "Competence",
-        "Mastery",
-        "Success",
-        "Abundance",
-        "Amusement",
-        "Bliss",
-        "Enjoyment",
-        "Pleasure",
-        "Assertiveness",
-        "Autonomy",
-        "Authenticity",
-        "Choice",
-        "Freedom",
-        "Focus",
-        "Honesty",
-        "Imagination",
-        "Independence",
-        "Open-mindedness",
-        "Passion",
-        "Self-awareness",
-        "Self-respect",
-        "Adaptation",
-        "Art",
-        "Boldness",
-        "Challenge",
-        "Confidence",
-        "Courage",
-        "Creativity",
-        "Determination",
-        "Exploration",
-        "Learning",
-        "Novelty",
-        "Vitality",
-        "Zest for life",
       ];
 
       let selectedWords = {
@@ -358,8 +321,8 @@
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const circleCenterX = canvas.width / 2;
-        const circleCenterY = canvas.height / 2;
+        const circleCenterX = canvas.width / 4;
+        const circleCenterY = canvas.height / 4;
 
         const desktopMeasures = {
           circles: [310, 200, 100],
@@ -479,15 +442,23 @@
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
 
+        const scale = 2; // 2x resolution
+
         const isMobile = window.innerWidth <= 768; // Adjust breakpoint as needed
 
         if (isMobile) {
-          canvas.width = window.innerWidth; // Mobile width
-          canvas.height = window.innerWidth; // Mobile height
+          canvas.width = window.innerWidth * scale; // Mobile width
+          canvas.height = window.innerWidth * scale; // Mobile height
+          canvas.style.width = "100%";
+          canvas.style.height = "100%";
         } else {
-          canvas.width = 700; // Desktop width
-          canvas.height = 700; // Desktop height
+          canvas.width = 700 * 2; // Desktop width
+          canvas.height = 700 * 2; // Desktop height
+          canvas.style.width = "700px";
+          canvas.style.height = "700px";
         }
+
+        ctx.scale(scale, scale);
 
         const downloadBtn = document.getElementById("downloadBtn");
 
