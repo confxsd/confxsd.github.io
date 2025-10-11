@@ -10,159 +10,204 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Funnel+Display">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo">
   <style>
+    /* Base styles with 8px grid system */
+    :root {
+      --spacing-unit: 8px;
+      --max-width: 640px;
+      --color-text: #1a1a1a;
+      --color-bg: rgb(254, 253, 251);
+      --color-accent: #00FF41;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      background: rgb(254, 253, 251);
+      background: var(--color-bg);
       padding: 0;
       margin: 0;
       min-height: 100vh;
-      font-family: 'Archivo'
+      font-family: 'Archivo', -apple-system, system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--color-text);
     }
 
-    h1,
+    /* Typography scale */
+    h1 {
+      font-family: 'Funnel Display', serif;
+      font-size: clamp(2rem, 5vw, 3rem);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin: 0 0 calc(var(--spacing-unit) * 3) 0;
+      font-weight: 600;
+    }
+
     h2 {
-      font-family: 'Funnel Display';
+      font-family: 'Funnel Display', serif;
+      font-size: 1.5rem;
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+      margin: calc(var(--spacing-unit) * 8) 0 calc(var(--spacing-unit) * 3) 0;
+      font-weight: 600;
     }
 
-    h1,
-    h2,
-    a,
-    p,
-    li {
-      color: #1a1a1a;
+    p {
+      margin: 0 0 calc(var(--spacing-unit) * 3) 0;
+      font-size: 1rem;
+      line-height: 1.6;
     }
 
+    a {
+      color: var(--color-text);
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
 
     a:hover {
       cursor: pointer;
       text-decoration: underline;
-      text-decoration-color: #00FF41;
+      text-decoration-color: var(--color-accent);
+      text-decoration-thickness: 2px;
+      text-underline-offset: 3px;
     }
 
-
-      
-
-
-    h2 {
-      margin: 0.6em 0 0.35em 0;
-    }
-
-    a {
-      text-decoration: none;
-    }
-
-    /* a.line {
-      text-decoration: underline;
-    } */
-
-    /* a:hover *,
-        a:hover {
-            color: orange;
-        } */
-
-    ul {
-      list-style: none;
-      padding: 0 0 0 1em;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 1em;
-    }
-
+    /* Layout */
     main {
       display: flex;
       flex-direction: column;
-      padding-bottom: 0em;
-    }
-
-    #main,
-    #content {
-      padding: 1em 0;
-    }
-
-    main #content {
-      display: flex;
-      flex-direction: column;
-      gap: 1em;
-    }
-
-
-
-    #main ul {
-      display: flex;
-      list-style: none;
-      gap: 1em;
-      flex-direction: row;
-      font-size: 14px;
-    }
-
-    header h1 {
-      bottom: 0
+      padding: calc(var(--spacing-unit) * 3) calc(var(--spacing-unit) * 3) calc(var(--spacing-unit) * 12);
     }
 
     .container {
-      padding: 0 2em 0 1em;
+      max-width: var(--max-width);
+      margin: 0 auto;
+      width: 100%;
     }
 
+    header {
+      margin-bottom: calc(var(--spacing-unit) * 6);
+    }
 
-    @media screen and (min-width: 480px) {
+    header img {
+      width: 100%;
+      height: auto;
+      display: block;
+      margin-bottom: calc(var(--spacing-unit) * 4);
+    }
 
-    ul a {
+    /* Sections */
+    section {
+      margin-bottom: calc(var(--spacing-unit) * 6);
+    }
+
+    section:first-child h2 {
+      margin-top: 0;
+    }
+
+    #main {
+      margin-bottom: calc(var(--spacing-unit) * 8);
+    }
+
+    #content {
+      display: flex;
+      flex-direction: column;
+      gap: calc(var(--spacing-unit) * 4);
+    }
+
+    /* Lists */
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: calc(var(--spacing-unit) * 2);
+    }
+
+    li {
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    /* Social links */
+    #main ul {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: calc(var(--spacing-unit) * 3);
+      font-size: 0.875rem;
+      margin-top: calc(var(--spacing-unit) * 3);
+    }
+
+    #main ul a {
+      text-decoration: underline;
+      text-decoration-color: var(--color-accent);
+      text-decoration-thickness: 1px;
+    }
+
+    #main ul a:hover {
+      text-decoration-thickness: 2px;
+    }
+
+    /* Project cards */
+    .card {
+      display: block;
+      border: none;
+      border-radius: 0.5rem;
+      padding: calc(var(--spacing-unit) * 2);
+      padding-left: 0.5em;
+      transition: all 0.2s ease;
       text-decoration: none;
     }
-      .container {
-        padding: 0em 0em 0em 0em;
-      }
 
+    .card:hover {
+      border-color: var(--color-accent);
+      text-decoration: none;
+      transform: translateY(-2px);
+    }
+
+    .card-title {
+      font-weight: 600;
+      margin-bottom: calc(var(--spacing-unit) * 1);
+      color: var(--color-text);
+    }
+
+    .card-description {
+      color: rgba(26, 26, 26, 0.7);
+      font-size: 0.9375rem;
+      line-height: 1.5;
+    }
+
+    #code ul {
+      gap: calc(var(--spacing-unit) * 3);
+    }
+
+    /* Desktop adjustments */
+    @media screen and (min-width: 768px) {
       main {
-        flex-direction: column;
-        gap: 0em;
-        align-items: center;
-        justify-content: center;
-        /* padding: 5em 5em 0 5em; */
+        padding: calc(var(--spacing-unit) * 6) calc(var(--spacing-unit) * 4) calc(var(--spacing-unit) * 16);
       }
 
-      #main ul {
-        flex-direction: row;
-      }
-
-      #main {
-        flex: 1;
-      }
-
-      #projects,
-      #articles {
-        flex: 1;
+      header {
+        margin-bottom: calc(var(--spacing-unit) * 8);
       }
 
       header img {
-        /* max-width: unset !important; */
-        width: 100%;
-        max-width: 540px;
-        padding: 2em 0 0 0em;
+        margin-bottom: calc(var(--spacing-unit) * 6);
       }
 
-      header h1 {
-        font-size: 3em !important;
-        left: 0;
-        right: 0;
+      #main {
+        margin-bottom: calc(var(--spacing-unit) * 12);
       }
 
-      main #content {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        gap: 1em;
-
+      #main ul {
+        text-decoration: none;
       }
 
-      main #content>section {
-        flex: 1;
+      #content {
+        gap: calc(var(--spacing-unit) * 8);
       }
-
-      header h1 {
-        top: 0
-      }
-
     }
   </style>
 
@@ -192,121 +237,95 @@
 
 <body>
   <main>
-    <!-- <div style="max-width:540px; margin: auto; box-shadow:rgba(149, 157, 165, 0.2) 0px 8px 24px; padding: 0 1em; min-height: 100vh;"> -->
-    <div style="width: fit-content; margin: auto; min-height: 100vh;">
+    <div class="container">
       <header>
-        <div style="position: relative;">
-          <h1
-            style="white-space: nowrap; letter-spacing: -2px; position: absolute; color: #00FF41; padding: 0.5em; margin: 0;">
-            <!-- entangling unknowns -->
-          </h1>
-          <img style="max-width: 500px; width: 100%;" src="img/cover.gif" />
-        </div>
+        <img src="img/cover.gif" alt="Cover" />
       </header>
-      <div class="container">
-        <section id="main">
-          <p><span id="animatedText"
-              style="color: #00FF41; background-color: #1a1a1a; padding: 0 0.25rem; margin-right: 1em">entangling
-              unknowns</span>@<a class="line" style="font-weight: 800" href="https://rome.markets/">rome.markets</a></p>
-          <ul style="padding: 0; flex-wrap: wrap;">
-            <!-- <a href="mailto:confxsd@gmail.com">
-                          <p style="color: green">available for web projects</p>
-                      </a> -->
-            <a href="https://github.com/confxsd">
-              <li>github</li>
-            </a>
-            <a href="https://www.linkedin.com/in/itsserhat">
-              <li>linkedin</li>
-            </a>
-            <a href="https://twitter.com/confxsd">
-              <li>twitter</li>
-            </a>
-            <a href="https://instagram.com/confxsd">
-              <li>instagram</li>
-            </a>
-            <a href="https://www.goodreads.com/confxsd">
-              <li>goodreads</li>
-            </a>
-            <a href="https://confxsd.substack.com">
-              <li>substack</li>
-            </a>
-          </ul>
 
+      <section id="main">
+        <p><span id="animatedText"
+            style="color: #00FF41; background-color: #1a1a1a; padding: 0.25rem 0.5rem; margin-right: 0.75rem;">entangling
+            unknowns</span>@<a style="font-weight: 600;" href="https://rome.markets/">rome.markets</a></p>
+        <ul>
+          <a href="https://github.com/confxsd">
+            <li>github</li>
+          </a>
+          <a href="https://www.linkedin.com/in/itsserhat">
+            <li>linkedin</li>
+          </a>
+          <a href="https://twitter.com/confxsd">
+            <li>twitter</li>
+          </a>
+          <a href="https://instagram.com/confxsd">
+            <li>instagram</li>
+          </a>
+          <a href="https://www.goodreads.com/confxsd">
+            <li>goodreads</li>
+          </a>
+          <a href="https://confxsd.substack.com">
+            <li>substack</li>
+          </a>
+        </ul>
+      </section>
+
+      <div id="content">
+        <section id="code">
+          <h2>created</h2>
+          <ul>
+            <li>
+              <a href="https://www.rome.markets" class="card">
+                <div class="card-title">Rome | Financial Assistant</div>
+                <div class="card-description">AI financial assistant that helps you understand markets, analyze investments, and make informed decisions.</div>
+              </a>
+            </li>
+            <li>
+              <a href="https://www.epifani.vercel.app" class="card">
+                <div class="card-title">EPIFANI | Interactive event map</div>
+                <div class="card-description">Interactive map exploring London's art scene, galleries, and cultural spaces.</div>
+              </a>
+            </li>
+          </ul>
         </section>
 
-        <div id="content">
+        <section id="works">
+          <h2>artworks</h2>
+          <ul>
+            <a href="works/1-reality">
+              <li>reality</li>
+            </a>
+            <li><a href="works/3-affirmations">affirmations</a>
+              <a href="works/3-affirmations/affirmations.apk">(download)</a>
+            </li>
+            <li>color studies:
+              <a href="works/4-color-studies/2-wound/index.html">Wound</a>,
+              <a href="works/4-color-studies/3-fire/index.html">Fire</a>,
+              <a href="works/4-color-studies/4-spring/index.html">Spring</a>
+            </li>
+            <a href="works/5-values-wheel/index.html">
+              <li>values wheel</li>
+            </a>
+            <a href="works/6-run-karma-run/index.html">
+              <li>run, karma. run!</li>
+            </a>
+          </ul>
+        </section>
 
-                    <section id="code">
-            <h2>created</h2>
-            <ul>
-              <a href="https://www.rome.markets">
-                <li><b>Rome</b>: AI Financial Assistant</li>
-              </a>
-              <a href="https://www.epifani.vercel.app">
-                <li><b>EPIFANI</b>: Interactive London Art Map</li>
-              </a>
-            </ul>
-          </section>
-
-
-          <section id="works">
-            <h2>artworks</h2>
-            <ul>
-              <a href="works/1-reality">
-                <li>reality</li>
-              </a>
-              <!-- <a href="works/2-love-songs-for-robots">
-                              <li>love songs for robots</li>
-                          </a> -->
-
-              <li><a href="works/3-affirmations">affirmations</a>
-                <a href="works/3-affirmations/affirmations.apk">
-                  <span">(download)</span>
-                </a>
-              </li>
-              <li style="display: flex; gap:1em"> color studies:
-                <a class="line" href="works/4-color-studies/2-wound/index.html">Wound</a>
-                <a class="line" href="works/4-color-studies/3-fire/index.html">Fire</a>
-                <a class="line" href="works/4-color-studies/4-spring/index.html">Spring</a>
-              </li>
-              <a href="works/5-values-wheel/index.html">
-                <li>values wheel</li>
-              </a>
-              <a href="works/6-run-karma-run/index.html">
-                <li>run, karma. run!</li>
-              </a>
-            </ul>
-          </section>
-
-          <section id="articles">
-            <h2>articles</h2>
-            <ul>
-              <a href="https://confxsd.substack.com/p/understanding-a-chronic-crisis-last">
-                <li>Understanding a Chronic Crisis: Last 50 Years of Türkiye's Economy</li>
-              </a>
-              <a href="https://confxsd.substack.com/p/web3-from-the-perspective-of-a-computer">
-                <li>Crypto-world from a computer engineer perspective</li>
-              </a>
-              <a href="https://confxsd.substack.com/p/what-is-wrong-with-digital-currencies">
-                <li>What's wrong with digital currencies?</li>
-              </a>
-            </ul>
-          </section>
-        </div>
+        <section id="articles">
+          <h2>articles</h2>
+          <ul>
+            <a href="https://confxsd.substack.com/p/understanding-a-chronic-crisis-last">
+              <li>Understanding a Chronic Crisis: Last 50 Years of Türkiye's Economy</li>
+            </a>
+            <a href="https://confxsd.substack.com/p/web3-from-the-perspective-of-a-computer">
+              <li>Crypto-world from a computer engineer perspective</li>
+            </a>
+            <a href="https://confxsd.substack.com/p/what-is-wrong-with-digital-currencies">
+              <li>What's wrong with digital currencies?</li>
+            </a>
+          </ul>
+        </section>
       </div>
     </div>
-
-    <!-- <section id="personal">
-            <h2>personal</h2>
-            <ul style="list-style: none; padding: 0; display: flex; gap: 1em">
-                <a href="https://open.spotify.com/user/risuss">
-                    <li>spotify</li>
-                </a>
-                <a href="https://instagram.com/confxsd/">
-                    <li>instagram</li>
-                </a>
-            </ul>
-        </section> -->
   </main>
 
   <script src="script.js"></script>
