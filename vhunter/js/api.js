@@ -7,8 +7,9 @@ export async function fetchPolygon(path) {
   return r.json();
 }
 
-export async function fetchClaude(prompt) {
-  const r = await fetch(`${CONFIG.PROXY_URL}/claude`, {
+export async function fetchClaude(prompt, skipCache = false) {
+  const url = skipCache ? `${CONFIG.PROXY_URL}/claude?nocache=1` : `${CONFIG.PROXY_URL}/claude`;
+  const r = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

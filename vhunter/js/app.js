@@ -7,6 +7,7 @@ import * as ui from './ui.js';
 import { buildAnalysisPrompt, buildTradePrompt } from './prompts.js';
 
 let mktData = {};
+let skipCache = false;
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
@@ -23,7 +24,8 @@ document.getElementById('tk').addEventListener('keypress', (e) => {
 // Expose run to window for button onclick
 window.run = run;
 
-async function run() {
+async function run(forceRefresh = false) {
+  skipCache = forceRefresh;
   const ticker = ui.$('tk').value.toUpperCase().trim();
   if (!ticker) return;
 
@@ -306,15 +308,16 @@ function processOptionsData(options, spotPrice) {
 }
 
 async function callAI() {
-  ui.$('aiSt').textContent = 'thinking...';
+  ui.$('aiSt').textContent = skipCache ? 'refreshing...' : 'thinking...';
 
   try {
     const [analysis, trades] = await Promise.all([
-      fetchClaude(buildAnalysisPrompt(mktData)),
-      fetchClaude(buildTradePrompt(mktData))
+      fetchClaude(buildAnalysisPrompt(mktData), skipCache),
+      fetchClaude(buildTradePrompt(mktData), skipCache)
     ]);
 
-    ui.updateAI(analysis, trades, 'done');
+    ui.updateAI(analysis, trades, skipCache ? 'fresh' : 'done');
+    skipCache = false; // Reset after use
   } catch (e) {
     ui.$('aiOut').textContent = 'AI Error: ' + e.message;
     ui.$('aiSt').textContent = 'error';
