@@ -106,14 +106,6 @@ Calls: ${d.topCalls} | Puts: ${d.topPuts}`;
   });
 };
 
-// Toggle chart guide "read more" expansion
-window.toggleGuide = function(chartId) {
-  const guide = document.getElementById('guide-' + chartId);
-  if (guide) {
-    guide.classList.toggle('expanded');
-  }
-};
-
 // Toggle collapsible sections
 window.toggleSection = function(sectionId) {
   const section = document.getElementById(sectionId);

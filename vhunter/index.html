@@ -64,55 +64,55 @@
       <div class="t">Price + SMA</div>
       <div class="ch"><canvas id="pC"></canvas></div>
       <div class="chart-metric" id="metric-price"></div>
-      <div class="chart-guide" id="guide-price"><span class="guide-short"><span class="g">SMA20</span> short, <span class="y">SMA50</span> med trend</span><span class="guide-full"> | Price > SMAs = Bullish | Cross up = Buy signal</span><a class="read-more" onclick="toggleGuide('price')">more</a></div>
+      <div class="chart-guide"><span class="g">SMA20</span> short, <span class="y">SMA50</span> med trend | Price > SMAs = Bullish | Cross up = Buy signal</div>
     </div>
     <div class="cell chart-cell">
       <div class="t">Volume</div>
       <div class="ch"><canvas id="vC"></canvas></div>
       <div class="chart-metric" id="metric-volume"></div>
-      <div class="chart-guide" id="guide-volume"><span class="guide-short">Purple = 20d avg line</span><span class="guide-full"> | Green = up day, Red = down | High vol confirms moves</span><a class="read-more" onclick="toggleGuide('volume')">more</a></div>
+      <div class="chart-guide">Purple = 20d avg | Green = up, Red = down | High vol confirms moves</div>
     </div>
     <div class="cell chart-cell">
       <div class="t">RSI (14)</div>
       <div class="ch"><canvas id="rC"></canvas></div>
       <div class="chart-metric" id="metric-rsi"></div>
-      <div class="chart-guide" id="guide-rsi"><span class="guide-short"><span class="r">>70</span> overbought, <span class="g">&lt;30</span> oversold</span><span class="guide-full"> | Divergence from price = potential reversal</span><a class="read-more" onclick="toggleGuide('rsi')">more</a></div>
+      <div class="chart-guide"><span class="r">>70</span> overbought, <span class="g">&lt;30</span> oversold | Divergence = potential reversal</div>
     </div>
     <div class="cell chart-cell">
       <div class="t">MACD</div>
       <div class="ch"><canvas id="mC"></canvas></div>
       <div class="chart-metric" id="metric-macd"></div>
-      <div class="chart-guide" id="guide-macd"><span class="guide-short">Histogram = momentum</span><span class="guide-full"> | MACD > Signal = Bullish | Above zero = Uptrend</span><a class="read-more" onclick="toggleGuide('macd')">more</a></div>
+      <div class="chart-guide">Histogram = momentum | MACD > Signal = Bullish | Above zero = Uptrend</div>
     </div>
     <div class="cell chart-cell">
       <div class="t">ADX / DI</div>
       <div class="ch"><canvas id="aC"></canvas></div>
       <div class="chart-metric" id="metric-adx"></div>
-      <div class="chart-guide" id="guide-adx"><span class="guide-short"><span class="y">ADX>25</span> = trending market</span><span class="guide-full"> | +DI > -DI = Bulls | ADX rising = Trend strengthening</span><a class="read-more" onclick="toggleGuide('adx')">more</a></div>
+      <div class="chart-guide"><span class="y">ADX>25</span> = trending | +DI > -DI = Bulls | ADX rising = Strengthening</div>
     </div>
     <div class="cell chart-cell">
       <div class="t">Bollinger Bands</div>
       <div class="ch"><canvas id="bC"></canvas></div>
       <div class="chart-metric" id="metric-bb"></div>
-      <div class="chart-guide" id="guide-bb"><span class="guide-short"><span class="r">Upper</span>=resist, <span class="g">Lower</span>=support</span><span class="guide-full"> | Squeeze = expect breakout | Touch band = reversal zone</span><a class="read-more" onclick="toggleGuide('bb')">more</a></div>
+      <div class="chart-guide"><span class="r">Upper</span>=resist, <span class="g">Lower</span>=support | Squeeze = breakout | Touch = reversal zone</div>
     </div>
     <div class="cell chart-cell">
       <div class="t">Money Flow (MFI)</div>
       <div class="ch"><canvas id="mfC"></canvas></div>
       <div class="chart-metric" id="metric-mfi"></div>
-      <div class="chart-guide" id="guide-mfi"><span class="guide-short"><span class="r">>80</span> overbought, <span class="g">&lt;20</span> oversold</span><span class="guide-full"> | Volume-weighted RSI, more reliable for reversals</span><a class="read-more" onclick="toggleGuide('mfi')">more</a></div>
+      <div class="chart-guide"><span class="r">>80</span> overbought, <span class="g">&lt;20</span> oversold | Vol-weighted RSI, reliable for reversals</div>
     </div>
     <div class="cell chart-cell">
       <div class="t">A/D Line</div>
       <div class="ch"><canvas id="adC"></canvas></div>
       <div class="chart-metric" id="metric-adl"></div>
-      <div class="chart-guide" id="guide-adl"><span class="guide-short"><span class="g">Rising</span>=accumulation, <span class="r">Falling</span>=distribution</span><span class="guide-full"> | Divergence from price = trend weakness ahead</span><a class="read-more" onclick="toggleGuide('adl')">more</a></div>
+      <div class="chart-guide"><span class="g">Rising</span>=accumulation, <span class="r">Falling</span>=distribution | Divergence = trend weakness</div>
     </div>
     <div class="cell chart-cell">
       <div class="t">ATR (Volatility)</div>
       <div class="ch"><canvas id="atC"></canvas></div>
       <div class="chart-metric" id="metric-atr"></div>
-      <div class="chart-guide" id="guide-atr"><span class="guide-short">Use 2x ATR for stop-loss</span><span class="guide-full"> | High = wide stops, Low = tight stops | Rising = more risk</span><a class="read-more" onclick="toggleGuide('atr')">more</a></div>
+      <div class="chart-guide">Use 2x ATR for stop-loss | High = wide, Low = tight | Rising = more risk</div>
     </div>
     <div class="cell">
       <div class="t">Technical Signals</div>

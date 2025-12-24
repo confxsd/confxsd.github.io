@@ -269,7 +269,7 @@ body {
 .chart-cell { position: relative; }
 .chart-cell .t { display: flex; align-items: center; gap: 6px; }
 
-/* Chart Guide - Inline with Read More */
+/* Chart Guide */
 .chart-guide {
   font-size: 9px;
   color: #64748b;
@@ -277,34 +277,6 @@ body {
   margin-top: 4px;
   padding-top: 4px;
   border-top: 1px solid #f1f5f9;
-}
-
-.guide-short {
-  color: #475569;
-}
-
-.guide-full {
-  display: none;
-  color: #64748b;
-}
-
-.chart-guide.expanded .guide-full {
-  display: inline;
-}
-
-.chart-guide.expanded .read-more {
-  display: none;
-}
-
-.read-more {
-  color: #818cf8;
-  cursor: pointer;
-  font-weight: 500;
-  margin-left: 4px;
-}
-
-.read-more:hover {
-  text-decoration: underline;
 }
 
 /* Chart Metrics Strip */
@@ -721,9 +693,5 @@ body {
 
   .section-header {
     padding: 14px;
-  }
-
-  .read-more {
-    padding: 4px 0;
   }
 }
