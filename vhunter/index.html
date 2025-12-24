@@ -16,8 +16,6 @@
         .hdr input{border:1px solid #cbd5e1;padding:6px 10px;width:80px;font-size:13px;border-radius:4px;font-weight:600;font-family:inherit}
         .hdr input:focus{outline:none;border-color:#818cf8}
         .hdr button{background:#818cf8;color:#fff;border:none;padding:6px 14px;font-size:11px;font-weight:600;border-radius:4px;cursor:pointer;font-family:inherit}
-        .hdr button.cfg{background:#f1f5f9;color:#64748b;padding:6px 10px}
-        .hdr button.cfg:hover{background:#e2e8f0}
         .hdr .score{font-size:28px;font-weight:800;margin-left:8px}
         .hdr .score.b{color:#10b981}.hdr .score.s{color:#ef4444}.hdr .score.n{color:#f59e0b}
         .hdr .sig{font-size:10px;font-weight:700;padding:4px 10px;border-radius:4px}
@@ -70,53 +68,9 @@
         .g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px}
         .g{color:#10b981}.r{color:#ef4444}.y{color:#f59e0b}.p{color:#8b5cf6}.c{color:#06b6d4}
         .alert{background:#fef2f2;padding:8px 12px;font-size:11px;display:none}
-
-        /* Modal */
-        .modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center}
-        .modal.show{display:flex}
-        .modal-box{background:#fff;border-radius:8px;padding:20px;width:90%;max-width:400px;box-shadow:0 10px 40px rgba(0,0,0,0.2)}
-        .modal-box h3{font-size:14px;margin-bottom:16px;color:#1e293b}
-        .modal-box label{display:block;font-size:10px;color:#64748b;margin-bottom:4px;text-transform:uppercase}
-        .modal-box input{width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:4px;font-size:12px;margin-bottom:12px;font-family:inherit}
-        .modal-box input:focus{outline:none;border-color:#818cf8}
-        .modal-box .note{font-size:10px;color:#94a3b8;margin-bottom:16px;line-height:1.5}
-        .modal-box .btns{display:flex;gap:8px;justify-content:flex-end}
-        .modal-box button{padding:8px 16px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:inherit}
-        .modal-box button.save{background:#818cf8;color:#fff}
-        .modal-box button.cancel{background:#f1f5f9;color:#64748b}
-        .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
-        .status-dot.ok{background:#10b981}
-        .status-dot.err{background:#ef4444}
     </style>
 </head>
 <body>
-<!-- Settings Modal -->
-<div class="modal" id="modal">
-    <div class="modal-box">
-        <h3>Configuration</h3>
-
-        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:10px;margin-bottom:12px">
-            <label style="color:#166534;margin:0">Proxy URL (Recommended - Most Secure)</label>
-            <input type="text" id="proxyUrl" placeholder="https://vhunter-proxy.xxx.workers.dev" style="margin-top:6px;margin-bottom:0">
-            <div class="note" style="margin:6px 0 0 0;color:#166534">If set, API keys below are ignored. Keys stay on your Cloudflare Worker.</div>
-        </div>
-
-        <div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-top:4px">
-            <div class="note" style="margin-bottom:8px">Or use direct API keys (stored in browser localStorage):</div>
-            <label>Polygon.io API Key</label>
-            <input type="password" id="polygonKey" placeholder="Your Polygon.io API key">
-            <label>Anthropic (Claude) API Key</label>
-            <input type="password" id="claudeKey" placeholder="Your Anthropic API key">
-            <div class="note">Get keys from: <a href="https://polygon.io" target="_blank">polygon.io</a> | <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></div>
-        </div>
-
-        <div class="btns">
-            <button class="cancel" onclick="closeModal()">Cancel</button>
-            <button class="save" onclick="saveKeys()">Save</button>
-        </div>
-    </div>
-</div>
-
 <div class="hdr">
     <span class="logo">VHUNTER</span>
     <input type="text" id="tk" value="TSLA">
@@ -128,7 +82,6 @@
     </div>
     <span id="st" style="font-size:11px;color:#94a3b8"></span>
     <div class="time" id="tm"></div>
-    <button class="cfg" onclick="openModal()" title="API Settings">&#9881; Keys</button>
 </div>
 <div id="al" class="alert"></div>
 
@@ -217,7 +170,7 @@
     <!-- AI Analysis -->
     <div class="cell" style="grid-column:span 3">
         <div class="t">AI Analysis & Trade Thesis <span id="aiSt" style="color:#818cf8"></span></div>
-        <div id="aiOut" style="font-size:11px;line-height:1.5;color:#475569;max-height:200px;overflow-y:auto">Configure API keys to enable AI analysis...</div>
+        <div id="aiOut" style="font-size:11px;line-height:1.5;color:#475569;max-height:200px;overflow-y:auto">Loading analysis...</div>
     </div>
     <div class="cell" style="grid-column:span 3">
         <div class="t">Trade Opportunities</div>
@@ -279,65 +232,24 @@
 </div>
 
 <script>
-// Proxy URL - set after deploying Cloudflare Worker
-// If empty, falls back to localStorage keys
-const PROXY_URL = localStorage.getItem('vhunter_proxy_url') || '';
-const U='https://api.polygon.io';
+// Default proxy - just works
+const PROXY_URL = 'https://vhunter-proxy.vhunter.workers.dev';
 let C={},mktData={};
-
-function getPolygonKey(){return localStorage.getItem('vhunter_polygon_key')||''}
-function getClaudeKey(){return localStorage.getItem('vhunter_claude_key')||''}
-function useProxy(){return PROXY_URL.length > 0}
-
-function openModal(){
-    $('modal').classList.add('show');
-    $('proxyUrl').value=localStorage.getItem('vhunter_proxy_url')||'';
-    $('polygonKey').value=getPolygonKey();
-    $('claudeKey').value=getClaudeKey();
-}
-function closeModal(){$('modal').classList.remove('show')}
-function saveKeys(){
-    const proxy=$('proxyUrl').value.trim();
-    localStorage.setItem('vhunter_proxy_url',proxy);
-    localStorage.setItem('vhunter_polygon_key',$('polygonKey').value.trim());
-    localStorage.setItem('vhunter_claude_key',$('claudeKey').value.trim());
-    // Reload to pick up new proxy URL
-    if(proxy)location.reload();
-    else{closeModal();run();}
-}
 
 document.addEventListener('DOMContentLoaded',()=>{
     $('tm').textContent=new Date().toLocaleString();
     initC();
-    if(!useProxy() && !getPolygonKey()){
-        openModal();
-    }else{
-        run();
-    }
+    run();
 });
 $('tk').addEventListener('keypress',e=>{if(e.key==='Enter')run()});
 function $(id){return document.getElementById(id)}
 async function api(p){
-    let r;
-    if(useProxy()){
-        // Use secure Cloudflare Worker proxy
-        r=await fetch(`${PROXY_URL}/polygon${p}`);
-    }else{
-        // Fallback to direct API with localStorage key
-        const k=getPolygonKey();
-        if(!k){$('al').textContent='Please configure Polygon API key or Proxy URL';$('al').style.display='block';return null}
-        r=await fetch(`${U}${p}${p.includes('?')?'&':'?'}apiKey=${k}`);
-    }
+    const r=await fetch(`${PROXY_URL}/polygon${p}`);
     if(!r.ok)throw new Error(r.status);
     return r.json();
 }
 
 async function callClaude(data){
-    if(!useProxy() && !getClaudeKey()){
-        $('aiOut').textContent='Configure Claude API key or Proxy URL for AI analysis';
-        $('tradeOut').textContent='--';
-        return;
-    }
     $('aiSt').textContent='thinking...';
     const prompt=`You are a senior quant analyst. Analyze this real-time market data and provide:
 
@@ -405,35 +317,15 @@ Include at least one OPTIONS trade (calls, puts, or spread) if conditions favor 
 }
 
 async function fetchClaude(prompt){
-    let r;
-    if(useProxy()){
-        // Use secure Cloudflare Worker proxy
-        r=await fetch(`${PROXY_URL}/claude`,{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({
-                model:'claude-sonnet-4-20250514',
-                max_tokens:1024,
-                messages:[{role:'user',content:prompt}]
-            })
-        });
-    }else{
-        // Fallback to direct API
-        r=await fetch('https://api.anthropic.com/v1/messages',{
-            method:'POST',
-            headers:{
-                'Content-Type':'application/json',
-                'x-api-key':getClaudeKey(),
-                'anthropic-version':'2023-06-01',
-                'anthropic-dangerous-direct-browser-access':'true'
-            },
-            body:JSON.stringify({
-                model:'claude-sonnet-4-20250514',
-                max_tokens:1024,
-                messages:[{role:'user',content:prompt}]
-            })
-        });
-    }
+    const r=await fetch(`${PROXY_URL}/claude`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+            model:'claude-sonnet-4-20250514',
+            max_tokens:1024,
+            messages:[{role:'user',content:prompt}]
+        })
+    });
     if(!r.ok){const e=await r.text();throw new Error(e)}
     const j=await r.json();
     return j.content[0].text;
@@ -447,7 +339,6 @@ function formatAI(t){
 
 async function run(){
     const t=$('tk').value.toUpperCase().trim();if(!t)return;
-    if(!useProxy() && !getPolygonKey()){openModal();return}
     $('st').textContent='...';
     try{
         const to=new Date(),fr=new Date(to-90*24*60*60*1000);
