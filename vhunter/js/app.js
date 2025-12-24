@@ -242,27 +242,53 @@ function processOptionsData(options, spotPrice) {
     return;
   }
 
+  // Filter to near-the-money options (within 20% of spot)
+  const nearMoney = options.filter(o => {
+    const strike = o.details?.strike_price;
+    if (!strike) return false;
+    const pctFromSpot = Math.abs(strike - spotPrice) / spotPrice;
+    return pctFromSpot < 0.20; // Within 20% of current price
+  });
+
   let callVol = 0, putVol = 0, callOI = 0, putOI = 0, ivSum = 0, ivCount = 0;
   const calls = [], puts = [];
 
+  // Process all options for totals, but prioritize near-money for display
   options.forEach(o => {
     const details = o.details;
     const day = o.day;
     if (!details || !day) return;
 
+    const vol = day.volume || 0;
+    const oi = day.open_interest || 0;
+
     if (details.contract_type === 'call') {
-      callVol += day.volume || 0;
-      callOI += day.open_interest || 0;
-      if (day.volume > 100) calls.push({ strike: details.strike_price, volume: day.volume });
+      callVol += vol;
+      callOI += oi;
     } else {
-      putVol += day.volume || 0;
-      putOI += day.open_interest || 0;
-      if (day.volume > 100) puts.push({ strike: details.strike_price, volume: day.volume });
+      putVol += vol;
+      putOI += oi;
     }
 
     if (o.implied_volatility) {
       ivSum += o.implied_volatility;
       ivCount++;
+    }
+  });
+
+  // Get top strikes from near-money options only
+  nearMoney.forEach(o => {
+    const details = o.details;
+    const day = o.day;
+    if (!details || !day) return;
+
+    const vol = day.volume || 0;
+    if (vol > 10) { // Lower threshold for near-money
+      if (details.contract_type === 'call') {
+        calls.push({ strike: details.strike_price, volume: vol, oi: day.open_interest || 0 });
+      } else {
+        puts.push({ strike: details.strike_price, volume: vol, oi: day.open_interest || 0 });
+      }
     }
   });
 

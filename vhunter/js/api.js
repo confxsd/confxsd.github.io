@@ -30,11 +30,24 @@ export async function fetchTickerData(ticker) {
   const to = new Date();
   const fr = new Date(to - CONFIG.HISTORY_DAYS * 24 * 60 * 60 * 1000);
 
+  // Get next 2 Friday expirations for relevant options
+  const nextFriday = getNextFriday();
+  const weekAfter = getNextFriday(7);
+
   const [prev, aggs, options] = await Promise.all([
     fetchPolygon(`/v2/aggs/ticker/${ticker}/prev`),
     fetchPolygon(`/v2/aggs/ticker/${ticker}/range/1/day/${fr.toISOString().split('T')[0]}/${to.toISOString().split('T')[0]}?adjusted=true&sort=asc`),
-    fetchPolygon(`/v3/snapshot/options/${ticker}?limit=50`).catch(() => null)
+    fetchPolygon(`/v3/snapshot/options/${ticker}?expiration_date.lte=${weekAfter}&limit=250`).catch(() => null)
   ]);
 
   return { prev, aggs, options };
+}
+
+function getNextFriday(addDays = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + addDays);
+  const day = d.getDay();
+  const daysUntilFriday = (5 - day + 7) % 7 || 7;
+  d.setDate(d.getDate() + daysUntilFriday);
+  return d.toISOString().split('T')[0];
 }
