@@ -1,0 +1,146 @@
+/* VHunter Signal Terminal Styles */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #e2e8f0;
+  color: #1e293b;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Header */
+.hdr {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.hdr input {
+  border: 1px solid #cbd5e1;
+  padding: 6px 10px;
+  width: 80px;
+  font-size: 13px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-family: inherit;
+}
+
+.hdr input:focus { outline: none; border-color: #818cf8; }
+
+.hdr button {
+  background: #818cf8;
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.hdr .score { font-size: 28px; font-weight: 800; margin-left: 8px; }
+.hdr .score.b { color: #10b981; }
+.hdr .score.s { color: #ef4444; }
+.hdr .score.n { color: #f59e0b; }
+
+.hdr .sig { font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 4px; }
+.hdr .sig.b { background: #d1fae5; color: #059669; }
+.hdr .sig.s { background: #fee2e2; color: #dc2626; }
+.hdr .sig.n { background: #fef3c7; color: #d97706; }
+
+.hdr .bias { font-size: 10px; color: #64748b; margin-top: 2px; }
+.hdr .time { margin-left: auto; font-size: 11px; color: #94a3b8; }
+.hdr .logo { font-weight: 800; font-size: 14px; color: #818cf8; }
+
+/* Status Bar */
+.sbar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: #e2e8f0;
+}
+
+.sbar .s { background: #fff; text-align: center; padding: 8px; }
+.sbar .lbl { font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; }
+.sbar .val { font-size: 15px; font-weight: 700; }
+.sbar .sub { font-size: 9px; color: #94a3b8; }
+
+/* Grid Layout */
+.wrap {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1px;
+  background: #e2e8f0;
+  padding: 1px;
+}
+
+.cell { background: #fff; padding: 10px; }
+
+/* Typography */
+.t {
+  font-size: 9px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.dr { display: flex; justify-content: space-between; padding: 3px 0; font-size: 11px; }
+.dr .l { color: #64748b; }
+.dr .v { font-weight: 600; }
+
+/* Indicators */
+.ind { display: flex; align-items: center; gap: 4px; padding: 4px 0; font-size: 11px; }
+.ind .n { flex: 1; color: #475569; }
+.ind .v { font-weight: 600; min-width: 44px; text-align: right; }
+.ind .sg { font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 3px; min-width: 34px; text-align: center; }
+.ind .sg.b { background: #d1fae5; color: #059669; }
+.ind .sg.s { background: #fee2e2; color: #dc2626; }
+.ind .sg.h { background: #f1f5f9; color: #64748b; }
+
+/* Mini Stats */
+.ms { text-align: center; padding: 4px 0; }
+.ms .l { font-size: 8px; color: #94a3b8; text-transform: uppercase; letter-spacing: .3px; }
+.ms .v { font-size: 16px; font-weight: 700; }
+.ms .s { font-size: 9px; color: #94a3b8; }
+
+/* Flow Bars */
+.flow { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; display: flex; margin: 4px 0; }
+.flow .g { background: #34d399; }
+.flow .r { background: #f87171; }
+.fl { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 2px; }
+
+/* Options */
+.opt { display: flex; gap: 6px; margin-top: 6px; }
+.opt > div { flex: 1; background: #f8fafc; padding: 6px; border-radius: 4px; border-left: 3px solid; }
+.opt .c { border-color: #34d399; }
+.opt .p { border-color: #f87171; }
+.opt .h { font-size: 9px; font-weight: 600; margin-bottom: 4px; }
+.opt-r { display: flex; justify-content: space-between; font-size: 10px; padding: 2px 0; }
+.opt-r .k { color: #64748b; }
+
+/* Charts */
+.ch { height: 150px; }
+.ch canvas { width: 100% !important; height: 100% !important; }
+
+/* Grid Helpers */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.g4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; }
+
+/* Colors */
+.g { color: #10b981; }
+.r { color: #ef4444; }
+.y { color: #f59e0b; }
+.p { color: #8b5cf6; }
+.c { color: #06b6d4; }
+
+/* Alert */
+.alert { background: #fef2f2; padding: 8px 12px; font-size: 11px; display: none; }
