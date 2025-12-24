@@ -1,6 +1,6 @@
 // VHunter Main Application
 import { CONFIG } from './config.js';
-import { fetchTickerData, fetchClaude } from './api.js';
+import { fetchTickerData, fetchClaude, fetchNews, fetchTickerDetails } from './api.js';
 import { initCharts, updateCharts } from './charts.js';
 import * as indicators from './indicators.js';
 import * as ui from './ui.js';
@@ -9,10 +9,63 @@ import { buildAnalysisPrompt, buildTradePrompt } from './prompts.js';
 let mktData = {};
 let skipCache = false;
 
+const HISTORY_KEY = 'vhunter_search_history';
+const MAX_HISTORY = 10;
+
+// Search history functions
+function getSearchHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function addToHistory(ticker) {
+  const history = getSearchHistory().filter(h => h.ticker !== ticker);
+  history.unshift({ ticker, time: Date.now() });
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
+  renderHistory();
+}
+
+function renderHistory() {
+  const strip = document.getElementById('historyStrip');
+  const history = getSearchHistory();
+  const current = ui.$('tk').value.toUpperCase().trim();
+
+  strip.innerHTML = history
+    .filter(h => h.ticker !== current)
+    .map(h => {
+      const ago = formatTimeAgo(h.time);
+      return `<div class="history-item" onclick="searchTicker('${h.ticker}')">
+        <span class="ticker">${h.ticker}</span>
+        <span class="time">${ago}</span>
+      </div>`;
+    })
+    .join('');
+}
+
+function formatTimeAgo(timestamp) {
+  const diff = Date.now() - timestamp;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'now';
+  if (mins < 60) return mins + 'm';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h';
+  const days = Math.floor(hrs / 24);
+  return days + 'd';
+}
+
+window.searchTicker = function(ticker) {
+  ui.$('tk').value = ticker;
+  run();
+};
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
   ui.$('tm').textContent = new Date().toLocaleString();
   initCharts();
+  renderHistory();
   run();
 });
 
@@ -40,6 +93,8 @@ async function run(forceRefresh = false) {
       return;
     }
 
+    addToHistory(ticker);
+
     if (prev.results?.[0]) {
       ui.updateCurrentPrice(prev.results[0]);
     }
@@ -49,6 +104,9 @@ async function run(forceRefresh = false) {
     }
 
     processOptionsData(options?.results, aggs.results?.[aggs.results.length - 1]?.c || 0);
+
+    // Fetch news in background
+    loadNews(ticker);
 
     ui.setStatus('');
   } catch (e) {
@@ -347,5 +405,47 @@ async function callAI() {
   } catch (e) {
     ui.$('aiOut').textContent = 'AI Error: ' + e.message;
     ui.$('aiSt').textContent = 'error';
+  }
+}
+
+async function loadNews(ticker) {
+  const newsOut = ui.$('newsOut');
+  newsOut.innerHTML = '<span style="color:#94a3b8">Loading news...</span>';
+
+  try {
+    const [news, details] = await Promise.all([
+      fetchNews(ticker),
+      fetchTickerDetails(ticker)
+    ]);
+
+    let html = '';
+
+    // Company info
+    if (details?.results) {
+      const d = details.results;
+      const mcap = d.market_cap ? '$' + (d.market_cap / 1e9).toFixed(1) + 'B' : '--';
+      html += `<div style="margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e2e8f0">
+        <strong>${d.name || ticker}</strong> · ${d.sic_description || 'N/A'}
+        <div style="color:#64748b;margin-top:2px">Mkt Cap: ${mcap} · Employees: ${d.total_employees?.toLocaleString() || '--'}</div>
+      </div>`;
+    }
+
+    // News items
+    if (news?.results?.length > 0) {
+      html += news.results.map(n => {
+        const date = new Date(n.published_utc).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const source = n.publisher?.name || 'News';
+        return `<div style="margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid #f1f5f9">
+          <a href="${n.article_url}" target="_blank" style="color:#1e293b;text-decoration:none;font-weight:500">${n.title}</a>
+          <div style="color:#94a3b8;font-size:9px;margin-top:2px">${source} · ${date}</div>
+        </div>`;
+      }).join('');
+    } else {
+      html += '<div style="color:#94a3b8">No recent news available</div>';
+    }
+
+    newsOut.innerHTML = html;
+  } catch (e) {
+    newsOut.innerHTML = '<span style="color:#ef4444">Failed to load news</span>';
   }
 }

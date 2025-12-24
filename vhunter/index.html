@@ -18,6 +18,7 @@
   <button onclick="run()">GO</button>
   <button onclick="run(true)" style="background:#f59e0b" title="Bypass cache, fresh AI">↻</button>
   <div class="score n" id="sc">--</div>
+  <div class="history-strip" id="historyStrip"></div>
   <div>
     <div class="sig n" id="sg">WAIT</div>
     <div class="bias" id="bi">--</div>
@@ -25,8 +26,6 @@
   <span id="st" style="font-size:11px;color:#94a3b8"></span>
   <div class="time" id="tm"></div>
 </div>
-
-<div class="history-strip" id="historyStrip"></div>
 
 <div id="al" class="alert"></div>
 
@@ -113,13 +112,17 @@
   </div>
 
   <!-- AI Analysis -->
-  <div class="cell" style="grid-column:span 3">
-    <div class="t">AI Analysis & Trade Thesis <span id="aiSt" style="color:#818cf8"></span></div>
-    <div id="aiOut" style="font-size:11px;line-height:1.5;color:#475569;max-height:200px;overflow-y:auto">Loading analysis...</div>
+  <div class="cell" style="grid-column:span 2">
+    <div class="t">AI Thesis <span id="aiSt" style="color:#818cf8"></span></div>
+    <div id="aiOut" style="font-size:10px;line-height:1.4;color:#475569;max-height:160px;overflow-y:auto">Loading...</div>
   </div>
-  <div class="cell" style="grid-column:span 3">
-    <div class="t">Trade Opportunities</div>
-    <div id="tradeOut" style="font-size:11px;line-height:1.5;color:#475569;max-height:200px;overflow-y:auto">Waiting for AI...</div>
+  <div class="cell" style="grid-column:span 2">
+    <div class="t">Trade Ideas</div>
+    <div id="tradeOut" style="font-size:10px;line-height:1.4;color:#475569;max-height:160px;overflow-y:auto">Waiting...</div>
+  </div>
+  <div class="cell" style="grid-column:span 2">
+    <div class="t">News & Catalysts</div>
+    <div id="newsOut" style="font-size:10px;line-height:1.4;color:#475569;max-height:160px;overflow-y:auto">Loading news...</div>
   </div>
 
   <!-- Data Row -->

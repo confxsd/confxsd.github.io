@@ -59,6 +59,14 @@ export async function fetchTickerData(ticker) {
   return { prev, aggs, options };
 }
 
+export async function fetchNews(ticker) {
+  return fetchPolygon(`/v2/reference/news?ticker=${ticker}&limit=5`).catch(() => null);
+}
+
+export async function fetchTickerDetails(ticker) {
+  return fetchPolygon(`/v3/reference/tickers/${ticker}`).catch(() => null);
+}
+
 function getNextFriday(addDays = 0) {
   const d = new Date();
   d.setDate(d.getDate() + addDays);
