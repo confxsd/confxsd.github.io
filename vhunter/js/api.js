@@ -30,14 +30,22 @@ export async function fetchTickerData(ticker) {
   const to = new Date();
   const fr = new Date(to - CONFIG.HISTORY_DAYS * 24 * 60 * 60 * 1000);
 
-  // Get next 2 Friday expirations for relevant options
+  // First get price data
+  const [prev, aggs] = await Promise.all([
+    fetchPolygon(`/v2/aggs/ticker/${ticker}/prev`),
+    fetchPolygon(`/v2/aggs/ticker/${ticker}/range/1/day/${fr.toISOString().split('T')[0]}/${to.toISOString().split('T')[0]}?adjusted=true&sort=asc`)
+  ]);
+
+  // Get spot price for strike filtering
+  const spotPrice = prev?.results?.[0]?.c || aggs?.results?.[aggs.results.length - 1]?.c || 100;
+  const minStrike = Math.floor(spotPrice * 0.80);
+  const maxStrike = Math.ceil(spotPrice * 1.20);
   const weekAfter = getNextFriday(14);
 
-  const [prev, aggs, calls, puts] = await Promise.all([
-    fetchPolygon(`/v2/aggs/ticker/${ticker}/prev`),
-    fetchPolygon(`/v2/aggs/ticker/${ticker}/range/1/day/${fr.toISOString().split('T')[0]}/${to.toISOString().split('T')[0]}?adjusted=true&sort=asc`),
-    fetchPolygon(`/v3/snapshot/options/${ticker}?contract_type=call&expiration_date.lte=${weekAfter}&limit=100`).catch(() => null),
-    fetchPolygon(`/v3/snapshot/options/${ticker}?contract_type=put&expiration_date.lte=${weekAfter}&limit=100`).catch(() => null)
+  // Fetch near-money calls and puts with strike filter
+  const [calls, puts] = await Promise.all([
+    fetchPolygon(`/v3/snapshot/options/${ticker}?contract_type=call&expiration_date.lte=${weekAfter}&strike_price.gte=${minStrike}&strike_price.lte=${maxStrike}&limit=100`).catch(() => null),
+    fetchPolygon(`/v3/snapshot/options/${ticker}?contract_type=put&expiration_date.lte=${weekAfter}&strike_price.gte=${minStrike}&strike_price.lte=${maxStrike}&limit=100`).catch(() => null)
   ]);
 
   // Combine calls and puts
