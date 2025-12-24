@@ -61,11 +61,49 @@ window.searchTicker = function(ticker) {
   run();
 };
 
+// Toggle chart guide "read more" expansion
+window.toggleGuide = function(chartId) {
+  const guide = document.getElementById('guide-' + chartId);
+  if (guide) {
+    guide.classList.toggle('expanded');
+  }
+};
+
+// Toggle collapsible sections
+window.toggleSection = function(sectionId) {
+  const section = document.getElementById(sectionId);
+  if (section) {
+    section.classList.toggle('collapsed');
+    // Save state to localStorage
+    const collapsed = JSON.parse(localStorage.getItem('vhunter_collapsed') || '{}');
+    collapsed[sectionId] = section.classList.contains('collapsed');
+    localStorage.setItem('vhunter_collapsed', JSON.stringify(collapsed));
+  }
+};
+
+// Toggle mobile menu / history strip
+window.toggleMobileMenu = function() {
+  const historyStrip = document.getElementById('historyStrip');
+  historyStrip.classList.toggle('show');
+};
+
+// Restore collapsed section states
+function restoreCollapsedSections() {
+  const collapsed = JSON.parse(localStorage.getItem('vhunter_collapsed') || '{}');
+  Object.entries(collapsed).forEach(([id, isCollapsed]) => {
+    if (isCollapsed) {
+      const section = document.getElementById(id);
+      if (section) section.classList.add('collapsed');
+    }
+  });
+}
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
   ui.$('tm').textContent = new Date().toLocaleString();
   initCharts();
   renderHistory();
+  restoreCollapsedSections();
   run();
 });
 

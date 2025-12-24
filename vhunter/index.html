@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VHunter - Signal Terminal</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,16 +14,17 @@
 <body>
 
 <div class="hdr">
+  <button class="menu-toggle" id="menuToggle" onclick="toggleMobileMenu()">☰</button>
   <span class="logo">VHUNTER</span>
   <input type="text" id="tk" value="TSLA">
   <button onclick="run()">GO</button>
   <button onclick="run(true)" style="background:#f59e0b" title="Bypass cache, fresh AI">↻</button>
   <div class="score n" id="sc">--</div>
-  <div class="history-strip" id="historyStrip"></div>
   <div>
     <div class="sig n" id="sg">WAIT</div>
     <div class="bias" id="bi">--</div>
   </div>
+  <div class="history-strip" id="historyStrip"></div>
   <span id="st" style="font-size:11px;color:#94a3b8"></span>
   <div class="time" id="tm"></div>
 </div>
@@ -36,145 +38,183 @@
   <div class="s"><div class="lbl">Volatility</div><div class="val" id="vo">--</div><div class="sub" id="voD">--</div></div>
 </div>
 
-<div class="wrap">
-  <!-- Charts Row 1 -->
-  <div class="cell">
-    <div class="t">Price + SMA</div>
-    <div class="ch"><canvas id="pC"></canvas></div>
+<!-- Charts Section -->
+<div class="section" id="sec-charts">
+  <div class="section-header" onclick="toggleSection('sec-charts')">
+    <span class="section-title">Charts & Indicators</span>
+    <span class="section-toggle">▼</span>
   </div>
-  <div class="cell">
-    <div class="t">Volume</div>
-    <div class="ch"><canvas id="vC"></canvas></div>
-  </div>
-  <div class="cell">
-    <div class="t">RSI (14)</div>
-    <div class="ch"><canvas id="rC"></canvas></div>
-  </div>
-  <div class="cell">
-    <div class="t">MACD</div>
-    <div class="ch"><canvas id="mC"></canvas></div>
-  </div>
-  <div class="cell">
-    <div class="t">ADX / DI</div>
-    <div class="ch"><canvas id="aC"></canvas></div>
-  </div>
-  <div class="cell">
-    <div class="t">Bollinger Bands</div>
-    <div class="ch"><canvas id="bC"></canvas></div>
-  </div>
-
-  <!-- Charts Row 2 -->
-  <div class="cell">
-    <div class="t">Money Flow (MFI)</div>
-    <div class="ch"><canvas id="mfC"></canvas></div>
-  </div>
-  <div class="cell">
-    <div class="t">A/D Line</div>
-    <div class="ch"><canvas id="adC"></canvas></div>
-  </div>
-  <div class="cell">
-    <div class="t">ATR (Volatility)</div>
-    <div class="ch"><canvas id="atC"></canvas></div>
-  </div>
-  <div class="cell">
-    <div class="t">Technical Signals</div>
-    <div class="ind"><span class="n">SMA Cross</span><span class="v" id="sX">--</span><span class="sg h" id="sXS">--</span></div>
-    <div class="ind"><span class="n">MACD</span><span class="v" id="mc">--</span><span class="sg h" id="mcS">--</span></div>
-    <div class="ind"><span class="n">RSI</span><span class="v" id="rT">--</span><span class="sg h" id="rTS">--</span></div>
-    <div class="ind"><span class="n">BB %B</span><span class="v" id="bb">--</span><span class="sg h" id="bbS">--</span></div>
-    <div class="ind"><span class="n">VWAP</span><span class="v" id="vw">--</span><span class="sg h" id="vwS">--</span></div>
-    <div class="ind"><span class="n">Vol Trend</span><span class="v" id="vT">--</span><span class="sg h" id="vTS">--</span></div>
-  </div>
-  <div class="cell">
-    <div class="t">Key Stats</div>
-    <div class="g4">
-      <div class="ms"><div class="l">Price</div><div class="v" id="pr">--</div><div class="s" id="ch2">--</div></div>
-      <div class="ms"><div class="l">Vol</div><div class="v" id="vv">--</div><div class="s" id="rv">--</div></div>
-      <div class="ms"><div class="l">RSI</div><div class="v" id="rs">--</div><div class="s" id="rsS">--</div></div>
-      <div class="ms"><div class="l">MFI</div><div class="v" id="mf">--</div><div class="s">14d</div></div>
+  <div class="section-content">
+    <div class="cell chart-cell">
+      <div class="t">Price + SMA</div>
+      <div class="ch"><canvas id="pC"></canvas></div>
+      <div class="chart-metric" id="metric-price"></div>
+      <div class="chart-guide" id="guide-price"><span class="guide-short"><span class="g">SMA20</span> short, <span class="y">SMA50</span> med trend</span><span class="guide-full"> | Price > SMAs = Bullish | Cross up = Buy signal</span><a class="read-more" onclick="toggleGuide('price')">more</a></div>
     </div>
-    <div class="g4" style="margin-top:8px">
-      <div class="ms"><div class="l">ATR</div><div class="v" id="at">--</div><div class="s">14d</div></div>
-      <div class="ms"><div class="l">ADX</div><div class="v" id="ax">--</div><div class="s" id="axS">--</div></div>
-      <div class="ms"><div class="l">IV</div><div class="v p" id="iv">--</div><div class="s">rank</div></div>
-      <div class="ms"><div class="l">P/C</div><div class="v" id="pc">--</div><div class="s" id="pcS">--</div></div>
+    <div class="cell chart-cell">
+      <div class="t">Volume</div>
+      <div class="ch"><canvas id="vC"></canvas></div>
+      <div class="chart-metric" id="metric-volume"></div>
+      <div class="chart-guide" id="guide-volume"><span class="guide-short">Purple = 20d avg line</span><span class="guide-full"> | Green = up day, Red = down | High vol confirms moves</span><a class="read-more" onclick="toggleGuide('volume')">more</a></div>
+    </div>
+    <div class="cell chart-cell">
+      <div class="t">RSI (14)</div>
+      <div class="ch"><canvas id="rC"></canvas></div>
+      <div class="chart-metric" id="metric-rsi"></div>
+      <div class="chart-guide" id="guide-rsi"><span class="guide-short"><span class="r">>70</span> overbought, <span class="g">&lt;30</span> oversold</span><span class="guide-full"> | Divergence from price = potential reversal</span><a class="read-more" onclick="toggleGuide('rsi')">more</a></div>
+    </div>
+    <div class="cell chart-cell">
+      <div class="t">MACD</div>
+      <div class="ch"><canvas id="mC"></canvas></div>
+      <div class="chart-metric" id="metric-macd"></div>
+      <div class="chart-guide" id="guide-macd"><span class="guide-short">Histogram = momentum</span><span class="guide-full"> | MACD > Signal = Bullish | Above zero = Uptrend</span><a class="read-more" onclick="toggleGuide('macd')">more</a></div>
+    </div>
+    <div class="cell chart-cell">
+      <div class="t">ADX / DI</div>
+      <div class="ch"><canvas id="aC"></canvas></div>
+      <div class="chart-metric" id="metric-adx"></div>
+      <div class="chart-guide" id="guide-adx"><span class="guide-short"><span class="y">ADX>25</span> = trending market</span><span class="guide-full"> | +DI > -DI = Bulls | ADX rising = Trend strengthening</span><a class="read-more" onclick="toggleGuide('adx')">more</a></div>
+    </div>
+    <div class="cell chart-cell">
+      <div class="t">Bollinger Bands</div>
+      <div class="ch"><canvas id="bC"></canvas></div>
+      <div class="chart-metric" id="metric-bb"></div>
+      <div class="chart-guide" id="guide-bb"><span class="guide-short"><span class="r">Upper</span>=resist, <span class="g">Lower</span>=support</span><span class="guide-full"> | Squeeze = expect breakout | Touch band = reversal zone</span><a class="read-more" onclick="toggleGuide('bb')">more</a></div>
+    </div>
+    <div class="cell chart-cell">
+      <div class="t">Money Flow (MFI)</div>
+      <div class="ch"><canvas id="mfC"></canvas></div>
+      <div class="chart-metric" id="metric-mfi"></div>
+      <div class="chart-guide" id="guide-mfi"><span class="guide-short"><span class="r">>80</span> overbought, <span class="g">&lt;20</span> oversold</span><span class="guide-full"> | Volume-weighted RSI, more reliable for reversals</span><a class="read-more" onclick="toggleGuide('mfi')">more</a></div>
+    </div>
+    <div class="cell chart-cell">
+      <div class="t">A/D Line</div>
+      <div class="ch"><canvas id="adC"></canvas></div>
+      <div class="chart-metric" id="metric-adl"></div>
+      <div class="chart-guide" id="guide-adl"><span class="guide-short"><span class="g">Rising</span>=accumulation, <span class="r">Falling</span>=distribution</span><span class="guide-full"> | Divergence from price = trend weakness ahead</span><a class="read-more" onclick="toggleGuide('adl')">more</a></div>
+    </div>
+    <div class="cell chart-cell">
+      <div class="t">ATR (Volatility)</div>
+      <div class="ch"><canvas id="atC"></canvas></div>
+      <div class="chart-metric" id="metric-atr"></div>
+      <div class="chart-guide" id="guide-atr"><span class="guide-short">Use 2x ATR for stop-loss</span><span class="guide-full"> | High = wide stops, Low = tight stops | Rising = more risk</span><a class="read-more" onclick="toggleGuide('atr')">more</a></div>
+    </div>
+    <div class="cell">
+      <div class="t">Technical Signals</div>
+      <div class="ind"><span class="n">SMA Cross</span><span class="v" id="sX">--</span><span class="sg h" id="sXS">--</span></div>
+      <div class="ind"><span class="n">MACD</span><span class="v" id="mc">--</span><span class="sg h" id="mcS">--</span></div>
+      <div class="ind"><span class="n">RSI</span><span class="v" id="rT">--</span><span class="sg h" id="rTS">--</span></div>
+      <div class="ind"><span class="n">BB %B</span><span class="v" id="bb">--</span><span class="sg h" id="bbS">--</span></div>
+      <div class="ind"><span class="n">VWAP</span><span class="v" id="vw">--</span><span class="sg h" id="vwS">--</span></div>
+      <div class="ind"><span class="n">Vol Trend</span><span class="v" id="vT">--</span><span class="sg h" id="vTS">--</span></div>
+    </div>
+    <div class="cell">
+      <div class="t">Key Stats</div>
+      <div class="g4">
+        <div class="ms"><div class="l">Price</div><div class="v" id="pr">--</div><div class="s" id="ch2">--</div></div>
+        <div class="ms"><div class="l">Vol</div><div class="v" id="vv">--</div><div class="s" id="rv">--</div></div>
+        <div class="ms"><div class="l">RSI</div><div class="v" id="rs">--</div><div class="s" id="rsS">--</div></div>
+        <div class="ms"><div class="l">MFI</div><div class="v" id="mf">--</div><div class="s">14d</div></div>
+      </div>
+      <div class="g4" style="margin-top:8px">
+        <div class="ms"><div class="l">ATR</div><div class="v" id="at">--</div><div class="s">14d</div></div>
+        <div class="ms"><div class="l">ADX</div><div class="v" id="ax">--</div><div class="s" id="axS">--</div></div>
+        <div class="ms"><div class="l">IV</div><div class="v p" id="iv">--</div><div class="s">rank</div></div>
+        <div class="ms"><div class="l">P/C</div><div class="v" id="pc">--</div><div class="s" id="pcS">--</div></div>
+      </div>
+    </div>
+    <div class="cell">
+      <div class="t">Money Flow</div>
+      <div class="fl"><span class="g">Buy</span><span id="bP">--</span></div>
+      <div class="flow"><div class="g" id="bB" style="width:50%"></div></div>
+      <div class="fl"><span class="r">Sell</span><span id="sP">--</span></div>
+      <div class="flow"><div class="r" id="sB" style="width:50%"></div></div>
+      <div class="dr"><span class="l">Net Flow</span><span class="v" id="nF">--</span></div>
+      <div class="dr"><span class="l">A/D Line</span><span class="v" id="ad">--</span></div>
+      <div class="dr"><span class="l">Signal</span><span class="v" id="adS">--</span></div>
     </div>
   </div>
-  <div class="cell">
-    <div class="t">Money Flow</div>
-    <div class="fl"><span class="g">Buy</span><span id="bP">--</span></div>
-    <div class="flow"><div class="g" id="bB" style="width:50%"></div></div>
-    <div class="fl"><span class="r">Sell</span><span id="sP">--</span></div>
-    <div class="flow"><div class="r" id="sB" style="width:50%"></div></div>
-    <div class="dr"><span class="l">Net Flow</span><span class="v" id="nF">--</span></div>
-    <div class="dr"><span class="l">A/D Line</span><span class="v" id="ad">--</span></div>
-    <div class="dr"><span class="l">Signal</span><span class="v" id="adS">--</span></div>
-  </div>
+</div>
 
-  <!-- AI Analysis -->
-  <div class="cell" style="grid-column:span 2">
-    <div class="t">AI Thesis <span id="aiSt" style="color:#818cf8"></span></div>
-    <div id="aiOut" style="font-size:10px;line-height:1.4;color:#475569;max-height:160px;overflow-y:auto">Loading...</div>
+<!-- AI Analysis Section -->
+<div class="section" id="sec-ai">
+  <div class="section-header" onclick="toggleSection('sec-ai')">
+    <span class="section-title">AI Analysis</span>
+    <span class="section-toggle">▼</span>
   </div>
-  <div class="cell" style="grid-column:span 2">
-    <div class="t">Trade Ideas</div>
-    <div id="tradeOut" style="font-size:10px;line-height:1.4;color:#475569;max-height:160px;overflow-y:auto">Waiting...</div>
-  </div>
-  <div class="cell" style="grid-column:span 2">
-    <div class="t">News & Catalysts</div>
-    <div id="newsOut" style="font-size:10px;line-height:1.4;color:#475569;max-height:160px;overflow-y:auto">Loading news...</div>
-  </div>
-
-  <!-- Data Row -->
-  <div class="cell">
-    <div class="t">Options Flow</div>
-    <div class="fl"><span class="g">Calls</span><span id="cP">--</span></div>
-    <div class="flow"><div class="g" id="cB" style="width:50%"></div></div>
-    <div class="fl"><span class="r">Puts</span><span id="pP">--</span></div>
-    <div class="flow"><div class="r" id="pB" style="width:50%"></div></div>
-    <div class="dr"><span class="l">Call Vol</span><span class="v g" id="cV">--</span></div>
-    <div class="dr"><span class="l">Put Vol</span><span class="v r" id="pV">--</span></div>
-    <div class="dr"><span class="l">Net</span><span class="v" id="oN">--</span></div>
-  </div>
-  <div class="cell">
-    <div class="t">Key Levels</div>
-    <div class="dr"><span class="l">R2</span><span class="v r" id="r2">--</span></div>
-    <div class="dr"><span class="l">R1</span><span class="v r" id="r1">--</span></div>
-    <div class="dr"><span class="l">Pivot</span><span class="v" id="pv">--</span></div>
-    <div class="dr"><span class="l">S1</span><span class="v g" id="s1">--</span></div>
-    <div class="dr"><span class="l">S2</span><span class="v g" id="s2">--</span></div>
-  </div>
-  <div class="cell">
-    <div class="t">Options Metrics</div>
-    <div class="dr"><span class="l">Impl. Vol</span><span class="v p" id="iV">--</span></div>
-    <div class="dr"><span class="l">IV Rank</span><span class="v" id="iR">--</span></div>
-    <div class="dr"><span class="l">Max Pain</span><span class="v y" id="mP">--</span></div>
-    <div class="dr"><span class="l">Exp. Move</span><span class="v c" id="eM">--</span></div>
-    <div class="dr"><span class="l">P/C OI</span><span class="v" id="pO">--</span></div>
-  </div>
-  <div class="cell">
-    <div class="t">Risk Analysis</div>
-    <div class="dr"><span class="l">Stop (2xATR)</span><span class="v r" id="sp">--</span></div>
-    <div class="dr"><span class="l">Target (1:2)</span><span class="v g" id="tg">--</span></div>
-    <div class="dr"><span class="l">Risk %</span><span class="v" id="rk">--</span></div>
-    <div class="dr"><span class="l">SMA 20</span><span class="v" id="s20">--</span></div>
-    <div class="dr"><span class="l">SMA 50</span><span class="v" id="s50">--</span></div>
-  </div>
-  <div class="cell">
-    <div class="t">Performance</div>
-    <div class="g3">
-      <div class="ms"><div class="l">1D</div><div class="v" id="d1">--</div></div>
-      <div class="ms"><div class="l">1W</div><div class="v" id="w1">--</div></div>
-      <div class="ms"><div class="l">1M</div><div class="v" id="m1">--</div></div>
+  <div class="section-content">
+    <div class="cell" style="grid-column:span 2">
+      <div class="t">AI Thesis <span id="aiSt" style="color:#818cf8"></span></div>
+      <div id="aiOut" style="font-size:11px;line-height:1.5;color:#475569;max-height:200px;overflow-y:auto">Loading...</div>
     </div>
-    <div class="dr" style="margin-top:6px"><span class="l">52W Range</span><span class="v" id="hl">--</span></div>
-    <div class="dr"><span class="l">Day Range</span><span class="v" id="dr2">--</span></div>
+    <div class="cell" style="grid-column:span 2">
+      <div class="t">Trade Ideas</div>
+      <div id="tradeOut" style="font-size:11px;line-height:1.5;color:#475569;max-height:200px;overflow-y:auto">Waiting...</div>
+    </div>
+    <div class="cell" style="grid-column:span 2">
+      <div class="t">News & Catalysts</div>
+      <div id="newsOut" style="font-size:11px;line-height:1.5;color:#475569;max-height:200px;overflow-y:auto">Loading news...</div>
+    </div>
   </div>
-  <div class="cell">
-    <div class="t">Top Options Strikes</div>
-    <div class="opt">
-      <div class="c"><div class="h g">Calls</div><div id="tC">--</div></div>
-      <div class="p"><div class="h r">Puts</div><div id="tP">--</div></div>
+</div>
+
+<!-- Options & Levels Section -->
+<div class="section" id="sec-options">
+  <div class="section-header" onclick="toggleSection('sec-options')">
+    <span class="section-title">Options & Levels</span>
+    <span class="section-toggle">▼</span>
+  </div>
+  <div class="section-content">
+    <div class="cell">
+      <div class="t">Options Flow</div>
+      <div class="fl"><span class="g">Calls</span><span id="cP">--</span></div>
+      <div class="flow"><div class="g" id="cB" style="width:50%"></div></div>
+      <div class="fl"><span class="r">Puts</span><span id="pP">--</span></div>
+      <div class="flow"><div class="r" id="pB" style="width:50%"></div></div>
+      <div class="dr"><span class="l">Call Vol</span><span class="v g" id="cV">--</span></div>
+      <div class="dr"><span class="l">Put Vol</span><span class="v r" id="pV">--</span></div>
+      <div class="dr"><span class="l">Net</span><span class="v" id="oN">--</span></div>
+    </div>
+    <div class="cell">
+      <div class="t">Key Levels</div>
+      <div class="dr"><span class="l">R2</span><span class="v r" id="r2">--</span></div>
+      <div class="dr"><span class="l">R1</span><span class="v r" id="r1">--</span></div>
+      <div class="dr"><span class="l">Pivot</span><span class="v" id="pv">--</span></div>
+      <div class="dr"><span class="l">S1</span><span class="v g" id="s1">--</span></div>
+      <div class="dr"><span class="l">S2</span><span class="v g" id="s2">--</span></div>
+    </div>
+    <div class="cell">
+      <div class="t">Options Metrics</div>
+      <div class="dr"><span class="l">Impl. Vol</span><span class="v p" id="iV">--</span></div>
+      <div class="dr"><span class="l">IV Rank</span><span class="v" id="iR">--</span></div>
+      <div class="dr"><span class="l">Max Pain</span><span class="v y" id="mP">--</span></div>
+      <div class="dr"><span class="l">Exp. Move</span><span class="v c" id="eM">--</span></div>
+      <div class="dr"><span class="l">P/C OI</span><span class="v" id="pO">--</span></div>
+    </div>
+    <div class="cell">
+      <div class="t">Risk Analysis</div>
+      <div class="dr"><span class="l">Stop (2xATR)</span><span class="v r" id="sp">--</span></div>
+      <div class="dr"><span class="l">Target (1:2)</span><span class="v g" id="tg">--</span></div>
+      <div class="dr"><span class="l">Risk %</span><span class="v" id="rk">--</span></div>
+      <div class="dr"><span class="l">SMA 20</span><span class="v" id="s20">--</span></div>
+      <div class="dr"><span class="l">SMA 50</span><span class="v" id="s50">--</span></div>
+    </div>
+    <div class="cell">
+      <div class="t">Performance</div>
+      <div class="g3">
+        <div class="ms"><div class="l">1D</div><div class="v" id="d1">--</div></div>
+        <div class="ms"><div class="l">1W</div><div class="v" id="w1">--</div></div>
+        <div class="ms"><div class="l">1M</div><div class="v" id="m1">--</div></div>
+      </div>
+      <div class="dr" style="margin-top:6px"><span class="l">52W Range</span><span class="v" id="hl">--</span></div>
+      <div class="dr"><span class="l">Day Range</span><span class="v" id="dr2">--</span></div>
+    </div>
+    <div class="cell">
+      <div class="t">Top Options Strikes</div>
+      <div class="opt">
+        <div class="c"><div class="h g">Calls</div><div id="tC">--</div></div>
+        <div class="p"><div class="h r">Puts</div><div id="tP">--</div></div>
+      </div>
     </div>
   </div>
 </div>
