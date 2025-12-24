@@ -238,6 +238,7 @@ let C={},mktData={};
 
 document.addEventListener('DOMContentLoaded',()=>{
     $('tm').textContent=new Date().toLocaleString();
+    cleanOldCache();
     initC();
     run();
 });
@@ -249,11 +250,26 @@ async function api(p){
     return r.json();
 }
 
+// Daily cache for AI responses
+function cacheKey(ticker){return `vh_${ticker}_${new Date().toISOString().split('T')[0]}`}
+function getCache(ticker){try{const c=JSON.parse(localStorage.getItem(cacheKey(ticker)));if(c&&c.date===new Date().toISOString().split('T')[0])return c;localStorage.removeItem(cacheKey(ticker))}catch(e){}return null}
+function setCache(ticker,analysis,trades){try{localStorage.setItem(cacheKey(ticker),JSON.stringify({date:new Date().toISOString().split('T')[0],analysis,trades}))}catch(e){}}
+function cleanOldCache(){try{Object.keys(localStorage).filter(k=>k.startsWith('vh_')).forEach(k=>{try{const c=JSON.parse(localStorage.getItem(k));if(c.date!==new Date().toISOString().split('T')[0])localStorage.removeItem(k)}catch(e){localStorage.removeItem(k)}})}catch(e){}}
+
 async function callClaude(data){
+    const ticker=data.ticker;
+    // Check cache first
+    const cached=getCache(ticker);
+    if(cached){
+        $('aiOut').innerHTML=formatAI(cached.analysis);
+        $('tradeOut').innerHTML=formatAI(cached.trades);
+        $('aiSt').textContent='cached';
+        return
+    }
     $('aiSt').textContent='thinking...';
     const prompt=`You are a senior quant analyst. Analyze this real-time market data and provide:
 
-MARKET DATA FOR ${data.ticker}:
+MARKET DATA FOR ${ticker}:
 - Current Price: $${data.price} (${data.change>0?'+':''}${data.change.toFixed(2)}%)
 - Volume: ${data.volume} (${data.rvol.toFixed(1)}x avg)
 - RSI(14): ${data.rsi.toFixed(1)}
@@ -287,7 +303,7 @@ Provide a concise analysis in this exact format:
 
 **RISK:** [Key risk to watch]`;
 
-    const tradePrompt=`Based on this data for ${data.ticker} at $${data.price}:
+    const tradePrompt=`Based on this data for ${ticker} at $${data.price}:
 - RSI: ${data.rsi.toFixed(1)}, MACD: ${data.macdH.toFixed(2)}, ADX: ${data.adx.toFixed(1)}
 - ATR: $${data.atr.toFixed(2)}, Volatility environment: ${data.vol>40?'HIGH':'NORMAL'}
 - Options P/C Ratio: ${data.pcRatio.toFixed(2)}
@@ -307,6 +323,7 @@ Include at least one OPTIONS trade (calls, puts, or spread) if conditions favor 
             fetchClaude(prompt),
             fetchClaude(tradePrompt)
         ]);
+        setCache(ticker,analysis,trades);
         $('aiOut').innerHTML=formatAI(analysis);
         $('tradeOut').innerHTML=formatAI(trades);
         $('aiSt').textContent='done';
