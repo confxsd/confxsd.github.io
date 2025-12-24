@@ -30,10 +30,11 @@ function addToHistory(ticker) {
 
 function renderHistory() {
   const strip = document.getElementById('historyStrip');
+  const stripMobile = document.getElementById('historyStripMobile');
   const history = getSearchHistory();
   const current = ui.$('tk').value.toUpperCase().trim();
 
-  strip.innerHTML = history
+  const html = history
     .filter(h => h.ticker !== current)
     .map(h => {
       const ago = formatTimeAgo(h.time);
@@ -43,6 +44,9 @@ function renderHistory() {
       </div>`;
     })
     .join('');
+
+  if (strip) strip.innerHTML = html;
+  if (stripMobile) stripMobile.innerHTML = html;
 }
 
 function formatTimeAgo(timestamp) {
@@ -59,6 +63,47 @@ function formatTimeAgo(timestamp) {
 window.searchTicker = function(ticker) {
   ui.$('tk').value = ticker;
   run();
+};
+
+// Export data for Claude AI prompts
+window.exportData = function() {
+  if (!mktData.ticker) {
+    alert('No data to export. Run analysis first.');
+    return;
+  }
+
+  const d = mktData;
+  const score = parseInt(ui.$('sc').textContent) || 0;
+  const signal = ui.$('sg').textContent;
+
+  // Compact format optimized for Claude prompts
+  const exportText = `[${d.ticker}] $${d.price.toFixed(2)} (${d.change >= 0 ? '+' : ''}${d.change.toFixed(1)}%) | Score: ${score}/100 ${signal}
+Vol: ${d.volume} (${d.rvol.toFixed(1)}x) | ATR: $${d.atr.toFixed(2)} | HV: ${d.vol.toFixed(0)}%
+RSI: ${d.rsi.toFixed(0)} | MACD: ${d.macdH >= 0 ? '+' : ''}${d.macdH.toFixed(2)} | MFI: ${d.mfi.toFixed(0)} | ADX: ${d.adx.toFixed(0)} (+DI:${d.pdi.toFixed(0)}/-DI:${d.mdi.toFixed(0)})
+BB%: ${d.bbPct}% | SMA20: $${d.sma20.toFixed(2)} | SMA50: $${d.sma50.toFixed(2)}
+Flow: ${d.buyPct}% buy | A/D: ${d.adlTrend >= 0 ? '+' : ''}${d.adlTrend.toFixed(0)}% ${d.adlTrend >= 0 ? 'accum' : 'distr'}
+Opts: C:${d.callVol} P:${d.putVol} | P/C: ${d.pcRatio.toFixed(2)} | MaxPain: $${d.maxPain}
+Calls: ${d.topCalls} | Puts: ${d.topPuts}`;
+
+  navigator.clipboard.writeText(exportText).then(() => {
+    const btn = document.querySelector('.btn-export');
+    const orig = btn.textContent;
+    btn.textContent = '✓';
+    btn.style.background = '#10b981';
+    setTimeout(() => {
+      btn.textContent = orig;
+      btn.style.background = '';
+    }, 1500);
+  }).catch(() => {
+    // Fallback for older browsers
+    const ta = document.createElement('textarea');
+    ta.value = exportText;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    alert('Data copied to clipboard!');
+  });
 };
 
 // Toggle chart guide "read more" expansion
@@ -81,10 +126,14 @@ window.toggleSection = function(sectionId) {
   }
 };
 
-// Toggle mobile menu / history strip
+// Toggle mobile menu / history row
 window.toggleMobileMenu = function() {
-  const historyStrip = document.getElementById('historyStrip');
-  historyStrip.classList.toggle('show');
+  const historyRow = document.getElementById('historyRow');
+  const menuToggle = document.getElementById('menuToggle');
+  if (historyRow) {
+    historyRow.classList.toggle('show');
+    menuToggle.textContent = historyRow.classList.contains('show') ? '✕' : '☰';
+  }
 };
 
 // Restore collapsed section states

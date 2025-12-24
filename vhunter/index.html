@@ -14,19 +14,34 @@
 <body>
 
 <div class="hdr">
-  <button class="menu-toggle" id="menuToggle" onclick="toggleMobileMenu()">☰</button>
-  <span class="logo">VHUNTER</span>
-  <input type="text" id="tk" value="TSLA">
-  <button onclick="run()">GO</button>
-  <button onclick="run(true)" style="background:#f59e0b" title="Bypass cache, fresh AI">↻</button>
-  <div class="score n" id="sc">--</div>
-  <div>
-    <div class="sig n" id="sg">WAIT</div>
-    <div class="bias" id="bi">--</div>
+  <div class="hdr-left">
+    <button class="menu-toggle" id="menuToggle" onclick="toggleMobileMenu()">☰</button>
+    <span class="logo">VHUNTER</span>
+    <div class="hdr-search">
+      <input type="text" id="tk" value="TSLA">
+      <button onclick="run()">GO</button>
+      <button onclick="run(true)" class="btn-refresh" title="Bypass cache, fresh AI">↻</button>
+      <button onclick="exportData()" class="btn-export" title="Copy data for Claude AI">📋</button>
+    </div>
   </div>
-  <div class="history-strip" id="historyStrip"></div>
-  <span id="st" style="font-size:11px;color:#94a3b8"></span>
-  <div class="time" id="tm"></div>
+  <div class="hdr-center">
+    <div class="hdr-signal">
+      <div class="score n" id="sc">--</div>
+      <div class="signal-info">
+        <div class="sig n" id="sg">WAIT</div>
+        <div class="bias" id="bi">--</div>
+      </div>
+    </div>
+    <span id="st" class="status-text"></span>
+  </div>
+  <div class="hdr-right">
+    <div class="history-strip" id="historyStrip"></div>
+    <div class="time" id="tm"></div>
+  </div>
+  <div class="history-row" id="historyRow">
+    <span class="history-label">Recent:</span>
+    <div class="history-strip" id="historyStripMobile"></div>
+  </div>
 </div>
 
 <div id="al" class="alert"></div>
