@@ -2497,7 +2497,7 @@ function runOptionsScanner() {
     const strike = details.strike_price;
     const moneyness = strike / spotPrice;
     if (deltaFilter === 'high' && moneyness > 0.85) return false;
-    if (deltaFilter === 'atm' && (moneyness < 0.s95 || moneyness > 1.05)) return false;
+    if (deltaFilter === 'atm' && (moneyness < 0.95 || moneyness > 1.05)) return false;
     if (deltaFilter === 'otm' && (moneyness < 1.05 || moneyness > 1.25)) return false;
     if (deltaFilter === 'deep-otm' && moneyness < 1.25) return false;
 
