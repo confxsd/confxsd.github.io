@@ -43,6 +43,10 @@
         <span class="nav-icon">💼</span>
         <span class="nav-label">Positions</span>
       </a>
+      <a href="#" class="nav-item" data-page="options" onclick="event.preventDefault(); switchPage('options')">
+        <span class="nav-icon">📈</span>
+        <span class="nav-label">Options</span>
+      </a>
       <a href="#" class="nav-item" data-page="watchlist" onclick="event.preventDefault(); switchPage('watchlist')">
         <span class="nav-icon">👁</span>
         <span class="nav-label">Watchlist</span>
@@ -59,25 +63,28 @@
 
   <!-- Main Content -->
   <main class="main-content">
-    <!-- Top Header -->
+    <!-- Top Header - Minimal -->
     <header class="top-header">
       <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+
       <div class="header-search" id="headerSearch">
-        <input type="text" id="tk" value="TSLA" placeholder="Ticker...">
-        <button onclick="run()">GO</button>
-        <button onclick="run(true)" class="btn-refresh" title="Fresh AI">↻</button>
-        <button onclick="exportData()" class="btn-export" title="Copy">📋</button>
-        <button onclick="shareAnalysis()" class="btn-share" title="Share">🔗</button>
+        <input type="text" id="tk" value="TSLA" placeholder="Search ticker">
+        <button onclick="run()" class="btn-search">→</button>
       </div>
+
       <div class="header-signal" id="headerSignal">
-        <div class="score n" id="sc">--</div>
-        <div class="signal-info">
-          <div class="sig n" id="sg">WAIT</div>
-          <div class="bias" id="bi">--</div>
-        </div>
+        <span class="score n" id="sc">--</span>
+        <span class="sig n" id="sg">WAIT</span>
       </div>
-      <div class="header-history" id="historyStrip"></div>
+
+      <div class="header-actions">
+        <button onclick="run(true)" title="Refresh">↻</button>
+        <button onclick="exportData()" title="Copy">📋</button>
+      </div>
+
       <span id="st" class="status-text"></span>
+      <span id="bi" class="bias-text"></span>
+      <div class="header-history" id="historyStrip"></div>
     </header>
 
     <!-- Page: Analyze -->
@@ -410,6 +417,345 @@
           <div class="empty-icon">📝</div>
           <div class="empty-text">No notes yet</div>
           <div class="empty-hint">Capture your trading ideas</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page: Options (Professional Quant Terminal) -->
+    <div class="page" id="page-options">
+      <!-- Options Header with Search -->
+      <div class="options-header">
+        <div class="options-search">
+          <input type="text" id="optTicker" placeholder="Enter ticker..." value="">
+          <button onclick="loadOptionsData()" class="btn-primary">Analyze</button>
+        </div>
+        <div class="options-spot" id="optSpotInfo">
+          <span class="spot-price">--</span>
+          <span class="spot-change">--</span>
+        </div>
+      </div>
+
+      <!-- Quick Stats Bar -->
+      <div class="opt-stats-bar" id="optStatsBar">
+        <div class="opt-stat">
+          <div class="opt-stat-label">IV Rank</div>
+          <div class="opt-stat-value" id="optIvRank">--</div>
+          <div class="opt-stat-hint">vs 52-week range</div>
+        </div>
+        <div class="opt-stat">
+          <div class="opt-stat-label">IV Percentile</div>
+          <div class="opt-stat-value" id="optIvPct">--</div>
+          <div class="opt-stat-hint">% days lower</div>
+        </div>
+        <div class="opt-stat">
+          <div class="opt-stat-label">HV (30d)</div>
+          <div class="opt-stat-value" id="optHv30">--</div>
+          <div class="opt-stat-hint">realized vol</div>
+        </div>
+        <div class="opt-stat">
+          <div class="opt-stat-label">IV - HV</div>
+          <div class="opt-stat-value" id="optIvHvDiff">--</div>
+          <div class="opt-stat-hint">vol premium</div>
+        </div>
+        <div class="opt-stat">
+          <div class="opt-stat-label">Exp Move</div>
+          <div class="opt-stat-value" id="optExpMove">--</div>
+          <div class="opt-stat-hint">to next exp</div>
+        </div>
+        <div class="opt-stat">
+          <div class="opt-stat-label">P/C Ratio</div>
+          <div class="opt-stat-value" id="optPcRatio">--</div>
+          <div class="opt-stat-hint">volume</div>
+        </div>
+      </div>
+
+      <!-- Options Grid Layout -->
+      <div class="options-grid">
+        <!-- Section 1: Volatility Analysis -->
+        <div class="opt-section">
+          <div class="opt-section-header">
+            <span class="opt-section-icon">📊</span>
+            <span class="opt-section-title">Volatility Analysis</span>
+          </div>
+          <div class="opt-section-body">
+            <!-- IV Term Structure -->
+            <div class="opt-subsection">
+              <div class="opt-subsection-title">IV Term Structure</div>
+              <div class="opt-subsection-hint">IV by expiration - rising = contango, falling = backwardation</div>
+              <div class="term-structure" id="optTermStructure">
+                <div class="term-bar"><div class="term-label">Weekly</div><div class="term-value">--</div><div class="term-fill" style="width:0%"></div></div>
+                <div class="term-bar"><div class="term-label">Monthly</div><div class="term-value">--</div><div class="term-fill" style="width:0%"></div></div>
+                <div class="term-bar"><div class="term-label">Quarterly</div><div class="term-value">--</div><div class="term-fill" style="width:0%"></div></div>
+                <div class="term-bar"><div class="term-label">6-Month</div><div class="term-value">--</div><div class="term-fill" style="width:0%"></div></div>
+              </div>
+            </div>
+            <!-- IV Skew -->
+            <div class="opt-subsection">
+              <div class="opt-subsection-title">Volatility Skew</div>
+              <div class="opt-subsection-hint">OTM Put IV vs ATM vs OTM Call IV - measures fear/greed</div>
+              <div class="skew-display" id="optSkewDisplay">
+                <div class="skew-item"><span class="skew-label">25Δ Put</span><span class="skew-value r">--</span></div>
+                <div class="skew-item"><span class="skew-label">ATM</span><span class="skew-value">--</span></div>
+                <div class="skew-item"><span class="skew-label">25Δ Call</span><span class="skew-value g">--</span></div>
+                <div class="skew-diff"><span>Put-Call Skew:</span><span id="optPcSkew">--</span></div>
+              </div>
+            </div>
+            <!-- Expected Moves -->
+            <div class="opt-subsection">
+              <div class="opt-subsection-title">Expected Moves (1 SD)</div>
+              <div class="opt-subsection-hint">Based on current IV - 68% probability range</div>
+              <div class="exp-moves" id="optExpMoves">
+                <div class="exp-row"><span class="exp-label">Daily</span><span class="exp-range" id="optExpDaily">--</span></div>
+                <div class="exp-row"><span class="exp-label">Weekly</span><span class="exp-range" id="optExpWeekly">--</span></div>
+                <div class="exp-row"><span class="exp-label">Monthly</span><span class="exp-range" id="optExpMonthly">--</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Options Flow & Sentiment -->
+        <div class="opt-section">
+          <div class="opt-section-header">
+            <span class="opt-section-icon">🌊</span>
+            <span class="opt-section-title">Flow & Sentiment</span>
+          </div>
+          <div class="opt-section-body">
+            <!-- Volume Flow -->
+            <div class="opt-subsection">
+              <div class="opt-subsection-title">Volume Flow</div>
+              <div class="opt-subsection-hint">Call vs Put volume - bullish > 1.0, bearish < 1.0</div>
+              <div class="flow-bars">
+                <div class="flow-row">
+                  <span class="flow-label g">Calls</span>
+                  <div class="flow-bar-container"><div class="flow-bar-fill g" id="optCallVolBar" style="width:50%"></div></div>
+                  <span class="flow-value" id="optCallVol">--</span>
+                </div>
+                <div class="flow-row">
+                  <span class="flow-label r">Puts</span>
+                  <div class="flow-bar-container"><div class="flow-bar-fill r" id="optPutVolBar" style="width:50%"></div></div>
+                  <span class="flow-value" id="optPutVol">--</span>
+                </div>
+              </div>
+              <div class="flow-metrics">
+                <div class="fm"><span>Net Flow</span><span id="optNetFlow">--</span></div>
+                <div class="fm"><span>Vol Ratio</span><span id="optVolRatio">--</span></div>
+              </div>
+            </div>
+            <!-- Open Interest -->
+            <div class="opt-subsection">
+              <div class="opt-subsection-title">Open Interest</div>
+              <div class="opt-subsection-hint">Existing positions - shows where money is positioned</div>
+              <div class="flow-bars">
+                <div class="flow-row">
+                  <span class="flow-label g">Calls</span>
+                  <div class="flow-bar-container"><div class="flow-bar-fill g" id="optCallOiBar" style="width:50%"></div></div>
+                  <span class="flow-value" id="optCallOi">--</span>
+                </div>
+                <div class="flow-row">
+                  <span class="flow-label r">Puts</span>
+                  <div class="flow-bar-container"><div class="flow-bar-fill r" id="optPutOiBar" style="width:50%"></div></div>
+                  <span class="flow-value" id="optPutOi">--</span>
+                </div>
+              </div>
+              <div class="flow-metrics">
+                <div class="fm"><span>P/C OI Ratio</span><span id="optOiRatio">--</span></div>
+                <div class="fm"><span>OI Change</span><span id="optOiChange">--</span></div>
+              </div>
+            </div>
+            <!-- Sentiment Gauge -->
+            <div class="opt-subsection">
+              <div class="opt-subsection-title">Sentiment Score</div>
+              <div class="opt-subsection-hint">Combined flow + OI + skew signal</div>
+              <div class="sentiment-gauge">
+                <div class="gauge-track">
+                  <div class="gauge-fill" id="optSentimentFill" style="width:50%"></div>
+                  <div class="gauge-marker" id="optSentimentMarker" style="left:50%"></div>
+                </div>
+                <div class="gauge-labels"><span class="r">Bearish</span><span>Neutral</span><span class="g">Bullish</span></div>
+                <div class="gauge-value" id="optSentimentValue">Neutral</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Max Pain & Key Strikes -->
+        <div class="opt-section">
+          <div class="opt-section-header">
+            <span class="opt-section-icon">🎯</span>
+            <span class="opt-section-title">Key Strikes & Levels</span>
+          </div>
+          <div class="opt-section-body">
+            <!-- Max Pain -->
+            <div class="opt-subsection">
+              <div class="opt-subsection-title">Max Pain Levels</div>
+              <div class="opt-subsection-hint">Price where option writers profit most at expiry</div>
+              <div class="maxpain-grid" id="optMaxPain">
+                <div class="mp-row">
+                  <span class="mp-exp">This Week</span>
+                  <span class="mp-strike y" id="optMpWeekly">--</span>
+                  <span class="mp-dist" id="optMpWeeklyDist">--</span>
+                </div>
+                <div class="mp-row">
+                  <span class="mp-exp">Monthly</span>
+                  <span class="mp-strike y" id="optMpMonthly">--</span>
+                  <span class="mp-dist" id="optMpMonthlyDist">--</span>
+                </div>
+                <div class="mp-row">
+                  <span class="mp-exp">Quarterly</span>
+                  <span class="mp-strike y" id="optMpQuarterly">--</span>
+                  <span class="mp-dist" id="optMpQuarterlyDist">--</span>
+                </div>
+              </div>
+            </div>
+            <!-- High OI Strikes (Walls) -->
+            <div class="opt-subsection">
+              <div class="opt-subsection-title">OI Walls (Support/Resistance)</div>
+              <div class="opt-subsection-hint">High OI strikes often act as magnets</div>
+              <div class="oi-walls">
+                <div class="oi-wall-col">
+                  <div class="oi-wall-header g">Call Walls</div>
+                  <div class="oi-wall-list" id="optCallWalls">--</div>
+                </div>
+                <div class="oi-wall-col">
+                  <div class="oi-wall-header r">Put Walls</div>
+                  <div class="oi-wall-list" id="optPutWalls">--</div>
+                </div>
+              </div>
+            </div>
+            <!-- GEX Zones -->
+            <div class="opt-subsection">
+              <div class="opt-subsection-title">Gamma Exposure (GEX)</div>
+              <div class="opt-subsection-hint">+GEX = dealer long gamma (dampens moves), -GEX = amplifies</div>
+              <div class="gex-display">
+                <div class="gex-row"><span>GEX Flip</span><span class="y" id="optGexFlip">--</span></div>
+                <div class="gex-row"><span>Call Wall</span><span class="g" id="optGexCallWall">--</span></div>
+                <div class="gex-row"><span>Put Wall</span><span class="r" id="optGexPutWall">--</span></div>
+                <div class="gex-row"><span>Net GEX</span><span id="optNetGex">--</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4: Options Chain -->
+        <div class="opt-section opt-section-wide">
+          <div class="opt-section-header">
+            <span class="opt-section-icon">📋</span>
+            <span class="opt-section-title">Options Chain</span>
+            <div class="chain-controls">
+              <select id="optExpSelect" onchange="loadChainForExpiry()">
+                <option value="">Select Expiry</option>
+              </select>
+              <button class="chain-toggle active" data-show="all" onclick="toggleChainView('all')">All</button>
+              <button class="chain-toggle" data-show="itm" onclick="toggleChainView('itm')">ITM</button>
+              <button class="chain-toggle" data-show="otm" onclick="toggleChainView('otm')">OTM</button>
+            </div>
+          </div>
+          <div class="opt-section-body">
+            <div class="chain-wrapper">
+              <div class="chain-header">
+                <div class="chain-side calls">
+                  <span>Bid</span><span>Ask</span><span>Last</span><span>Vol</span><span>OI</span><span>IV</span><span>Delta</span>
+                </div>
+                <div class="chain-strike-header">Strike</div>
+                <div class="chain-side puts">
+                  <span>Delta</span><span>IV</span><span>OI</span><span>Vol</span><span>Last</span><span>Bid</span><span>Ask</span>
+                </div>
+              </div>
+              <div class="chain-body" id="optChainBody">
+                <div class="chain-loading">Select expiration to load chain</div>
+              </div>
+            </div>
+            <div class="chain-legend">
+              <span class="legend-item"><span class="legend-dot itm"></span>In-The-Money</span>
+              <span class="legend-item"><span class="legend-dot atm"></span>At-The-Money</span>
+              <span class="legend-item"><span class="legend-dot otm"></span>Out-Of-Money</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 5: Trade Scanner -->
+        <div class="opt-section">
+          <div class="opt-section-header">
+            <span class="opt-section-icon">🔍</span>
+            <span class="opt-section-title">Trade Scanner</span>
+          </div>
+          <div class="opt-section-body">
+            <!-- Scanner Filters -->
+            <div class="opt-subsection">
+              <div class="opt-subsection-title">Find Options</div>
+              <div class="opt-subsection-hint">Hunt contracts matching your thesis</div>
+              <div class="scanner-filters">
+                <div class="filter-row">
+                  <label>Type</label>
+                  <select id="scanType">
+                    <option value="all">All</option>
+                    <option value="call">Calls</option>
+                    <option value="put" selected>Puts</option>
+                  </select>
+                </div>
+                <div class="filter-row">
+                  <label>Delta</label>
+                  <select id="scanDelta">
+                    <option value="all">Any</option>
+                    <option value="high">High (>0.7)</option>
+                    <option value="atm">ATM (0.4-0.6)</option>
+                    <option value="otm" selected>OTM (0.2-0.4)</option>
+                    <option value="deep-otm">Deep OTM (<0.2)</option>
+                  </select>
+                </div>
+                <div class="filter-row">
+                  <label>DTE</label>
+                  <select id="scanDte">
+                    <option value="all">Any</option>
+                    <option value="weekly">< 7 days</option>
+                    <option value="monthly" selected>7-45 days</option>
+                    <option value="leap">45+ days</option>
+                  </select>
+                </div>
+                <div class="filter-row">
+                  <label>IV Rank</label>
+                  <select id="scanIv">
+                    <option value="all">Any</option>
+                    <option value="high" selected>High (>50)</option>
+                    <option value="low">Low (<30)</option>
+                  </select>
+                </div>
+                <button class="btn-primary btn-scan" onclick="runOptionsScanner()">Scan</button>
+              </div>
+            </div>
+            <!-- Scanner Results -->
+            <div class="opt-subsection">
+              <div class="opt-subsection-title">Scanner Results</div>
+              <div class="scanner-results" id="optScanResults">
+                <div class="scan-empty">Configure filters and click Scan</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 6: AI Options Analysis -->
+        <div class="opt-section">
+          <div class="opt-section-header">
+            <span class="opt-section-icon">🤖</span>
+            <span class="opt-section-title">AI Options Insight</span>
+          </div>
+          <div class="opt-section-body">
+            <div class="opt-subsection">
+              <div class="opt-subsection-title">Market Maker Positioning</div>
+              <div class="opt-subsection-hint">AI analysis of flow, positioning, and likely moves</div>
+              <div class="ai-options-output" id="optAiInsight">
+                <div class="ai-loading">Enter a ticker and click Analyze to get AI insights</div>
+              </div>
+            </div>
+            <div class="opt-subsection">
+              <div class="opt-subsection-title">Thesis-Aligned Opportunities</div>
+              <div class="opt-subsection-hint">Options setups matching your bearish growth rotation thesis</div>
+              <div class="ai-options-output" id="optAiOpportunities">
+                <div class="ai-loading">--</div>
+              </div>
+            </div>
+            <button class="btn-primary btn-ai-refresh" onclick="refreshOptionsAi()">Refresh AI Analysis</button>
+          </div>
         </div>
       </div>
     </div>
