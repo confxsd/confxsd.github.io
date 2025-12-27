@@ -156,12 +156,14 @@ export function updateMoneyFlow(data) {
 
 export function updateOptions(data) {
   if (!data) {
-    $('iv').textContent = 'N/A';
     $('pc').textContent = 'N/A';
+    $('mPw').textContent = '--';
+    $('mPm').textContent = '--';
+    $('mP6').textContent = '--';
     return;
   }
 
-  const { callVol, putVol, pcRatio, avgIV, maxPain, topCalls, topPuts, pcOI } = data;
+  const { callVol, putVol, pcRatio, avgIV, maxPain, topCalls, topPuts, pcOI, spotPrice } = data;
   const totalVol = callVol + putVol;
   const callPct = totalVol > 0 ? (callVol / totalVol * 100).toFixed(0) : 50;
 
@@ -170,11 +172,12 @@ export function updateOptions(data) {
   $('pcS').textContent = pcRatio > 1 ? 'Bear' : pcRatio < 0.7 ? 'Bull' : 'Ntrl';
 
   $('iV').textContent = avgIV.toFixed(1) + '%';
-  $('iv').textContent = avgIV > 50 ? 'High' : avgIV > 30 ? 'Mid' : 'Low';
-  $('iR').textContent = avgIV > 50 ? 'High' : 'Norm';
-
-  $('mP').textContent = maxPain ? '$' + maxPain : '--';
   $('pO').textContent = pcOI.toFixed(2);
+
+  // Max Pain levels with distance from spot
+  updateMaxPain('mPw', maxPain?.weekly, spotPrice);
+  updateMaxPain('mPm', maxPain?.monthly, spotPrice);
+  updateMaxPain('mP6', maxPain?.sixMonth, spotPrice);
 
   $('cP').textContent = callPct + '%';
   $('pP').textContent = (100 - callPct) + '%';
@@ -194,6 +197,29 @@ export function updateOptions(data) {
   $('tP').innerHTML = topPuts.map(p =>
     `<div class="opt-r"><span class="k">$${p.strike}</span><span class="r">${formatNumber(p.volume)}</span></div>`
   ).join('') || '--';
+}
+
+function updateMaxPain(id, maxPain, spotPrice) {
+  const el = $(id);
+  const detailEl = $(id + 'D');
+
+  if (!maxPain || !spotPrice) {
+    el.textContent = '--';
+    if (detailEl) detailEl.textContent = '';
+    return;
+  }
+
+  el.textContent = '$' + maxPain.toFixed(0);
+
+  // Calculate % distance from current price
+  const pctDiff = ((maxPain - spotPrice) / spotPrice * 100);
+  const direction = pctDiff > 0 ? '↑' : pctDiff < 0 ? '↓' : '→';
+  const color = pctDiff > 0 ? 'g' : pctDiff < 0 ? 'r' : '';
+
+  if (detailEl) {
+    detailEl.textContent = ` ${direction}${Math.abs(pctDiff).toFixed(1)}%`;
+    detailEl.className = 'sub ' + color;
+  }
 }
 
 export function updateAI(analysis, trades, status) {

@@ -193,6 +193,8 @@ body {
 .btn-refresh { background: #f59e0b !important; }
 .btn-export { background: #06b6d4 !important; }
 .btn-export:hover { background: #0891b2 !important; }
+.btn-share { background: #8b5cf6 !important; }
+.btn-share:hover { background: #7c3aed !important; }
 
 .header-signal {
   display: flex;

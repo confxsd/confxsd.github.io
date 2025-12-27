@@ -38,21 +38,33 @@ export async function fetchTickerData(ticker) {
 
   // Get spot price for strike filtering
   const spotPrice = prev?.results?.[0]?.c || aggs?.results?.[aggs.results.length - 1]?.c || 100;
-  const minStrike = Math.floor(spotPrice * 0.80);
-  const maxStrike = Math.ceil(spotPrice * 1.20);
-  const weekAfter = getNextFriday(14);
+  const minStrike = Math.floor(spotPrice * 0.70);
+  const maxStrike = Math.ceil(spotPrice * 1.30);
 
-  // Fetch near-money calls and puts with strike filter
-  const [calls, puts] = await Promise.all([
-    fetchPolygon(`/v3/snapshot/options/${ticker}?contract_type=call&expiration_date.lte=${weekAfter}&strike_price.gte=${minStrike}&strike_price.lte=${maxStrike}&limit=100`).catch(() => null),
-    fetchPolygon(`/v3/snapshot/options/${ticker}?contract_type=put&expiration_date.lte=${weekAfter}&strike_price.gte=${minStrike}&strike_price.lte=${maxStrike}&limit=100`).catch(() => null)
+  // Get expiration dates for weekly, monthly, 6-month
+  const weeklyExp = getNextFriday(7);
+  const monthlyExp = getMonthlyExpiration(1);
+  const sixMonthExp = getMonthlyExpiration(6);
+
+  // Fetch options for different expirations (wider strike range for max pain accuracy)
+  const [weeklyCalls, weeklyPuts, monthlyCalls, monthlyPuts, sixMonthCalls, sixMonthPuts] = await Promise.all([
+    fetchPolygon(`/v3/snapshot/options/${ticker}?contract_type=call&expiration_date.lte=${weeklyExp}&strike_price.gte=${minStrike}&strike_price.lte=${maxStrike}&limit=250`).catch(() => null),
+    fetchPolygon(`/v3/snapshot/options/${ticker}?contract_type=put&expiration_date.lte=${weeklyExp}&strike_price.gte=${minStrike}&strike_price.lte=${maxStrike}&limit=250`).catch(() => null),
+    fetchPolygon(`/v3/snapshot/options/${ticker}?contract_type=call&expiration_date.gt=${weeklyExp}&expiration_date.lte=${monthlyExp}&strike_price.gte=${minStrike}&strike_price.lte=${maxStrike}&limit=250`).catch(() => null),
+    fetchPolygon(`/v3/snapshot/options/${ticker}?contract_type=put&expiration_date.gt=${weeklyExp}&expiration_date.lte=${monthlyExp}&strike_price.gte=${minStrike}&strike_price.lte=${maxStrike}&limit=250`).catch(() => null),
+    fetchPolygon(`/v3/snapshot/options/${ticker}?contract_type=call&expiration_date.gt=${monthlyExp}&expiration_date.lte=${sixMonthExp}&strike_price.gte=${minStrike}&strike_price.lte=${maxStrike}&limit=250`).catch(() => null),
+    fetchPolygon(`/v3/snapshot/options/${ticker}?contract_type=put&expiration_date.gt=${monthlyExp}&expiration_date.lte=${sixMonthExp}&strike_price.gte=${minStrike}&strike_price.lte=${maxStrike}&limit=250`).catch(() => null)
   ]);
 
-  // Combine calls and puts
+  // Combine all options with expiration category
   const options = {
-    results: [
-      ...(calls?.results || []),
-      ...(puts?.results || [])
+    weekly: [...(weeklyCalls?.results || []), ...(weeklyPuts?.results || [])],
+    monthly: [...(monthlyCalls?.results || []), ...(monthlyPuts?.results || [])],
+    sixMonth: [...(sixMonthCalls?.results || []), ...(sixMonthPuts?.results || [])],
+    all: [
+      ...(weeklyCalls?.results || []), ...(weeklyPuts?.results || []),
+      ...(monthlyCalls?.results || []), ...(monthlyPuts?.results || []),
+      ...(sixMonthCalls?.results || []), ...(sixMonthPuts?.results || [])
     ]
   };
 
@@ -73,5 +85,17 @@ function getNextFriday(addDays = 0) {
   const day = d.getDay();
   const daysUntilFriday = (5 - day + 7) % 7 || 7;
   d.setDate(d.getDate() + daysUntilFriday);
+  return d.toISOString().split('T')[0];
+}
+
+// Get third Friday of month (standard monthly options expiration)
+function getMonthlyExpiration(monthsAhead = 1) {
+  const d = new Date();
+  d.setMonth(d.getMonth() + monthsAhead);
+  d.setDate(1);
+  // Find first Friday
+  while (d.getDay() !== 5) d.setDate(d.getDate() + 1);
+  // Third Friday = first Friday + 14 days
+  d.setDate(d.getDate() + 14);
   return d.toISOString().split('T')[0];
 }

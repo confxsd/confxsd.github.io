@@ -17,6 +17,37 @@ let skipCache = false;
 const HISTORY_KEY = 'vhunter_search_history';
 const MAX_HISTORY = 10;
 
+// ============================================
+// ROUTING
+// ============================================
+
+function parseRoute() {
+  const hash = window.location.hash.slice(1) || 'analyze';
+  const [page, ticker] = hash.split('/');
+  return { page: page || 'analyze', ticker: ticker || null };
+}
+
+function updateRoute(page, ticker = null) {
+  const hash = ticker ? `${page}/${ticker}` : page;
+  if (window.location.hash !== `#${hash}`) {
+    history.pushState(null, '', `#${hash}`);
+  }
+}
+
+window.addEventListener('hashchange', () => {
+  const { page, ticker } = parseRoute();
+  if (page !== currentPage) {
+    switchPage(page, false); // false = don't update URL again
+  }
+  if (page === 'analyze' && ticker) {
+    const currentTicker = ui.$('tk').value.toUpperCase().trim();
+    if (ticker.toUpperCase() !== currentTicker) {
+      ui.$('tk').value = ticker.toUpperCase();
+      run();
+    }
+  }
+});
+
 // Search history functions
 function getSearchHistory() {
   try {
@@ -148,7 +179,7 @@ function restoreCollapsedSections() {
 // PAGE NAVIGATION
 // ============================================
 
-window.switchPage = function(page) {
+window.switchPage = function(page, shouldUpdateRoute = true) {
   currentPage = page;
 
   // Update nav items
@@ -174,6 +205,12 @@ window.switchPage = function(page) {
     headerSearch.style.display = 'none';
     headerSignal.style.display = 'none';
     historyStrip.style.display = 'none';
+  }
+
+  // Update URL
+  if (shouldUpdateRoute) {
+    const ticker = page === 'analyze' ? ui.$('tk').value.toUpperCase().trim() : null;
+    updateRoute(page, ticker || null);
   }
 
   // Load data for the page
@@ -788,8 +825,40 @@ document.addEventListener('DOMContentLoaded', () => {
   initCharts();
   renderHistory();
   restoreCollapsedSections();
+
+  // Handle initial route
+  const { page, ticker } = parseRoute();
+  if (ticker) {
+    ui.$('tk').value = ticker.toUpperCase();
+  }
+  switchPage(page, false);
   run();
 });
+
+// Share current analysis URL
+window.shareAnalysis = function() {
+  const ticker = ui.$('tk').value.toUpperCase().trim();
+  if (!ticker) {
+    alert('No ticker to share. Run analysis first.');
+    return;
+  }
+
+  const url = `${window.location.origin}${window.location.pathname}#analyze/${ticker}`;
+
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.querySelector('.btn-share');
+    const orig = btn.innerHTML;
+    btn.innerHTML = '✓';
+    btn.style.background = '#10b981';
+    setTimeout(() => {
+      btn.innerHTML = orig;
+      btn.style.background = '';
+    }, 1500);
+  }).catch(() => {
+    // Fallback
+    prompt('Copy this URL:', url);
+  });
+};
 
 // Enter key handler
 document.getElementById('tk').addEventListener('keypress', (e) => {
@@ -814,6 +883,9 @@ async function run(forceRefresh = false) {
       ui.setStatus('');
       return;
     }
+
+    // Update URL with ticker
+    updateRoute('analyze', ticker);
 
     addToHistory(ticker);
 
