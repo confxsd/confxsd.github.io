@@ -13,224 +13,483 @@
 </head>
 <body>
 
-<div class="hdr">
-  <div class="hdr-left">
-    <button class="menu-toggle" id="menuToggle" onclick="toggleMobileMenu()">☰</button>
-    <span class="logo">VHUNTER</span>
-    <div class="hdr-search">
-      <input type="text" id="tk" value="TSLA">
-      <button onclick="run()">GO</button>
-      <button onclick="run(true)" class="btn-refresh" title="Bypass cache, fresh AI">↻</button>
-      <button onclick="exportData()" class="btn-export" title="Copy data for Claude AI">📋</button>
+<!-- App Container -->
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="logo">VHUNTER</span>
+      <button class="sidebar-close" onclick="toggleSidebar()">×</button>
     </div>
-  </div>
-  <div class="hdr-center">
-    <div class="hdr-signal">
-      <div class="score n" id="sc">--</div>
-      <div class="signal-info">
-        <div class="sig n" id="sg">WAIT</div>
-        <div class="bias" id="bi">--</div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-page="analyze" onclick="event.preventDefault(); switchPage('analyze')">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Analyze</span>
+      </a>
+      <a href="#" class="nav-item" data-page="positions" onclick="event.preventDefault(); switchPage('positions')">
+        <span class="nav-icon">💼</span>
+        <span class="nav-label">Positions</span>
+      </a>
+      <a href="#" class="nav-item" data-page="watchlist" onclick="event.preventDefault(); switchPage('watchlist')">
+        <span class="nav-icon">👁</span>
+        <span class="nav-label">Watchlist</span>
+      </a>
+      <a href="#" class="nav-item" data-page="notes" onclick="event.preventDefault(); switchPage('notes')">
+        <span class="nav-icon">📝</span>
+        <span class="nav-label">Notes</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="time" id="tm"></div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Top Header -->
+    <header class="top-header">
+      <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="header-search" id="headerSearch">
+        <input type="text" id="tk" value="TSLA" placeholder="Ticker...">
+        <button onclick="run()">GO</button>
+        <button onclick="run(true)" class="btn-refresh" title="Fresh AI">↻</button>
+        <button onclick="exportData()" class="btn-export" title="Copy data">📋</button>
+      </div>
+      <div class="header-signal" id="headerSignal">
+        <div class="score n" id="sc">--</div>
+        <div class="signal-info">
+          <div class="sig n" id="sg">WAIT</div>
+          <div class="bias" id="bi">--</div>
+        </div>
+      </div>
+      <div class="header-history" id="historyStrip"></div>
+      <span id="st" class="status-text"></span>
+    </header>
+
+    <!-- Page: Analyze -->
+    <div class="page active" id="page-analyze">
+      <div id="al" class="alert"></div>
+
+      <div class="sbar">
+        <div class="s"><div class="lbl">Trend</div><div class="val" id="tr">--</div><div class="sub" id="trD">--</div></div>
+        <div class="s"><div class="lbl">Momentum</div><div class="val" id="mo">--</div><div class="sub" id="moD">--</div></div>
+        <div class="s"><div class="lbl">Volume</div><div class="val" id="vl">--</div><div class="sub" id="vlD">--</div></div>
+        <div class="s"><div class="lbl">Volatility</div><div class="val" id="vo">--</div><div class="sub" id="voD">--</div></div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="section" id="sec-charts">
+        <div class="section-header" onclick="toggleSection('sec-charts')">
+          <span class="section-title">Charts & Indicators</span>
+          <span class="section-toggle">▼</span>
+        </div>
+        <div class="section-content">
+          <div class="cell chart-cell">
+            <div class="t">Price + SMA</div>
+            <div class="ch"><canvas id="pC"></canvas></div>
+            <div class="chart-metric" id="metric-price"></div>
+            <div class="chart-guide"><span class="g">SMA20</span> short, <span class="y">SMA50</span> med trend</div>
+          </div>
+          <div class="cell chart-cell">
+            <div class="t">Volume</div>
+            <div class="ch"><canvas id="vC"></canvas></div>
+            <div class="chart-metric" id="metric-volume"></div>
+            <div class="chart-guide">Purple = 20d avg | High vol confirms moves</div>
+          </div>
+          <div class="cell chart-cell">
+            <div class="t">RSI (14)</div>
+            <div class="ch"><canvas id="rC"></canvas></div>
+            <div class="chart-metric" id="metric-rsi"></div>
+            <div class="chart-guide"><span class="r">>70</span> overbought, <span class="g">&lt;30</span> oversold</div>
+          </div>
+          <div class="cell chart-cell">
+            <div class="t">MACD</div>
+            <div class="ch"><canvas id="mC"></canvas></div>
+            <div class="chart-metric" id="metric-macd"></div>
+            <div class="chart-guide">MACD > Signal = Bullish</div>
+          </div>
+          <div class="cell chart-cell">
+            <div class="t">ADX / DI</div>
+            <div class="ch"><canvas id="aC"></canvas></div>
+            <div class="chart-metric" id="metric-adx"></div>
+            <div class="chart-guide"><span class="y">ADX>25</span> = trending</div>
+          </div>
+          <div class="cell chart-cell">
+            <div class="t">Bollinger Bands</div>
+            <div class="ch"><canvas id="bC"></canvas></div>
+            <div class="chart-metric" id="metric-bb"></div>
+            <div class="chart-guide">Squeeze = breakout coming</div>
+          </div>
+          <div class="cell chart-cell">
+            <div class="t">Money Flow (MFI)</div>
+            <div class="ch"><canvas id="mfC"></canvas></div>
+            <div class="chart-metric" id="metric-mfi"></div>
+            <div class="chart-guide"><span class="r">>80</span> OB, <span class="g">&lt;20</span> OS</div>
+          </div>
+          <div class="cell chart-cell">
+            <div class="t">A/D Line</div>
+            <div class="ch"><canvas id="adC"></canvas></div>
+            <div class="chart-metric" id="metric-adl"></div>
+            <div class="chart-guide"><span class="g">Rising</span>=accumulation</div>
+          </div>
+          <div class="cell chart-cell">
+            <div class="t">ATR (Volatility)</div>
+            <div class="ch"><canvas id="atC"></canvas></div>
+            <div class="chart-metric" id="metric-atr"></div>
+            <div class="chart-guide">Use 2x ATR for stop-loss</div>
+          </div>
+          <div class="cell">
+            <div class="t">Technical Signals</div>
+            <div class="ind"><span class="n">SMA Cross</span><span class="v" id="sX">--</span><span class="sg h" id="sXS">--</span></div>
+            <div class="ind"><span class="n">MACD</span><span class="v" id="mc">--</span><span class="sg h" id="mcS">--</span></div>
+            <div class="ind"><span class="n">RSI</span><span class="v" id="rT">--</span><span class="sg h" id="rTS">--</span></div>
+            <div class="ind"><span class="n">BB %B</span><span class="v" id="bb">--</span><span class="sg h" id="bbS">--</span></div>
+            <div class="ind"><span class="n">VWAP</span><span class="v" id="vw">--</span><span class="sg h" id="vwS">--</span></div>
+            <div class="ind"><span class="n">Vol Trend</span><span class="v" id="vT">--</span><span class="sg h" id="vTS">--</span></div>
+          </div>
+          <div class="cell">
+            <div class="t">Key Stats</div>
+            <div class="g4">
+              <div class="ms"><div class="l">Price</div><div class="v" id="pr">--</div><div class="s" id="ch2">--</div></div>
+              <div class="ms"><div class="l">Vol</div><div class="v" id="vv">--</div><div class="s" id="rv">--</div></div>
+              <div class="ms"><div class="l">RSI</div><div class="v" id="rs">--</div><div class="s" id="rsS">--</div></div>
+              <div class="ms"><div class="l">MFI</div><div class="v" id="mf">--</div><div class="s">14d</div></div>
+            </div>
+            <div class="g4" style="margin-top:8px">
+              <div class="ms"><div class="l">ATR</div><div class="v" id="at">--</div><div class="s">14d</div></div>
+              <div class="ms"><div class="l">ADX</div><div class="v" id="ax">--</div><div class="s" id="axS">--</div></div>
+              <div class="ms"><div class="l">IV</div><div class="v p" id="iv">--</div><div class="s">rank</div></div>
+              <div class="ms"><div class="l">P/C</div><div class="v" id="pc">--</div><div class="s" id="pcS">--</div></div>
+            </div>
+          </div>
+          <div class="cell">
+            <div class="t">Money Flow</div>
+            <div class="fl"><span class="g">Buy</span><span id="bP">--</span></div>
+            <div class="flow"><div class="g" id="bB" style="width:50%"></div></div>
+            <div class="fl"><span class="r">Sell</span><span id="sP">--</span></div>
+            <div class="flow"><div class="r" id="sB" style="width:50%"></div></div>
+            <div class="dr"><span class="l">Net Flow</span><span class="v" id="nF">--</span></div>
+            <div class="dr"><span class="l">A/D Line</span><span class="v" id="ad">--</span></div>
+            <div class="dr"><span class="l">Signal</span><span class="v" id="adS">--</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Analysis Section -->
+      <div class="section" id="sec-ai">
+        <div class="section-header" onclick="toggleSection('sec-ai')">
+          <span class="section-title">AI Analysis</span>
+          <span class="section-toggle">▼</span>
+        </div>
+        <div class="section-content">
+          <div class="cell" style="grid-column:span 2">
+            <div class="t">AI Thesis <span id="aiSt" style="color:#818cf8"></span></div>
+            <div id="aiOut" style="font-size:11px;line-height:1.5;color:#475569;max-height:200px;overflow-y:auto">Loading...</div>
+          </div>
+          <div class="cell" style="grid-column:span 2">
+            <div class="t">Trade Ideas</div>
+            <div id="tradeOut" style="font-size:11px;line-height:1.5;color:#475569;max-height:200px;overflow-y:auto">Waiting...</div>
+          </div>
+          <div class="cell" style="grid-column:span 2">
+            <div class="t">News & Catalysts</div>
+            <div id="newsOut" style="font-size:11px;line-height:1.5;color:#475569;max-height:200px;overflow-y:auto">Loading news...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Options & Levels Section -->
+      <div class="section" id="sec-options">
+        <div class="section-header" onclick="toggleSection('sec-options')">
+          <span class="section-title">Options & Levels</span>
+          <span class="section-toggle">▼</span>
+        </div>
+        <div class="section-content">
+          <div class="cell">
+            <div class="t">Options Flow</div>
+            <div class="fl"><span class="g">Calls</span><span id="cP">--</span></div>
+            <div class="flow"><div class="g" id="cB" style="width:50%"></div></div>
+            <div class="fl"><span class="r">Puts</span><span id="pP">--</span></div>
+            <div class="flow"><div class="r" id="pB" style="width:50%"></div></div>
+            <div class="dr"><span class="l">Call Vol</span><span class="v g" id="cV">--</span></div>
+            <div class="dr"><span class="l">Put Vol</span><span class="v r" id="pV">--</span></div>
+            <div class="dr"><span class="l">Net</span><span class="v" id="oN">--</span></div>
+          </div>
+          <div class="cell">
+            <div class="t">Key Levels</div>
+            <div class="dr"><span class="l">R2</span><span class="v r" id="r2">--</span></div>
+            <div class="dr"><span class="l">R1</span><span class="v r" id="r1">--</span></div>
+            <div class="dr"><span class="l">Pivot</span><span class="v" id="pv">--</span></div>
+            <div class="dr"><span class="l">S1</span><span class="v g" id="s1">--</span></div>
+            <div class="dr"><span class="l">S2</span><span class="v g" id="s2">--</span></div>
+          </div>
+          <div class="cell">
+            <div class="t">Options Metrics</div>
+            <div class="dr"><span class="l">Impl. Vol</span><span class="v p" id="iV">--</span></div>
+            <div class="dr"><span class="l">Exp. Move</span><span class="v c" id="eM">--</span></div>
+            <div class="dr"><span class="l">P/C OI</span><span class="v" id="pO">--</span></div>
+            <div class="t" style="margin-top:8px;border-top:1px solid #e2e8f0;padding-top:6px">Max Pain Levels</div>
+            <div class="dr"><span class="l">Weekly</span><span class="v y" id="mPw">--</span><span class="sub" id="mPwD"></span></div>
+            <div class="dr"><span class="l">Monthly</span><span class="v y" id="mPm">--</span><span class="sub" id="mPmD"></span></div>
+            <div class="dr"><span class="l">6-Month</span><span class="v y" id="mP6">--</span><span class="sub" id="mP6D"></span></div>
+          </div>
+          <div class="cell">
+            <div class="t">Risk Analysis</div>
+            <div class="dr"><span class="l">Stop (2xATR)</span><span class="v r" id="sp">--</span></div>
+            <div class="dr"><span class="l">Target (1:2)</span><span class="v g" id="tg">--</span></div>
+            <div class="dr"><span class="l">Risk %</span><span class="v" id="rk">--</span></div>
+            <div class="dr"><span class="l">SMA 20</span><span class="v" id="s20">--</span></div>
+            <div class="dr"><span class="l">SMA 50</span><span class="v" id="s50">--</span></div>
+          </div>
+          <div class="cell">
+            <div class="t">Performance</div>
+            <div class="g3">
+              <div class="ms"><div class="l">1D</div><div class="v" id="d1">--</div></div>
+              <div class="ms"><div class="l">1W</div><div class="v" id="w1">--</div></div>
+              <div class="ms"><div class="l">1M</div><div class="v" id="m1">--</div></div>
+            </div>
+            <div class="dr" style="margin-top:6px"><span class="l">52W Range</span><span class="v" id="hl">--</span></div>
+            <div class="dr"><span class="l">Day Range</span><span class="v" id="dr2">--</span></div>
+          </div>
+          <div class="cell">
+            <div class="t">Top Options Strikes</div>
+            <div class="opt">
+              <div class="c"><div class="h g">Calls</div><div id="tC">--</div></div>
+              <div class="p"><div class="h r">Puts</div><div id="tP">--</div></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-    <span id="st" class="status-text"></span>
-  </div>
-  <div class="hdr-right">
-    <div class="history-strip" id="historyStrip"></div>
-    <div class="time" id="tm"></div>
-  </div>
-  <div class="history-row" id="historyRow">
-    <span class="history-label">Recent:</span>
-    <div class="history-strip" id="historyStripMobile"></div>
+
+    <!-- Page: Positions -->
+    <div class="page" id="page-positions">
+      <div class="page-header">
+        <h1>Positions</h1>
+        <button class="btn-primary" onclick="openPositionModal()">+ New</button>
+      </div>
+
+      <!-- Position Stats - Compact -->
+      <div class="stats-row compact">
+        <div class="stat-card highlight">
+          <div class="stat-label">Unrealized</div>
+          <div class="stat-value" id="unrealizedPnl">$0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total P&L</div>
+          <div class="stat-value" id="totalPnl">$0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Open</div>
+          <div class="stat-value" id="openCount">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Win Rate</div>
+          <div class="stat-value" id="winRate">--%</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Closed</div>
+          <div class="stat-value" id="closedCount">0</div>
+        </div>
+      </div>
+
+      <!-- Position Tabs -->
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchPositionTab('open')">Open</button>
+        <button class="tab-btn" onclick="switchPositionTab('closed')">Closed</button>
+      </div>
+
+      <!-- Open Positions -->
+      <div class="position-list" id="openPositions">
+        <div class="empty-state">
+          <div class="empty-icon">💼</div>
+          <div class="empty-text">No open positions</div>
+          <div class="empty-hint">Click "+ New" to add one</div>
+        </div>
+      </div>
+
+      <!-- Closed Positions -->
+      <div class="position-list hidden" id="closedPositions">
+        <div class="empty-state">
+          <div class="empty-icon">📜</div>
+          <div class="empty-text">No closed positions</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page: Watchlist -->
+    <div class="page" id="page-watchlist">
+      <div class="page-header">
+        <h1>Watchlist</h1>
+        <button class="btn-primary" onclick="openWatchlistModal()">+ Add Ticker</button>
+      </div>
+      <div class="watchlist-grid" id="watchlistItems">
+        <div class="empty-state">
+          <div class="empty-icon">👁</div>
+          <div class="empty-text">Your watchlist is empty</div>
+          <div class="empty-hint">Add tickers to track</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page: Notes -->
+    <div class="page" id="page-notes">
+      <div class="page-header">
+        <h1>Notes</h1>
+        <button class="btn-primary" onclick="openNoteModal()">+ New Note</button>
+      </div>
+      <div class="notes-list" id="notesList">
+        <div class="empty-state">
+          <div class="empty-icon">📝</div>
+          <div class="empty-text">No notes yet</div>
+          <div class="empty-hint">Capture your trading ideas</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Sidebar Overlay (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- Position Modal -->
+<div class="modal" id="positionModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="positionModalTitle">New Position</h2>
+      <button class="modal-close" onclick="closePositionModal()">×</button>
+    </div>
+    <form id="positionForm" onsubmit="savePosition(event)">
+      <input type="hidden" id="positionId">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Ticker</label>
+          <input type="text" id="posTicker" required placeholder="TSLA">
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="posType" required>
+            <option value="long">Long</option>
+            <option value="short">Short</option>
+            <option value="call">Call</option>
+            <option value="put">Put</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Entry Price</label>
+          <input type="number" id="posEntry" step="0.01" required placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label>Quantity</label>
+          <input type="number" id="posQty" step="0.01" required placeholder="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Stop Loss</label>
+          <input type="number" id="posStop" step="0.01" placeholder="Optional">
+        </div>
+        <div class="form-group">
+          <label>Take Profit</label>
+          <input type="number" id="posTarget" step="0.01" placeholder="Optional">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="posNotes" rows="2" placeholder="Trade thesis..."></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" onclick="closePositionModal()">Cancel</button>
+        <button type="submit" class="btn-primary">Save Position</button>
+      </div>
+    </form>
   </div>
 </div>
 
-<div id="al" class="alert"></div>
-
-<div class="sbar">
-  <div class="s"><div class="lbl">Trend</div><div class="val" id="tr">--</div><div class="sub" id="trD">--</div></div>
-  <div class="s"><div class="lbl">Momentum</div><div class="val" id="mo">--</div><div class="sub" id="moD">--</div></div>
-  <div class="s"><div class="lbl">Volume</div><div class="val" id="vl">--</div><div class="sub" id="vlD">--</div></div>
-  <div class="s"><div class="lbl">Volatility</div><div class="val" id="vo">--</div><div class="sub" id="voD">--</div></div>
-</div>
-
-<!-- Charts Section -->
-<div class="section" id="sec-charts">
-  <div class="section-header" onclick="toggleSection('sec-charts')">
-    <span class="section-title">Charts & Indicators</span>
-    <span class="section-toggle">▼</span>
-  </div>
-  <div class="section-content">
-    <div class="cell chart-cell">
-      <div class="t">Price + SMA</div>
-      <div class="ch"><canvas id="pC"></canvas></div>
-      <div class="chart-metric" id="metric-price"></div>
-      <div class="chart-guide"><span class="g">SMA20</span> short, <span class="y">SMA50</span> med trend | Price > SMAs = Bullish | Cross up = Buy signal</div>
+<!-- Close Position Modal -->
+<div class="modal" id="closePositionModal">
+  <div class="modal-content modal-sm">
+    <div class="modal-header">
+      <h2>Close Position</h2>
+      <button class="modal-close" onclick="closeCloseModal()">×</button>
     </div>
-    <div class="cell chart-cell">
-      <div class="t">Volume</div>
-      <div class="ch"><canvas id="vC"></canvas></div>
-      <div class="chart-metric" id="metric-volume"></div>
-      <div class="chart-guide">Purple = 20d avg | Green = up, Red = down | High vol confirms moves</div>
-    </div>
-    <div class="cell chart-cell">
-      <div class="t">RSI (14)</div>
-      <div class="ch"><canvas id="rC"></canvas></div>
-      <div class="chart-metric" id="metric-rsi"></div>
-      <div class="chart-guide"><span class="r">>70</span> overbought, <span class="g">&lt;30</span> oversold | Divergence = potential reversal</div>
-    </div>
-    <div class="cell chart-cell">
-      <div class="t">MACD</div>
-      <div class="ch"><canvas id="mC"></canvas></div>
-      <div class="chart-metric" id="metric-macd"></div>
-      <div class="chart-guide">Histogram = momentum | MACD > Signal = Bullish | Above zero = Uptrend</div>
-    </div>
-    <div class="cell chart-cell">
-      <div class="t">ADX / DI</div>
-      <div class="ch"><canvas id="aC"></canvas></div>
-      <div class="chart-metric" id="metric-adx"></div>
-      <div class="chart-guide"><span class="y">ADX>25</span> = trending | +DI > -DI = Bulls | ADX rising = Strengthening</div>
-    </div>
-    <div class="cell chart-cell">
-      <div class="t">Bollinger Bands</div>
-      <div class="ch"><canvas id="bC"></canvas></div>
-      <div class="chart-metric" id="metric-bb"></div>
-      <div class="chart-guide"><span class="r">Upper</span>=resist, <span class="g">Lower</span>=support | Squeeze = breakout | Touch = reversal zone</div>
-    </div>
-    <div class="cell chart-cell">
-      <div class="t">Money Flow (MFI)</div>
-      <div class="ch"><canvas id="mfC"></canvas></div>
-      <div class="chart-metric" id="metric-mfi"></div>
-      <div class="chart-guide"><span class="r">>80</span> overbought, <span class="g">&lt;20</span> oversold | Vol-weighted RSI, reliable for reversals</div>
-    </div>
-    <div class="cell chart-cell">
-      <div class="t">A/D Line</div>
-      <div class="ch"><canvas id="adC"></canvas></div>
-      <div class="chart-metric" id="metric-adl"></div>
-      <div class="chart-guide"><span class="g">Rising</span>=accumulation, <span class="r">Falling</span>=distribution | Divergence = trend weakness</div>
-    </div>
-    <div class="cell chart-cell">
-      <div class="t">ATR (Volatility)</div>
-      <div class="ch"><canvas id="atC"></canvas></div>
-      <div class="chart-metric" id="metric-atr"></div>
-      <div class="chart-guide">Use 2x ATR for stop-loss | High = wide, Low = tight | Rising = more risk</div>
-    </div>
-    <div class="cell">
-      <div class="t">Technical Signals</div>
-      <div class="ind"><span class="n">SMA Cross</span><span class="v" id="sX">--</span><span class="sg h" id="sXS">--</span></div>
-      <div class="ind"><span class="n">MACD</span><span class="v" id="mc">--</span><span class="sg h" id="mcS">--</span></div>
-      <div class="ind"><span class="n">RSI</span><span class="v" id="rT">--</span><span class="sg h" id="rTS">--</span></div>
-      <div class="ind"><span class="n">BB %B</span><span class="v" id="bb">--</span><span class="sg h" id="bbS">--</span></div>
-      <div class="ind"><span class="n">VWAP</span><span class="v" id="vw">--</span><span class="sg h" id="vwS">--</span></div>
-      <div class="ind"><span class="n">Vol Trend</span><span class="v" id="vT">--</span><span class="sg h" id="vTS">--</span></div>
-    </div>
-    <div class="cell">
-      <div class="t">Key Stats</div>
-      <div class="g4">
-        <div class="ms"><div class="l">Price</div><div class="v" id="pr">--</div><div class="s" id="ch2">--</div></div>
-        <div class="ms"><div class="l">Vol</div><div class="v" id="vv">--</div><div class="s" id="rv">--</div></div>
-        <div class="ms"><div class="l">RSI</div><div class="v" id="rs">--</div><div class="s" id="rsS">--</div></div>
-        <div class="ms"><div class="l">MFI</div><div class="v" id="mf">--</div><div class="s">14d</div></div>
+    <form id="closeForm" onsubmit="confirmClosePosition(event)">
+      <input type="hidden" id="closePositionId">
+      <div class="form-group">
+        <label>Exit Price</label>
+        <input type="number" id="exitPrice" step="0.01" required placeholder="0.00">
       </div>
-      <div class="g4" style="margin-top:8px">
-        <div class="ms"><div class="l">ATR</div><div class="v" id="at">--</div><div class="s">14d</div></div>
-        <div class="ms"><div class="l">ADX</div><div class="v" id="ax">--</div><div class="s" id="axS">--</div></div>
-        <div class="ms"><div class="l">IV</div><div class="v p" id="iv">--</div><div class="s">rank</div></div>
-        <div class="ms"><div class="l">P/C</div><div class="v" id="pc">--</div><div class="s" id="pcS">--</div></div>
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" onclick="closeCloseModal()">Cancel</button>
+        <button type="submit" class="btn-primary">Close Position</button>
       </div>
-    </div>
-    <div class="cell">
-      <div class="t">Money Flow</div>
-      <div class="fl"><span class="g">Buy</span><span id="bP">--</span></div>
-      <div class="flow"><div class="g" id="bB" style="width:50%"></div></div>
-      <div class="fl"><span class="r">Sell</span><span id="sP">--</span></div>
-      <div class="flow"><div class="r" id="sB" style="width:50%"></div></div>
-      <div class="dr"><span class="l">Net Flow</span><span class="v" id="nF">--</span></div>
-      <div class="dr"><span class="l">A/D Line</span><span class="v" id="ad">--</span></div>
-      <div class="dr"><span class="l">Signal</span><span class="v" id="adS">--</span></div>
-    </div>
+    </form>
   </div>
 </div>
 
-<!-- AI Analysis Section -->
-<div class="section" id="sec-ai">
-  <div class="section-header" onclick="toggleSection('sec-ai')">
-    <span class="section-title">AI Analysis</span>
-    <span class="section-toggle">▼</span>
-  </div>
-  <div class="section-content">
-    <div class="cell" style="grid-column:span 2">
-      <div class="t">AI Thesis <span id="aiSt" style="color:#818cf8"></span></div>
-      <div id="aiOut" style="font-size:11px;line-height:1.5;color:#475569;max-height:200px;overflow-y:auto">Loading...</div>
+<!-- Watchlist Modal -->
+<div class="modal" id="watchlistModal">
+  <div class="modal-content modal-sm">
+    <div class="modal-header">
+      <h2>Add to Watchlist</h2>
+      <button class="modal-close" onclick="closeWatchlistModal()">×</button>
     </div>
-    <div class="cell" style="grid-column:span 2">
-      <div class="t">Trade Ideas</div>
-      <div id="tradeOut" style="font-size:11px;line-height:1.5;color:#475569;max-height:200px;overflow-y:auto">Waiting...</div>
-    </div>
-    <div class="cell" style="grid-column:span 2">
-      <div class="t">News & Catalysts</div>
-      <div id="newsOut" style="font-size:11px;line-height:1.5;color:#475569;max-height:200px;overflow-y:auto">Loading news...</div>
-    </div>
+    <form id="watchlistForm" onsubmit="saveWatchlistItem(event)">
+      <div class="form-group">
+        <label>Ticker</label>
+        <input type="text" id="watchTicker" required placeholder="TSLA">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Alert Above</label>
+          <input type="number" id="watchAbove" step="0.01" placeholder="Optional">
+        </div>
+        <div class="form-group">
+          <label>Alert Below</label>
+          <input type="number" id="watchBelow" step="0.01" placeholder="Optional">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="watchNotes" rows="2" placeholder="Why watching..."></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" onclick="closeWatchlistModal()">Cancel</button>
+        <button type="submit" class="btn-primary">Add to Watchlist</button>
+      </div>
+    </form>
   </div>
 </div>
 
-<!-- Options & Levels Section -->
-<div class="section" id="sec-options">
-  <div class="section-header" onclick="toggleSection('sec-options')">
-    <span class="section-title">Options & Levels</span>
-    <span class="section-toggle">▼</span>
-  </div>
-  <div class="section-content">
-    <div class="cell">
-      <div class="t">Options Flow</div>
-      <div class="fl"><span class="g">Calls</span><span id="cP">--</span></div>
-      <div class="flow"><div class="g" id="cB" style="width:50%"></div></div>
-      <div class="fl"><span class="r">Puts</span><span id="pP">--</span></div>
-      <div class="flow"><div class="r" id="pB" style="width:50%"></div></div>
-      <div class="dr"><span class="l">Call Vol</span><span class="v g" id="cV">--</span></div>
-      <div class="dr"><span class="l">Put Vol</span><span class="v r" id="pV">--</span></div>
-      <div class="dr"><span class="l">Net</span><span class="v" id="oN">--</span></div>
+<!-- Note Modal -->
+<div class="modal" id="noteModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="noteModalTitle">New Note</h2>
+      <button class="modal-close" onclick="closeNoteModal()">×</button>
     </div>
-    <div class="cell">
-      <div class="t">Key Levels</div>
-      <div class="dr"><span class="l">R2</span><span class="v r" id="r2">--</span></div>
-      <div class="dr"><span class="l">R1</span><span class="v r" id="r1">--</span></div>
-      <div class="dr"><span class="l">Pivot</span><span class="v" id="pv">--</span></div>
-      <div class="dr"><span class="l">S1</span><span class="v g" id="s1">--</span></div>
-      <div class="dr"><span class="l">S2</span><span class="v g" id="s2">--</span></div>
-    </div>
-    <div class="cell">
-      <div class="t">Options Metrics</div>
-      <div class="dr"><span class="l">Impl. Vol</span><span class="v p" id="iV">--</span></div>
-      <div class="dr"><span class="l">IV Rank</span><span class="v" id="iR">--</span></div>
-      <div class="dr"><span class="l">Max Pain</span><span class="v y" id="mP">--</span></div>
-      <div class="dr"><span class="l">Exp. Move</span><span class="v c" id="eM">--</span></div>
-      <div class="dr"><span class="l">P/C OI</span><span class="v" id="pO">--</span></div>
-    </div>
-    <div class="cell">
-      <div class="t">Risk Analysis</div>
-      <div class="dr"><span class="l">Stop (2xATR)</span><span class="v r" id="sp">--</span></div>
-      <div class="dr"><span class="l">Target (1:2)</span><span class="v g" id="tg">--</span></div>
-      <div class="dr"><span class="l">Risk %</span><span class="v" id="rk">--</span></div>
-      <div class="dr"><span class="l">SMA 20</span><span class="v" id="s20">--</span></div>
-      <div class="dr"><span class="l">SMA 50</span><span class="v" id="s50">--</span></div>
-    </div>
-    <div class="cell">
-      <div class="t">Performance</div>
-      <div class="g3">
-        <div class="ms"><div class="l">1D</div><div class="v" id="d1">--</div></div>
-        <div class="ms"><div class="l">1W</div><div class="v" id="w1">--</div></div>
-        <div class="ms"><div class="l">1M</div><div class="v" id="m1">--</div></div>
+    <form id="noteForm" onsubmit="saveNote(event)">
+      <input type="hidden" id="noteId">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Ticker</label>
+          <input type="text" id="noteTicker" required placeholder="TSLA">
+        </div>
+        <div class="form-group">
+          <label>Tags</label>
+          <input type="text" id="noteTags" placeholder="thesis, earnings, etc">
+        </div>
       </div>
-      <div class="dr" style="margin-top:6px"><span class="l">52W Range</span><span class="v" id="hl">--</span></div>
-      <div class="dr"><span class="l">Day Range</span><span class="v" id="dr2">--</span></div>
-    </div>
-    <div class="cell">
-      <div class="t">Top Options Strikes</div>
-      <div class="opt">
-        <div class="c"><div class="h g">Calls</div><div id="tC">--</div></div>
-        <div class="p"><div class="h r">Puts</div><div id="tP">--</div></div>
+      <div class="form-group">
+        <label>Content</label>
+        <textarea id="noteContent" rows="6" required placeholder="Your notes..."></textarea>
       </div>
-    </div>
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" onclick="closeNoteModal()">Cancel</button>
+        <button type="submit" class="btn-primary">Save Note</button>
+      </div>
+    </form>
   </div>
 </div>
 
