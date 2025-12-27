@@ -4,6 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VHunter - Signal Terminal</title>
+  <script>
+    // Debug: Show errors on screen for mobile debugging
+    window.onerror = function(msg, url, line) {
+      var d = document.getElementById('debug-log');
+      if (!d) { d = document.createElement('div'); d.id = 'debug-log'; d.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#1a1a2e;color:#f00;font:12px monospace;padding:8px;max-height:150px;overflow:auto;z-index:99999'; document.body.appendChild(d); }
+      d.innerHTML += msg + ' (line ' + line + ')<br>';
+    };
+    window.addEventListener('unhandledrejection', function(e) {
+      var d = document.getElementById('debug-log');
+      if (!d) { d = document.createElement('div'); d.id = 'debug-log'; d.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#1a1a2e;color:#f00;font:12px monospace;padding:8px;max-height:150px;overflow:auto;z-index:99999'; document.body.appendChild(d); }
+      d.innerHTML += 'Promise: ' + (e.reason?.message || e.reason) + '<br>';
+    });
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
