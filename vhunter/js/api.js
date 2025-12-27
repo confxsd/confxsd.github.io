@@ -1,5 +1,6 @@
 // API Module - handles all external API calls
 import { CONFIG } from './config.js';
+import { setStockPrice, setTickerDetails, getTickerDetails } from './cache.js';
 
 export async function fetchPolygon(path) {
   try {
@@ -35,11 +36,16 @@ export async function fetchTickerData(ticker) {
   const to = new Date();
   const fr = new Date(to - CONFIG.HISTORY_DAYS * 24 * 60 * 60 * 1000);
 
-  // First get price data
+  // Get price data
   const [prev, aggs] = await Promise.all([
     fetchPolygon(`/v2/aggs/ticker/${ticker}/prev`),
     fetchPolygon(`/v2/aggs/ticker/${ticker}/range/1/day/${fr.toISOString().split('T')[0]}/${to.toISOString().split('T')[0]}?adjusted=true&sort=asc`)
   ]);
+
+  // Cache the stock price for positions module
+  if (prev?.results?.[0]?.c) {
+    setStockPrice(ticker, prev.results[0].c);
+  }
 
   // Get spot price for strike filtering
   const spotPrice = prev?.results?.[0]?.c || aggs?.results?.[aggs.results.length - 1]?.c || 100;
@@ -51,25 +57,21 @@ export async function fetchTickerData(ticker) {
   const monthlyExp = getMonthlyExpiration(1);
   const sixMonthExp = getMonthlyExpiration(6);
 
-  // Fetch options for different expirations (wider strike range for max pain accuracy)
-  const [weeklyCalls, weeklyPuts, monthlyCalls, monthlyPuts, sixMonthCalls, sixMonthPuts] = await Promise.all([
-    fetchPolygon(`/v3/snapshot/options/${ticker}?contract_type=call&expiration_date.lte=${weeklyExp}&strike_price.gte=${minStrike}&strike_price.lte=${maxStrike}&limit=250`).catch(() => null),
-    fetchPolygon(`/v3/snapshot/options/${ticker}?contract_type=put&expiration_date.lte=${weeklyExp}&strike_price.gte=${minStrike}&strike_price.lte=${maxStrike}&limit=250`).catch(() => null),
-    fetchPolygon(`/v3/snapshot/options/${ticker}?contract_type=call&expiration_date.gt=${weeklyExp}&expiration_date.lte=${monthlyExp}&strike_price.gte=${minStrike}&strike_price.lte=${maxStrike}&limit=250`).catch(() => null),
-    fetchPolygon(`/v3/snapshot/options/${ticker}?contract_type=put&expiration_date.gt=${weeklyExp}&expiration_date.lte=${monthlyExp}&strike_price.gte=${minStrike}&strike_price.lte=${maxStrike}&limit=250`).catch(() => null),
-    fetchPolygon(`/v3/snapshot/options/${ticker}?contract_type=call&expiration_date.gt=${monthlyExp}&expiration_date.lte=${sixMonthExp}&strike_price.gte=${minStrike}&strike_price.lte=${maxStrike}&limit=250`).catch(() => null),
-    fetchPolygon(`/v3/snapshot/options/${ticker}?contract_type=put&expiration_date.gt=${monthlyExp}&expiration_date.lte=${sixMonthExp}&strike_price.gte=${minStrike}&strike_price.lte=${maxStrike}&limit=250`).catch(() => null)
+  // Fetch options - 3 calls instead of 6 (no contract_type filter)
+  const [weeklyOpts, monthlyOpts, sixMonthOpts] = await Promise.all([
+    fetchPolygon(`/v3/snapshot/options/${ticker}?expiration_date.lte=${weeklyExp}&strike_price.gte=${minStrike}&strike_price.lte=${maxStrike}&limit=250`).catch(() => null),
+    fetchPolygon(`/v3/snapshot/options/${ticker}?expiration_date.gt=${weeklyExp}&expiration_date.lte=${monthlyExp}&strike_price.gte=${minStrike}&strike_price.lte=${maxStrike}&limit=250`).catch(() => null),
+    fetchPolygon(`/v3/snapshot/options/${ticker}?expiration_date.gt=${monthlyExp}&expiration_date.lte=${sixMonthExp}&strike_price.gte=${minStrike}&strike_price.lte=${maxStrike}&limit=250`).catch(() => null)
   ]);
 
-  // Combine all options with expiration category
   const options = {
-    weekly: [...(weeklyCalls?.results || []), ...(weeklyPuts?.results || [])],
-    monthly: [...(monthlyCalls?.results || []), ...(monthlyPuts?.results || [])],
-    sixMonth: [...(sixMonthCalls?.results || []), ...(sixMonthPuts?.results || [])],
+    weekly: weeklyOpts?.results || [],
+    monthly: monthlyOpts?.results || [],
+    sixMonth: sixMonthOpts?.results || [],
     all: [
-      ...(weeklyCalls?.results || []), ...(weeklyPuts?.results || []),
-      ...(monthlyCalls?.results || []), ...(monthlyPuts?.results || []),
-      ...(sixMonthCalls?.results || []), ...(sixMonthPuts?.results || [])
+      ...(weeklyOpts?.results || []),
+      ...(monthlyOpts?.results || []),
+      ...(sixMonthOpts?.results || [])
     ]
   };
 
@@ -81,7 +83,12 @@ export async function fetchNews(ticker) {
 }
 
 export async function fetchTickerDetails(ticker) {
-  return fetchPolygon(`/v3/reference/tickers/${ticker}`).catch(() => null);
+  const cached = getTickerDetails(ticker);
+  if (cached) return cached;
+
+  const data = await fetchPolygon(`/v3/reference/tickers/${ticker}`).catch(() => null);
+  if (data) setTickerDetails(ticker, data);
+  return data;
 }
 
 function getNextFriday(addDays = 0) {

@@ -3,7 +3,7 @@ import { fetchTickerData, fetchClaude, fetchNews, fetchTickerDetails } from './a
 import { updateCharts } from './charts.js';
 import * as indicators from './indicators.js';
 import * as ui from './ui.js';
-import { buildAnalysisPrompt, buildTradePrompt } from './prompts.js';
+import { buildCombinedPrompt } from './prompts.js';
 import { calculateMaxPain } from './utils.js';
 import { updateRoute } from './router.js';
 import { addToHistory } from './history.js';
@@ -327,12 +327,13 @@ async function callAI() {
   ui.$('aiSt').textContent = skipCache ? 'refreshing...' : 'thinking...';
 
   try {
-    const [analysis, trades] = await Promise.all([
-      fetchClaude(buildAnalysisPrompt(mktData), skipCache),
-      fetchClaude(buildTradePrompt(mktData), skipCache)
-    ]);
+    // Single combined API call instead of two separate calls
+    const response = await fetchClaude(buildCombinedPrompt(mktData), skipCache);
 
-    ui.updateAI(analysis, trades, skipCache ? 'fresh' : 'done');
+    // Split response at ===TRADES=== separator
+    const [analysis, trades] = response.split('===TRADES===').map(s => s.trim());
+
+    ui.updateAI(analysis || response, trades || '', skipCache ? 'fresh' : 'done');
     skipCache = false;
   } catch (e) {
     ui.$('aiOut').textContent = 'AI Error: ' + e.message;

@@ -4,10 +4,16 @@ import * as ui from './ui.js';
 import { fetchPolygon } from './api.js';
 import { parseOptionFromNotes, buildOptionTicker } from './utils.js';
 import { switchPage } from './pages.js';
+import {
+  getStockPrice,
+  setStockPrice,
+  fetchStockPricesBatch,
+  getOptionPrice,
+  setOptionPrice,
+  buildOptionKey
+} from './cache.js';
 
 export let positionsCache = { open: [], closed: [] };
-let priceCache = {};
-let optionPriceCache = {};
 let runCallback = null;
 
 export function setRunCallback(callback) {
@@ -15,13 +21,14 @@ export function setRunCallback(callback) {
 }
 
 export async function fetchCurrentPrice(ticker) {
-  if (priceCache[ticker] && priceCache[ticker].time > Date.now() - 60000) {
-    return priceCache[ticker].price;
-  }
+  // Check shared cache first
+  const cached = getStockPrice(ticker);
+  if (cached !== null) return cached;
+
   try {
     const data = await fetchPolygon(`/v2/aggs/ticker/${ticker}/prev`);
     const price = data?.results?.[0]?.c || 0;
-    priceCache[ticker] = { price, time: Date.now() };
+    setStockPrice(ticker, price);
     return price;
   } catch {
     return 0;
@@ -29,10 +36,12 @@ export async function fetchCurrentPrice(ticker) {
 }
 
 export async function fetchOptionPrice(optInfo) {
-  const optionTicker = buildOptionTicker(optInfo);
-  if (optionPriceCache[optionTicker] && optionPriceCache[optionTicker].time > Date.now() - 60000) {
-    return optionPriceCache[optionTicker].price;
-  }
+  const cacheKey = buildOptionKey(optInfo.ticker, optInfo.expiry, optInfo.strike, optInfo.type);
+
+  // Check shared cache first
+  const cached = getOptionPrice(cacheKey);
+  if (cached !== null) return cached;
+
   try {
     const data = await fetchPolygon(`/v3/snapshot/options/${optInfo.ticker}?contract_type=${optInfo.type}&expiration_date=${optInfo.expiry}&strike_price=${optInfo.strike}&limit=1`);
     const result = data?.results?.[0];
@@ -44,10 +53,10 @@ export async function fetchOptionPrice(optInfo) {
     } else if (result?.day?.last) {
       price = result.day.last;
     }
-    optionPriceCache[optionTicker] = { price, time: Date.now() };
+    setOptionPrice(cacheKey, price);
     return price;
   } catch (e) {
-    console.error('Error fetching option price:', optionTicker, e);
+    console.error('Error fetching option price:', cacheKey, e);
     return 0;
   }
 }
@@ -82,11 +91,13 @@ export async function loadPositions() {
       optionInfo: parseOptionFromNotes(p.notes)
     }));
 
+    // Batch fetch all stock prices at once (uses shared cache)
     const stockTickers = [...new Set(positionsWithInfo.map(p =>
       p.optionInfo ? p.optionInfo.ticker : p.ticker
     ))];
-    await Promise.all(stockTickers.map(t => fetchCurrentPrice(t)));
+    const stockPrices = await fetchStockPricesBatch(stockTickers);
 
+    // Fetch option prices in parallel (uses shared cache)
     const optionPositions = positionsWithInfo.filter(p => p.optionInfo);
     const optionPrices = await Promise.all(
       optionPositions.map(p => fetchOptionPrice(p.optionInfo))
@@ -94,17 +105,17 @@ export async function loadPositions() {
 
     const optionPriceMap = {};
     optionPositions.forEach((p, i) => {
-      const key = `${p.optionInfo.ticker}-${p.optionInfo.expiry}-${p.optionInfo.strike}-${p.optionInfo.type}`;
+      const key = buildOptionKey(p.optionInfo.ticker, p.optionInfo.expiry, p.optionInfo.strike, p.optionInfo.type);
       optionPriceMap[key] = optionPrices[i];
     });
 
     positionsCache.open = positionsWithInfo.map(p => {
       const underlyingTicker = p.optionInfo ? p.optionInfo.ticker : p.ticker;
-      const currentPrice = priceCache[underlyingTicker]?.price || 0;
+      const currentPrice = stockPrices[underlyingTicker] || 0;
 
       let optionPrice = null;
       if (p.optionInfo) {
-        const key = `${p.optionInfo.ticker}-${p.optionInfo.expiry}-${p.optionInfo.strike}-${p.optionInfo.type}`;
+        const key = buildOptionKey(p.optionInfo.ticker, p.optionInfo.expiry, p.optionInfo.strike, p.optionInfo.type);
         optionPrice = optionPriceMap[key] || 0;
       }
 

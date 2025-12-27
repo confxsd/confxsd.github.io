@@ -280,6 +280,14 @@ function populateExpiryDropdown(options) {
     opt.textContent = `${exp} (${dte}d)`;
     select.appendChild(opt);
   });
+
+  // Auto-select first expiry and load chain
+  if (select.options.length > 1) {
+    select.selectedIndex = 1;
+    loadChainForExpiry();
+  } else {
+    document.getElementById('optChainBody').innerHTML = '<div class="chain-loading">No options data available</div>';
+  }
 }
 
 export function loadChainForExpiry() {
