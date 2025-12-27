@@ -3,12 +3,18 @@ import { CONFIG } from './config.js';
 
 // Get or create user ID (stored in localStorage)
 function getUserId() {
-  let userId = localStorage.getItem('vhunter_user_id');
-  if (!userId) {
-    userId = 'vhunter-serhat'; // Default user
-    localStorage.setItem('vhunter_user_id', userId);
+  try {
+    let userId = localStorage.getItem('vhunter_user_id');
+    if (!userId) {
+      userId = 'vhunter-serhat'; // Default user
+      localStorage.setItem('vhunter_user_id', userId);
+    }
+    return userId;
+  } catch (e) {
+    // localStorage may be blocked in private browsing
+    console.warn('localStorage unavailable:', e);
+    return 'vhunter-serhat';
   }
-  return userId;
 }
 
 // Force set user ID (for importing positions)
@@ -18,15 +24,23 @@ export function setUserId(id) {
 
 // Base fetch with user ID header
 async function dbFetch(path, options = {}) {
-  const response = await fetch(`${CONFIG.PROXY_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-User-Id': getUserId(),
-      ...options.headers
+  try {
+    const response = await fetch(`${CONFIG.PROXY_URL}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': getUserId(),
+        ...options.headers
+      }
+    });
+    if (!response.ok) {
+      console.error(`API error ${response.status} for ${path}`);
     }
-  });
-  return response.json();
+    return response.json();
+  } catch (e) {
+    console.error(`Fetch failed for ${path}:`, e.message);
+    throw e;
+  }
 }
 
 // ==================== POSITIONS ====================

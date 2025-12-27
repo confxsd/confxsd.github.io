@@ -266,7 +266,61 @@
     <div class="page" id="page-positions">
       <div class="page-header">
         <h1>Positions</h1>
-        <button class="btn-primary" onclick="openPositionModal()">+ New</button>
+        <div class="header-actions">
+          <button class="btn-secondary btn-ai" onclick="analyzePortfolio()" id="btnAnalyzePortfolio" title="AI Analysis">
+            <span class="ai-icon">🤖</span> Analyze
+          </button>
+          <button class="btn-primary" onclick="openPositionModal()">+ New</button>
+        </div>
+      </div>
+
+      <!-- AI Portfolio Insights -->
+      <div class="ai-insights-section" id="aiInsightsSection" style="display:none;">
+        <div class="ai-insights-header">
+          <div class="ai-insights-title">
+            <span class="ai-badge">AI</span>
+            Portfolio Insights
+            <span class="ai-status" id="portfolioAiStatus"></span>
+          </div>
+          <button class="btn-icon" onclick="hideAiInsights()" title="Close">×</button>
+        </div>
+        <div class="ai-insights-content">
+          <div class="ai-insights-grid">
+            <!-- Risk Score -->
+            <div class="insight-card risk-card">
+              <div class="insight-label">Portfolio Risk</div>
+              <div class="insight-score" id="portfolioRiskScore">--</div>
+              <div class="insight-detail" id="portfolioRiskDetail">Analyzing...</div>
+            </div>
+            <!-- Thesis Alignment -->
+            <div class="insight-card thesis-card">
+              <div class="insight-label">Thesis Alignment</div>
+              <div class="insight-value" id="thesisAlignment">--</div>
+              <div class="insight-detail" id="thesisDetail">--</div>
+            </div>
+            <!-- Time Decay Alert -->
+            <div class="insight-card time-card">
+              <div class="insight-label">Expiry Alert</div>
+              <div class="insight-value" id="expiryAlert">--</div>
+              <div class="insight-detail" id="expiryDetail">--</div>
+            </div>
+          </div>
+          <!-- AI Analysis Output -->
+          <div class="ai-analysis-box">
+            <div class="ai-analysis-section">
+              <div class="ai-section-title">Portfolio Analysis</div>
+              <div class="ai-section-content" id="portfolioAnalysis">Loading analysis...</div>
+            </div>
+            <div class="ai-analysis-section">
+              <div class="ai-section-title">Position Signals</div>
+              <div class="ai-section-content" id="positionSignals">Evaluating positions...</div>
+            </div>
+            <div class="ai-analysis-section">
+              <div class="ai-section-title">Recommendations</div>
+              <div class="ai-section-content" id="portfolioRecommendations">Generating recommendations...</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Position Stats - Compact -->

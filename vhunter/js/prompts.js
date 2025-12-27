@@ -82,3 +82,79 @@ If stock is TOO STRONG to short, say "NO SHORT EDGE - FORTRESS STOCK" and sugges
 
 Be specific with strike prices and expirations for options trades.`;
 }
+
+export function buildPortfolioPrompt(portfolioData) {
+  const { positions, marketData, totalUnrealized, totalValue } = portfolioData;
+
+  // Build position summary
+  const positionSummary = positions.map(p => {
+    const pnlPct = p.costBasis > 0 ? ((p.unrealizedPnL / p.costBasis) * 100).toFixed(1) : 0;
+    const mktData = marketData[p.underlyingTicker] || {};
+    const daysToExpiry = p.daysToExpiry !== null ? `${p.daysToExpiry}d to exp` : '';
+
+    return `- ${p.ticker} ${p.type.toUpperCase()} ${p.quantity}x @ $${p.entry_price.toFixed(2)}
+  Current: $${(p.displayPrice || 0).toFixed(2)} | P&L: ${p.unrealizedPnL >= 0 ? '+' : ''}$${p.unrealizedPnL.toFixed(0)} (${pnlPct}%)
+  ${p.optionInfo ? `Strike: $${p.optionInfo.strike} | ${daysToExpiry}` : ''}
+  ${mktData.rsi ? `RSI: ${mktData.rsi.toFixed(0)} | MACD: ${mktData.macdH >= 0 ? '+' : ''}${mktData.macdH?.toFixed(2) || '--'}` : 'Technical data loading...'}`;
+  }).join('\n');
+
+  // Calculate portfolio metrics
+  const shortBias = positions.filter(p => p.type === 'short' || p.type === 'put').length;
+  const longBias = positions.filter(p => p.type === 'long' || p.type === 'call').length;
+  const optionsCount = positions.filter(p => p.type === 'put' || p.type === 'call').length;
+  const stocksCount = positions.filter(p => p.type === 'long' || p.type === 'short').length;
+
+  // Find positions expiring soon
+  const expiringPositions = positions
+    .filter(p => p.daysToExpiry !== null && p.daysToExpiry <= 14)
+    .map(p => `${p.ticker} (${p.daysToExpiry}d)`)
+    .join(', ');
+
+  // Find winners and losers
+  const winners = positions.filter(p => p.unrealizedPnL > 0).sort((a, b) => b.unrealizedPnL - a.unrealizedPnL);
+  const losers = positions.filter(p => p.unrealizedPnL < 0).sort((a, b) => a.unrealizedPnL - b.unrealizedPnL);
+
+  return `You are a portfolio risk manager analyzing a BEARISH-BIASED trading portfolio.
+
+MACRO THESIS CONTEXT:
+- US equity rotation underway - money flowing OUT of high-multiple growth into value/defensives
+- Portfolio is positioned to profit from fragile, overvalued growth stocks declining
+- Short positions and puts are the core thesis plays
+
+PORTFOLIO OVERVIEW:
+- Total Positions: ${positions.length} (${shortBias} bearish, ${longBias} bullish)
+- Composition: ${optionsCount} options, ${stocksCount} stock positions
+- Total Unrealized P&L: ${totalUnrealized >= 0 ? '+' : ''}$${totalUnrealized.toFixed(0)}
+- Portfolio Value: ~$${totalValue.toFixed(0)}
+
+POSITIONS:
+${positionSummary}
+
+${expiringPositions ? `OPTIONS EXPIRING SOON: ${expiringPositions}` : ''}
+
+${winners.length > 0 ? `TOP WINNERS: ${winners.slice(0, 3).map(p => `${p.ticker} +$${p.unrealizedPnL.toFixed(0)}`).join(', ')}` : ''}
+${losers.length > 0 ? `BIGGEST LOSERS: ${losers.slice(0, 3).map(p => `${p.ticker} $${p.unrealizedPnL.toFixed(0)}`).join(', ')}` : ''}
+
+Analyze this portfolio and provide output in EXACTLY this format:
+
+**RISK_SCORE:** [1-10 number only, where 10=extreme risk, 1=very safe]
+
+**RISK_LEVEL:** [LOW|MEDIUM|HIGH]
+
+**THESIS_STATUS:** [ALIGNED|PARTIAL|DIVERGENT]
+
+**THESIS_DETAIL:** [One sentence on how well positions align with bearish rotation thesis]
+
+**EXPIRY_STATUS:** [SAFE|WARNING|URGENT]
+
+**EXPIRY_DETAIL:** [One sentence about time decay risk or "No imminent expirations"]
+
+**PORTFOLIO_ANALYSIS:**
+[2-3 sentences on overall portfolio health, concentration risk, and macro alignment]
+
+**POSITION_SIGNALS:**
+[For each position, one line with format: TICKER: [TAKE_PROFIT|HOLD|CUT_LOSS|ADD] - brief reason]
+
+**RECOMMENDATIONS:**
+[3-4 specific, actionable recommendations prioritized by urgency. Include specific prices/levels where applicable]`;
+}

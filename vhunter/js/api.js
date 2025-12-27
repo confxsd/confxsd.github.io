@@ -2,9 +2,14 @@
 import { CONFIG } from './config.js';
 
 export async function fetchPolygon(path) {
-  const r = await fetch(`${CONFIG.PROXY_URL}/polygon${path}`);
-  if (!r.ok) throw new Error(r.status);
-  return r.json();
+  try {
+    const r = await fetch(`${CONFIG.PROXY_URL}/polygon${path}`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+  } catch (e) {
+    console.error(`Polygon fetch failed for ${path}:`, e.message);
+    throw e;
+  }
 }
 
 export async function fetchClaude(prompt, skipCache = false) {
