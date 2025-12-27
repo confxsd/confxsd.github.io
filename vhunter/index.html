@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>VHunter - Signal Terminal</title>
   <script>
     // Debug: Show errors on screen for mobile debugging
@@ -59,41 +59,25 @@
 
   <!-- Main Content -->
   <main class="main-content">
-    <!-- Top Header - Simplified for mobile -->
+    <!-- Top Header -->
     <header class="top-header">
-      <!-- Row 1: Menu + Search -->
-      <div class="header-row header-row-search">
-        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-        <div class="header-search" id="headerSearch">
-          <input type="text" id="tk" value="TSLA" placeholder="Enter ticker...">
-          <button onclick="run()" class="btn-go">Analyze</button>
-        </div>
-        <div class="header-actions-desktop">
-          <button onclick="run(true)" class="btn-icon-action" title="Refresh AI">↻</button>
-          <button onclick="exportData()" class="btn-icon-action" title="Copy">📋</button>
-          <button onclick="shareAnalysis()" class="btn-icon-action" title="Share">🔗</button>
+      <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="header-search" id="headerSearch">
+        <input type="text" id="tk" value="TSLA" placeholder="Ticker...">
+        <button onclick="run()">GO</button>
+        <button onclick="run(true)" class="btn-refresh" title="Fresh AI">↻</button>
+        <button onclick="exportData()" class="btn-export" title="Copy">📋</button>
+        <button onclick="shareAnalysis()" class="btn-share" title="Share">🔗</button>
+      </div>
+      <div class="header-signal" id="headerSignal">
+        <div class="score n" id="sc">--</div>
+        <div class="signal-info">
+          <div class="sig n" id="sg">WAIT</div>
+          <div class="bias" id="bi">--</div>
         </div>
       </div>
-      <!-- Row 2: Signal Display -->
-      <div class="header-row header-row-signal" id="headerSignal">
-        <div class="signal-display">
-          <div class="score n" id="sc">--</div>
-          <div class="signal-info">
-            <div class="sig n" id="sg">WAIT</div>
-            <div class="bias" id="bi">--</div>
-          </div>
-        </div>
-        <div class="header-actions-mobile">
-          <button onclick="run(true)" class="btn-icon-sm" title="Refresh">↻</button>
-          <button onclick="exportData()" class="btn-icon-sm" title="Copy">📋</button>
-          <button onclick="shareAnalysis()" class="btn-icon-sm" title="Share">🔗</button>
-        </div>
-        <span id="st" class="status-text"></span>
-      </div>
-      <!-- Row 3: History Strip -->
-      <div class="header-row header-row-history">
-        <div class="header-history" id="historyStrip"></div>
-      </div>
+      <div class="header-history" id="historyStrip"></div>
+      <span id="st" class="status-text"></span>
     </header>
 
     <!-- Page: Analyze -->

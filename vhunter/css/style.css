@@ -135,13 +135,15 @@ body {
 }
 
 /* ============================================
-   TOP HEADER - Simplified Layout
+   TOP HEADER
    ============================================ */
 
 .top-header {
   display: flex;
-  flex-direction: column;
-  gap: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 16px;
   background: #fff;
   border-bottom: 1px solid #e2e8f0;
   position: sticky;
@@ -149,60 +151,32 @@ body {
   z-index: 100;
 }
 
-.header-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
-}
-
-.header-row-search {
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.header-row-signal {
-  background: #f8fafc;
-}
-
-.header-row-history {
-  padding: 6px 16px;
-  border-top: 1px solid #f1f5f9;
-}
-
-.header-row-history:has(.header-history:empty) {
-  display: none;
-}
-
 .menu-btn {
   display: none;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   color: #64748b;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 18px;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
 }
 
 .header-search {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex: 1;
+  gap: 6px;
 }
 
 .header-search input {
   border: 1px solid #e2e8f0;
-  padding: 10px 14px;
-  flex: 1;
-  min-width: 80px;
-  max-width: 140px;
-  font-size: 14px;
-  border-radius: 8px;
+  padding: 8px 12px;
+  width: 90px;
+  font-size: 13px;
+  border-radius: 6px;
   font-weight: 600;
   font-family: inherit;
   background: #f8fafc;
@@ -214,70 +188,29 @@ body {
   background: #fff;
 }
 
-.btn-go {
+.header-search button,
+.top-header button {
   background: #818cf8;
   color: #fff;
   border: none;
-  padding: 10px 18px;
-  font-size: 14px;
+  padding: 8px 14px;
+  font-size: 12px;
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   font-family: inherit;
-  white-space: nowrap;
 }
 
-.btn-go:hover { background: #6366f1; }
+.btn-refresh { background: #f59e0b !important; }
+.btn-export { background: #06b6d4 !important; }
+.btn-export:hover { background: #0891b2 !important; }
+.btn-share { background: #8b5cf6 !important; }
+.btn-share:hover { background: #7c3aed !important; }
 
-.header-actions-desktop {
-  display: flex;
-  gap: 6px;
-}
-
-.btn-icon-action {
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  color: #64748b;
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
+.header-signal {
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-}
-
-.btn-icon-action:hover {
-  background: #e2e8f0;
-  color: #475569;
-}
-
-.header-actions-mobile {
-  display: none;
-  gap: 6px;
-  margin-left: auto;
-}
-
-.btn-icon-sm {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  color: #64748b;
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.signal-display {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .score { font-size: 28px; font-weight: 800; }
@@ -287,16 +220,16 @@ body {
 
 .signal-info { display: flex; flex-direction: column; gap: 2px; }
 
-.sig { font-size: 11px; font-weight: 700; padding: 5px 12px; border-radius: 4px; }
+.sig { font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 4px; }
 .sig.b { background: #d1fae5; color: #059669; }
 .sig.s { background: #fee2e2; color: #dc2626; }
 .sig.n { background: #fef3c7; color: #d97706; }
 
-.bias { font-size: 11px; color: #64748b; }
+.bias { font-size: 10px; color: #64748b; }
 
 .header-history {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
   overflow-x: auto;
   padding: 4px 0;
@@ -305,7 +238,7 @@ body {
 
 .header-history:empty { display: none; }
 
-.status-text { font-size: 12px; color: #94a3b8; margin-left: auto; }
+.status-text { font-size: 11px; color: #94a3b8; margin-left: auto; }
 
 /* History Items */
 .history-item {
@@ -1322,9 +1255,9 @@ form { padding: 20px; }
 
 /* Mobile: < 768px */
 @media (max-width: 768px) {
-  body { font-size: 14px; }
+  body { font-size: 13px; }
 
-  /* Prevent any overflow */
+  /* Prevent overflow */
   .main-content,
   .page,
   .section,
@@ -1334,83 +1267,64 @@ form { padding: 20px; }
     overflow-x: hidden;
   }
 
-  /* Mobile-optimized header - clean stacked layout */
-  .header-row {
-    padding: 12px 16px;
-    max-width: 100%;
-  }
-
-  .header-row-search {
-    gap: 10px;
-  }
-
-  .header-actions-desktop {
-    display: none;
-  }
-
-  .header-actions-mobile {
-    display: flex;
-  }
-
-  .btn-icon-sm {
-    width: 40px;
-    height: 40px;
-    font-size: 16px;
+  /* Mobile header */
+  .top-header {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
   }
 
   .header-search {
+    order: 1;
     flex: 1;
     min-width: 0;
-    max-width: 100%;
   }
 
   .header-search input {
     flex: 1;
-    min-width: 0;
+    min-width: 60px;
+    width: auto;
     font-size: 16px;
-    padding: 10px 14px;
-    border-radius: 8px;
+    padding: 10px 12px;
   }
 
-  .btn-go {
-    padding: 10px 16px;
-    font-size: 14px;
-    border-radius: 8px;
-    flex-shrink: 0;
+  .header-search button {
+    padding: 10px 12px;
+    font-size: 12px;
   }
 
-  .header-row-signal {
-    padding: 12px 14px;
+  /* Hide extra buttons on mobile */
+  .btn-refresh,
+  .btn-export,
+  .btn-share {
+    display: none;
   }
 
-  .signal-display {
-    gap: 10px;
+  .header-signal {
+    order: 2;
+    gap: 8px;
   }
 
-  .score { font-size: 28px; }
-  .sig { font-size: 12px; padding: 5px 10px; border-radius: 4px; }
-  .bias { font-size: 11px; }
-
-  .header-row-history {
-    padding: 8px 14px;
-  }
+  .score { font-size: 24px; }
+  .sig { font-size: 10px; padding: 4px 8px; }
+  .bias { font-size: 10px; }
 
   .header-history {
-    gap: 8px;
-    max-width: 100%;
+    order: 3;
+    width: 100%;
+    flex: none;
+    gap: 6px;
   }
 
   .history-item {
-    font-size: 11px;
-    padding: 8px 10px;
-    border-radius: 6px;
-    flex-shrink: 0;
+    font-size: 10px;
+    padding: 6px 8px;
   }
 
-  .history-item .ticker { font-size: 11px; }
-  .history-item .time { font-size: 9px; }
-
-  .status-text { font-size: 11px; }
+  .status-text {
+    order: 4;
+    font-size: 10px;
+  }
 
   /* Status bar */
   .sbar { grid-template-columns: repeat(2, 1fr); }
