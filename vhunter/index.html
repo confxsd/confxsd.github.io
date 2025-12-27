@@ -395,13 +395,73 @@
     <div class="page" id="page-watchlist">
       <div class="page-header">
         <h1>Watchlist</h1>
-        <button class="btn-primary" onclick="openWatchlistModal()">+ Add Ticker</button>
+        <div class="header-actions">
+          <button class="btn-secondary btn-hunt" onclick="huntOptions()" id="btnHunt" title="Scan all tickers for opportunities">
+            <span class="hunt-icon">🎯</span> Hunt
+          </button>
+          <button class="btn-primary" onclick="openWatchlistModal()">+ Add</button>
+        </div>
       </div>
-      <div class="watchlist-grid" id="watchlistItems">
+
+      <!-- Hunt Results Section (hidden until hunt runs) -->
+      <div class="hunt-results-section" id="huntResultsSection" style="display:none;">
+        <div class="hunt-header">
+          <div class="hunt-title">
+            <span class="hunt-badge">🎯</span>
+            Hunt Results
+            <span class="hunt-status" id="huntStatus"></span>
+          </div>
+          <button class="btn-icon" onclick="hideHuntResults()" title="Close">×</button>
+        </div>
+
+        <!-- AI Hunt Summary -->
+        <div class="hunt-ai-summary" id="huntAiSummary">
+          <div class="hunt-ai-loading">Click "Hunt" to scan watchlist for opportunities...</div>
+        </div>
+
+        <!-- Hunt Metrics Grid -->
+        <div class="hunt-grid" id="huntGrid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Quick Stats (shown after hunt) -->
+      <div class="hunt-quick-stats" id="huntQuickStats" style="display:none;">
+        <div class="hunt-stat">
+          <div class="hunt-stat-label">Best Setup</div>
+          <div class="hunt-stat-value" id="bestSetup">--</div>
+        </div>
+        <div class="hunt-stat">
+          <div class="hunt-stat-label">High IV</div>
+          <div class="hunt-stat-value" id="highIvCount">--</div>
+        </div>
+        <div class="hunt-stat">
+          <div class="hunt-stat-label">Bearish Flow</div>
+          <div class="hunt-stat-value" id="bearishFlowCount">--</div>
+        </div>
+        <div class="hunt-stat">
+          <div class="hunt-stat-label">Near Max Pain</div>
+          <div class="hunt-stat-value" id="nearMaxPainCount">--</div>
+        </div>
+      </div>
+
+      <!-- Watchlist Items -->
+      <div class="watchlist-compact" id="watchlistItems">
         <div class="empty-state">
           <div class="empty-icon">👁</div>
           <div class="empty-text">Your watchlist is empty</div>
-          <div class="empty-hint">Add tickers to track</div>
+          <div class="empty-hint">Add tickers to hunt options</div>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="hunt-legend" id="huntLegend" style="display:none;">
+        <div class="legend-title">Metrics Guide</div>
+        <div class="legend-items">
+          <span><b>IV-HV</b> Vol premium (+ = expensive)</span>
+          <span><b>P/C</b> Put/Call ratio (>1 = bearish)</span>
+          <span><b>MP%</b> Distance to max pain</span>
+          <span><b>Score</b> Opportunity rating</span>
         </div>
       </div>
     </div>

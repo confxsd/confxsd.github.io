@@ -804,8 +804,10 @@ window.hideAiInsights = function() {
 };
 
 // ============================================
-// WATCHLIST
+// WATCHLIST & OPTIONS HUNT
 // ============================================
+
+let huntCache = {}; // Cache for hunt results
 
 async function loadWatchlist() {
   try {
@@ -825,31 +827,360 @@ function renderWatchlist() {
       <div class="empty-state">
         <div class="empty-icon">👁</div>
         <div class="empty-text">Your watchlist is empty</div>
-        <div class="empty-hint">Add tickers to track</div>
+        <div class="empty-hint">Add tickers to hunt options</div>
       </div>
     `;
+    document.getElementById('huntLegend').style.display = 'none';
     return;
   }
 
-  container.innerHTML = watchlistCache.map(w => `
-    <div class="watchlist-card">
-      <div class="watchlist-ticker">
-        <span>${w.ticker}</span>
-        <button class="btn-secondary btn-sm" onclick="analyzeWatchlistItem('${w.ticker}')">📊</button>
+  // Show legend when there are items
+  document.getElementById('huntLegend').style.display = 'block';
+
+  container.innerHTML = `
+    <div class="watchlist-table">
+      <div class="watchlist-header">
+        <span class="col-ticker">Ticker</span>
+        <span class="col-price">Price</span>
+        <span class="col-metrics">IV-HV</span>
+        <span class="col-metrics">P/C</span>
+        <span class="col-metrics">MP%</span>
+        <span class="col-score">Score</span>
+        <span class="col-actions">Actions</span>
       </div>
-      ${w.alert_above || w.alert_below ? `
-        <div class="watchlist-alerts">
-          ${w.alert_above ? `<span>▲ $${w.alert_above}</span>` : ''}
-          ${w.alert_below ? `<span>▼ $${w.alert_below}</span>` : ''}
-        </div>
-      ` : ''}
-      ${w.notes ? `<div class="watchlist-notes">${w.notes}</div>` : ''}
-      <div class="watchlist-actions">
-        <button class="btn-secondary btn-sm btn-danger" onclick="removeWatchlistItem('${w.id}')">Remove</button>
-      </div>
+      ${watchlistCache.map(w => {
+        const h = huntCache[w.ticker] || {};
+        const hasData = !!h.spotPrice;
+        const scoreClass = h.score >= 70 ? 'hot' : h.score >= 50 ? 'warm' : '';
+        const ivHvClass = h.ivHvDiff > 10 ? 'high' : h.ivHvDiff < -5 ? 'low' : '';
+        const pcClass = h.pcRatio > 1.2 ? 'bearish' : h.pcRatio < 0.8 ? 'bullish' : '';
+        const chgClass = h.changePct >= 0 ? 'positive' : 'negative';
+
+        return `
+          <div class="watchlist-row ${scoreClass}" data-ticker="${w.ticker}">
+            <span class="col-ticker">
+              <strong>${w.ticker}</strong>
+              ${w.notes ? `<small class="ticker-note" title="${w.notes}">${w.notes.slice(0, 20)}${w.notes.length > 20 ? '...' : ''}</small>` : ''}
+            </span>
+            <span class="col-price">
+              ${hasData ? `
+                <span class="price-val">$${h.spotPrice.toFixed(2)}</span>
+                <span class="price-chg ${chgClass}">${h.changePct >= 0 ? '+' : ''}${h.changePct.toFixed(1)}%</span>
+              ` : '<span class="loading-dot">--</span>'}
+            </span>
+            <span class="col-metrics ${ivHvClass}">
+              ${hasData ? (h.ivHvDiff >= 0 ? '+' : '') + h.ivHvDiff.toFixed(0) + '%' : '--'}
+            </span>
+            <span class="col-metrics ${pcClass}">
+              ${hasData ? h.pcRatio.toFixed(2) : '--'}
+            </span>
+            <span class="col-metrics">
+              ${hasData && h.maxPainDist ? (h.maxPainDist >= 0 ? '+' : '') + h.maxPainDist.toFixed(1) + '%' : '--'}
+            </span>
+            <span class="col-score">
+              ${hasData ? `<span class="score-badge ${scoreClass}">${h.score}</span>` : '--'}
+            </span>
+            <span class="col-actions">
+              <button class="btn-icon" onclick="analyzeWatchlistItem('${w.ticker}')" title="Analyze">📊</button>
+              <button class="btn-icon" onclick="openOptionsForTicker('${w.ticker}')" title="Options">📈</button>
+              <button class="btn-icon btn-danger" onclick="removeWatchlistItem('${w.id}')" title="Remove">✕</button>
+            </span>
+          </div>
+        `;
+      }).join('')}
     </div>
-  `).join('');
+  `;
 }
+
+// Hunt function - batch analyze all watchlist tickers
+window.huntOptions = async function() {
+  if (!watchlistCache.length) {
+    alert('Add tickers to watchlist first');
+    return;
+  }
+
+  const btn = document.getElementById('btnHunt');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<span class="hunt-icon">⏳</span> Hunting...';
+  btn.disabled = true;
+
+  document.getElementById('huntResultsSection').style.display = 'block';
+  document.getElementById('huntQuickStats').style.display = 'flex';
+  document.getElementById('huntStatus').textContent = 'scanning...';
+  document.getElementById('huntAiSummary').innerHTML = '<div class="hunt-ai-loading">Analyzing options data...</div>';
+  document.getElementById('huntGrid').innerHTML = '';
+
+  try {
+    // Fetch data for all tickers in parallel
+    const tickers = watchlistCache.map(w => w.ticker);
+    const results = await Promise.all(tickers.map(ticker => fetchHuntData(ticker)));
+
+    // Process results
+    const huntResults = [];
+    results.forEach((data, i) => {
+      if (data) {
+        huntCache[tickers[i]] = data;
+        huntResults.push({ ticker: tickers[i], ...data });
+      }
+    });
+
+    // Sort by opportunity score (highest first)
+    huntResults.sort((a, b) => b.score - a.score);
+
+    // Update quick stats
+    updateHuntQuickStats(huntResults);
+
+    // Render hunt grid
+    renderHuntGrid(huntResults);
+
+    // Re-render watchlist with data
+    renderWatchlist();
+
+    // Run AI analysis
+    await runHuntAiAnalysis(huntResults);
+
+    document.getElementById('huntStatus').textContent = 'done';
+
+  } catch (e) {
+    console.error('Hunt failed:', e);
+    document.getElementById('huntStatus').textContent = 'error';
+    document.getElementById('huntAiSummary').innerHTML = `<div class="hunt-ai-error">Hunt failed: ${e.message}</div>`;
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+};
+
+// Fetch and calculate hunt metrics for a single ticker
+async function fetchHuntData(ticker) {
+  try {
+    const { prev, aggs, options } = await fetchTickerData(ticker);
+
+    if (!prev?.results?.[0] || !options?.all?.length) return null;
+
+    const spot = prev.results[0];
+    const spotPrice = spot.c;
+    const changePct = ((spot.c - spot.o) / spot.o) * 100;
+
+    // Calculate HV from aggs
+    let hv30 = 0;
+    if (aggs?.results?.length > 0) {
+      const prices = aggs.results.map(d => d.c);
+      hv30 = calculateHistoricalVolatility(prices, 30);
+    }
+
+    // Process options
+    let callVol = 0, putVol = 0, callOI = 0, putOI = 0;
+    let ivSum = 0, ivCount = 0;
+
+    options.all.forEach(o => {
+      const type = o.details?.contract_type;
+      const vol = o.day?.volume || 0;
+      const oi = o.open_interest || 0;
+      const iv = o.implied_volatility || 0;
+
+      if (type === 'call') { callVol += vol; callOI += oi; }
+      else { putVol += vol; putOI += oi; }
+
+      if (iv > 0) { ivSum += iv; ivCount++; }
+    });
+
+    const avgIV = ivCount > 0 ? (ivSum / ivCount) * 100 : 0;
+    const pcRatio = putVol / (callVol || 1);
+    const pcOiRatio = putOI / (callOI || 1);
+    const ivHvDiff = avgIV - hv30;
+
+    // Calculate max pain for monthly
+    const monthlyMaxPain = calculateMaxPain(options.monthly);
+    const maxPainDist = monthlyMaxPain ? ((monthlyMaxPain - spotPrice) / spotPrice) * 100 : null;
+
+    // Expected move (weekly)
+    const expMove = spotPrice * (avgIV / 100) * Math.sqrt(5 / 365);
+    const expMovePct = (expMove / spotPrice) * 100;
+
+    // Calculate opportunity score (0-100)
+    // Higher = better short/put opportunity
+    let score = 50;
+
+    // IV premium = good for selling premium / buying puts (IV expensive)
+    if (ivHvDiff > 15) score += 15;
+    else if (ivHvDiff > 5) score += 8;
+    else if (ivHvDiff < -10) score -= 10;
+
+    // Bearish flow (high P/C ratio)
+    if (pcRatio > 1.5) score += 15;
+    else if (pcRatio > 1.2) score += 10;
+    else if (pcRatio < 0.7) score -= 10;
+
+    // High P/C OI (put heavy positioning)
+    if (pcOiRatio > 1.3) score += 8;
+    else if (pcOiRatio < 0.7) score -= 5;
+
+    // Near or above max pain (likely to pull down)
+    if (maxPainDist !== null) {
+      if (maxPainDist < -5) score += 12; // Price above max pain = pullback likely
+      else if (maxPainDist > 5) score -= 5; // Price below max pain
+    }
+
+    // High volatility environment
+    if (avgIV > 60) score += 8;
+    else if (avgIV > 40) score += 4;
+
+    // Recent weakness (negative change)
+    if (changePct < -3) score += 8;
+    else if (changePct < -1) score += 4;
+    else if (changePct > 3) score -= 8;
+
+    score = Math.max(0, Math.min(100, score));
+
+    return {
+      spotPrice,
+      changePct,
+      avgIV,
+      hv30,
+      ivHvDiff,
+      pcRatio,
+      pcOiRatio,
+      callVol,
+      putVol,
+      callOI,
+      putOI,
+      maxPainDist,
+      monthlyMaxPain,
+      expMove,
+      expMovePct,
+      score,
+      sentiment: pcRatio > 1.2 ? 'Bearish' : pcRatio < 0.8 ? 'Bullish' : 'Neutral'
+    };
+  } catch (e) {
+    console.error(`Hunt error for ${ticker}:`, e);
+    return null;
+  }
+}
+
+function updateHuntQuickStats(results) {
+  if (!results.length) return;
+
+  // Best setup (highest score)
+  const best = results[0];
+  document.getElementById('bestSetup').textContent = best.ticker;
+  document.getElementById('bestSetup').className = 'hunt-stat-value hot';
+
+  // Count high IV (IV-HV > 10)
+  const highIv = results.filter(r => r.ivHvDiff > 10).length;
+  document.getElementById('highIvCount').textContent = highIv + '/' + results.length;
+  document.getElementById('highIvCount').className = 'hunt-stat-value' + (highIv > 0 ? ' high' : '');
+
+  // Count bearish flow (P/C > 1.2)
+  const bearish = results.filter(r => r.pcRatio > 1.2).length;
+  document.getElementById('bearishFlowCount').textContent = bearish + '/' + results.length;
+  document.getElementById('bearishFlowCount').className = 'hunt-stat-value' + (bearish > 0 ? ' bearish' : '');
+
+  // Count near max pain (<5% away)
+  const nearMp = results.filter(r => r.maxPainDist !== null && Math.abs(r.maxPainDist) < 5).length;
+  document.getElementById('nearMaxPainCount').textContent = nearMp + '/' + results.length;
+}
+
+function renderHuntGrid(results) {
+  const container = document.getElementById('huntGrid');
+
+  if (!results.length) {
+    container.innerHTML = '<div class="hunt-empty">No data available</div>';
+    return;
+  }
+
+  container.innerHTML = results.map(r => {
+    const scoreClass = r.score >= 70 ? 'hot' : r.score >= 50 ? 'warm' : 'cold';
+    const sentimentClass = r.sentiment === 'Bearish' ? 'bearish' : r.sentiment === 'Bullish' ? 'bullish' : '';
+
+    return `
+      <div class="hunt-card ${scoreClass}">
+        <div class="hunt-card-header">
+          <span class="hunt-card-ticker">${r.ticker}</span>
+          <span class="hunt-card-score">${r.score}</span>
+        </div>
+        <div class="hunt-card-price">
+          $${r.spotPrice.toFixed(2)}
+          <span class="${r.changePct >= 0 ? 'positive' : 'negative'}">${r.changePct >= 0 ? '+' : ''}${r.changePct.toFixed(1)}%</span>
+        </div>
+        <div class="hunt-card-metrics">
+          <div class="hunt-metric">
+            <span class="hunt-metric-label">IV</span>
+            <span class="hunt-metric-value">${r.avgIV.toFixed(0)}%</span>
+          </div>
+          <div class="hunt-metric">
+            <span class="hunt-metric-label">IV-HV</span>
+            <span class="hunt-metric-value ${r.ivHvDiff > 10 ? 'high' : ''}">${r.ivHvDiff >= 0 ? '+' : ''}${r.ivHvDiff.toFixed(0)}%</span>
+          </div>
+          <div class="hunt-metric">
+            <span class="hunt-metric-label">P/C</span>
+            <span class="hunt-metric-value ${sentimentClass}">${r.pcRatio.toFixed(2)}</span>
+          </div>
+          <div class="hunt-metric">
+            <span class="hunt-metric-label">Exp Move</span>
+            <span class="hunt-metric-value">±${r.expMovePct.toFixed(1)}%</span>
+          </div>
+        </div>
+        <div class="hunt-card-flow">
+          <span class="flow-label ${sentimentClass}">${r.sentiment}</span>
+          <span class="flow-detail">C:${formatNum(r.callVol)} P:${formatNum(r.putVol)}</span>
+        </div>
+        ${r.maxPainDist !== null ? `
+          <div class="hunt-card-mp">
+            Max Pain: $${r.monthlyMaxPain.toFixed(0)} (${r.maxPainDist >= 0 ? '+' : ''}${r.maxPainDist.toFixed(1)}%)
+          </div>
+        ` : ''}
+        <div class="hunt-card-actions">
+          <button class="btn-sm" onclick="analyzeWatchlistItem('${r.ticker}')">Analyze</button>
+          <button class="btn-sm" onclick="openOptionsForTicker('${r.ticker}')">Options</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function runHuntAiAnalysis(results) {
+  if (!results.length) return;
+
+  const summaryEl = document.getElementById('huntAiSummary');
+  summaryEl.innerHTML = '<div class="hunt-ai-loading">AI analyzing opportunities...</div>';
+
+  // Build prompt with hunt data
+  const dataStr = results.slice(0, 5).map(r => {
+    return `${r.ticker}: $${r.spotPrice.toFixed(2)} (${r.changePct >= 0 ? '+' : ''}${r.changePct.toFixed(1)}%) | IV:${r.avgIV.toFixed(0)}% IV-HV:${r.ivHvDiff >= 0 ? '+' : ''}${r.ivHvDiff.toFixed(0)}% | P/C:${r.pcRatio.toFixed(2)} | MaxPain:$${r.monthlyMaxPain?.toFixed(0) || '--'} | Score:${r.score}`;
+  }).join('\n');
+
+  const prompt = `You are a quant options trader hunting for SHORT opportunities during US equity rotation from growth to value.
+
+WATCHLIST OPTIONS SCAN (top 5 by opportunity score):
+${dataStr}
+
+SCORING LOGIC: Higher score = better short/put opportunity based on IV premium, bearish flow, and max pain positioning.
+
+Provide a BRIEF hunt summary (3-4 sentences max):
+1. Which ticker(s) have the best SHORT setup and why?
+2. Any concerning signals (bullish flow, low IV)?
+3. One specific trade recommendation (ticker, strike range, expiry window)
+
+Be direct and actionable. No preamble.`;
+
+  try {
+    const analysis = await fetchClaude(prompt, true);
+    summaryEl.innerHTML = `<div class="hunt-ai-content">${analysis}</div>`;
+  } catch (e) {
+    summaryEl.innerHTML = `<div class="hunt-ai-error">AI analysis failed: ${e.message}</div>`;
+  }
+}
+
+window.hideHuntResults = function() {
+  document.getElementById('huntResultsSection').style.display = 'none';
+};
+
+window.openOptionsForTicker = function(ticker) {
+  document.getElementById('optTicker').value = ticker;
+  switchPage('options');
+  loadOptionsData();
+};
 
 window.openWatchlistModal = function() {
   document.getElementById('watchTicker').value = ui.$('tk').value || '';
