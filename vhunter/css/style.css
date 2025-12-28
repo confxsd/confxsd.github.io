@@ -43,7 +43,7 @@ body {
   left: 0;
   height: 100vh;
   z-index: 200;
-  transition: transform 0.3s ease;
+  transition: transform 0.25s ease;
 }
 
 .sidebar-header {
@@ -113,14 +113,21 @@ body {
 }
 
 .sidebar-overlay {
-  display: none;
   position: fixed;
   top: 0;
-  left: 200px;
+  left: 0;
   right: 0;
   bottom: 0;
   background: rgba(0,0,0,0.5);
   z-index: 199;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+  visibility: visible;
 }
 
 /* ============================================
@@ -1355,8 +1362,6 @@ form { padding: 20px; }
   }
 
   .sidebar-close { display: block; }
-
-  .sidebar-overlay.active { display: block; }
 
   .main-content { margin-left: 0; }
 
