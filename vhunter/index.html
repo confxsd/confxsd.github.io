@@ -43,6 +43,10 @@
         <span class="nav-icon">📈</span>
         <span class="nav-label">Options</span>
       </a>
+      <a href="#" class="nav-item" data-page="feed" onclick="event.preventDefault(); switchPage('feed')">
+        <span class="nav-icon">📡</span>
+        <span class="nav-label">Feed</span>
+      </a>
       <a href="#" class="nav-item" data-page="positions" onclick="event.preventDefault(); switchPage('positions')">
         <span class="nav-icon">💼</span>
         <span class="nav-label">Positions</span>
@@ -277,6 +281,49 @@
               <div class="c"><div class="h g">Calls</div><div id="tC">--</div></div>
               <div class="p"><div class="h r">Puts</div><div id="tP">--</div></div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page: Feed -->
+    <div class="page" id="page-feed">
+      <div class="page-header">
+        <h1>Feed</h1>
+        <button class="btn-primary" onclick="openFeedModal()">+ Add</button>
+      </div>
+
+      <div class="feed-container">
+        <!-- Feed Stats -->
+        <div class="feed-stats" id="feedStats">
+          <div class="feed-stat">
+            <div class="feed-stat-value" id="feedTotal">0</div>
+            <div class="feed-stat-label">Signals</div>
+          </div>
+          <div class="feed-stat">
+            <div class="feed-stat-value" id="feedRaw">0</div>
+            <div class="feed-stat-label">Unprocessed</div>
+          </div>
+          <div class="feed-stat">
+            <div class="feed-stat-value" id="feedBearish">0</div>
+            <div class="feed-stat-label">Bearish</div>
+          </div>
+        </div>
+
+        <!-- Feed Filters -->
+        <div class="feed-filters">
+          <button class="filter-btn active" onclick="filterFeed('all')">All</button>
+          <button class="filter-btn" onclick="filterFeed('tweet')">Tweets</button>
+          <button class="filter-btn" onclick="filterFeed('blog')">Blogs</button>
+          <button class="filter-btn" onclick="filterFeed('chart')">Charts</button>
+        </div>
+
+        <!-- Feed List -->
+        <div class="feed-list" id="feedList">
+          <div class="empty-state">
+            <div class="empty-icon">📡</div>
+            <div class="empty-text">No signals yet</div>
+            <div class="empty-hint">Tap + to capture tweets, charts, or insights</div>
           </div>
         </div>
       </div>
@@ -967,6 +1014,81 @@
     </form>
   </div>
 </div>
+
+<!-- Feed Modal -->
+<div class="modal" id="feedModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="feedModalTitle">New Signal</h2>
+      <button class="modal-close" onclick="closeFeedModal()">×</button>
+    </div>
+    <form id="feedForm" onsubmit="saveFeedItem(event)">
+      <input type="hidden" id="feedId">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Type</label>
+          <select id="feedType">
+            <option value="tweet">Tweet</option>
+            <option value="blog">Blog</option>
+            <option value="chart">Chart</option>
+            <option value="link">Link</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Author/Source</label>
+          <input type="text" id="feedAuthor" placeholder="@handle or source">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Content</label>
+        <textarea id="feedContent" rows="4" required placeholder="Paste tweet, insight, or notes..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Images</label>
+        <input type="file" id="feedImages" accept="image/*" multiple onchange="handleImageUpload(event)">
+        <div class="image-preview" id="feedImagePreview"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tickers</label>
+          <input type="text" id="feedTickers" placeholder="IONQ, RGTI, etc">
+        </div>
+        <div class="form-group">
+          <label>URL (optional)</label>
+          <input type="url" id="feedUrl" placeholder="https://...">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Sentiment</label>
+          <select id="feedSentiment">
+            <option value="">--</option>
+            <option value="bullish">Bullish</option>
+            <option value="bearish">Bearish</option>
+            <option value="neutral">Neutral</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Signal Type</label>
+          <select id="feedSignalType">
+            <option value="">--</option>
+            <option value="thesis">Thesis</option>
+            <option value="catalyst">Catalyst</option>
+            <option value="technical">Technical</option>
+            <option value="flow">Flow</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" onclick="closeFeedModal()">Cancel</button>
+        <button type="submit" class="btn-primary">Save Signal</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- FAB Button (Mobile) -->
+<button class="fab" id="fabButton" onclick="openFeedModal()">+</button>
 
 <script type="module" src="js/app.js"></script>
 </body>

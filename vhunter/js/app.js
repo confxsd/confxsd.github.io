@@ -7,6 +7,7 @@ import { switchPage, registerPageLoaders, restoreCollapsedSections, getCurrentPa
 import { loadPositions, setRunCallback as setPositionsRunCallback } from './positions.js';
 import { loadWatchlist, setRunCallback as setWatchlistRunCallback } from './watchlist.js';
 import { loadNotes, setRunCallback as setNotesRunCallback } from './notes.js';
+import { loadFeed, setRunCallback as setFeedRunCallback } from './feed.js';
 import { run } from './analysis.js';
 import { loadOptionsData } from './options-page.js';
 
@@ -18,13 +19,15 @@ setSearchCallback(() => run());
 setPositionsRunCallback(() => run());
 setWatchlistRunCallback(() => run());
 setNotesRunCallback(() => run());
+setFeedRunCallback(() => run());
 
 // Register page loaders
 registerPageLoaders({
   positions: loadPositions,
   watchlist: loadWatchlist,
   notes: loadNotes,
-  options: loadOptionsData
+  options: loadOptionsData,
+  feed: loadFeed
 });
 
 // Initialize router with change handler

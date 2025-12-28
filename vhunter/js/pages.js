@@ -52,9 +52,9 @@ export function switchPage(page, shouldUpdateRoute = true) {
   }
 
   // Load data for the page
-  if (page === 'positions' && pageLoaders.positions) pageLoaders.positions();
-  else if (page === 'watchlist' && pageLoaders.watchlist) pageLoaders.watchlist();
-  else if (page === 'notes' && pageLoaders.notes) pageLoaders.notes();
+  if (pageLoaders[page]) {
+    pageLoaders[page]();
+  }
 
   // Close sidebar on mobile after navigation
   if (window.innerWidth <= 1024) {
