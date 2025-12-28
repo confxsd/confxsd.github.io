@@ -2,6 +2,7 @@
 import { CONFIG } from './config.js';
 
 let feedItems = [];
+let currentThesis = null;
 let runCallback = null;
 
 export function setRunCallback(cb) {
@@ -22,10 +23,9 @@ async function feedFetch(path, options = {}) {
   return response.json();
 }
 
-export async function getFeedItems(status = null, ticker = null) {
+export async function getFeedItems(status = null) {
   let query = '/api/feed?limit=100';
   if (status) query += `&status=${status}`;
-  if (ticker) query += `&ticker=${ticker}`;
   return feedFetch(query);
 }
 
@@ -60,6 +60,122 @@ export async function uploadImage(file) {
   return response.json();
 }
 
+// Extract insights from unprocessed feeds
+export async function extractInsights() {
+  const btn = document.getElementById('extractBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Extracting...';
+  }
+
+  try {
+    const result = await feedFetch('/api/feed/extract', { method: 'POST' });
+    if (result.processed > 0) {
+      showToast(`Extracted ${result.processed} insights`);
+      loadFeed();
+    } else {
+      showToast(result.message || 'No items to process');
+    }
+  } catch (e) {
+    showToast('Extract failed: ' + e.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Extract';
+    }
+  }
+}
+
+// Update thesis with processed insights
+export async function updateThesis() {
+  const btn = document.getElementById('updateThesisBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Updating...';
+  }
+
+  try {
+    const result = await feedFetch('/api/thesis/update', { method: 'POST' });
+    if (result.success) {
+      showToast(`Thesis v${result.version} updated`);
+      loadThesis();
+    } else {
+      showToast(result.message || 'Update failed');
+    }
+  } catch (e) {
+    showToast('Update failed: ' + e.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Update Thesis';
+    }
+  }
+}
+
+// Get current thesis
+export async function getThesis() {
+  return feedFetch('/api/thesis');
+}
+
+// Load and render thesis
+export async function loadThesis() {
+  const card = document.getElementById('thesisCard');
+  if (!card) return;
+
+  try {
+    const thesis = await getThesis();
+    currentThesis = thesis;
+    renderThesis(card, thesis);
+  } catch (e) {
+    card.innerHTML = '<div class="thesis-empty">Failed to load thesis</div>';
+  }
+}
+
+function renderThesis(card, thesis) {
+  if (!thesis || !thesis.thesis_data) {
+    card.innerHTML = `
+      <div class="thesis-empty">
+        <div class="thesis-empty-text">No thesis yet</div>
+        <div class="thesis-empty-hint">Extract insights then update thesis</div>
+      </div>`;
+    return;
+  }
+
+  const t = thesis.thesis_data;
+  card.innerHTML = `
+    <div class="thesis-header">
+      <span class="thesis-regime ${t.regime}">${t.regime}</span>
+      <span class="thesis-bias ${t.bias}">${t.bias}</span>
+      <span class="thesis-version">v${thesis.version} · ${thesis.signals_count} signals</span>
+    </div>
+    <div class="thesis-narrative">${t.narrative}</div>
+    <div class="thesis-row">
+      <span class="thesis-label">Themes:</span>
+      <span class="thesis-value">${(t.themes || []).join(', ')}</span>
+    </div>
+    <div class="thesis-row">
+      <span class="thesis-label">OW:</span>
+      <span class="thesis-value ow">${(t.sectors?.ow || []).join(', ')}</span>
+    </div>
+    <div class="thesis-row">
+      <span class="thesis-label">UW:</span>
+      <span class="thesis-value uw">${(t.sectors?.uw || []).join(', ')}</span>
+    </div>
+    <div class="thesis-row">
+      <span class="thesis-label">Catalysts:</span>
+      <span class="thesis-value">${(t.catalysts || []).join(', ')}</span>
+    </div>
+    <div class="thesis-row">
+      <span class="thesis-label">Risks:</span>
+      <span class="thesis-value risks">${(t.risks || []).join(', ')}</span>
+    </div>`;
+}
+
+// Get current thesis for use in prompts
+export function getCurrentThesis() {
+  return currentThesis;
+}
+
 // Load and render feed
 export async function loadFeed() {
   const container = document.getElementById('feedList');
@@ -77,6 +193,7 @@ export async function loadFeed() {
 
     renderFeed(container);
     updateFeedStats();
+    loadThesis();
   } catch (e) {
     container.innerHTML = `<div class="error">Failed to load feed: ${e.message}</div>`;
   }
@@ -98,14 +215,30 @@ function renderFeed(container) {
   container.innerHTML = items.map(item => renderFeedItem(item)).join('');
 }
 
+// Rewrite legacy workers.dev URLs to new custom domain
+function rewriteImageUrl(url) {
+  if (!url) return url;
+  return url.replace('https://vhunter-proxy.vhunter.workers.dev/', 'https://api.rome.markets/');
+}
+
 function parseJsonField(field) {
   if (!field) return [];
-  if (Array.isArray(field)) return field;
+  if (Array.isArray(field)) return field.map(rewriteImageUrl);
   try {
     const parsed = JSON.parse(field);
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.map(rewriteImageUrl) : [];
   } catch {
     return [];
+  }
+}
+
+function parseJsonObject(field) {
+  if (!field) return null;
+  if (typeof field === 'object') return field;
+  try {
+    return JSON.parse(field);
+  } catch {
+    return null;
   }
 }
 
@@ -114,23 +247,23 @@ function renderFeedItem(item) {
 
   const timeAgo = getTimeAgo(item.created_at);
   const sourceIcon = getSourceIcon(item.source_type);
-  const tickers = parseJsonField(item.tickers);
   const images = parseJsonField(item.image_urls);
-
-  const tickerTags = tickers.map(t =>
-    `<span class="feed-ticker" onclick="window.analyzeTicker('${t}')">${t}</span>`
-  ).join('');
-
-  const sentimentClass = item.sentiment === 'bullish' ? 'g' :
-                         item.sentiment === 'bearish' ? 'r' : '';
+  const insight = parseJsonObject(item.insight_data);
 
   const imageHtml = images.length ? `
     <div class="feed-images-carousel">
       ${images.map(url => `<a href="${url}" target="_blank" class="feed-thumb"><img src="${url}" alt="chart" loading="lazy"></a>`).join('')}
     </div>` : '';
 
+  const insightHtml = insight ? `
+    <div class="feed-insight">
+      <span class="insight-direction ${insight.direction}">${insight.direction}</span>
+      <span class="insight-signal">${insight.signal}</span>
+      <span class="insight-theme">${insight.theme}</span>
+    </div>` : '';
+
   return `
-    <div class="feed-item" data-id="${item.id}">
+    <div class="feed-item ${item.status}" data-id="${item.id}">
       <div class="feed-header">
         <span class="feed-source">${sourceIcon} ${item.author || item.source_type}</span>
         <span class="feed-time">${timeAgo}</span>
@@ -138,10 +271,8 @@ function renderFeedItem(item) {
       </div>
       <div class="feed-content">${escapeHtml(item.content)}</div>
       ${imageHtml}
+      ${insightHtml}
       <div class="feed-meta">
-        <div class="feed-tickers">${tickerTags}</div>
-        ${item.sentiment ? `<span class="feed-sentiment ${sentimentClass}">${item.sentiment}</span>` : ''}
-        ${item.signal_type ? `<span class="feed-signal">${item.signal_type}</span>` : ''}
         <span class="feed-status ${item.status}">${item.status}</span>
       </div>
       <div class="feed-actions hidden" id="menu-${item.id}">
@@ -169,9 +300,18 @@ function getTimeAgo(dateStr) {
 }
 
 function escapeHtml(text) {
+  if (!text) return '';
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+function showToast(msg) {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
 }
 
 // Modal functions
@@ -194,9 +334,6 @@ export function openFeedModal(editId = null) {
       document.getElementById('feedAuthor').value = item.author || '';
       document.getElementById('feedContent').value = item.content || '';
       document.getElementById('feedUrl').value = item.url || '';
-      document.getElementById('feedTickers').value = parseJsonField(item.tickers).join(', ');
-      document.getElementById('feedSentiment').value = item.sentiment || '';
-      document.getElementById('feedSignalType').value = item.signal_type || '';
 
       // Show existing images
       const existingImages = parseJsonField(item.image_urls);
@@ -220,11 +357,6 @@ export async function saveFeedItem(event) {
   event.preventDefault();
 
   const id = document.getElementById('feedId').value;
-  const tickers = document.getElementById('feedTickers').value
-    .split(',')
-    .map(t => t.trim().toUpperCase())
-    .filter(t => t);
-
   const images = window.pendingImages && window.pendingImages.length > 0 ? [...window.pendingImages] : null;
 
   const item = {
@@ -232,9 +364,6 @@ export async function saveFeedItem(event) {
     author: document.getElementById('feedAuthor').value || null,
     content: document.getElementById('feedContent').value,
     url: document.getElementById('feedUrl').value || null,
-    tickers: tickers.length ? tickers : null,
-    sentiment: document.getElementById('feedSentiment').value || null,
-    signal_type: document.getElementById('feedSignalType').value || null,
     image_urls: images
   };
 
@@ -300,6 +429,8 @@ window.openFeedModal = openFeedModal;
 window.closeFeedModal = closeFeedModal;
 window.saveFeedItem = saveFeedItem;
 window.handleImageUpload = handleImageUpload;
+window.extractInsights = extractInsights;
+window.updateThesis = updateThesis;
 
 window.removePreviewImage = function(index) {
   window.pendingImages.splice(index, 1);
@@ -325,17 +456,14 @@ window.deleteFeedItemConfirm = async function(id) {
 window.analyzeTicker = function(ticker) {
   document.getElementById('tk').value = ticker;
   if (runCallback) runCallback();
-  // Switch to analyze page
   if (window.switchPage) window.switchPage('analyze');
 };
 
 window.filterFeed = function(type) {
-  // Update active filter button
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.classList.toggle('active', btn.textContent.toLowerCase().includes(type) || (type === 'all' && btn.textContent === 'All'));
   });
 
-  // Filter items
   const container = document.getElementById('feedList');
   const items = feedItems || [];
 
@@ -356,13 +484,13 @@ function updateFeedStats() {
   const items = feedItems || [];
   const total = items.length;
   const raw = items.filter(i => i.status === 'raw').length;
-  const bearish = items.filter(i => i.sentiment === 'bearish').length;
+  const processed = items.filter(i => i.status === 'processed').length;
 
   const totalEl = document.getElementById('feedTotal');
   const rawEl = document.getElementById('feedRaw');
-  const bearishEl = document.getElementById('feedBearish');
+  const processedEl = document.getElementById('feedProcessed');
 
   if (totalEl) totalEl.textContent = total;
   if (rawEl) rawEl.textContent = raw;
-  if (bearishEl) bearishEl.textContent = bearish;
+  if (processedEl) processedEl.textContent = processed;
 }

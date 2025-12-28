@@ -1,15 +1,39 @@
 // AI Prompts Module
-// Thesis: US equity rotation underway, shorting overvalued hyper-growth with fragile technicals
+// Dynamic macro thesis from feed system
+
+import { getCurrentThesis } from './feed.js';
+
+// Build macro context from thesis
+function buildMacroContext() {
+  const thesis = getCurrentThesis();
+  if (!thesis || !thesis.thesis_data) {
+    // Fallback to default thesis
+    return `MACRO CONTEXT: neutral | neutral
+No thesis established. Using default: Monitor for opportunities.
+Themes: awaiting signal
+OW: -- | UW: --
+Catalysts: --
+Risks: --`;
+  }
+
+  const t = thesis.thesis_data;
+  return `MACRO CONTEXT: ${t.regime} | ${t.bias}
+${t.narrative}
+Themes: ${(t.themes || []).join(', ')}
+OW: ${(t.sectors?.ow || []).join(', ')} | UW: ${(t.sectors?.uw || []).join(', ')}
+Catalysts: ${(t.catalysts || []).join(', ')}
+Risks: ${(t.risks || []).join(', ')}`;
+}
 
 // Combined prompt for both analysis and trade ideas (single API call)
 export function buildCombinedPrompt(data) {
-  return `You are an institutional macro strategist and trader with a BEARISH tilt on overvalued growth stocks.
+  const macroContext = buildMacroContext();
 
-MACRO THESIS:
-- US equity rotation underway - money flowing OUT of high-multiple growth into value/defensives
-- Hyper-growth stocks with stretched valuations are fragile and vulnerable to sharp selloffs
-- Only Mag7/mega-caps with strong fundamentals can sustain elevated levels
-- Prefer SHORT positions on weak names, only go LONG on fortress-tier stocks
+  return `You are an institutional macro strategist and trader.
+
+${macroContext}
+
+---
 
 MARKET DATA FOR ${data.ticker}:
 - Price: $${data.price} (${data.change > 0 ? '+' : ''}${data.change.toFixed(2)}%) | Vol: ${data.volume} (${data.rvol.toFixed(1)}x avg)
@@ -89,12 +113,13 @@ export function buildPortfolioPrompt(portfolioData) {
   const winners = positions.filter(p => p.unrealizedPnL > 0).sort((a, b) => b.unrealizedPnL - a.unrealizedPnL);
   const losers = positions.filter(p => p.unrealizedPnL < 0).sort((a, b) => a.unrealizedPnL - b.unrealizedPnL);
 
-  return `You are a portfolio risk manager analyzing a BEARISH-BIASED trading portfolio.
+  const macroContext = buildMacroContext();
 
-MACRO THESIS CONTEXT:
-- US equity rotation underway - money flowing OUT of high-multiple growth into value/defensives
-- Portfolio is positioned to profit from fragile, overvalued growth stocks declining
-- Short positions and puts are the core thesis plays
+  return `You are a portfolio risk manager analyzing this trading portfolio.
+
+${macroContext}
+
+---
 
 PORTFOLIO OVERVIEW:
 - Total Positions: ${positions.length} (${shortBias} bearish, ${longBias} bullish)

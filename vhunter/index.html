@@ -290,10 +290,22 @@
     <div class="page" id="page-feed">
       <div class="page-header">
         <h1>Feed</h1>
-        <button class="btn-primary" onclick="openFeedModal()">+ Add</button>
+        <div class="header-actions">
+          <button class="btn-secondary" id="extractBtn" onclick="extractInsights()">Extract</button>
+          <button class="btn-secondary" id="updateThesisBtn" onclick="updateThesis()">Update Thesis</button>
+          <button class="btn-primary" onclick="openFeedModal()">+ Add</button>
+        </div>
       </div>
 
       <div class="feed-container">
+        <!-- Thesis Card -->
+        <div class="thesis-card" id="thesisCard">
+          <div class="thesis-empty">
+            <div class="thesis-empty-text">No thesis yet</div>
+            <div class="thesis-empty-hint">Extract insights then update thesis</div>
+          </div>
+        </div>
+
         <!-- Feed Stats -->
         <div class="feed-stats" id="feedStats">
           <div class="feed-stat">
@@ -302,11 +314,11 @@
           </div>
           <div class="feed-stat">
             <div class="feed-stat-value" id="feedRaw">0</div>
-            <div class="feed-stat-label">Unprocessed</div>
+            <div class="feed-stat-label">Raw</div>
           </div>
           <div class="feed-stat">
-            <div class="feed-stat-value" id="feedBearish">0</div>
-            <div class="feed-stat-label">Bearish</div>
+            <div class="feed-stat-value" id="feedProcessed">0</div>
+            <div class="feed-stat-label">Processed</div>
           </div>
         </div>
 
@@ -1048,36 +1060,9 @@
         <input type="file" id="feedImages" accept="image/*" multiple onchange="handleImageUpload(event)">
         <div class="image-preview" id="feedImagePreview"></div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Tickers</label>
-          <input type="text" id="feedTickers" placeholder="IONQ, RGTI, etc">
-        </div>
-        <div class="form-group">
-          <label>URL (optional)</label>
-          <input type="url" id="feedUrl" placeholder="https://...">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Sentiment</label>
-          <select id="feedSentiment">
-            <option value="">--</option>
-            <option value="bullish">Bullish</option>
-            <option value="bearish">Bearish</option>
-            <option value="neutral">Neutral</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Signal Type</label>
-          <select id="feedSignalType">
-            <option value="">--</option>
-            <option value="thesis">Thesis</option>
-            <option value="catalyst">Catalyst</option>
-            <option value="technical">Technical</option>
-            <option value="flow">Flow</option>
-          </select>
-        </div>
+      <div class="form-group">
+        <label>URL (optional)</label>
+        <input type="url" id="feedUrl" placeholder="https://...">
       </div>
       <div class="form-actions">
         <button type="button" class="btn-secondary" onclick="closeFeedModal()">Cancel</button>

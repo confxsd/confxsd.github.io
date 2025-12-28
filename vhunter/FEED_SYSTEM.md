@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Feed System is a signal intelligence layer that captures qualitative market insights (tweets, blog posts, charts) and processes them to enhance quantitative technical analysis. It bridges the gap between social/fundamental signals and trading decisions.
+The Feed System is a signal intelligence layer that captures qualitative market insights (tweets, blog posts, charts) and processes them into a **cumulative macro thesis**. Insights are extracted as **general market signals** (not ticker-specific) and used as context for any stock analysis. It bridges the gap between social/fundamental signals and trading decisions.
 
 ## Architecture
 
@@ -12,354 +12,268 @@ The Feed System is a signal intelligence layer that captures qualitative market 
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
 │  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────────────┐  │
-│  │  INPUT   │    │  STORE   │    │ PROCESS  │    │    CONSUME       │  │
+│  │  CAPTURE │    │  STORE   │    │ EXTRACT  │    │   MACRO THESIS   │  │
 │  │          │    │          │    │          │    │                  │  │
-│  │ • Tweet  │───▶│ D1 + R2  │───▶│ Claude   │───▶│ Analysis Prompts │  │
-│  │ • Blog   │    │          │    │ AI       │    │ Ticker Context   │  │
-│  │ • Chart  │    │          │    │          │    │ Thesis Updates   │  │
+│  │ • Tweet  │───▶│ D1 + R2  │───▶│ Claude   │───▶│  Living document │  │
+│  │ • Blog   │    │ feed_items    │ extracts │    │  updated by AI   │  │
+│  │ • Chart  │    │          │    │ insights │    │  from insights   │  │
 │  │ • Link   │    │          │    │          │    │                  │  │
-│  └──────────┘    └──────────┘    └──────────┘    └──────────────────┘  │
-│                                                                          │
-│       Mobile          Backend         Batch           Frontend           │
-│       FAB/Form        Worker          Job             Integration        │
+│  └──────────┘    └──────────┘    └──────────┘    └────────┬─────────┘  │
+│                                                            │            │
+│       Mobile          Backend         On-demand            ▼            │
+│       FAB/Form        Worker          Batch         ┌──────────────┐   │
+│                                                     │   ANALYSIS   │   │
+│                                                     │ Thesis used  │   │
+│                                                     │ as context   │   │
+│                                                     │ for any stock│   │
+│                                                     └──────────────┘   │
 │                                                                          │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Data Model
-
-### feed_items (D1 SQLite)
+## Core Tables
 
 ```sql
+-- feed_items: raw signals from tweets, blogs, charts
 CREATE TABLE feed_items (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
-
-  -- Source metadata
-  source_type TEXT CHECK(source_type IN ('tweet', 'blog', 'chart', 'link')),
-  author TEXT,                    -- @handle, blog name, source
-  content TEXT NOT NULL,          -- raw text content
-  image_urls TEXT,                -- JSON array of R2 URLs
-  url TEXT,                       -- original source URL
-
-  -- AI-extracted fields (null until processed)
-  tickers TEXT,                   -- JSON array: ["IONQ", "RGTI", "SPY"]
-  sentiment TEXT,                 -- bullish / bearish / neutral
-  signal_type TEXT,               -- thesis / catalyst / technical / flow
-  relevance_score INTEGER,        -- 1-10 importance rating
-  summary TEXT,                   -- AI-generated key insight
-
-  -- Processing state
-  status TEXT DEFAULT 'raw',      -- raw / processed / archived
+  source_type TEXT,               -- tweet/blog/chart/link
+  author TEXT,
+  content TEXT NOT NULL,
+  image_urls TEXT,                -- JSON array
+  insight_data TEXT,              -- AI-extracted: {signal, direction, theme, timeframe}
+  status TEXT DEFAULT 'raw',      -- raw/processed
   created_at TEXT,
   processed_at TEXT
 );
-```
 
-### Field Definitions
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `source_type` | enum | tweet, blog, chart, link |
-| `author` | string | Source attribution (@handle, blog name) |
-| `content` | text | Raw captured text |
-| `image_urls` | JSON | Array of R2 image URLs |
-| `tickers` | JSON | Extracted ticker symbols |
-| `sentiment` | enum | Market sentiment: bullish/bearish/neutral |
-| `signal_type` | enum | Category of signal |
-| `relevance_score` | 1-10 | AI-rated importance |
-| `summary` | text | Condensed key insight |
-| `status` | enum | Processing state |
-
-### Signal Types
-
-| Type | Description | Example |
-|------|-------------|---------|
-| `thesis` | Macro/structural market view | "QC stocks are in a bubble due to..." |
-| `catalyst` | Event-driven signal | "IONQ lockup expiry Jan 15" |
-| `technical` | Chart/price action | "Head & shoulders forming on daily" |
-| `flow` | Order flow / institutional | "Large put sweep on RGTI" |
-
-## Image Storage (R2)
-
-```
-Bucket: vhunter-images
-Path:   feed/{timestamp}-{hash}.{ext}
-URL:    https://vhunter-proxy.vhunter.workers.dev/images/feed/...
-```
-
-- Images uploaded via multipart form
-- Served through worker endpoint (cached 1 year)
-- Linked to feed items via `image_urls` JSON array
-
-## API Endpoints
-
-### Feed CRUD
-
-```
-GET    /api/feed?status=raw&ticker=IONQ&limit=50&offset=0
-POST   /api/feed                    # Create feed item
-PUT    /api/feed/:id                # Update feed item
-DELETE /api/feed/:id                # Delete feed item
-```
-
-### Image Upload
-
-```
-POST   /api/feed/upload             # Multipart form, returns {url, filename}
-GET    /images/:path                # Serve image from R2
-```
-
-### Request/Response Examples
-
-**Create Feed Item:**
-```json
-POST /api/feed
-{
-  "source_type": "tweet",
-  "author": "@hedgefund_anon",
-  "content": "IONQ lockup expiring, insiders likely to sell...",
-  "image_urls": ["https://.../feed/123-abc.png"],
-  "tickers": ["IONQ"],
-  "sentiment": "bearish",
-  "signal_type": "catalyst"
-}
-```
-
-**Get Feed Items:**
-```json
-GET /api/feed?status=raw&limit=10
-
-[
-  {
-    "id": "abc123",
-    "source_type": "tweet",
-    "author": "@analyst",
-    "content": "...",
-    "image_urls": "[\"https://...\"]",
-    "tickers": "[\"IONQ\"]",
-    "sentiment": "bearish",
-    "signal_type": "thesis",
-    "status": "raw",
-    "created_at": "2024-12-28T10:00:00Z"
-  }
-]
-```
-
-## Frontend Components
-
-### Feed Page (`#feed`)
-- Stats bar: Total signals, Unprocessed count, Bearish count
-- Filter tabs: All / Tweets / Blogs / Charts
-- Feed list with cards showing content, thumbnails, tags
-- FAB button (mobile) for quick capture
-
-### Feed Modal
-- Source type selector
-- Author/source input
-- Content textarea
-- Image upload with preview
-- Ticker tags input
-- Sentiment/Signal type dropdowns
-
-### Key Files
-```
-vhunter/
-├── js/feed.js          # Feed module (API, render, modal)
-├── css/style.css       # Feed styles (line ~3295)
-└── index.html          # Feed page HTML, modal, FAB
+-- macro_thesis: single evolving view
+CREATE TABLE macro_thesis (
+  id TEXT PRIMARY KEY DEFAULT 'current',
+  version INTEGER DEFAULT 1,
+  signals_count INTEGER DEFAULT 0,
+  thesis_data TEXT,               -- JSON: {regime, bias, narrative, themes, sectors, catalysts, risks}
+  updated_at TEXT
+);
 ```
 
 ---
 
-## Phase 2: AI Processing Pipeline
+## Data Structures
 
-### Processing Flow
+### Extracted Insight (per feed item)
 
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  Raw Feed   │────▶│   Claude    │────▶│  Processed  │
-│   Items     │     │   Extract   │     │    Items    │
-└─────────────┘     └─────────────┘     └─────────────┘
-                           │
-                           ▼
-                    ┌─────────────┐
-                    │   Ticker    │
-                    │  Sentiment  │
-                    │  Aggregate  │
-                    └─────────────┘
-```
+Stored in `feed_items.insight_data`. **Lean extraction** - one signal per feed item, feeds into thesis.
 
-### Extraction Prompt Template
-
-```
-Analyze this market signal and extract structured data:
-
-SOURCE: {source_type} by {author}
-CONTENT: {content}
-IMAGES: {image_count} chart(s) attached
-
-Extract:
-1. TICKERS: List all mentioned stock symbols (e.g., IONQ, SPY, $QQQ)
-2. SENTIMENT: Overall market sentiment (bullish/bearish/neutral)
-3. SIGNAL_TYPE: Category (thesis/catalyst/technical/flow)
-4. RELEVANCE: Score 1-10 for trading relevance
-5. SUMMARY: One sentence key insight
-
-Respond in JSON:
+```json
 {
-  "tickers": ["IONQ", "SPY"],
-  "sentiment": "bearish",
-  "signal_type": "thesis",
-  "relevance_score": 8,
-  "summary": "Macro rotation thesis suggests QC stocks vulnerable to correction"
+  "signal": "Rotation from speculative growth to value accelerating",
+  "direction": "risk-off",
+  "theme": "rotation",
+  "timeframe": "near-term",
+  "catalyst": "lockup expiries"  // optional, only if specific event mentioned
 }
 ```
 
-### Batch Processing Endpoint
+That's it. No nested arrays, no categories. One clean signal per item.
 
+### Macro Thesis (cumulative)
+
+Stored in `macro_thesis` table. **PM's working view** - fits on a post-it note.
+
+```json
+{
+  "version": 12,
+  "updated_at": "2024-12-28",
+  "signals_count": 45,
+
+  "regime": "rotation",
+  "bias": "cautious",
+
+  "narrative": "Growth-to-value rotation accelerating. Speculative names under pressure from lockups and valuation resets. Risk-off bid building.",
+
+  "themes": ["rotation", "risk-off", "dollar-weakness"],
+
+  "sectors": {
+    "ow": ["value", "commodities", "defensives"],
+    "uw": ["speculative-growth", "meme", "crypto-adjacent"]
+  },
+
+  "catalysts": ["FOMC 1/29", "NFP 2/7"],
+
+  "risks": ["fed-pivot", "melt-up", "geopolitical-shock"]
+}
 ```
-POST /api/feed/process?limit=20
 
-1. Fetch unprocessed items (status='raw')
-2. For each item, call Claude with extraction prompt
-3. Update item with extracted fields
-4. Set status='processed', processed_at=now()
-5. Return processing results
-```
-
-### Ticker Sentiment Aggregation
-
-After processing, aggregate sentiment per ticker:
-
-```sql
--- Aggregation query
-SELECT
-  ticker,
-  COUNT(*) as total_signals,
-  SUM(CASE WHEN sentiment = 'bullish' THEN 1 ELSE 0 END) as bullish,
-  SUM(CASE WHEN sentiment = 'bearish' THEN 1 ELSE 0 END) as bearish,
-  AVG(relevance_score) as avg_relevance
-FROM feed_items, json_each(feed_items.tickers)
-WHERE status = 'processed'
-  AND created_at > datetime('now', '-7 days')
-GROUP BY ticker
-```
+**7 fields that matter:**
+| Field | Purpose |
+|-------|---------|
+| `regime` | Market environment: risk-on, risk-off, rotation, range |
+| `bias` | Net stance: bullish, bearish, cautious, neutral |
+| `narrative` | 1-2 sentence thesis (human readable) |
+| `themes` | Active market narratives |
+| `sectors.ow/uw` | Overweight/Underweight tilts |
+| `catalysts` | Next 2-3 macro events |
+| `risks` | What breaks the thesis |
 
 ---
 
-## Phase 3: Analysis Integration
+## Processing Pipeline
 
-### Enhanced Analysis Prompt
+### Step 1: Extract Insight
 
-Current prompt structure in `prompts.js`:
-```javascript
-MACRO THESIS:
-- US equity rotation underway...
-- Bearish on speculative growth...
-```
-
-Enhanced with feed intelligence:
-```javascript
-MACRO THESIS:
-- US equity rotation underway...
-
-FEED INTELLIGENCE FOR ${ticker}:
-- Sentiment: ${bearishCount} bearish / ${bullishCount} bullish (7d)
-- Recent signals:
-  • "${signal1.summary}" (${signal1.sentiment}, ${signal1.signal_type})
-  • "${signal2.summary}" (${signal2.sentiment}, ${signal2.signal_type})
-- Key catalysts: ${catalysts.join(', ')}
-```
-
-### Ticker-Specific Feed Context
-
-When analyzing a ticker, fetch relevant feed items:
+One signal per feed item. Keep it atomic.
 
 ```javascript
-async function getFeedContext(ticker) {
-  const items = await getFeedItems(null, ticker);
-  const processed = items.filter(i => i.status === 'processed');
+// POST /api/feed/extract-batch?limit=20
 
-  return {
-    bullish: processed.filter(i => i.sentiment === 'bullish').length,
-    bearish: processed.filter(i => i.sentiment === 'bearish').length,
-    recentSignals: processed.slice(0, 3).map(i => ({
-      summary: i.summary,
-      sentiment: i.sentiment,
-      signal_type: i.signal_type,
-      author: i.author
-    })),
-    catalysts: processed
-      .filter(i => i.signal_type === 'catalyst')
-      .map(i => i.summary)
-  };
+const extractionPrompt = `
+Extract ONE market signal from this content.
+
+SOURCE: ${source_type} by ${author}
+CONTENT: ${content}
+
+Output JSON (5 fields max):
+{
+  "signal": "one sentence market observation",
+  "direction": "risk-on|risk-off|bullish|bearish|neutral",
+  "theme": "rotation|risk-off|momentum|value|growth|macro|sector|flow",
+  "timeframe": "near|medium|long",
+  "catalyst": "specific event if mentioned, else null"
 }
+
+Rules:
+- Extract the MARKET SIGNAL, not stock opinion
+- "Rotation accelerating" not "IONQ going down"
+- One signal only. If multiple, pick the strongest.
+- Be terse. This feeds a trading thesis.
+`;
 ```
 
-### Thesis Evolution Tracking
+### Step 2: Update Thesis
 
-Track how thesis evolves over time:
+Fold new signals into thesis. Thesis evolves, doesn't reset.
 
 ```javascript
-// Compare current vs historical sentiment
-const currentWeek = await getSentiment(ticker, '7d');
-const previousWeek = await getSentiment(ticker, '14d', '7d');
+// POST /api/thesis/update
 
-const trendShift = currentWeek.bearishRatio - previousWeek.bearishRatio;
-// Positive = becoming more bearish
-// Negative = becoming more bullish
+const thesisUpdatePrompt = `
+You are a macro PM updating your working thesis.
+
+CURRENT THESIS:
+${JSON.stringify(currentThesis, null, 2)}
+
+NEW SIGNALS (${insights.length}):
+${insights.map(i => `- [${i.direction}] ${i.signal} (${i.theme})`).join('\n')}
+
+Update the thesis:
+1. Adjust regime/bias if signals warrant
+2. Update narrative (1-2 sentences)
+3. Add/remove themes based on signal clustering
+4. Shift sector tilts if rotation evident
+5. Update catalysts (next 2-3 only)
+6. Note new risks or remove stale ones
+
+Output JSON (same structure):
+{
+  "regime": "...",
+  "bias": "...",
+  "narrative": "...",
+  "themes": [...],
+  "sectors": { "ow": [...], "uw": [...] },
+  "catalysts": [...],
+  "risks": [...]
+}
+
+Be decisive. This is your live trading view.
+`;
 ```
+
+### Step 3: Inject into Stock Analysis
+
+Thesis becomes context header for any ticker analysis.
+
+```javascript
+// In prompts.js
+
+const macroContext = `
+MACRO: ${thesis.regime} | ${thesis.bias}
+${thesis.narrative}
+Themes: ${thesis.themes.join(', ')}
+OW: ${thesis.sectors.ow.join(', ')} | UW: ${thesis.sectors.uw.join(', ')}
+Catalysts: ${thesis.catalysts.join(', ')}
+Risks: ${thesis.risks.join(', ')}
+`;
+
+// Prepend to any stock analysis prompt
+const analysisPrompt = `
+${macroContext}
+---
+Analyze ${ticker}. Consider macro backdrop above.
+`;
+```
+
+**3 lines of context, not a wall of text.** The AI connects dots between macro view and specific stock.
+
+---
+
+## API Endpoints (Phase 2-3)
+
+```
+POST /api/feed/extract          # Extract insights from unprocessed feeds
+POST /api/thesis/update         # Fold new insights into thesis
+GET  /api/thesis                # Get current thesis
+```
+
+That's the core. Everything else is CRUD we already have.
+
+---
+
+## Workflow
+
+```
+CAPTURE → EXTRACT → UPDATE THESIS → ANALYZE
+   ↓         ↓            ↓             ↓
+ Mobile    Batch AI    Fold into     Inject as
+ or Web    process     live view     context
+```
+
+**Daily**: Capture signals → Extract → Update thesis
+**Per-trade**: Thesis auto-injected into stock analysis
 
 ---
 
 ## Implementation Checklist
 
-### Phase 1: Core Feed (Complete)
-- [x] D1 table schema
-- [x] R2 bucket setup
-- [x] CRUD API endpoints
-- [x] Image upload endpoint
-- [x] Feed page UI
-- [x] Modal form
-- [x] FAB button (mobile)
-- [x] Image carousel display
+### Phase 1: Feed Capture ✓
+- [x] D1 schema, R2 bucket
+- [x] CRUD endpoints + image upload
+- [x] Feed page, modal, FAB
 
-### Phase 2: AI Processing (Pending)
-- [ ] Batch processing endpoint
-- [ ] Extraction prompt template
-- [ ] Claude API integration for extraction
-- [ ] Ticker aggregation queries
-- [ ] Processing status UI
-- [ ] Manual re-process action
+### Phase 2: Insight Extraction ✓
+- [x] `POST /api/feed/extract` endpoint
+- [x] Extraction prompt (signal, direction, theme, timeframe)
+- [x] "Extract" button in Feed UI
+- [x] Show insight badge on processed items
 
-### Phase 3: Analysis Integration (Pending)
-- [ ] `getFeedContext()` helper
-- [ ] Enhanced analysis prompt template
-- [ ] Ticker-specific feed panel
-- [ ] Sentiment trend indicators
-- [ ] Thesis evolution tracking
+### Phase 3: Thesis ✓
+- [x] `macro_thesis` table
+- [x] `POST /api/thesis/update` endpoint
+- [x] `GET /api/thesis` endpoint
+- [x] Thesis card in UI (dark gradient, regime/bias badges)
+
+### Phase 4: Integration ✓
+- [x] Import `getCurrentThesis()` in prompts.js
+- [x] Dynamic macro context injected into analysis prompts
+- [x] Portfolio analysis uses same thesis context
 
 ---
 
-## Usage Patterns
+## Usage
 
-### Mobile Capture Flow
-1. See interesting tweet/chart
-2. Copy text / screenshot
-3. Tap FAB → Paste content, attach image
-4. Quick tag ticker if obvious
-5. Save (AI processes later)
+**Capture** (mobile/desktop): See signal → FAB → paste/screenshot → save
 
-### Desktop Review Flow
-1. Open Feed page
-2. Filter by unprocessed
-3. Manually tag/categorize if needed
-4. Trigger batch processing
-5. Review extracted insights
+**Process** (batch): Extract button → AI extracts signals → Update Thesis button → thesis evolves
 
-### Analysis Enhancement Flow
-1. Enter ticker in analysis
-2. System fetches feed context
-3. AI includes recent signals in analysis
-4. Thesis reinforced/challenged by feed data
+**Analyze** (per-stock): Enter ticker → macro context auto-injected → AI produces thesis-aware analysis
