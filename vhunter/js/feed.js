@@ -131,7 +131,7 @@ function renderFeedItem(item) {
 
   const imageHtml = images.length ? `
     <div class="feed-images-carousel">
-      ${images.map(url => `<a href="${url}" target="_blank" class="feed-thumb"><img src="${url}" alt="chart"></a>`).join('')}
+      ${images.map(url => `<a href="${url}" target="_blank" class="feed-thumb"><img src="${url}" alt="chart" loading="lazy"></a>`).join('')}
     </div>` : '';
 
   return `
