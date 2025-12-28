@@ -62,6 +62,8 @@ export async function uploadImage(file) {
 
 // Extract insights from unprocessed feeds
 export async function extractInsights() {
+  if (!confirm('This will use API credits. Continue?')) return;
+
   const btn = document.getElementById('extractBtn');
   if (btn) {
     btn.disabled = true;
@@ -88,6 +90,8 @@ export async function extractInsights() {
 
 // Update thesis with processed insights
 export async function updateThesis() {
+  if (!confirm('This will use API credits. Continue?')) return;
+
   const btn = document.getElementById('updateThesisBtn');
   if (btn) {
     btn.disabled = true;
@@ -250,6 +254,9 @@ function renderFeedItem(item) {
   const images = parseJsonField(item.image_urls);
   const insight = parseJsonObject(item.insight_data);
 
+  // Extract author from x.com URL if no author is set
+  const author = item.author || extractAuthorFromUrl(item.url) || item.source_type;
+
   const imageHtml = images.length ? `
     <div class="feed-images-carousel">
       ${images.map(url => `<a href="${url}" target="_blank" class="feed-thumb"><img src="${url}" alt="chart" loading="lazy"></a>`).join('')}
@@ -265,11 +272,11 @@ function renderFeedItem(item) {
   return `
     <div class="feed-item ${item.status}" data-id="${item.id}">
       <div class="feed-header">
-        <span class="feed-source">${sourceIcon} ${item.author || item.source_type}</span>
+        <span class="feed-source">${sourceIcon} ${author}</span>
         <span class="feed-time">${timeAgo}</span>
         <button class="feed-menu" onclick="toggleFeedMenu('${item.id}')">⋮</button>
       </div>
-      <div class="feed-content">${escapeHtml(item.content)}</div>
+      <div class="feed-content">${truncateText(item.content, item.id)}</div>
       ${imageHtml}
       ${insightHtml}
       <div class="feed-meta">
@@ -304,6 +311,25 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+const TRUNCATE_LENGTH = 280;
+
+function truncateText(text, id) {
+  if (!text || text.length <= TRUNCATE_LENGTH) {
+    return escapeHtml(text);
+  }
+  const truncated = text.slice(0, TRUNCATE_LENGTH);
+  return `<span class="feed-text-truncated" id="text-${id}">${escapeHtml(truncated)}...</span><span class="feed-text-full hidden" id="full-${id}">${escapeHtml(text)}</span><div class="feed-toggle-wrap"><button class="feed-toggle-btn" onclick="toggleFeedText('${id}')">show more</button></div>`;
+}
+
+function extractAuthorFromUrl(url) {
+  if (!url) return null;
+  const match = url.match(/(?:x\.com|twitter\.com)\/([^\/\?]+)/i);
+  if (match && match[1] && !['home', 'search', 'explore', 'i', 'intent'].includes(match[1].toLowerCase())) {
+    return '@' + match[1];
+  }
+  return null;
 }
 
 function showToast(msg) {
@@ -464,6 +490,19 @@ window.removePreviewImage = function(index) {
 window.toggleFeedMenu = function(id) {
   const menu = document.getElementById(`menu-${id}`);
   menu.classList.toggle('hidden');
+};
+
+window.toggleFeedText = function(id) {
+  const truncated = document.getElementById(`text-${id}`);
+  const full = document.getElementById(`full-${id}`);
+  const container = truncated?.closest('.feed-content');
+  const btn = container?.querySelector('.feed-toggle-btn');
+  if (truncated && full && btn) {
+    const isExpanded = !full.classList.contains('hidden');
+    truncated.classList.toggle('hidden', !isExpanded);
+    full.classList.toggle('hidden', isExpanded);
+    btn.textContent = isExpanded ? 'show more' : 'show less';
+  }
 };
 
 window.editFeedItem = function(id) {

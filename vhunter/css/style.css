@@ -3421,6 +3421,44 @@ form { padding: 20px; }
   word-break: break-word;
 }
 
+.feed-toggle-wrap {
+  margin-top: 6px;
+}
+
+.feed-toggle-btn {
+  background: transparent;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  color: #818cf8;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.feed-toggle-btn:hover {
+  text-decoration: underline;
+}
+
+.feed-toggle-btn:focus {
+  outline: none;
+}
+
+.api-warning {
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 4px;
+}
+
 /* Image carousel */
 .feed-images-carousel {
   display: flex;
