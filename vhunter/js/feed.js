@@ -69,20 +69,15 @@ export async function loadFeed() {
 
   try {
     const response = await getFeedItems();
-    console.log('Raw API response:', response);
-
-    // Handle both array and object responses
     feedItems = Array.isArray(response) ? response : (response.results || response.data || []);
 
     if (!Array.isArray(feedItems)) {
       feedItems = [];
     }
 
-    console.log('feedItems after processing:', feedItems);
     renderFeed(container);
     updateFeedStats();
   } catch (e) {
-    console.error('Load error:', e);
     container.innerHTML = `<div class="error">Failed to load feed: ${e.message}</div>`;
   }
 }
@@ -231,7 +226,6 @@ export async function saveFeedItem(event) {
     .filter(t => t);
 
   const images = window.pendingImages && window.pendingImages.length > 0 ? [...window.pendingImages] : null;
-  console.log('pendingImages before save:', window.pendingImages, 'images to save:', images);
 
   const item = {
     source_type: document.getElementById('feedType').value,
@@ -243,8 +237,6 @@ export async function saveFeedItem(event) {
     signal_type: document.getElementById('feedSignalType').value || null,
     image_urls: images
   };
-
-  console.log('Saving feed item:', item);
 
   try {
     if (id) {
@@ -282,7 +274,6 @@ export async function handleImageUpload(event) {
         alert('Upload error: ' + result.error);
       } else if (result.url) {
         window.pendingImages.push(result.url);
-        console.log('Image uploaded, pendingImages now:', window.pendingImages);
       }
     } catch (e) {
       alert('Upload failed: ' + e.message);
