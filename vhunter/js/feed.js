@@ -383,72 +383,27 @@ export async function saveFeedItem(event) {
 // Image handling
 let uploading = false;
 
-// Image optimization settings
-const IMAGE_MAX_WIDTH = 1600;
-const IMAGE_MAX_HEIGHT = 1200;
-const IMAGE_QUALITY = 0.85;
-
 async function optimizeImage(file) {
-  // Skip non-image files
   if (!file.type.startsWith('image/')) {
     return file;
   }
 
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
+  const options = {
+    maxSizeMB: 1,
+    maxWidthOrHeight: 1600,
+    useWebWorker: true,
+    fileType: 'image/webp'
+  };
 
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-
-      let { width, height } = img;
-      const originalSize = file.size;
-
-      // Calculate new dimensions maintaining aspect ratio
-      if (width > IMAGE_MAX_WIDTH || height > IMAGE_MAX_HEIGHT) {
-        const ratio = Math.min(IMAGE_MAX_WIDTH / width, IMAGE_MAX_HEIGHT / height);
-        width = Math.round(width * ratio);
-        height = Math.round(height * ratio);
-      }
-
-      // Create canvas and draw resized image
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-
-      const ctx = canvas.getContext('2d');
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(img, 0, 0, width, height);
-
-      // Convert to blob - prefer WebP, fallback to JPEG
-      const outputType = 'image/webp';
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            const optimizedFile = new File([blob], file.name.replace(/\.[^.]+$/, '.webp'), {
-              type: outputType,
-              lastModified: Date.now()
-            });
-            const savedKB = Math.round((originalSize - blob.size) / 1024);
-            console.log(`Image optimized: ${Math.round(originalSize / 1024)}KB → ${Math.round(blob.size / 1024)}KB (saved ${savedKB}KB)`);
-            resolve(optimizedFile);
-          } else {
-            resolve(file); // Fallback to original
-          }
-        },
-        outputType,
-        IMAGE_QUALITY
-      );
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      resolve(file); // Fallback to original on error
-    };
-
-    img.src = url;
-  });
+  try {
+    const originalSize = file.size;
+    const compressed = await imageCompression(file, options);
+    console.log(`Image optimized: ${Math.round(originalSize / 1024)}KB → ${Math.round(compressed.size / 1024)}KB`);
+    return compressed;
+  } catch (e) {
+    console.warn('Image compression failed, using original:', e);
+    return file;
+  }
 }
 
 export async function handleImageUpload(event) {
