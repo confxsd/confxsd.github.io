@@ -104,6 +104,24 @@
       <div class="header-history" id="historyStrip"></div>
     </header>
 
+    <!-- AI Summary Section (global - visible on all pages) -->
+    <div class="summary-section" id="summarySection" style="display:none">
+      <div class="summary-header" onclick="toggleSummary()">
+        <div class="summary-title">
+          <span class="summary-icon">AI</span>
+          <span>Summary</span>
+          <span class="summary-ticker" id="summaryTicker"></span>
+        </div>
+        <div class="summary-meta">
+          <span class="summary-time" id="summaryTime"></span>
+          <span class="summary-toggle" id="summaryToggle">▼</span>
+        </div>
+      </div>
+      <div class="summary-content" id="summaryContent">
+        <div class="summary-loading">Generating summary...</div>
+      </div>
+    </div>
+
     <!-- Page: Analyze -->
     <div class="page active" id="page-analyze">
       <div id="al" class="alert"></div>
@@ -113,24 +131,6 @@
         <div class="s"><div class="lbl">Momentum</div><div class="val" id="mo">--</div><div class="sub" id="moD">--</div></div>
         <div class="s"><div class="lbl">Volume</div><div class="val" id="vl">--</div><div class="sub" id="vlD">--</div></div>
         <div class="s"><div class="lbl">Volatility</div><div class="val" id="vo">--</div><div class="sub" id="voD">--</div></div>
-      </div>
-
-      <!-- AI Summary Section -->
-      <div class="summary-section" id="summarySection" style="display:none">
-        <div class="summary-header" onclick="toggleSummary()">
-          <div class="summary-title">
-            <span class="summary-icon">AI</span>
-            <span>Summary</span>
-            <span class="summary-ticker" id="summaryTicker"></span>
-          </div>
-          <div class="summary-meta">
-            <span class="summary-time" id="summaryTime"></span>
-            <span class="summary-toggle" id="summaryToggle">▼</span>
-          </div>
-        </div>
-        <div class="summary-content" id="summaryContent">
-          <div class="summary-loading">Generating summary...</div>
-        </div>
       </div>
 
       <!-- Charts Section -->
