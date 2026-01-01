@@ -627,6 +627,8 @@ body {
 .type-badge.short { background: #fee2e2; color: #dc2626; }
 .type-badge.call { background: #dbeafe; color: #2563eb; }
 .type-badge.put { background: #fef3c7; color: #d97706; }
+.type-badge.short-call { background: #fce7f3; color: #be185d; }
+.type-badge.short-put { background: #f3e8ff; color: #7c3aed; }
 
 /* Icon buttons */
 .btn-icon {
@@ -1278,7 +1280,7 @@ form { padding: 20px; }
 
 .section-content {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   gap: 1px;
   background: #e2e8f0;
 }
@@ -1329,6 +1331,351 @@ form { padding: 20px; }
 .opt .h { font-size: 9px; font-weight: 600; margin-bottom: 4px; }
 .opt-r { display: flex; justify-content: space-between; font-size: 10px; padding: 2px 0; }
 .opt-r .k { color: #64748b; }
+
+/* VRP (Volatility Risk Premium) Section */
+.vrp-cell { background: linear-gradient(135deg, #fff 0%, #f8fafc 100%); }
+
+.vrp-badge {
+  font-size: 8px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: #f1f5f9;
+  color: #64748b;
+  margin-left: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.vrp-badge.g { background: #d1fae5; color: #059669; }
+.vrp-badge.r { background: #fee2e2; color: #dc2626; }
+.vrp-badge.y { background: #fef3c7; color: #d97706; }
+
+.vrp-setup { display: inline-block; }
+.vrp-setup.g { background: #d1fae5; color: #059669; }
+.vrp-setup.r { background: #fee2e2; color: #dc2626; }
+.vrp-setup.y { background: #fef3c7; color: #d97706; }
+
+.vrp-gauge {
+  margin: 8px 0;
+}
+
+.vrp-gauge-track {
+  height: 8px;
+  background: linear-gradient(90deg, #10b981 0%, #f59e0b 50%, #ef4444 100%);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.vrp-gauge-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: rgba(255,255,255,0.5);
+  transition: width 0.3s ease;
+}
+
+.vrp-gauge-fill::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: -2px;
+  width: 4px;
+  height: 12px;
+  background: #1e293b;
+  border-radius: 2px;
+}
+
+.vrp-gauge-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 8px;
+  color: #94a3b8;
+  margin-top: 2px;
+  text-transform: uppercase;
+}
+
+.vrp-panel {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.vrp-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  font-size: 10px;
+}
+
+.vrp-row.highlight {
+  background: #f8fafc;
+  margin: 4px -6px;
+  padding: 6px;
+  border-radius: 4px;
+}
+
+.vrp-label { color: #64748b; }
+.vrp-value { font-weight: 600; }
+
+.vrp-signal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.vrp-signal.g { background: #d1fae5; color: #059669; }
+.vrp-signal.r { background: #fee2e2; color: #dc2626; }
+.vrp-signal.y { background: #fef3c7; color: #d97706; }
+
+.signal-label { text-transform: uppercase; letter-spacing: 0.5px; }
+.signal-setup { font-size: 9px; opacity: 0.8; }
+
+.vrp-hint {
+  font-size: 9px;
+  color: #94a3b8;
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+/* ============================================
+   VOL TOOLS SECTION (Moontower-style)
+   ============================================ */
+
+/* Multi-Window VRP */
+.vrp-windows {
+  background: #f8fafc;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.vrp-window-row {
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.vrp-window-row:last-of-type {
+  border-bottom: none;
+}
+
+.vrp-window-label {
+  flex: 1;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.vrp-window-rv {
+  width: 60px;
+  text-align: right;
+  font-size: 11px;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.vrp-window-vrp {
+  width: 60px;
+  text-align: right;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.vrp-window-vrp.positive, .vrp-window-vrp.high { color: #ef4444; }
+.vrp-window-vrp.negative, .vrp-window-vrp.low { color: #22c55e; }
+.vrp-window-vrp.neutral { color: #f59e0b; }
+
+.vrp-summary {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 2px solid #e2e8f0;
+}
+
+.vrp-trend {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.vrp-signal {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.vrp-signal.sell { background: #fee2e2; color: #dc2626; }
+.vrp-signal.buy { background: #d1fae5; color: #059669; }
+.vrp-signal.neutral { background: #fef3c7; color: #d97706; }
+
+/* Straddle Calculator */
+.straddle-calc {
+  background: #f8fafc;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.straddle-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  font-size: 11px;
+}
+
+.straddle-row.hint {
+  color: #94a3b8;
+  font-size: 10px;
+  border-top: 1px dashed #e2e8f0;
+  margin-top: 3px;
+  padding-top: 6px;
+}
+
+.straddle-value {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.straddle-hint {
+  color: #64748b;
+}
+
+/* Earnings Vol Extractor */
+.earnings-calc {
+  background: #f8fafc;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.earnings-inputs {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.earnings-input {
+  flex: 1;
+  min-width: 70px;
+}
+
+.earnings-input label {
+  display: block;
+  font-size: 9px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.earnings-input input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.earnings-input input:focus {
+  outline: none;
+  border-color: #818cf8;
+}
+
+.earnings-results {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 6px;
+}
+
+.earnings-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 11px;
+}
+
+.earnings-value {
+  font-weight: 600;
+  color: #8b5cf6;
+}
+
+/* Vol Trade Ideas */
+.vol-ideas {
+  background: #f8fafc;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.vol-idea-empty {
+  color: #94a3b8;
+  font-size: 11px;
+  text-align: center;
+  padding: 12px 0;
+}
+
+.vol-idea {
+  padding: 8px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  border-left: 3px solid #818cf8;
+  background: #fff;
+}
+
+.vol-idea:last-child {
+  margin-bottom: 0;
+}
+
+.vol-idea.sell { border-color: #ef4444; }
+.vol-idea.buy { border-color: #22c55e; }
+
+.vol-idea-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.vol-idea-strategy {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1e293b;
+  text-transform: uppercase;
+}
+
+.vol-idea-conviction {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.vol-idea-conviction.high { background: #d1fae5; color: #059669; }
+.vol-idea-conviction.medium { background: #fef3c7; color: #d97706; }
+.vol-idea-conviction.low { background: #f1f5f9; color: #64748b; }
+
+.vol-idea-rationale {
+  font-size: 10px;
+  color: #475569;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.vol-idea-structure {
+  font-size: 10px;
+  color: #8b5cf6;
+  font-weight: 500;
+}
+
+.vol-idea-risk {
+  font-size: 9px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
 
 /* Charts */
 .ch { height: 150px; }
@@ -1775,8 +2122,8 @@ form { padding: 20px; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 16px 20px;
+  gap: 12px;
+  padding: 10px 12px;
   background: #fff;
   border-bottom: 1px solid #e2e8f0;
 }
@@ -1787,12 +2134,12 @@ form { padding: 20px; }
 }
 
 .options-search input {
-  padding: 10px 14px;
+  padding: 8px 12px;
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 14px;
   font-weight: 600;
-  width: 140px;
+  width: 120px;
   background: #f8fafc;
   font-family: inherit;
 }
@@ -1828,30 +2175,35 @@ form { padding: 20px; }
 /* Quick Stats Bar */
 .opt-stats-bar {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   gap: 1px;
   background: #e2e8f0;
 }
 
 .opt-stat {
   background: #fff;
-  padding: 12px 16px;
+  padding: 6px 4px;
   text-align: center;
+  min-width: 0;
 }
 
 .opt-stat-label {
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 600;
   color: #94a3b8;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
+  letter-spacing: 0.3px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .opt-stat-value {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 800;
   color: #1e293b;
+  white-space: nowrap;
 }
 
 .opt-stat-value.high { color: #ef4444; }
@@ -1859,9 +2211,12 @@ form { padding: 20px; }
 .opt-stat-value.neutral { color: #f59e0b; }
 
 .opt-stat-hint {
-  font-size: 8px;
+  font-size: 7px;
   color: #94a3b8;
-  margin-top: 2px;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Options Grid */
@@ -1887,8 +2242,8 @@ form { padding: 20px; }
 .opt-section-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
+  gap: 6px;
+  padding: 8px 10px;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-bottom: 1px solid #e2e8f0;
   border-left: 3px solid #818cf8;
@@ -1908,18 +2263,18 @@ form { padding: 20px; }
 }
 
 .opt-section-body {
-  padding: 12px;
+  padding: 8px;
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 /* Subsection */
 .opt-subsection {
   background: #f8fafc;
-  border-radius: 6px;
-  padding: 10px 12px;
+  border-radius: 4px;
+  padding: 8px 10px;
 }
 
 .opt-subsection-title {
@@ -1928,13 +2283,13 @@ form { padding: 20px; }
   color: #475569;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .opt-subsection-hint {
   font-size: 9px;
   color: #94a3b8;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   font-style: italic;
 }
 
@@ -1942,7 +2297,7 @@ form { padding: 20px; }
 .term-structure {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .term-bar {
@@ -2080,8 +2435,8 @@ form { padding: 20px; }
 .flow-metrics {
   display: flex;
   justify-content: space-between;
-  margin-top: 8px;
-  padding-top: 8px;
+  margin-top: 6px;
+  padding-top: 6px;
   border-top: 1px solid #e2e8f0;
 }
 
@@ -2104,7 +2459,7 @@ form { padding: 20px; }
 
 /* Sentiment Gauge */
 .sentiment-gauge {
-  padding: 8px 0;
+  padding: 4px 0;
 }
 
 .gauge-track {
@@ -2138,14 +2493,14 @@ form { padding: 20px; }
 .gauge-labels {
   display: flex;
   justify-content: space-between;
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: 9px;
   color: #64748b;
 }
 
 .gauge-value {
   text-align: center;
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: 12px;
   font-weight: 700;
   color: #1e293b;
@@ -2155,14 +2510,14 @@ form { padding: 20px; }
 .maxpain-grid {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .mp-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 0;
+  gap: 6px;
+  padding: 4px 0;
   border-bottom: 1px solid #e2e8f0;
 }
 
@@ -2194,7 +2549,7 @@ form { padding: 20px; }
 .oi-walls {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 8px;
 }
 
 .oi-wall-col {
@@ -2240,6 +2595,23 @@ form { padding: 20px; }
 
 .gex-row span:last-child {
   font-weight: 700;
+}
+
+.gex-trading-style {
+  margin-top: 6px;
+  padding: 6px 8px;
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #a5b4fc;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.gex-trading-style:empty {
+  display: none;
 }
 
 /* Options Chain */
@@ -2360,7 +2732,7 @@ form { padding: 20px; }
 }
 
 .chain-loading {
-  padding: 40px;
+  padding: 20px;
   text-align: center;
   color: #94a3b8;
   font-size: 12px;
@@ -2369,8 +2741,8 @@ form { padding: 20px; }
 .chain-legend {
   display: flex;
   justify-content: center;
-  gap: 20px;
-  padding: 10px;
+  gap: 16px;
+  padding: 6px;
   font-size: 10px;
   color: #64748b;
 }
@@ -2395,7 +2767,7 @@ form { padding: 20px; }
 .scanner-filters {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  gap: 8px;
 }
 
 .filter-row {
@@ -2423,17 +2795,17 @@ form { padding: 20px; }
 
 .btn-scan {
   grid-column: span 2;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 /* Scanner Results */
 .scanner-results {
-  max-height: 200px;
+  max-height: 180px;
   overflow-y: auto;
 }
 
 .scan-empty {
-  padding: 20px;
+  padding: 12px;
   text-align: center;
   color: #94a3b8;
   font-size: 11px;
@@ -2491,9 +2863,9 @@ form { padding: 20px; }
 
 /* AI Options Output */
 .ai-options-output {
-  min-height: 60px;
+  min-height: 40px;
   font-size: 11px;
-  line-height: 1.6;
+  line-height: 1.5;
   color: #475569;
 }
 
@@ -2503,7 +2875,7 @@ form { padding: 20px; }
 }
 
 .btn-ai-refresh {
-  margin-top: 12px;
+  margin-top: 8px;
   width: 100%;
 }
 
@@ -2521,7 +2893,11 @@ form { padding: 20px; }
   }
 
   .opt-stats-bar {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .opt-stat:last-child {
+    grid-column: span 1;
   }
 }
 
@@ -2546,7 +2922,11 @@ form { padding: 20px; }
   }
 
   .opt-stats-bar {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .opt-stat:nth-last-child(-n+3) {
+    grid-column: span 1;
   }
 
   .options-grid {
@@ -2602,20 +2982,37 @@ form { padding: 20px; }
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .opt-stat:last-child {
+    grid-column: span 2;
+  }
+
   .opt-stat {
-    padding: 10px;
+    padding: 8px 6px;
   }
 
   .opt-stat-value {
-    font-size: 16px;
+    font-size: 14px;
+  }
+
+  .opt-stat-label {
+    font-size: 7px;
+  }
+
+  .opt-stat-hint {
+    font-size: 6px;
   }
 
   .opt-section-header {
-    padding: 10px 12px;
+    padding: 6px 8px;
   }
 
   .opt-section-title {
     font-size: 10px;
+  }
+
+  .opt-section-body {
+    padding: 6px;
+    gap: 6px;
   }
 
   .chain-body {
@@ -2964,6 +3361,44 @@ form { padding: 20px; }
   background: #0f172a;
   border-radius: 4px;
   margin-bottom: 10px;
+}
+
+.hunt-card-setup {
+  margin: 6px 0;
+  text-align: center;
+}
+
+.setup-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #334155;
+  color: #94a3b8;
+}
+
+.setup-badge.bearish {
+  background: #7f1d1d;
+  color: #fca5a5;
+}
+
+.setup-badge.bullish {
+  background: #14532d;
+  color: #86efac;
+}
+
+/* VRP metric highlight in hunt cards */
+.hunt-metric-value.high {
+  color: #f87171;
+  font-weight: 700;
+}
+
+.hunt-metric-value.low {
+  color: #4ade80;
+  font-weight: 700;
 }
 
 .hunt-card-actions {
@@ -3724,6 +4159,47 @@ form { padding: 20px; }
 .thesis-value.ow { color: #4ade80; }
 .thesis-value.uw { color: #f87171; }
 .thesis-value.risks { color: #fbbf24; }
+.thesis-value.avoid { color: #94a3b8; font-style: italic; }
+
+.thesis-conviction {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.thesis-conviction.high { background: #22c55e; color: #fff; }
+.thesis-conviction.medium { background: #f59e0b; color: #1e293b; }
+.thesis-conviction.low { background: #64748b; color: #fff; }
+
+.thesis-primary {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f8fafc;
+  margin: 8px 0;
+  padding: 8px 12px;
+  background: rgba(99, 102, 241, 0.15);
+  border-left: 3px solid #6366f1;
+  border-radius: 4px;
+}
+
+.thesis-trades {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #334155;
+}
+.thesis-trades .thesis-label {
+  display: block;
+  margin-bottom: 6px;
+}
+.thesis-trades ul {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 12px;
+  color: #e2e8f0;
+}
+.thesis-trades li {
+  margin: 4px 0;
+}
 
 /* Feed Insight Display */
 .feed-insight {
@@ -3872,4 +4348,527 @@ form { padding: 20px; }
     height: 48px;
     font-size: 24px;
   }
+}
+
+/* ============================================
+   TEACHING TOOLTIPS - Moontower-style Education
+   ============================================ */
+
+.teaching-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+}
+
+.tip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 700;
+  margin-left: 4px;
+  flex-shrink: 0;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.teaching-tooltip:hover .tip-icon {
+  transform: scale(1.2);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+
+.tip-popup {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px;
+  background: #1e293b;
+  color: #fff;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
+  pointer-events: none;
+}
+
+.tip-popup::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: #1e293b;
+}
+
+.teaching-tooltip:hover .tip-popup {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-4px);
+  pointer-events: auto;
+}
+
+.tip-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #818cf8;
+  margin-bottom: 6px;
+}
+
+.tip-short {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #334155;
+}
+
+.tip-detail {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #cbd5e1;
+  white-space: pre-line;
+  margin-bottom: 10px;
+}
+
+.tip-quote {
+  font-size: 11px;
+  font-style: italic;
+  color: #a5b4fc;
+  padding: 10px;
+  background: rgba(129, 140, 248, 0.1);
+  border-left: 3px solid #818cf8;
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 8px;
+}
+
+.tip-source {
+  font-size: 9px;
+  color: #64748b;
+  text-align: right;
+}
+
+/* Right-aligned tooltips */
+.tip-popup.tip-right {
+  left: auto;
+  right: 0;
+  transform: translateX(0);
+}
+
+.teaching-tooltip:hover .tip-popup.tip-right {
+  transform: translateX(0) translateY(-4px);
+}
+
+/* Mobile tooltip adjustments */
+@media (max-width: 600px) {
+  .tip-popup {
+    width: 280px;
+    padding: 12px;
+  }
+}
+
+/* ============================================
+   THREE LENSES FRAMEWORK
+   ============================================ */
+
+.three-lenses {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.lens-card {
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 8px;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.lens-card:hover {
+  border-color: #818cf8;
+  box-shadow: 0 2px 8px rgba(129, 140, 248, 0.1);
+}
+
+.lens-icon { font-size: 18px; margin-bottom: 4px; }
+.lens-name { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 2px; }
+.lens-question { font-size: 10px; color: #94a3b8; margin-bottom: 6px; font-style: italic; }
+.lens-value { font-size: 12px; font-weight: 600; color: #1e293b; margin-bottom: 2px; }
+.lens-signal { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-block; }
+.lens-signal.expensive { background: #fef3c7; color: #d97706; }
+.lens-signal.cheap { background: #d1fae5; color: #059669; }
+.lens-signal.high { background: #fee2e2; color: #dc2626; }
+.lens-signal.low { background: #d1fae5; color: #059669; }
+.lens-signal.normal { background: #e2e8f0; color: #64748b; }
+
+@media (max-width: 600px) {
+  .three-lenses { grid-template-columns: 1fr; }
+}
+
+/* ============================================
+   WIN RATE REALITY CHECK BOX
+   ============================================ */
+
+.winrate-box {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  border-radius: 6px;
+  padding: 10px;
+  margin-top: 8px;
+  color: #fff;
+}
+
+.winrate-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #a5b4fc;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.winrate-title::before {
+  content: '!';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  background: #fbbf24;
+  color: #1e1b4b;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.winrate-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.winrate-stat {
+  text-align: center;
+  padding: 8px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 6px;
+}
+
+.winrate-label { font-size: 9px; color: #c4b5fd; margin-bottom: 2px; }
+.winrate-value { font-size: 18px; font-weight: 800; }
+.winrate-value.buyer { color: #f87171; }
+.winrate-value.seller { color: #34d399; }
+
+.winrate-insight {
+  font-size: 10px;
+  line-height: 1.4;
+  color: #e2e8f0;
+  padding: 8px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 4px;
+  border-left: 3px solid #fbbf24;
+}
+
+/* ============================================
+   EDGE SOURCE INDICATOR
+   ============================================ */
+
+.edge-source {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border-left: 3px solid #818cf8;
+  margin-top: 8px;
+}
+
+.edge-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.edge-badge.distributional { background: #fef3c7; color: #d97706; }
+.edge-badge.vrp { background: #d1fae5; color: #059669; }
+.edge-badge.surface { background: #dbeafe; color: #2563eb; }
+.edge-badge.mixed { background: #e2e8f0; color: #64748b; }
+.edge-desc { font-size: 10px; color: #64748b; }
+
+/* ============================================
+   VOLATILITY CONE VISUALIZATION
+   ============================================ */
+
+.vol-cone { margin-top: 8px; }
+
+.cone-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.cone-period {
+  font-size: 10px;
+  color: #64748b;
+  width: 50px;
+  flex-shrink: 0;
+}
+
+.cone-bar-container {
+  flex: 1;
+  height: 20px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  position: relative;
+  overflow: visible;
+}
+
+.cone-range {
+  position: absolute;
+  height: 100%;
+  background: linear-gradient(90deg, #dbeafe 0%, #93c5fd 50%, #dbeafe 100%);
+  border-radius: 4px;
+}
+
+.cone-current {
+  position: absolute;
+  width: 4px;
+  height: 24px;
+  background: #ef4444;
+  border-radius: 2px;
+  top: -2px;
+  transform: translateX(-50%);
+}
+
+.cone-iv-marker {
+  position: absolute;
+  width: 4px;
+  height: 24px;
+  background: #818cf8;
+  border-radius: 2px;
+  top: -2px;
+  transform: translateX(-50%);
+}
+
+.cone-percentile {
+  font-size: 10px;
+  font-weight: 600;
+  min-width: 40px;
+  text-align: right;
+}
+
+.cone-legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 10px;
+  font-size: 9px;
+  color: #64748b;
+}
+
+.cone-legend-item { display: flex; align-items: center; gap: 4px; }
+.cone-legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+.cone-legend-dot.rv { background: #ef4444; }
+.cone-legend-dot.iv { background: #818cf8; }
+.cone-legend-dot.range { background: #93c5fd; }
+
+/* ============================================
+   EDUCATIONAL ALERTS
+   ============================================ */
+
+.edu-alert {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.edu-alert.opportunity {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1px solid #10b981;
+}
+
+.edu-alert.info {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1px solid #3b82f6;
+}
+
+.edu-alert.warning {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid #f59e0b;
+}
+
+.edu-alert-icon { font-size: 18px; flex-shrink: 0; }
+.edu-alert-content { flex: 1; }
+.edu-alert-title { font-size: 11px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+.edu-alert-message { font-size: 10px; color: #475569; line-height: 1.5; }
+.edu-alert-tip {
+  font-size: 9px;
+  color: #64748b;
+  font-style: italic;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed currentColor;
+}
+
+/* ============================================
+   POSITION SIZING GUIDANCE
+   ============================================ */
+
+.sizing-guidance {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #f59e0b;
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 12px;
+}
+
+.sizing-header { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.sizing-icon { font-size: 16px; }
+.sizing-title { font-size: 11px; font-weight: 700; color: #92400e; }
+.sizing-content { font-size: 10px; line-height: 1.5; color: #78350f; }
+.sizing-quote {
+  font-style: italic;
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(255,255,255,0.5);
+  border-radius: 6px;
+}
+
+/* ============================================
+   MOONTOWER QUOTE BOX
+   ============================================ */
+
+.moontower-quote {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  border-radius: 6px;
+  padding: 10px;
+  margin-top: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.moontower-quote::before {
+  content: '"';
+  position: absolute;
+  top: -20px;
+  left: 10px;
+  font-size: 80px;
+  color: rgba(129, 140, 248, 0.15);
+  font-family: Georgia, serif;
+}
+
+.moontower-quote-text {
+  font-size: 11px;
+  font-style: italic;
+  color: #e2e8f0;
+  line-height: 1.5;
+  position: relative;
+  z-index: 1;
+}
+
+.moontower-quote-source {
+  font-size: 10px;
+  color: #a5b4fc;
+  margin-top: 6px;
+  text-align: right;
+}
+
+/* ============================================
+   STRADDLE WIN RATE VISUAL
+   ============================================ */
+
+.straddle-winrate-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.straddle-winrate-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.straddle-winrate-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.straddle-winrate-bars {
+  display: flex;
+  height: 24px;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.winrate-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.winrate-bar.buyer { background: linear-gradient(135deg, #f87171 0%, #ef4444 100%); }
+.winrate-bar.seller { background: linear-gradient(135deg, #34d399 0%, #10b981 100%); }
+
+.straddle-winrate-note {
+  font-size: 9px;
+  color: #64748b;
+  line-height: 1.5;
+  padding: 8px;
+  background: #f8fafc;
+  border-radius: 6px;
+}
+
+/* Enhanced opt-subsection hints with info icon */
+.opt-subsection-hint.has-icon {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.opt-subsection-hint.has-icon::before {
+  content: 'i';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  background: #e2e8f0;
+  color: #64748b;
+  border-radius: 50%;
+  font-size: 8px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
 }

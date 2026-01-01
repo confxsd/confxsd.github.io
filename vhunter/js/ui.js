@@ -240,3 +240,117 @@ export function hideError() {
 export function setStatus(text) {
   $('st').textContent = text;
 }
+
+// VRP (Volatility Risk Premium) Display
+export function updateVRPDisplay(vrpMetrics, ivAnalysis, volSetup) {
+  // IV Rank display
+  const ivRankEl = $('iv');
+  if (ivRankEl && ivAnalysis) {
+    const rank = ivAnalysis.ivRank;
+    if (rank != null) {
+      ivRankEl.textContent = rank.toFixed(0) + '%';
+      ivRankEl.className = 'v ' + (rank > 70 ? 'r' : rank < 30 ? 'g' : 'y');
+    } else {
+      ivRankEl.textContent = '--';
+    }
+  }
+
+  // VRP Section (if elements exist)
+  const vrpEl = $('vrp');
+  const rvEl = $('rv30');
+  const setupEl = $('volSetup');
+
+  if (vrpMetrics) {
+    if (vrpEl) {
+      const vrp = vrpMetrics.vrp;
+      if (vrp != null) {
+        vrpEl.textContent = (vrp >= 0 ? '+' : '') + vrp.toFixed(1) + '%';
+        vrpEl.className = 'v ' + (vrp > 10 ? 'r' : vrp < -5 ? 'g' : 'y');
+      } else {
+        vrpEl.textContent = '--';
+      }
+    }
+
+    if (rvEl) {
+      const rv = vrpMetrics.rv30;
+      if (rv != null) {
+        rvEl.textContent = rv.toFixed(1) + '%';
+      } else {
+        rvEl.textContent = '--';
+      }
+    }
+  }
+
+  // Volatility Setup Classification
+  if (setupEl && volSetup) {
+    const setupColors = {
+      LONG_CALENDAR: 'g',
+      SELL_VEGA: 'r',
+      BUY_GAMMA: 'g',
+      SHORT_CALENDAR: 'r',
+      HIGH_VRP: 'r',
+      NEGATIVE_VRP: 'g',
+      NEUTRAL: 'y',
+      UNKNOWN: ''
+    };
+
+    setupEl.textContent = volSetup.setup.replace('_', ' ');
+    setupEl.className = 'vrp-setup ' + (setupColors[volSetup.setup] || '');
+    setupEl.title = volSetup.description;
+  }
+
+  // Update VRP gauge if it exists
+  const vrpGauge = $('vrpGauge');
+  if (vrpGauge && vrpMetrics?.vrp != null) {
+    // Map VRP from -20 to +30 range to 0-100%
+    const normalized = Math.min(100, Math.max(0, (vrpMetrics.vrp + 20) / 50 * 100));
+    vrpGauge.style.width = normalized + '%';
+    vrpGauge.className = 'vrp-gauge-fill ' + (vrpMetrics.vrp > 10 ? 'premium' : vrpMetrics.vrp < -5 ? 'discount' : 'neutral');
+  }
+
+  // Update VRP detail panel if it exists
+  const vrpPanel = $('vrpPanel');
+  if (vrpPanel && vrpMetrics && ivAnalysis) {
+    vrpPanel.innerHTML = buildVRPPanelHTML(vrpMetrics, ivAnalysis, volSetup);
+  }
+}
+
+// Build HTML for VRP detail panel
+function buildVRPPanelHTML(vrpMetrics, ivAnalysis, volSetup) {
+  const vrp = vrpMetrics.vrp;
+  const vrpColor = vrp > 10 ? 'r' : vrp < -5 ? 'g' : 'y';
+  const vrpLabel = vrp > 10 ? 'SELL PREMIUM' : vrp < -5 ? 'BUY PREMIUM' : 'NEUTRAL';
+
+  return `
+    <div class="vrp-row">
+      <span class="vrp-label">IV (Implied)</span>
+      <span class="vrp-value p">${vrpMetrics.iv?.toFixed(1) || '--'}%</span>
+    </div>
+    <div class="vrp-row">
+      <span class="vrp-label">RV (Realized 30d)</span>
+      <span class="vrp-value">${vrpMetrics.rv30?.toFixed(1) || '--'}%</span>
+    </div>
+    <div class="vrp-row highlight">
+      <span class="vrp-label">VRP (IV - RV)</span>
+      <span class="vrp-value ${vrpColor}">${vrp != null ? (vrp >= 0 ? '+' : '') + vrp.toFixed(1) + '%' : '--'}</span>
+    </div>
+    <div class="vrp-row">
+      <span class="vrp-label">IV Rank (52w)</span>
+      <span class="vrp-value">${ivAnalysis.ivRank?.toFixed(0) || '--'}%</span>
+    </div>
+    <div class="vrp-row">
+      <span class="vrp-label">IV Percentile</span>
+      <span class="vrp-value">${ivAnalysis.ivPercentile?.toFixed(0) || '--'}%</span>
+    </div>
+    ${vrpMetrics.termSteepness != null ? `
+    <div class="vrp-row">
+      <span class="vrp-label">Term Steepness</span>
+      <span class="vrp-value">${vrpMetrics.termSteepness >= 0 ? '+' : ''}${vrpMetrics.termSteepness.toFixed(1)}%</span>
+    </div>` : ''}
+    <div class="vrp-signal ${vrpColor}">
+      <span class="signal-label">${vrpLabel}</span>
+      ${volSetup ? `<span class="signal-setup">${volSetup.setup.replace('_', ' ')}</span>` : ''}
+    </div>
+    ${volSetup?.description ? `<div class="vrp-hint">${volSetup.description}</div>` : ''}
+  `;
+}

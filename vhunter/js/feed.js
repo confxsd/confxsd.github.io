@@ -146,12 +146,54 @@ function renderThesis(card, thesis) {
   }
 
   const t = thesis.thesis_data;
+
+  // Build conviction bar
+  const conviction = t.conviction || 5;
+  const convictionClass = conviction >= 7 ? 'high' : conviction >= 4 ? 'medium' : 'low';
+
+  // Build vol view if available
+  const volView = t.volatilityView;
+  const volHtml = volView ? `
+    <div class="thesis-row">
+      <span class="thesis-label">Vol View:</span>
+      <span class="thesis-value">${volView.level} / ${volView.direction} → ${volView.strategy}</span>
+    </div>` : '';
+
+  // Build factor tilts if available
+  const factors = t.factorTilts;
+  const factorHtml = factors ? `
+    <div class="thesis-row">
+      <span class="thesis-label">Tilts:</span>
+      <span class="thesis-value">${factors.style} | ${factors.size} | ${factors.geography}</span>
+    </div>` : '';
+
+  // Build trade ideas if available
+  const tradeIdeas = t.tradeIdeas || [];
+  const tradesHtml = tradeIdeas.length ? `
+    <div class="thesis-trades">
+      <span class="thesis-label">Trade Ideas:</span>
+      <ul>${tradeIdeas.map(idea => `<li>${idea}</li>`).join('')}</ul>
+    </div>` : '';
+
+  // Build key levels if available
+  const levels = t.keyLevels;
+  const levelsHtml = levels && (levels.SPX?.support || levels.VIX?.floor) ? `
+    <div class="thesis-row">
+      <span class="thesis-label">Key Levels:</span>
+      <span class="thesis-value">
+        ${levels.SPX?.support ? `SPX ${levels.SPX.support}-${levels.SPX.resistance}` : ''}
+        ${levels.VIX?.floor ? `| VIX ${levels.VIX.floor}-${levels.VIX.ceiling}` : ''}
+      </span>
+    </div>` : '';
+
   card.innerHTML = `
     <div class="thesis-header">
-      <span class="thesis-regime ${t.regime}">${t.regime}</span>
-      <span class="thesis-bias ${t.bias}">${t.bias}</span>
-      <span class="thesis-version">v${thesis.version} · ${thesis.signals_count} signals</span>
+      <span class="thesis-regime ${t.regime}">${t.regime?.toUpperCase()}</span>
+      <span class="thesis-bias ${t.bias}">${t.bias?.toUpperCase()}</span>
+      <span class="thesis-conviction ${convictionClass}" title="Conviction ${conviction}/10">${conviction}/10</span>
+      <span class="thesis-version">v${thesis.version} · ${thesis.signals_count} signals${t.timeHorizon ? ` · ${t.timeHorizon}` : ''}</span>
     </div>
+    ${t.primaryThesis ? `<div class="thesis-primary">${t.primaryThesis}</div>` : ''}
     <div class="thesis-narrative">${t.narrative}</div>
     <div class="thesis-row">
       <span class="thesis-label">Themes:</span>
@@ -165,6 +207,14 @@ function renderThesis(card, thesis) {
       <span class="thesis-label">UW:</span>
       <span class="thesis-value uw">${(t.sectors?.uw || []).join(', ')}</span>
     </div>
+    ${t.sectors?.avoid?.length ? `
+    <div class="thesis-row">
+      <span class="thesis-label">Avoid:</span>
+      <span class="thesis-value avoid">${t.sectors.avoid.join(', ')}</span>
+    </div>` : ''}
+    ${factorHtml}
+    ${volHtml}
+    ${levelsHtml}
     <div class="thesis-row">
       <span class="thesis-label">Catalysts:</span>
       <span class="thesis-value">${(t.catalysts || []).join(', ')}</span>
@@ -172,7 +222,8 @@ function renderThesis(card, thesis) {
     <div class="thesis-row">
       <span class="thesis-label">Risks:</span>
       <span class="thesis-value risks">${(t.risks || []).join(', ')}</span>
-    </div>`;
+    </div>
+    ${tradesHtml}`;
 }
 
 // Get current thesis for use in prompts

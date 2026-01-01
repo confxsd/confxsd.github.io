@@ -177,3 +177,729 @@ export function calcSMA(prices, period) {
   }
   return result;
 }
+
+// ============================================
+// VOLATILITY RISK PREMIUM (VRP) ANALYTICS
+// Inspired by Moontower.ai / Kris Abdelmessih
+// ============================================
+
+// Calculate Realized Volatility using log returns (proper method)
+export function calcRealizedVol(prices, window = 30) {
+  if (prices.length < window + 1) return null;
+  const returns = [];
+  for (let i = prices.length - window; i < prices.length; i++) {
+    returns.push(Math.log(prices[i] / prices[i - 1]));
+  }
+  const mean = average(returns);
+  const variance = returns.reduce((s, r) => s + Math.pow(r - mean, 2), 0) / returns.length;
+  return Math.sqrt(variance) * Math.sqrt(252) * 100; // Annualized %
+}
+
+// Calculate multiple RV windows for comparison
+export function calcRealizedVolMulti(prices) {
+  return {
+    rv5: calcRealizedVol(prices, 5),
+    rv10: calcRealizedVol(prices, 10),
+    rv20: calcRealizedVol(prices, 20),
+    rv30: calcRealizedVol(prices, 30),
+    rv60: prices.length >= 61 ? calcRealizedVol(prices, 60) : null
+  };
+}
+
+// VRP = IV - RV (positive = options expensive, negative = cheap)
+export function calcVRP(impliedVol, realizedVol) {
+  if (impliedVol == null || realizedVol == null) return null;
+  return impliedVol - realizedVol;
+}
+
+// VRP as percentage of IV
+export function calcVRPRatio(impliedVol, realizedVol) {
+  if (impliedVol == null || realizedVol == null || impliedVol === 0) return null;
+  return ((impliedVol - realizedVol) / impliedVol) * 100;
+}
+
+// IV Rank: Where is current IV relative to 52-week range?
+// IV Rank = (Current IV - 52w Low) / (52w High - 52w Low) * 100
+export function calcIVRank(currentIV, ivHistory) {
+  if (!ivHistory || ivHistory.length === 0 || currentIV == null) return null;
+  const min = Math.min(...ivHistory);
+  const max = Math.max(...ivHistory);
+  if (max === min) return 50; // No range
+  return ((currentIV - min) / (max - min)) * 100;
+}
+
+// IV Percentile: What % of historical IV readings are below current?
+export function calcIVPercentile(currentIV, ivHistory) {
+  if (!ivHistory || ivHistory.length === 0 || currentIV == null) return null;
+  const below = ivHistory.filter(iv => iv < currentIV).length;
+  return (below / ivHistory.length) * 100;
+}
+
+// Term Structure Steepness: (Back month IV - Front month IV) / Front month IV
+// Positive = contango (normal), Negative = backwardation (fear)
+export function calcTermSteepness(frontIV, backIV) {
+  if (frontIV == null || backIV == null || frontIV === 0) return null;
+  return ((backIV - frontIV) / frontIV) * 100;
+}
+
+// Classify volatility trade setup (Moontower-style)
+export function classifyVolSetup(metrics) {
+  const { ivRank, vrp, rvRank, termSteepness, iv } = metrics;
+
+  // If no VRP data at all, we can't classify
+  if (vrp == null) {
+    return { setup: 'NO_DATA', confidence: 0, description: 'Awaiting volatility data' };
+  }
+
+  // Use estimated IV rank if not available (based on typical IV ranges)
+  // Most stocks: 15-50% IV is normal, <15% is low, >50% is high
+  let effectiveIvRank = ivRank;
+  if (ivRank == null && iv != null) {
+    // Estimate based on absolute IV levels
+    if (iv > 80) effectiveIvRank = 95;
+    else if (iv > 60) effectiveIvRank = 80;
+    else if (iv > 45) effectiveIvRank = 65;
+    else if (iv > 30) effectiveIvRank = 50;
+    else if (iv > 20) effectiveIvRank = 35;
+    else if (iv > 15) effectiveIvRank = 20;
+    else effectiveIvRank = 10;
+  }
+
+  // If still no IV rank, use VRP-only classification
+  if (effectiveIvRank == null) {
+    // VRP-only signals
+    if (vrp > 15) {
+      return {
+        setup: 'HIGH_VRP',
+        confidence: 70,
+        description: `VRP +${vrp.toFixed(0)}% - Options expensive vs realized. Sell premium.`,
+        action: 'SELL_PREMIUM'
+      };
+    }
+    if (vrp > 8) {
+      return {
+        setup: 'MODERATE_VRP',
+        confidence: 55,
+        description: `VRP +${vrp.toFixed(0)}% - Slight premium in options.`,
+        action: 'LEAN_SELL'
+      };
+    }
+    if (vrp < -10) {
+      return {
+        setup: 'NEGATIVE_VRP',
+        confidence: 70,
+        description: `VRP ${vrp.toFixed(0)}% - Options cheap vs realized. Buy premium.`,
+        action: 'BUY_PREMIUM'
+      };
+    }
+    if (vrp < -3) {
+      return {
+        setup: 'LOW_VRP',
+        confidence: 50,
+        description: `VRP ${vrp.toFixed(0)}% - Slight discount in options.`,
+        action: 'LEAN_BUY'
+      };
+    }
+    return {
+      setup: 'NEUTRAL',
+      confidence: 40,
+      description: 'VRP near zero. No vol edge. Building IV history...',
+      action: 'WAIT'
+    };
+  }
+
+  const ivRankToUse = effectiveIvRank;
+
+  // Long Calendar: High VRP + Low IV + Flat term structure
+  // "IV is cheap but options are rich relative to RV - sell front month"
+  if (ivRankToUse < 35 && vrp > 5 && Math.abs(termSteepness || 0) < 10) {
+    return {
+      setup: 'LONG_CALENDAR',
+      confidence: Math.min(100, 50 + (30 - ivRankToUse) + vrp),
+      description: 'Low IV + High VRP + Flat term. Sell front month, buy back month.',
+      action: 'SELL_FRONT_BUY_BACK'
+    };
+  }
+
+  // Sell Vega: High VRP + High IV + High RV
+  // "Everything is volatile but options are even more expensive - sell premium"
+  if (ivRankToUse > 60 && vrp > 8 && (rvRank || 50) > 40) {
+    return {
+      setup: 'SELL_VEGA',
+      confidence: Math.min(100, 40 + ivRankToUse * 0.3 + vrp),
+      description: 'High IV + High VRP. Options expensive. Sell premium (strangles, iron condors).',
+      action: 'SELL_PREMIUM'
+    };
+  }
+
+  // Buy Gamma/Vega: Low VRP + Low IV + Low RV (coiled spring)
+  // "Nothing is priced - cheap options before potential move"
+  if (ivRankToUse < 25 && vrp < 3 && (rvRank || 50) < 30) {
+    return {
+      setup: 'BUY_GAMMA',
+      confidence: Math.min(100, 60 + (25 - ivRankToUse) + (3 - vrp) * 5),
+      description: 'Coiled spring. Low IV, low RV, low VRP. Buy cheap options.',
+      action: 'BUY_STRADDLE'
+    };
+  }
+
+  // Short Calendar: Low VRP + High IV + Steep term structure
+  // "Back months are too expensive relative to fronts"
+  if (ivRankToUse > 50 && vrp < 5 && (termSteepness || 0) > 15) {
+    return {
+      setup: 'SHORT_CALENDAR',
+      confidence: Math.min(100, 40 + (termSteepness || 0) * 2),
+      description: 'High IV + Steep term. Back months overpriced. Sell back, buy front.',
+      action: 'SELL_BACK_BUY_FRONT'
+    };
+  }
+
+  // High VRP (general premium selling opportunity)
+  if (vrp > 10) {
+    return {
+      setup: 'HIGH_VRP',
+      confidence: Math.min(100, 50 + vrp * 2),
+      description: `VRP +${vrp.toFixed(0)}% - Options expensive. Sell premium.`,
+      action: 'SELL_PREMIUM'
+    };
+  }
+
+  // Moderate VRP
+  if (vrp > 5) {
+    return {
+      setup: 'MODERATE_VRP',
+      confidence: Math.min(100, 40 + vrp * 2),
+      description: `VRP +${vrp.toFixed(0)}% - Slight edge for selling.`,
+      action: 'LEAN_SELL'
+    };
+  }
+
+  // Negative VRP (premium buying opportunity)
+  if (vrp < -5) {
+    return {
+      setup: 'NEGATIVE_VRP',
+      confidence: Math.min(100, 50 + Math.abs(vrp) * 3),
+      description: `VRP ${vrp.toFixed(0)}% - Options cheap. Buy premium.`,
+      action: 'BUY_PREMIUM'
+    };
+  }
+
+  // Low VRP
+  if (vrp < 0) {
+    return {
+      setup: 'LOW_VRP',
+      confidence: Math.min(100, 40 + Math.abs(vrp) * 3),
+      description: `VRP ${vrp.toFixed(0)}% - Slight edge for buying.`,
+      action: 'LEAN_BUY'
+    };
+  }
+
+  return {
+    setup: 'NEUTRAL',
+    confidence: 35,
+    description: 'VRP near zero. No clear vol edge.',
+    action: 'WAIT'
+  };
+}
+
+// Cross-sectional ranking: Rank metrics across a universe of tickers
+export function crossSectionalRank(tickers, metricKey) {
+  const validTickers = tickers.filter(t => t[metricKey] != null);
+  const sorted = [...validTickers].sort((a, b) => a[metricKey] - b[metricKey]);
+
+  return sorted.map((ticker, i) => ({
+    ticker: ticker.ticker,
+    value: ticker[metricKey],
+    rank: Math.round((i / (sorted.length - 1 || 1)) * 100)
+  }));
+}
+
+// Calculate volatility metrics bundle for a ticker
+export function calcVolatilityMetrics(prices, avgIV, termStructure = null) {
+  const rvMulti = calcRealizedVolMulti(prices);
+  const rv30 = rvMulti.rv30;
+  const vrp = calcVRP(avgIV, rv30);
+  const vrpRatio = calcVRPRatio(avgIV, rv30);
+
+  // Term structure steepness (if available)
+  let termSteepness = null;
+  if (termStructure?.weekly && termStructure?.sixMonth) {
+    termSteepness = calcTermSteepness(termStructure.weekly, termStructure.sixMonth);
+  }
+
+  return {
+    iv: avgIV,
+    ...rvMulti,
+    vrp,
+    vrpRatio,
+    termSteepness,
+    // Labels for UI
+    vrpLabel: vrp != null ? (vrp > 0 ? 'Premium' : 'Discount') : '--',
+    vrpSignal: vrp != null ? (vrp > 10 ? 'SELL' : vrp < -5 ? 'BUY' : 'NEUTRAL') : '--'
+  };
+}
+
+// ============================================
+// GAMMA EXPOSURE (GEX) & DEALER POSITIONING
+// Institutional-grade options flow analytics
+// Based on SqueezeMetrics methodology
+// ============================================
+
+/**
+ * Calculate Gamma Exposure (GEX) from options chain
+ *
+ * GEX measures the $ amount of stock dealers must buy/sell to delta-hedge
+ * for a 1% move in the underlying. Key insights:
+ *
+ * - Positive GEX: Dealers are LONG gamma (bought options from customers)
+ *   They hedge BY selling into rallies, buying dips = STABILIZING
+ *
+ * - Negative GEX: Dealers are SHORT gamma (sold options to customers)
+ *   They hedge BY buying into rallies, selling dips = AMPLIFYING
+ *
+ * Formula: GEX = Gamma × OI × 100 × Spot²  × 0.01
+ * (The 0.01 converts to "per 1% move" and Spot² accounts for $ gamma)
+ *
+ * @param {Array} options - Array of option contracts from Polygon
+ * @param {number} spotPrice - Current underlying price
+ * @returns {Object} GEX metrics
+ */
+export function calcGEX(options, spotPrice) {
+  if (!options?.length || !spotPrice) {
+    return { error: 'Insufficient data', netGEX: 0 };
+  }
+
+  let callGEX = 0;
+  let putGEX = 0;
+  const strikeGEX = {};
+
+  for (const o of options) {
+    const gamma = o.greeks?.gamma;
+    const oi = o.open_interest || 0;
+    const type = o.details?.contract_type;
+    const strike = o.details?.strike_price;
+
+    // Skip if no gamma or no OI
+    if (!gamma || gamma <= 0 || oi <= 0 || !type || !strike) continue;
+
+    // GEX formula: gamma × OI × 100 shares × spot² × 0.01
+    // This gives us $ of stock to trade per 1% underlying move
+    const contractGEX = gamma * oi * 100 * spotPrice * spotPrice * 0.01;
+
+    // Dealer positioning assumption:
+    // - Calls: Dealers are typically SHORT calls (sold to customers) = SHORT gamma
+    //   When they're short calls, they have NEGATIVE gamma exposure
+    //   But we flip the sign: customer long call = dealer short = we show as POSITIVE GEX
+    //   because net market positioning from calls adds positive gamma pressure
+    //
+    // - Puts: Dealers are typically SHORT puts (sold to customers) = LONG gamma
+    //   Short puts = positive gamma for the dealer
+    //   We show this as NEGATIVE GEX because puts add negative gamma pressure
+    //
+    // Net effect: Above GEX flip, market is stabilized. Below, it's amplified.
+
+    if (type === 'call') {
+      callGEX += contractGEX;
+      strikeGEX[strike] = (strikeGEX[strike] || 0) + contractGEX;
+    } else {
+      putGEX -= contractGEX;
+      strikeGEX[strike] = (strikeGEX[strike] || 0) - contractGEX;
+    }
+  }
+
+  const netGEX = callGEX + putGEX;
+
+  // Find key levels
+  const strikes = Object.entries(strikeGEX)
+    .map(([strike, gex]) => ({ strike: parseFloat(strike), gex }))
+    .sort((a, b) => a.strike - b.strike);
+
+  // GEX Zero Line: Price level where net GEX flips sign
+  // Above this = positive gamma (stabilizing), Below = negative gamma (amplifying)
+  const gexZeroLine = findGEXZeroLine(strikes, spotPrice);
+
+  // Gamma walls: Strikes with highest absolute GEX
+  const sortedByGEX = [...strikes].sort((a, b) => Math.abs(b.gex) - Math.abs(a.gex));
+  const callWall = sortedByGEX.find(s => s.gex > 0 && s.strike > spotPrice);
+  const putWall = sortedByGEX.find(s => s.gex < 0 && s.strike < spotPrice);
+
+  // Regime classification
+  let regime = 'NEUTRAL';
+  let regimeDesc = '';
+
+  if (netGEX > 0 && spotPrice > (gexZeroLine || spotPrice)) {
+    regime = 'POSITIVE_GAMMA';
+    regimeDesc = 'Dealers long gamma. Expect mean reversion, lower vol.';
+  } else if (netGEX < 0 || spotPrice < (gexZeroLine || 0)) {
+    regime = 'NEGATIVE_GAMMA';
+    regimeDesc = 'Dealers short gamma. Expect trend continuation, higher vol.';
+  }
+
+  // Normalize GEX to millions for readability
+  const formatGEX = (gex) => {
+    const absGex = Math.abs(gex);
+    if (absGex >= 1e9) return (gex / 1e9).toFixed(2) + 'B';
+    if (absGex >= 1e6) return (gex / 1e6).toFixed(2) + 'M';
+    if (absGex >= 1e3) return (gex / 1e3).toFixed(0) + 'K';
+    return gex.toFixed(0);
+  };
+
+  return {
+    callGEX,
+    putGEX,
+    netGEX,
+    netGEXFormatted: formatGEX(netGEX),
+    gexZeroLine,
+    callWall: callWall?.strike || null,
+    putWall: putWall?.strike || null,
+    regime,
+    regimeDesc,
+    strikeGEX: strikes,
+    // Key insight: distance from zero line
+    distFromZero: gexZeroLine ? ((spotPrice - gexZeroLine) / spotPrice * 100).toFixed(2) : null,
+    isAboveZero: gexZeroLine ? spotPrice > gexZeroLine : netGEX > 0
+  };
+}
+
+/**
+ * Find the price level where cumulative GEX flips from positive to negative
+ */
+function findGEXZeroLine(strikes, spotPrice) {
+  if (!strikes.length) return null;
+
+  // Find where cumulative GEX changes sign
+  let cumulativeGEX = 0;
+  let lastPositive = null;
+  let firstNegative = null;
+
+  for (const { strike, gex } of strikes) {
+    const prevCumulative = cumulativeGEX;
+    cumulativeGEX += gex;
+
+    if (prevCumulative >= 0 && cumulativeGEX < 0) {
+      lastPositive = strike;
+    }
+    if (prevCumulative < 0 && cumulativeGEX >= 0) {
+      firstNegative = strike;
+    }
+  }
+
+  // Alternative: find the strike closest to where net GEX = 0
+  let runningGEX = 0;
+  let zeroStrike = strikes[0]?.strike;
+  let minAbsGEX = Infinity;
+
+  for (const { strike, gex } of strikes) {
+    runningGEX += gex;
+    if (Math.abs(runningGEX) < minAbsGEX) {
+      minAbsGEX = Math.abs(runningGEX);
+      zeroStrike = strike;
+    }
+  }
+
+  return zeroStrike || spotPrice;
+}
+
+/**
+ * Calculate Delta Exposure (DEX) from options chain
+ *
+ * DEX measures net directional exposure from options positioning
+ *
+ * @param {Array} options - Array of option contracts
+ * @param {number} spotPrice - Current underlying price
+ * @returns {Object} DEX metrics
+ */
+export function calcDEX(options, spotPrice) {
+  if (!options?.length || !spotPrice) {
+    return { error: 'Insufficient data', netDEX: 0 };
+  }
+
+  let callDEX = 0;
+  let putDEX = 0;
+
+  for (const o of options) {
+    const delta = o.greeks?.delta;
+    const oi = o.open_interest || 0;
+    const type = o.details?.contract_type;
+
+    if (delta == null || oi <= 0) continue;
+
+    // DEX = |delta| × OI × 100 × spot
+    // This is the notional $ exposure
+    const contractDEX = Math.abs(delta) * oi * 100 * spotPrice;
+
+    if (type === 'call') {
+      callDEX += contractDEX;
+    } else {
+      putDEX += contractDEX;
+    }
+  }
+
+  const netDEX = callDEX - putDEX;
+  const totalDEX = callDEX + putDEX;
+  const dexRatio = totalDEX > 0 ? callDEX / totalDEX : 0.5;
+
+  return {
+    callDEX,
+    putDEX,
+    netDEX,
+    totalDEX,
+    dexRatio, // > 0.5 = call heavy, < 0.5 = put heavy
+    bias: dexRatio > 0.55 ? 'BULLISH' : dexRatio < 0.45 ? 'BEARISH' : 'NEUTRAL'
+  };
+}
+
+/**
+ * Calculate Gamma Ratio (G) - SqueezeMetrics style
+ *
+ * G = Call Gamma / Total Gamma
+ * Ranges 0 to 1:
+ * - > 0.5: Call-heavy positioning (bullish)
+ * - < 0.5: Put-heavy positioning (bearish)
+ * - = 0.5: Balanced
+ *
+ * @param {Array} options - Array of option contracts
+ * @returns {Object} Gamma ratio metrics
+ */
+export function calcGammaRatio(options) {
+  if (!options?.length) {
+    return { gammaRatio: 0.5, interpretation: 'NO_DATA' };
+  }
+
+  let callGamma = 0;
+  let putGamma = 0;
+
+  for (const o of options) {
+    const gamma = o.greeks?.gamma || 0;
+    const oi = o.open_interest || 0;
+    const type = o.details?.contract_type;
+
+    if (gamma <= 0 || oi <= 0) continue;
+
+    const weightedGamma = gamma * oi;
+
+    if (type === 'call') {
+      callGamma += weightedGamma;
+    } else {
+      putGamma += weightedGamma;
+    }
+  }
+
+  const totalGamma = callGamma + putGamma;
+  const gammaRatio = totalGamma > 0 ? callGamma / totalGamma : 0.5;
+
+  return {
+    callGamma,
+    putGamma,
+    totalGamma,
+    gammaRatio,
+    gammaRatioFormatted: gammaRatio.toFixed(2),
+    interpretation: gammaRatio > 0.55 ? 'CALL_HEAVY' :
+                    gammaRatio < 0.45 ? 'PUT_HEAVY' : 'BALANCED',
+    signal: gammaRatio > 0.6 ? 'BULLISH' : gammaRatio < 0.4 ? 'BEARISH' : 'NEUTRAL'
+  };
+}
+
+/**
+ * Combined options exposure analysis
+ * Aggregates GEX, DEX, and Gamma Ratio for complete picture
+ */
+export function calcOptionsExposure(options, spotPrice) {
+  const gex = calcGEX(options, spotPrice);
+  const dex = calcDEX(options, spotPrice);
+  const gammaRatio = calcGammaRatio(options);
+
+  // Composite score: -100 (max bearish) to +100 (max bullish)
+  let compositeScore = 0;
+
+  // GEX component: above zero line = bullish
+  if (gex.isAboveZero) compositeScore += 25;
+  else compositeScore -= 25;
+
+  // GEX regime
+  if (gex.regime === 'POSITIVE_GAMMA') compositeScore += 15;
+  else if (gex.regime === 'NEGATIVE_GAMMA') compositeScore -= 15;
+
+  // DEX component
+  compositeScore += (dex.dexRatio - 0.5) * 60; // -30 to +30
+
+  // Gamma ratio component
+  compositeScore += (gammaRatio.gammaRatio - 0.5) * 60; // -30 to +30
+
+  compositeScore = Math.max(-100, Math.min(100, compositeScore));
+
+  return {
+    gex,
+    dex,
+    gammaRatio,
+    compositeScore: Math.round(compositeScore),
+    compositeSignal: compositeScore > 25 ? 'BULLISH' :
+                     compositeScore < -25 ? 'BEARISH' : 'NEUTRAL',
+    volRegime: gex.regime,
+    summary: `${gex.regime} | G-Ratio: ${gammaRatio.gammaRatioFormatted} | Net GEX: ${gex.netGEXFormatted}`
+  };
+}
+
+// ============================================
+// SQUEEZEMETRICS-STYLE TREND INDICATORS
+// P (Price-Trend) and V (Volatility-Trend)
+// ============================================
+
+/**
+ * Calculate Price-Trend (P) - Volatility-normalized momentum
+ *
+ * P = Recent % move / Realized Volatility
+ *
+ * Oscillates primarily between +1 and -1:
+ * - P > +1: Strong upward momentum (move exceeds typical volatility)
+ * - P < -1: Strong downward momentum
+ * - |P| < 0.5: Subdued price action
+ *
+ * This normalizes moves across assets with different volatility profiles
+ *
+ * @param {Array} prices - Array of closing prices
+ * @param {number} window - Lookback window (default 5 days)
+ * @returns {Object} Price trend metrics
+ */
+export function calcPriceTrend(prices, window = 5) {
+  if (!prices || prices.length < window + 10) {
+    return { p: null, error: 'Insufficient data' };
+  }
+
+  const currentPrice = prices[prices.length - 1];
+  const pastPrice = prices[prices.length - 1 - window];
+  const pctMove = ((currentPrice - pastPrice) / pastPrice) * 100;
+
+  // Use slightly longer window for RV to smooth it
+  const rv = calcRealizedVol(prices, Math.max(window, 10));
+  if (!rv || rv === 0) {
+    return { p: null, error: 'Cannot calculate RV' };
+  }
+
+  // Daily vol from annualized
+  const dailyVol = rv / Math.sqrt(252);
+
+  // Expected move over window
+  const expectedMove = dailyVol * Math.sqrt(window);
+
+  // P = actual move / expected move
+  const p = pctMove / expectedMove;
+
+  return {
+    p: parseFloat(p.toFixed(2)),
+    pctMove: parseFloat(pctMove.toFixed(2)),
+    rv,
+    expectedMove: parseFloat(expectedMove.toFixed(2)),
+    interpretation: Math.abs(p) > 1.5 ? 'EXTREME' :
+                    Math.abs(p) > 1 ? 'STRONG' :
+                    Math.abs(p) > 0.5 ? 'MODERATE' : 'SUBDUED',
+    direction: p > 0 ? 'UP' : 'DOWN',
+    // Signal: extreme readings tend to mean-revert
+    signal: p > 1.5 ? 'OVERBOUGHT' : p < -1.5 ? 'OVERSOLD' : 'NEUTRAL'
+  };
+}
+
+/**
+ * Calculate Volatility-Trend (V) - RV direction indicator
+ *
+ * V = (Short-term RV - Long-term RV) / Long-term RV
+ *
+ * Indicates whether realized volatility is expanding or contracting:
+ * - V > 0: Vol expanding (short-term > long-term)
+ * - V < 0: Vol contracting (short-term < long-term)
+ *
+ * @param {Array} prices - Array of closing prices
+ * @returns {Object} Volatility trend metrics
+ */
+export function calcVolTrend(prices) {
+  if (!prices || prices.length < 30) {
+    return { v: null, error: 'Insufficient data' };
+  }
+
+  const rv5 = calcRealizedVol(prices, 5);
+  const rv10 = calcRealizedVol(prices, 10);
+  const rv20 = calcRealizedVol(prices, 20);
+  const rv30 = calcRealizedVol(prices, 30);
+
+  if (!rv5 || !rv20) {
+    return { v: null, error: 'Cannot calculate RV' };
+  }
+
+  // V = (RV5 - RV20) / RV20
+  const v = ((rv5 - rv20) / rv20) * 100;
+
+  // Term structure of RV
+  const rvTermStructure = rv30 && rv5 ? ((rv30 - rv5) / rv5) * 100 : null;
+
+  return {
+    v: parseFloat(v.toFixed(1)),
+    rv5,
+    rv10,
+    rv20,
+    rv30,
+    rvTermStructure: rvTermStructure?.toFixed(1),
+    regime: v > 20 ? 'EXPANDING' : v < -20 ? 'CONTRACTING' : 'STABLE',
+    interpretation: v > 30 ? 'VOL_SPIKE' :
+                    v > 10 ? 'VOL_RISING' :
+                    v < -30 ? 'VOL_CRUSH' :
+                    v < -10 ? 'VOL_FALLING' : 'VOL_STABLE',
+    // High short-term vol often precedes mean reversion
+    signal: v > 40 ? 'EXPECT_VOL_DECREASE' :
+            v < -40 ? 'EXPECT_VOL_INCREASE' : 'NEUTRAL'
+  };
+}
+
+/**
+ * Combined PVGD analysis (Price, Vol, Gamma, Dark-ratio)
+ * Note: D (Dark-ratio) requires FINRA data not available via Polygon
+ *
+ * This combines all SqueezeMetrics-style indicators into one view
+ */
+export function calcPVGD(prices, options, spotPrice) {
+  const pTrend = calcPriceTrend(prices, 5);
+  const vTrend = calcVolTrend(prices);
+  const exposure = options ? calcOptionsExposure(options, spotPrice) : null;
+
+  // Combine signals for overall market read
+  let overallScore = 0;
+  let signals = [];
+
+  // Price trend contribution
+  if (pTrend.p != null) {
+    if (pTrend.p > 1) { overallScore += 20; signals.push('Strong uptrend'); }
+    else if (pTrend.p < -1) { overallScore -= 20; signals.push('Strong downtrend'); }
+    else if (pTrend.p > 0.5) { overallScore += 10; signals.push('Mild uptrend'); }
+    else if (pTrend.p < -0.5) { overallScore -= 10; signals.push('Mild downtrend'); }
+  }
+
+  // Vol trend contribution (high vol = bearish bias historically)
+  if (vTrend.v != null) {
+    if (vTrend.v > 30) { overallScore -= 15; signals.push('Vol spiking'); }
+    else if (vTrend.v < -30) { overallScore += 15; signals.push('Vol crushing'); }
+  }
+
+  // Options exposure contribution
+  if (exposure) {
+    overallScore += exposure.compositeScore * 0.5;
+    if (exposure.gex.regime === 'POSITIVE_GAMMA') signals.push('Positive GEX');
+    else if (exposure.gex.regime === 'NEGATIVE_GAMMA') signals.push('Negative GEX');
+  }
+
+  overallScore = Math.max(-100, Math.min(100, overallScore));
+
+  return {
+    P: pTrend,
+    V: vTrend,
+    G: exposure?.gammaRatio || null,
+    exposure,
+    overallScore: Math.round(overallScore),
+    overallSignal: overallScore > 30 ? 'BULLISH' :
+                   overallScore < -30 ? 'BEARISH' : 'NEUTRAL',
+    signals,
+    summary: [
+      `P: ${pTrend.p?.toFixed(2) || '--'} (${pTrend.direction || '--'})`,
+      `V: ${vTrend.v?.toFixed(1) || '--'}% (${vTrend.regime || '--'})`,
+      exposure ? `GEX: ${exposure.gex.netGEXFormatted}` : 'GEX: --'
+    ].join(' | ')
+  };
+}

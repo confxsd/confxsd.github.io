@@ -1,0 +1,102 @@
+/* @section:notes - Notes List, Cards */
+
+/* Notes List */
+.notes-list {
+  padding: 20px;
+}
+
+.note-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.note-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.note-ticker {
+  font-size: 14px;
+  font-weight: 700;
+  color: #818cf8;
+}
+
+.note-date {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.note-content {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #475569;
+  white-space: pre-wrap;
+}
+
+.note-tags {
+  margin-top: 10px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.note-tag {
+  font-size: 10px;
+  background: #f1f5f9;
+  color: #64748b;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.note-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* Watchlist */
+.watchlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  padding: 20px;
+}
+
+.watchlist-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.watchlist-ticker {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.watchlist-alerts {
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.watchlist-notes {
+  font-size: 11px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.watchlist-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}

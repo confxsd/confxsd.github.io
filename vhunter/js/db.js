@@ -126,6 +126,114 @@ export async function deleteNote(id) {
   return dbFetch(`/api/notes/${id}`, { method: 'DELETE' });
 }
 
+// ==================== GAMMA LEVELS (Local Storage) ====================
+// Track historical gamma levels for wall shift analysis
+// Uses localStorage until D1 table is added
+
+const GAMMA_STORAGE_KEY = 'vhunter_gamma_levels';
+const MAX_HISTORY_DAYS = 30;
+
+// Get all gamma level history
+export function getGammaHistory(ticker = null) {
+  try {
+    const stored = localStorage.getItem(GAMMA_STORAGE_KEY);
+    const history = stored ? JSON.parse(stored) : {};
+
+    if (ticker) {
+      return history[ticker] || [];
+    }
+    return history;
+  } catch (e) {
+    console.warn('Failed to get gamma history:', e);
+    return ticker ? [] : {};
+  }
+}
+
+// Record gamma levels for a ticker
+export function recordGammaLevels(ticker, levels) {
+  try {
+    const history = getGammaHistory();
+    if (!history[ticker]) history[ticker] = [];
+
+    const today = new Date().toISOString().split('T')[0];
+
+    // Check if we already have today's record
+    const existingIdx = history[ticker].findIndex(h => h.date === today);
+    if (existingIdx >= 0) {
+      history[ticker][existingIdx] = { date: today, ...levels };
+    } else {
+      history[ticker].push({ date: today, ...levels });
+    }
+
+    // Keep only last MAX_HISTORY_DAYS
+    history[ticker] = history[ticker]
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, MAX_HISTORY_DAYS);
+
+    localStorage.setItem(GAMMA_STORAGE_KEY, JSON.stringify(history));
+    return true;
+  } catch (e) {
+    console.warn('Failed to record gamma levels:', e);
+    return false;
+  }
+}
+
+// Get wall shift analysis for a ticker
+export function getWallShiftAnalysis(ticker) {
+  const history = getGammaHistory(ticker);
+  if (history.length < 2) {
+    return { error: 'Insufficient history', shifts: null };
+  }
+
+  const today = history[0];
+  const yesterday = history[1];
+
+  const callWallShift = today.callWall && yesterday.callWall
+    ? today.callWall - yesterday.callWall
+    : null;
+
+  const putWallShift = today.putWall && yesterday.putWall
+    ? today.putWall - yesterday.putWall
+    : null;
+
+  const zeroGammaShift = today.zeroGamma && yesterday.zeroGamma
+    ? today.zeroGamma - yesterday.zeroGamma
+    : null;
+
+  // 5-day trend
+  let callWallTrend = 0;
+  let putWallTrend = 0;
+  if (history.length >= 5) {
+    const recent5 = history.slice(0, 5);
+    const firstCW = recent5[recent5.length - 1]?.callWall;
+    const lastCW = recent5[0]?.callWall;
+    if (firstCW && lastCW) callWallTrend = lastCW - firstCW;
+
+    const firstPW = recent5[recent5.length - 1]?.putWall;
+    const lastPW = recent5[0]?.putWall;
+    if (firstPW && lastPW) putWallTrend = lastPW - firstPW;
+  }
+
+  return {
+    today,
+    yesterday,
+    shifts: {
+      callWall: callWallShift,
+      callWallSignal: callWallShift > 0 ? 'UP' : callWallShift < 0 ? 'DOWN' : 'FLAT',
+      putWall: putWallShift,
+      putWallSignal: putWallShift > 0 ? 'UP' : putWallShift < 0 ? 'DOWN' : 'FLAT',
+      zeroGamma: zeroGammaShift
+    },
+    trends: {
+      callWall5d: callWallTrend,
+      callWallSignal5d: callWallTrend > 0 ? 'BULLISH' : callWallTrend < 0 ? 'BEARISH' : 'NEUTRAL',
+      putWall5d: putWallTrend,
+      putWallSignal5d: putWallTrend > 0 ? 'BULLISH' : putWallTrend < 0 ? 'BEARISH' : 'NEUTRAL'
+    },
+    history: history.slice(0, 10)
+  };
+}
+
 // ==================== HELPERS ====================
 
 // Calculate total P&L from closed positions

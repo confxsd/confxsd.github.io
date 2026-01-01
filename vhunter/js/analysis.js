@@ -2,11 +2,14 @@
 import { fetchTickerData, fetchClaude, fetchNews, fetchTickerDetails } from './api.js';
 import { updateCharts } from './charts.js';
 import * as indicators from './indicators.js';
+import * as gammaTools from './gamma.js';
 import * as ui from './ui.js';
 import { buildCombinedPrompt } from './prompts.js';
 import { calculateMaxPain } from './utils.js';
 import { updateRoute } from './router.js';
 import { addToHistory } from './history.js';
+import { getFullIVAnalysis, recordIV } from './iv-history.js';
+import { recordGammaLevels, getWallShiftAnalysis } from './db.js';
 
 export let mktData = {};
 let skipCache = false;
@@ -184,10 +187,11 @@ function processHistoricalData(ticker, data) {
   if (prices.length >= 6) ui.setPerformance('w1', currentPrice, prices[prices.length - 6]);
   if (prices.length >= 23) ui.setPerformance('m1', currentPrice, prices[prices.length - 23]);
 
-  // Store for AI
+  // Store for AI and VRP calculations
   mktData = {
     ticker,
     price: currentPrice,
+    prices, // Store full price array for VRP/RV calculations
     change: ((currentPrice - data[data.length - 2].c) / data[data.length - 2].c) * 100,
     volume: ui.formatNumber(lastBar.v),
     rvol,
@@ -203,7 +207,8 @@ function processHistoricalData(ticker, data) {
     sma50,
     buyPct,
     adlTrend: adlChange,
-    vol
+    vol, // Historical volatility
+    hv30: vol // Alias for clarity
   };
 
   // Update charts
@@ -234,6 +239,9 @@ function processOptionsData(options, spotPrice) {
     mktData.topCalls = 'N/A';
     mktData.topPuts = 'N/A';
     mktData.maxPain = 'N/A';
+    mktData.vrp = null;
+    mktData.ivRank = null;
+    mktData.volSetup = null;
     if (mktData.price) callAI();
     return;
   }
@@ -249,6 +257,9 @@ function processOptionsData(options, spotPrice) {
 
   let callVol = 0, putVol = 0, callOI = 0, putOI = 0, ivSum = 0, ivCount = 0;
   const calls = [], puts = [];
+
+  // IV by expiration bucket for term structure
+  const expiryIV = { weekly: [], monthly: [], quarterly: [], sixMonth: [] };
 
   allOptions.forEach(o => {
     const details = o.details;
@@ -269,6 +280,14 @@ function processOptionsData(options, spotPrice) {
     if (o.implied_volatility) {
       ivSum += o.implied_volatility;
       ivCount++;
+
+      // Bucket IV by expiration for term structure
+      const expDate = details.expiration_date;
+      const daysToExp = Math.ceil((new Date(expDate) - new Date()) / (1000 * 60 * 60 * 24));
+      if (daysToExp <= 7) expiryIV.weekly.push(o.implied_volatility * 100);
+      else if (daysToExp <= 30) expiryIV.monthly.push(o.implied_volatility * 100);
+      else if (daysToExp <= 90) expiryIV.quarterly.push(o.implied_volatility * 100);
+      else expiryIV.sixMonth.push(o.implied_volatility * 100);
     }
   });
 
@@ -290,6 +309,34 @@ function processOptionsData(options, spotPrice) {
   const pcRatio = putVol / (callVol || 1);
   const avgIV = ivCount > 0 ? (ivSum / ivCount * 100) : 0;
 
+  // Calculate term structure averages
+  const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+  const termStructure = {
+    weekly: avg(expiryIV.weekly),
+    monthly: avg(expiryIV.monthly),
+    quarterly: avg(expiryIV.quarterly),
+    sixMonth: avg(expiryIV.sixMonth)
+  };
+
+  // Calculate VRP metrics using stored price data
+  let vrpMetrics = null;
+  let ivAnalysis = null;
+  let volSetup = null;
+
+  if (mktData.prices && avgIV > 0) {
+    vrpMetrics = indicators.calcVolatilityMetrics(mktData.prices, avgIV, termStructure);
+    ivAnalysis = getFullIVAnalysis(mktData.ticker, avgIV);
+
+    // Classify the volatility setup
+    volSetup = indicators.classifyVolSetup({
+      ivRank: ivAnalysis.ivRank,
+      vrp: vrpMetrics.vrp,
+      iv: avgIV, // Current IV for fallback estimation
+      rvRank: null, // Would need cross-sectional data
+      termSteepness: vrpMetrics.termSteepness
+    });
+  }
+
   const weeklyMaxPain = calculateMaxPain(options.weekly);
   const monthlyMaxPain = calculateMaxPain(options.monthly);
   const sixMonthMaxPain = calculateMaxPain(options.sixMonth);
@@ -309,8 +356,15 @@ function processOptionsData(options, spotPrice) {
     topCalls: calls.slice(0, 3),
     topPuts: puts.slice(0, 3),
     pcOI: putOI / (callOI || 1),
-    spotPrice
+    spotPrice,
+    vrpMetrics,
+    ivAnalysis,
+    volSetup,
+    termStructure
   });
+
+  // Update VRP display in UI
+  ui.updateVRPDisplay(vrpMetrics, ivAnalysis, volSetup);
 
   mktData.callVol = ui.formatNumber(callVol);
   mktData.putVol = ui.formatNumber(putVol);
@@ -319,6 +373,49 @@ function processOptionsData(options, spotPrice) {
   mktData.topPuts = puts.slice(0, 3).map(p => '$' + p.strike).join(', ') || 'N/A';
   mktData.maxPain = weeklyMaxPain || 'N/A';
   mktData.maxPainMonthly = monthlyMaxPain || 'N/A';
+
+  // Add VRP data to mktData for AI prompts
+  mktData.avgIV = avgIV;
+  mktData.vrp = vrpMetrics?.vrp;
+  mktData.rv30 = vrpMetrics?.rv30;
+  mktData.ivRank = ivAnalysis?.ivRank;
+  mktData.ivPercentile = ivAnalysis?.ivPercentile;
+
+  // Calculate GEX metrics using institutional-grade functions
+  const gexMetrics = indicators.calcGEX(allOptions, spotPrice);
+  const dexMetrics = indicators.calcDEX(allOptions, spotPrice);
+
+  // Advanced gamma analytics (SIG-level)
+  const gammaAnalysis = gammaTools.analyzeGamma(allOptions, spotPrice);
+  const deltaFlow = gammaAnalysis.deltaFlow;
+  const charmPressure = gammaAnalysis.charm;
+
+  // Add GEX data to mktData for AI prompts
+  mktData.gexMetrics = gexMetrics;
+  mktData.dexMetrics = dexMetrics;
+  mktData.deltaFlow = deltaFlow;
+  mktData.charmPressure = charmPressure;
+  mktData.gammaLevels = gammaAnalysis.levels;
+  mktData.gammaRegime = gammaAnalysis.regime;
+
+  // Record gamma levels for wall shift tracking
+  if (gexMetrics && !gexMetrics.error) {
+    recordGammaLevels(mktData.ticker, {
+      callWall: gexMetrics.callWall,
+      putWall: gexMetrics.putWall,
+      zeroGamma: gexMetrics.gexZeroLine,
+      netGEX: gexMetrics.netGEX,
+      regime: gexMetrics.regime,
+      spotPrice: spotPrice
+    });
+
+    // Get wall shift analysis
+    const wallShift = getWallShiftAnalysis(mktData.ticker);
+    mktData.wallShift = wallShift;
+  }
+  mktData.termSteepness = vrpMetrics?.termSteepness;
+  mktData.volSetup = volSetup;
+  mktData.termStructure = termStructure;
 
   if (mktData.price) callAI();
 }

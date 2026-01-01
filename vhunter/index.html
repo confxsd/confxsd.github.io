@@ -23,7 +23,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <!-- Modular CSS - organized for AI editing -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/positions.css">
+  <link rel="stylesheet" href="css/analyze.css">
+  <link rel="stylesheet" href="css/notes.css">
+  <link rel="stylesheet" href="css/options.css">
+  <link rel="stylesheet" href="css/watchlist.css">
+  <link rel="stylesheet" href="css/feed.css">
+  <link rel="stylesheet" href="css/teaching.css">
+  <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
 
@@ -257,6 +268,34 @@
             <div class="dr"><span class="l">Weekly</span><span class="v y" id="mPw">--</span><span class="sub" id="mPwD"></span></div>
             <div class="dr"><span class="l">Monthly</span><span class="v y" id="mPm">--</span><span class="sub" id="mPmD"></span></div>
             <div class="dr"><span class="l">6-Month</span><span class="v y" id="mP6">--</span><span class="sub" id="mP6D"></span></div>
+          </div>
+          <div class="cell vrp-cell">
+            <div class="t">Volatility Premium <span class="vrp-badge" id="volSetup">--</span></div>
+            <div class="vrp-gauge">
+              <div class="vrp-gauge-track">
+                <div class="vrp-gauge-fill" id="vrpGauge"></div>
+              </div>
+              <div class="vrp-gauge-labels">
+                <span class="g">Cheap</span>
+                <span>Fair</span>
+                <span class="r">Expensive</span>
+              </div>
+            </div>
+            <div id="vrpPanel" class="vrp-panel">
+              <div class="vrp-row">
+                <span class="vrp-label">IV (Implied)</span>
+                <span class="vrp-value p">--</span>
+              </div>
+              <div class="vrp-row">
+                <span class="vrp-label">RV (Realized 30d)</span>
+                <span class="vrp-value" id="rv30">--</span>
+              </div>
+              <div class="vrp-row highlight">
+                <span class="vrp-label">VRP (IV - RV)</span>
+                <span class="vrp-value" id="vrp">--</span>
+              </div>
+              <div class="vrp-hint">VRP > 0: Options expensive. VRP < 0: Options cheap.</div>
+            </div>
           </div>
           <div class="cell">
             <div class="t">Risk Analysis</div>
@@ -574,8 +613,8 @@
           <div class="opt-stat-value" id="optHv30">--</div>
           <div class="opt-stat-hint">realized vol</div>
         </div>
-        <div class="opt-stat">
-          <div class="opt-stat-label">IV - HV</div>
+        <div class="opt-stat vrp-stat">
+          <div class="opt-stat-label">VRP (IV-HV)</div>
           <div class="opt-stat-value" id="optIvHvDiff">--</div>
           <div class="opt-stat-hint">vol premium</div>
         </div>
@@ -588,6 +627,11 @@
           <div class="opt-stat-label">P/C Ratio</div>
           <div class="opt-stat-value" id="optPcRatio">--</div>
           <div class="opt-stat-hint">volume</div>
+        </div>
+        <div class="opt-stat vol-setup-stat">
+          <div class="opt-stat-label">Vol Setup</div>
+          <div class="opt-stat-value vrp-badge" id="optVolSetup">--</div>
+          <div class="opt-stat-hint">trade signal</div>
         </div>
       </div>
 
@@ -630,6 +674,54 @@
                 <div class="exp-row"><span class="exp-label">Daily</span><span class="exp-range" id="optExpDaily">--</span></div>
                 <div class="exp-row"><span class="exp-label">Weekly</span><span class="exp-range" id="optExpWeekly">--</span></div>
                 <div class="exp-row"><span class="exp-label">Monthly</span><span class="exp-range" id="optExpMonthly">--</span></div>
+              </div>
+            </div>
+            <!-- Volatility Cone -->
+            <div class="opt-subsection">
+              <div class="opt-subsection-title">Volatility Cone</div>
+              <div class="opt-subsection-hint">Historical RV ranges by lookback - shows where current RV sits in context</div>
+              <div class="vol-cone" id="volCone">
+                <div class="cone-row">
+                  <span class="cone-period">5-day</span>
+                  <div class="cone-bar-container">
+                    <div class="cone-range" id="cone5dRange" style="left:20%;width:60%"></div>
+                    <div class="cone-current" id="cone5dRv" style="left:50%"></div>
+                    <div class="cone-iv-marker" id="cone5dIv" style="left:70%"></div>
+                  </div>
+                  <span class="cone-percentile" id="cone5dPct">--</span>
+                </div>
+                <div class="cone-row">
+                  <span class="cone-period">10-day</span>
+                  <div class="cone-bar-container">
+                    <div class="cone-range" id="cone10dRange" style="left:25%;width:50%"></div>
+                    <div class="cone-current" id="cone10dRv" style="left:50%"></div>
+                    <div class="cone-iv-marker" id="cone10dIv" style="left:65%"></div>
+                  </div>
+                  <span class="cone-percentile" id="cone10dPct">--</span>
+                </div>
+                <div class="cone-row">
+                  <span class="cone-period">20-day</span>
+                  <div class="cone-bar-container">
+                    <div class="cone-range" id="cone20dRange" style="left:30%;width:40%"></div>
+                    <div class="cone-current" id="cone20dRv" style="left:50%"></div>
+                    <div class="cone-iv-marker" id="cone20dIv" style="left:60%"></div>
+                  </div>
+                  <span class="cone-percentile" id="cone20dPct">--</span>
+                </div>
+                <div class="cone-row">
+                  <span class="cone-period">30-day</span>
+                  <div class="cone-bar-container">
+                    <div class="cone-range" id="cone30dRange" style="left:32%;width:36%"></div>
+                    <div class="cone-current" id="cone30dRv" style="left:50%"></div>
+                    <div class="cone-iv-marker" id="cone30dIv" style="left:55%"></div>
+                  </div>
+                  <span class="cone-percentile" id="cone30dPct">--</span>
+                </div>
+              </div>
+              <div class="cone-legend">
+                <div class="cone-legend-item"><div class="cone-legend-dot rv"></div><span>Current RV</span></div>
+                <div class="cone-legend-item"><div class="cone-legend-dot iv"></div><span>Implied Vol</span></div>
+                <div class="cone-legend-item"><div class="cone-legend-dot range"></div><span>10-90 %ile Range</span></div>
               </div>
             </div>
           </div>
@@ -744,58 +836,193 @@
                 </div>
               </div>
             </div>
-            <!-- GEX Zones -->
+            <!-- GEX Zones (SIG-level) -->
             <div class="opt-subsection">
               <div class="opt-subsection-title">Gamma Exposure (GEX)</div>
-              <div class="opt-subsection-hint">+GEX = dealer long gamma (dampens moves), -GEX = amplifies</div>
+              <div class="opt-subsection-hint">+GEX = dealers long gamma (dampens), -GEX = short (amplifies)</div>
               <div class="gex-display">
-                <div class="gex-row"><span>GEX Flip</span><span class="y" id="optGexFlip">--</span></div>
+                <div class="gex-row"><span>Zero Gamma</span><span class="y" id="optGexFlip">--</span></div>
                 <div class="gex-row"><span>Call Wall</span><span class="g" id="optGexCallWall">--</span></div>
                 <div class="gex-row"><span>Put Wall</span><span class="r" id="optGexPutWall">--</span></div>
+                <div class="gex-row"><span>Vol Trigger</span><span class="y" id="optVolTrigger">--</span></div>
                 <div class="gex-row"><span>Net GEX</span><span id="optNetGex">--</span></div>
               </div>
             </div>
+            <!-- Delta Flow & Charm -->
+            <div class="opt-subsection">
+              <div class="opt-subsection-title">Dealer Positioning</div>
+              <div class="opt-subsection-hint">Hedging pressure and near-expiry pinning effects</div>
+              <div class="gex-display">
+                <div class="gex-row"><span>Delta Flow</span><span id="optDeltaFlow">--</span></div>
+                <div class="gex-row"><span>Charm Pin</span><span id="optCharmPin">--</span></div>
+                <div class="gex-row"><span>G-Ratio</span><span id="optGammaRatio">--</span></div>
+                <div class="gex-row"><span>DEX Bias</span><span id="optNetDex">--</span></div>
+              </div>
+              <div class="gex-trading-style" id="optGexTradingStyle"></div>
+            </div>
           </div>
         </div>
 
-        <!-- Section 4: Options Chain -->
-        <div class="opt-section opt-section-wide">
+        <!-- Section 5: Volatility Tools (Moontower-style) -->
+        <div class="opt-section">
           <div class="opt-section-header">
-            <span class="opt-section-icon">📋</span>
-            <span class="opt-section-title">Options Chain</span>
-            <div class="chain-controls">
-              <select id="optExpSelect" onchange="loadChainForExpiry()">
-                <option value="">Select Expiry</option>
-              </select>
-              <button class="chain-toggle active" data-show="all" onclick="toggleChainView('all')">All</button>
-              <button class="chain-toggle" data-show="itm" onclick="toggleChainView('itm')">ITM</button>
-              <button class="chain-toggle" data-show="otm" onclick="toggleChainView('otm')">OTM</button>
-            </div>
+            <span class="opt-section-icon">🎯</span>
+            <span class="opt-section-title">Vol Tools</span>
           </div>
           <div class="opt-section-body">
-            <div class="chain-wrapper">
-              <div class="chain-header">
-                <div class="chain-side calls">
-                  <span>Bid</span><span>Ask</span><span>Last</span><span>Vol</span><span>OI</span><span>IV</span><span>Delta</span>
+            <!-- Multi-Window VRP -->
+            <div class="opt-subsection">
+              <div class="opt-subsection-title">VRP Analysis (Multi-Window)</div>
+              <div class="opt-subsection-hint">Compare IV vs RV across different lookbacks</div>
+              <div class="vrp-windows" id="vrpWindows">
+                <div class="vrp-window-row">
+                  <span class="vrp-window-label">5-day RV</span>
+                  <span class="vrp-window-rv" id="rv5d">--</span>
+                  <span class="vrp-window-vrp" id="vrp5d">--</span>
                 </div>
-                <div class="chain-strike-header">Strike</div>
-                <div class="chain-side puts">
-                  <span>Delta</span><span>IV</span><span>OI</span><span>Vol</span><span>Last</span><span>Bid</span><span>Ask</span>
+                <div class="vrp-window-row">
+                  <span class="vrp-window-label">10-day RV</span>
+                  <span class="vrp-window-rv" id="rv10d">--</span>
+                  <span class="vrp-window-vrp" id="vrp10d">--</span>
                 </div>
-              </div>
-              <div class="chain-body" id="optChainBody">
-                <div class="chain-loading">Select expiration to load chain</div>
+                <div class="vrp-window-row">
+                  <span class="vrp-window-label">20-day RV</span>
+                  <span class="vrp-window-rv" id="rv20d">--</span>
+                  <span class="vrp-window-vrp" id="vrp20d">--</span>
+                </div>
+                <div class="vrp-window-row">
+                  <span class="vrp-window-label">30-day RV</span>
+                  <span class="vrp-window-rv" id="rv30d">--</span>
+                  <span class="vrp-window-vrp" id="vrp30d">--</span>
+                </div>
+                <div class="vrp-summary" id="vrpSummary">
+                  <span class="vrp-trend">--</span>
+                  <span class="vrp-signal">--</span>
+                </div>
               </div>
             </div>
-            <div class="chain-legend">
-              <span class="legend-item"><span class="legend-dot itm"></span>In-The-Money</span>
-              <span class="legend-item"><span class="legend-dot atm"></span>At-The-Money</span>
-              <span class="legend-item"><span class="legend-dot otm"></span>Out-Of-Money</span>
+            <!-- Straddle Calculator -->
+            <div class="opt-subsection">
+              <div class="opt-subsection-title">Straddle Pricing</div>
+              <div class="opt-subsection-hint">ATM straddle cost and breakeven analysis</div>
+              <div class="straddle-calc" id="straddleCalc">
+                <div class="straddle-row">
+                  <span>ATM Straddle</span>
+                  <span class="straddle-value" id="straddlePrice">$--</span>
+                </div>
+                <div class="straddle-row">
+                  <span>As % of Spot</span>
+                  <span class="straddle-value" id="straddlePct">--%</span>
+                </div>
+                <div class="straddle-row">
+                  <span>Expected Move (1SD)</span>
+                  <span class="straddle-value" id="expMoveAmt">$--</span>
+                </div>
+                <div class="straddle-row">
+                  <span>Breakeven</span>
+                  <span class="straddle-value" id="straddleBE">±--%</span>
+                </div>
+              </div>
+              <!-- Win Rate Reality Check -->
+              <div class="winrate-box">
+                <div class="winrate-title">Win Rate Reality Check</div>
+                <div class="winrate-grid">
+                  <div class="winrate-stat">
+                    <div class="winrate-label">Buyer Wins</div>
+                    <div class="winrate-value buyer">42%</div>
+                  </div>
+                  <div class="winrate-stat">
+                    <div class="winrate-label">Seller Wins</div>
+                    <div class="winrate-value seller">58%</div>
+                  </div>
+                </div>
+                <div class="winrate-insight">
+                  A fairly priced straddle has 0 expectancy but loses ~58% of the time. Buyers win less often, but wins are larger. Zero expectancy ≠ equal outcomes!
+                </div>
+              </div>
+            </div>
+            <!-- Earnings Vol Extractor -->
+            <div class="opt-subsection">
+              <div class="opt-subsection-title">Earnings Vol Extractor</div>
+              <div class="opt-subsection-hint">Extract implied earnings move from term structure</div>
+              <div class="earnings-calc">
+                <div class="earnings-inputs">
+                  <div class="earnings-input">
+                    <label>Days to Exp</label>
+                    <input type="number" id="earningsDTE" value="30" min="1" max="365">
+                  </div>
+                  <div class="earnings-input">
+                    <label>Term IV (%)</label>
+                    <input type="number" id="earningsTermIV" value="" placeholder="e.g. 45">
+                  </div>
+                  <div class="earnings-input">
+                    <label>Base IV (%)</label>
+                    <input type="number" id="earningsBaseIV" value="" placeholder="optional">
+                  </div>
+                  <button class="btn-sm" onclick="calcEarningsMove()">Extract</button>
+                </div>
+                <div class="earnings-results" id="earningsResults">
+                  <div class="earnings-row">
+                    <span>Implied Earnings Move</span>
+                    <span class="earnings-value" id="earningsMove">--%</span>
+                  </div>
+                  <div class="earnings-row">
+                    <span>Event Vol (annualized)</span>
+                    <span class="earnings-value" id="eventVol">--%</span>
+                  </div>
+                  <div class="earnings-row">
+                    <span>Variance Weight</span>
+                    <span class="earnings-value" id="varWeight">--%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Vol Trade Ideas -->
+            <div class="opt-subsection">
+              <div class="opt-subsection-title">Vol Trade Ideas</div>
+              <div class="opt-subsection-hint">AI-generated volatility trade setups</div>
+              <div class="vol-ideas" id="volIdeas">
+                <div class="vol-idea-empty">Analyze a ticker to generate vol trade ideas</div>
+              </div>
+            </div>
+            <!-- Three Lenses Framework -->
+            <div class="opt-subsection">
+              <div class="opt-subsection-title">Three Lenses Framework</div>
+              <div class="opt-subsection-hint">Analyze options through cross-sectional, time series, and fundamental views</div>
+              <div class="three-lenses" id="threeLenses">
+                <div class="lens-card">
+                  <div class="lens-icon">📊</div>
+                  <div class="lens-name">Cross-Sectional</div>
+                  <div class="lens-question">Is IV high vs peers?</div>
+                  <div class="lens-value" id="lensXs">--</div>
+                  <div class="lens-signal normal" id="lensXsSignal">--</div>
+                </div>
+                <div class="lens-card">
+                  <div class="lens-icon">📈</div>
+                  <div class="lens-name">Time Series</div>
+                  <div class="lens-question">Is IV high for this stock?</div>
+                  <div class="lens-value" id="lensTs">--</div>
+                  <div class="lens-signal normal" id="lensTsSignal">--</div>
+                </div>
+                <div class="lens-card">
+                  <div class="lens-icon">🔍</div>
+                  <div class="lens-name">Fundamental</div>
+                  <div class="lens-question">Is vol justified?</div>
+                  <div class="lens-value" id="lensFund">--</div>
+                  <div class="lens-signal normal" id="lensFundSignal">--</div>
+                </div>
+              </div>
+              <div class="moontower-quote">
+                <div class="moontower-quote-text">
+                  "A durable way of seeing based on lots of pain. This is the stuff of salt mines. The way traders think."
+                </div>
+                <div class="moontower-quote-source">- Kris Abdelmessih, Moontower</div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Section 5: Trade Scanner -->
+        <!-- Section 6: Trade Scanner -->
         <div class="opt-section">
           <div class="opt-section-header">
             <span class="opt-section-icon">🔍</span>
@@ -879,6 +1106,43 @@
             <button class="btn-primary btn-ai-refresh" onclick="refreshOptionsAi()">Refresh AI Analysis</button>
           </div>
         </div>
+
+        <!-- Options Chain -->
+        <div class="opt-section opt-section-wide">
+          <div class="opt-section-header">
+            <span class="opt-section-icon">📋</span>
+            <span class="opt-section-title">Options Chain</span>
+            <div class="chain-controls">
+              <select id="optExpSelect" onchange="loadChainForExpiry()">
+                <option value="">Select Expiry</option>
+              </select>
+              <button class="chain-toggle active" data-show="all" onclick="toggleChainView('all')">All</button>
+              <button class="chain-toggle" data-show="itm" onclick="toggleChainView('itm')">ITM</button>
+              <button class="chain-toggle" data-show="otm" onclick="toggleChainView('otm')">OTM</button>
+            </div>
+          </div>
+          <div class="opt-section-body">
+            <div class="chain-wrapper">
+              <div class="chain-header">
+                <div class="chain-side calls">
+                  <span>Bid</span><span>Ask</span><span>Last</span><span>Vol</span><span>OI</span><span>IV</span><span>Delta</span>
+                </div>
+                <div class="chain-strike-header">Strike</div>
+                <div class="chain-side puts">
+                  <span>Delta</span><span>IV</span><span>OI</span><span>Vol</span><span>Last</span><span>Bid</span><span>Ask</span>
+                </div>
+              </div>
+              <div class="chain-body" id="optChainBody">
+                <div class="chain-loading">Select expiration to load chain</div>
+              </div>
+            </div>
+            <div class="chain-legend">
+              <span class="legend-item"><span class="legend-dot itm"></span>In-The-Money</span>
+              <span class="legend-item"><span class="legend-dot atm"></span>At-The-Money</span>
+              <span class="legend-item"><span class="legend-dot otm"></span>Out-Of-Money</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </main>
@@ -904,10 +1168,12 @@
         <div class="form-group">
           <label>Type</label>
           <select id="posType" required>
-            <option value="long">Long</option>
-            <option value="short">Short</option>
-            <option value="call">Call</option>
-            <option value="put">Put</option>
+            <option value="long">Long Stock</option>
+            <option value="short">Short Stock</option>
+            <option value="call">Long Call</option>
+            <option value="put">Long Put</option>
+            <option value="short_call">Short Call</option>
+            <option value="short_put">Short Put</option>
           </select>
         </div>
       </div>

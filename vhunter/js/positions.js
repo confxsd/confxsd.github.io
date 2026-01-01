@@ -71,7 +71,11 @@ export function calcUnrealizedPnL(position, currentPrice, optionPrice = null) {
   } else if (type === 'short') {
     return (entry - currentPrice) * qty;
   } else if ((type === 'put' || type === 'call') && optionPrice !== null) {
+    // Long options: profit when option price rises
     return (optionPrice - entry) * qty * 100;
+  } else if ((type === 'short_put' || type === 'short_call') && optionPrice !== null) {
+    // Short options: profit when option price falls (collected premium - current value)
+    return (entry - optionPrice) * qty * 100;
   }
   return 0;
 }
@@ -86,10 +90,15 @@ export async function loadPositions() {
     positionsCache.open = Array.isArray(open) ? open : (open.data || []);
     positionsCache.closed = Array.isArray(closed) ? closed : (closed.data || []);
 
-    const positionsWithInfo = positionsCache.open.map(p => ({
-      ...p,
-      optionInfo: parseOptionFromNotes(p.notes)
-    }));
+    const positionsWithInfo = positionsCache.open.map(p => {
+      // Parse option info from notes, handling both long and short options
+      let optionInfo = parseOptionFromNotes(p.notes);
+      // For short_put/short_call, also try to parse option details
+      if (!optionInfo && (p.type === 'short_put' || p.type === 'short_call')) {
+        optionInfo = parseOptionFromNotes(p.notes);
+      }
+      return { ...p, optionInfo };
+    });
 
     // Batch fetch all stock prices at once (uses shared cache)
     const stockTickers = [...new Set(positionsWithInfo.map(p =>
@@ -161,16 +170,19 @@ export function renderPositions(status) {
         ${positions.map(p => {
           const pnl = p.unrealizedPnL || 0;
           const pnlClass = pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : '';
-          const costBasis = p.type === 'long' || p.type === 'short'
-            ? p.entry_price * p.quantity
-            : p.entry_price * p.quantity * 100;
+          const isOption = ['put', 'call', 'short_put', 'short_call'].includes(p.type);
+          const costBasis = isOption
+            ? p.entry_price * p.quantity * 100
+            : p.entry_price * p.quantity;
           const pnlPct = costBasis > 0 ? (pnl / costBasis) * 100 : 0;
           const optInfo = p.optionInfo;
+          const isShortOption = p.type === 'short_put' || p.type === 'short_call';
           const displayTicker = optInfo
             ? `${p.ticker} ${optInfo.strike}${optInfo.type === 'put' ? 'P' : 'C'}`
             : p.ticker;
           const expiryText = optInfo ? optInfo.expiryRaw : '';
           const displayPrice = optInfo ? (p.optionPrice || 0) : (p.currentPrice || 0);
+          const typeLabel = isShortOption ? p.type.replace('_', ' ') : p.type;
 
           return `
             <div class="position-row ${pnlClass}">
@@ -178,7 +190,7 @@ export function renderPositions(status) {
                 <strong>${displayTicker}</strong>
                 ${expiryText ? `<small>${expiryText}</small>` : ''}
               </span>
-              <span class="col-type"><span class="type-badge ${p.type}">${p.type}</span></span>
+              <span class="col-type"><span class="type-badge ${p.type.replace('_', '-')}">${typeLabel}</span></span>
               <span class="col-qty">${p.quantity}</span>
               <span class="col-entry">$${p.entry_price.toFixed(2)}</span>
               <span class="col-current">$${displayPrice.toFixed(2)}</span>

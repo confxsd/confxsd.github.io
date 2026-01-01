@@ -4,6 +4,8 @@ import * as ui from './ui.js';
 import { fetchTickerData, fetchClaude } from './api.js';
 import { formatNum, calculateMaxPain, calculateHistoricalVolatility } from './utils.js';
 import { switchPage } from './pages.js';
+import { calcVRP, classifyVolSetup, crossSectionalRank } from './indicators.js';
+import { getFullIVAnalysis } from './iv-history.js';
 
 export let watchlistCache = [];
 let huntCache = {};
@@ -124,6 +126,22 @@ export async function huntOptions() {
       }
     });
 
+    // Calculate cross-sectional rankings (Moontower-style)
+    if (huntResults.length > 1) {
+      const vrpRanks = crossSectionalRank(huntResults, 'vrp');
+      const ivRankRanks = crossSectionalRank(huntResults, 'ivRank');
+      const pcRatioRanks = crossSectionalRank(huntResults, 'pcRatio');
+
+      huntResults.forEach(r => {
+        r.vrpRank = vrpRanks.find(x => x.ticker === r.ticker)?.rank || 50;
+        r.ivRankRank = ivRankRanks.find(x => x.ticker === r.ticker)?.rank || 50;
+        r.pcRatioRank = pcRatioRanks.find(x => x.ticker === r.ticker)?.rank || 50;
+
+        // Composite VRP score: weight VRP and IV Rank heavily for premium selling
+        r.vrpComposite = (r.vrpRank * 0.4 + r.ivRankRank * 0.3 + r.pcRatioRank * 0.3);
+      });
+    }
+
     huntResults.sort((a, b) => b.score - a.score);
 
     updateHuntQuickStats(huntResults);
@@ -233,6 +251,21 @@ async function fetchHuntData(ticker) {
     const pcOiRatio = putOI / (callOI || 1);
     const ivHvDiff = avgIV - hv30;
 
+    // VRP (Volatility Risk Premium) calculations
+    const vrp = calcVRP(avgIV, hv30);
+    const ivAnalysis = getFullIVAnalysis(ticker, avgIV);
+    const ivRank = ivAnalysis.ivRank;
+    const ivPercentile = ivAnalysis.ivPercentile;
+
+    // Classify the volatility setup
+    const volSetup = classifyVolSetup({
+      ivRank: ivRank,
+      vrp: vrp,
+      iv: avgIV, // Current IV for fallback estimation
+      rvRank: null,
+      termSteepness: null
+    });
+
     const totalPremium = callPremium + putPremium;
     const putPremiumPct = totalPremium > 0 ? (putPremium / totalPremium) * 100 : 50;
     const premiumBias = putPremiumPct > 55 ? 'PUT HEAVY' : putPremiumPct < 45 ? 'CALL HEAVY' : 'BALANCED';
@@ -253,9 +286,20 @@ async function fetchHuntData(ticker) {
 
     let score = 50;
 
-    if (ivHvDiff > 15) score += 15;
-    else if (ivHvDiff > 5) score += 8;
-    else if (ivHvDiff < -10) score -= 10;
+    // VRP scoring (key Moontower insight)
+    if (vrp > 15) score += 18; // Very high premium - strong sell signal
+    else if (vrp > 10) score += 12;
+    else if (vrp > 5) score += 6;
+    else if (vrp < -5) score -= 8; // Options cheap, don't sell
+    else if (vrp < 0) score -= 4;
+
+    // IV Rank scoring
+    if (ivRank != null) {
+      if (ivRank > 80) score += 12; // Very high IV - good for selling
+      else if (ivRank > 60) score += 8;
+      else if (ivRank < 20) score -= 10; // Low IV - options cheap
+      else if (ivRank < 40) score -= 5;
+    }
 
     if (pcRatio > 1.5) score += 15;
     else if (pcRatio > 1.2) score += 10;
@@ -269,8 +313,9 @@ async function fetchHuntData(ticker) {
       else if (maxPainDist > 5) score -= 5;
     }
 
-    if (avgIV > 60) score += 8;
-    else if (avgIV > 40) score += 4;
+    // Vol setup bonus
+    if (volSetup.setup === 'SELL_VEGA' || volSetup.setup === 'HIGH_VRP') score += 10;
+    else if (volSetup.setup === 'BUY_GAMMA' || volSetup.setup === 'NEGATIVE_VRP') score -= 10;
 
     if (changePct < -3) score += 8;
     else if (changePct < -1) score += 4;
@@ -293,6 +338,12 @@ async function fetchHuntData(ticker) {
       avgIV,
       hv30,
       ivHvDiff,
+      // VRP metrics (Moontower-style)
+      vrp,
+      ivRank,
+      ivPercentile,
+      volSetup,
+      // Flow metrics
       pcRatio,
       pcOiRatio,
       callVol,
@@ -407,12 +458,16 @@ function renderHuntGrid(results) {
         ${unusualHtml}
         <div class="hunt-card-metrics">
           <div class="hunt-metric">
-            <span class="hunt-metric-label">IV</span>
-            <span class="hunt-metric-value">${r.avgIV.toFixed(0)}%</span>
+            <span class="hunt-metric-label">VRP</span>
+            <span class="hunt-metric-value ${r.vrp > 10 ? 'high' : r.vrp < 0 ? 'low' : ''}" title="IV - RV: Options ${r.vrp > 5 ? 'expensive' : r.vrp < -5 ? 'cheap' : 'fair'}">
+              ${r.vrp != null ? (r.vrp >= 0 ? '+' : '') + r.vrp.toFixed(0) + '%' : '--'}
+            </span>
           </div>
           <div class="hunt-metric">
-            <span class="hunt-metric-label">IV-HV</span>
-            <span class="hunt-metric-value ${r.ivHvDiff > 10 ? 'high' : ''}">${r.ivHvDiff >= 0 ? '+' : ''}${r.ivHvDiff.toFixed(0)}%</span>
+            <span class="hunt-metric-label">IV Rank</span>
+            <span class="hunt-metric-value ${r.ivRank > 60 ? 'high' : r.ivRank < 30 ? 'low' : ''}" title="Percentile vs 52-week range">
+              ${r.ivRank != null ? r.ivRank.toFixed(0) + '%' : '--'}
+            </span>
           </div>
           <div class="hunt-metric">
             <span class="hunt-metric-label">P/C Vol</span>
@@ -423,6 +478,14 @@ function renderHuntGrid(results) {
             <span class="hunt-metric-value ${premiumClass}">${r.putPremiumPct.toFixed(0)}%</span>
           </div>
         </div>
+        ${r.volSetup ? `
+        <div class="hunt-card-setup">
+          <span class="setup-badge ${r.volSetup.setup.includes('SELL') || r.volSetup.setup === 'HIGH_VRP' ? 'bearish' : r.volSetup.setup.includes('BUY') ? 'bullish' : ''}"
+                title="${r.volSetup.description}">
+            ${r.volSetup.setup.replace('_', ' ')}
+          </span>
+        </div>
+        ` : ''}
         <div class="hunt-card-flow">
           <span class="flow-label ${premiumClass}">${r.premiumBias}</span>
           <span class="flow-detail">$${formatNum(r.totalPremium / 1000000)}M prem</span>
@@ -450,8 +513,11 @@ async function runHuntAiAnalysis(results) {
 
   const dataStr = results.slice(0, 5).map(r => {
     let line = `${r.ticker}: $${r.spotPrice.toFixed(2)} (${r.changePct >= 0 ? '+' : ''}${r.changePct.toFixed(1)}%)`;
-    line += ` | IV:${r.avgIV.toFixed(0)}% IV-HV:${r.ivHvDiff >= 0 ? '+' : ''}${r.ivHvDiff.toFixed(0)}%`;
+    // VRP metrics (Moontower-style)
+    line += ` | VRP:${r.vrp != null ? (r.vrp >= 0 ? '+' : '') + r.vrp.toFixed(0) + '%' : '--'}`;
+    line += ` IVRank:${r.ivRank != null ? r.ivRank.toFixed(0) + '%' : '--'}`;
     line += ` | P/C:${r.pcRatio.toFixed(2)} | Put$:${r.putPremiumPct.toFixed(0)}%`;
+    line += ` | Setup:${r.volSetup?.setup || 'N/A'}`;
     line += ` | Score:${r.score}`;
 
     if (r.hasUnusualActivity) {
@@ -465,26 +531,33 @@ async function runHuntAiAnalysis(results) {
 
   const withUnusual = results.filter(r => r.hasUnusualActivity);
   const unusualPutBias = results.filter(r => r.unusualPutCount > r.unusualCallCount).length;
+  const highVrp = results.filter(r => r.vrp > 10).length;
+  const sellVega = results.filter(r => r.volSetup?.setup === 'SELL_VEGA' || r.volSetup?.setup === 'HIGH_VRP').length;
 
-  const prompt = `You are a professional options flow analyst hunting for SHORT setups during US equity rotation.
+  const prompt = `You are a professional volatility trader using Moontower-style VRP analysis.
 
 WATCHLIST SCAN (sorted by opportunity score):
 ${dataStr}
+
+VOLATILITY ANALYSIS:
+- ${highVrp}/${results.length} tickers have HIGH VRP (IV >> RV) - options expensive, good for selling
+- ${sellVega}/${results.length} tickers classified as SELL_VEGA or HIGH_VRP setup
+- VRP (Volatility Risk Premium) = IV - RV. Positive = options trading at premium to realized movement
 
 UNUSUAL ACTIVITY SUMMARY:
 - ${withUnusual.length}/${results.length} tickers have unusual options activity
 - ${unusualPutBias} tickers show unusual PUT activity (bearish)
 - Unusual = Volume > 2x Open Interest (new aggressive positioning)
 
-SCORING: Higher = better short/put opportunity (IV premium + bearish flow + unusual puts + max pain positioning)
+SCORING: VRP + IV Rank + bearish flow + unusual puts + max pain positioning
 
 Analyze and provide (be BRIEF, 4-5 sentences):
-1. BEST SETUP: Which ticker has strongest bearish signals? Why?
-2. UNUSUAL ACTIVITY: What does the unusual flow suggest? Smart money positioning?
-3. TRADE IDEA: One specific recommendation (ticker, strike, expiry, why)
-4. CAUTION: Any tickers to avoid shorting?
+1. BEST VRP SETUP: Which ticker has the best volatility setup? (High VRP = sell premium, Low VRP = buy premium)
+2. FLOW ANALYSIS: What does the unusual flow + VRP combination suggest?
+3. TRADE IDEA: One specific recommendation considering both direction AND volatility (ticker, strategy, why)
+4. VRP WARNING: Any tickers where VRP is too low to sell premium?
 
-Be direct. No fluff.`;
+Focus on volatility edge, not just direction. Be direct.`;
 
   try {
     const analysis = await fetchClaude(prompt, true);
