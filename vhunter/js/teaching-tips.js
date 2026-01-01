@@ -226,6 +226,40 @@ Use the cone to:
 3. Identify when IV is mispriced vs RV`
   },
 
+  // Dealer Positioning (SIG-Level)
+  dealerPositioning: {
+    title: 'Dealer Positioning',
+    short: 'How market makers hedge creates price magnets and volatility regimes',
+    detail: `DEALER HEDGING MECHANICS (SIG-Level):
+
+Market makers (MMs) are typically SHORT options to retail. Their hedging creates predictable price dynamics.
+
+KEY CONCEPTS:
+
+• GEX (Gamma Exposure):
+  +GEX = MMs long gamma → DAMPENS moves (mean-reversion)
+  -GEX = MMs short gamma → AMPLIFIES moves (trending)
+
+• Delta Flow:
+  When customers buy calls → MMs short calls → MMs buy stock to hedge
+  When customers buy puts → MMs short puts → MMs sell stock to hedge
+  Net hedging pressure moves the underlying!
+
+• Charm (Delta Decay):
+  Near-expiry ATM options have massive charm
+  As expiry approaches, gamma concentrates → PINNING effect
+  Stock gravitates toward high-OI strikes on Friday PM
+
+• G-Ratio (Call GEX / Put GEX):
+  >1 = Call gamma dominates → resistance is real
+  <1 = Put gamma dominates → support may break
+
+TRADING REGIMES:
++GEX: Fade moves, sell vol, mean-reversion works
+-GEX: Follow trend, buy vol, breakouts are real
+Near zero: Transitional, be nimble`
+  },
+
   // Path Dependence
   pathDependence: {
     title: 'Path Dependence',
@@ -267,7 +301,7 @@ export function createTooltip(tipKey) {
   return `
     <div class="teaching-tooltip" data-tip="${tipKey}">
       <span class="tip-icon">?</span>
-      <div class="tip-popup">
+      <div class="tip-popup" id="sectionTip_${tipKey}">
         <div class="tip-title">${tip.title}</div>
         <div class="tip-short">${tip.short}</div>
         <div class="tip-detail">${tip.detail}</div>
@@ -443,6 +477,9 @@ export function getRiskContext(position, portfolioSize) {
 
 export function updateDynamicTooltips(metrics) {
   const { ticker, ivRank, ivPct, hv30, vrp, expMove, pcRatio, volSetup, spotPrice, avgIV } = metrics;
+
+  // Update dynamic hints below stat values
+  updateDynamicHints(metrics);
 
   // IV Rank tooltip
   const tipIvRank = document.getElementById('tipIvRank');
@@ -628,4 +665,551 @@ export function getEducationalAlert(metrics) {
   }
 
   return alerts;
+}
+
+// ============================================
+// SECTION TOOLTIP UPDATES
+// Updates section tooltips (Term Structure, Skew, etc.) with actual data
+// ============================================
+
+export function updateSectionTooltips(data) {
+  const { termStructure, skew, spotPrice, avgIV, hv30, ticker, gammaAnalysis } = data;
+
+  // Term Structure tooltip - ACTIONABLE DATA INTERPRETATION
+  const termTip = document.getElementById('sectionTip_termStructure');
+  const termHint = document.getElementById('termStructureHint');
+  if (termTip) {
+    if (ticker && termStructure) {
+      const weekly = termStructure.weekly || 0;
+      const monthly = termStructure.monthly || 0;
+      const quarterly = termStructure.quarterly || 0;
+      const sixMonth = termStructure.sixMonth || 0;
+
+      // Calculate forward vol (what market implies for period between monthly and quarterly)
+      const forwardVol = monthly > 0 && quarterly > 0 ?
+        Math.sqrt((quarterly * quarterly * 90 - monthly * monthly * 30) / 60) : 0;
+
+      let actionTitle = '';
+      let actionColor = '#94a3b8';
+      let whatItMeans = '';
+      let howToTrade = '';
+      let hintText = '';
+
+      if (weekly > monthly * 1.15) {
+        actionColor = '#ef4444';
+        actionTitle = `${ticker}: EVENT RISK PRICED IN`;
+        hintText = `⚠️ BACKWARDATION - Front ${weekly.toFixed(0)}% > Back ${monthly.toFixed(0)}%`;
+        whatItMeans = `Front-month IV (${weekly.toFixed(0)}%) is ${((weekly/monthly - 1) * 100).toFixed(0)}% HIGHER than back months. Market is pricing a near-term catalyst (earnings? news?). This is UNUSUAL.`;
+        howToTrade = `→ DON'T sell front-month premium blindly - event risk is real
+→ Calendars are EXPENSIVE (you're buying high front vol)
+→ If you think event is overpriced: front-month butterflies
+→ If you think event is underpriced: straddles/strangles`;
+      } else if (sixMonth > weekly * 1.1) {
+        actionColor = '#10b981';
+        actionTitle = `${ticker}: NORMAL STRUCTURE - CALENDARS WORK`;
+        hintText = `✓ CONTANGO - Weekly ${weekly.toFixed(0)}% < 6M ${sixMonth.toFixed(0)}%`;
+        whatItMeans = `Back-month IV (${sixMonth.toFixed(0)}%) exceeds front (${weekly.toFixed(0)}%). This is NORMAL - longer-dated options should cost more. No event risk priced.`;
+        howToTrade = `→ Calendar spreads are ATTRACTIVE (sell back, buy front)
+→ You're selling expensive back-month vol
+→ Front-month premium selling has normal theta
+→ No urgency - standard vol selling works`;
+      } else {
+        actionTitle = `${ticker}: FLAT STRUCTURE - NO EDGE`;
+        hintText = `FLAT - ${weekly.toFixed(0)}% to ${sixMonth.toFixed(0)}%`;
+        whatItMeans = `IV is similar across all expirations (${weekly.toFixed(0)}% - ${sixMonth.toFixed(0)}%). No term structure trade here.`;
+        howToTrade = `→ No calendar spread edge
+→ Pick expiration based on your thesis, not structure
+→ Focus on VRP and skew instead`;
+      }
+
+      if (termHint) {
+        termHint.textContent = hintText;
+        termHint.style.color = actionColor;
+      }
+
+      termTip.innerHTML = `
+        <div class="tip-title" style="color:${actionColor}">${actionTitle}</div>
+        <div class="tip-short">Weekly ${weekly.toFixed(0)}% | Monthly ${monthly.toFixed(0)}% | 6M ${sixMonth.toFixed(0)}%</div>
+        <div class="tip-detail">
+<strong>What This Means for ${ticker}:</strong>
+${whatItMeans}
+
+<strong>How to Trade It:</strong>
+${howToTrade}
+${forwardVol > 0 ? `
+<strong>Forward Vol (30-90 day):</strong> ${forwardVol.toFixed(0)}%
+${forwardVol > quarterly ? `→ Market expects vol to RISE after month 1` : `→ Market expects vol to STAY FLAT`}` : ''}
+        </div>
+      `;
+    } else {
+      // Reset to static default
+      const defaultTip = TEACHING_TIPS.termStructure;
+      termTip.innerHTML = `
+        <div class="tip-title">${defaultTip.title}</div>
+        <div class="tip-short">${defaultTip.short}</div>
+        <div class="tip-detail">${defaultTip.detail}</div>
+      `;
+      if (termHint) {
+        termHint.textContent = 'Load a ticker to see term structure';
+        termHint.style.color = '#94a3b8';
+      }
+    }
+  }
+
+  // Skew tooltip - ACTIONABLE DATA INTERPRETATION
+  const skewTip = document.getElementById('sectionTip_skew');
+  const skewHint = document.getElementById('skewHint');
+  if (skewTip) {
+    if (ticker && skew) {
+      const putIV = skew.putIV || 0;
+      const atmIV = skew.atmIV || avgIV || 0;
+      const callIV = skew.callIV || 0;
+      const pcSkew = skew.pcSkew || (putIV - callIV);
+
+      let actionTitle = '';
+      let actionColor = '#94a3b8';
+      let whatItMeans = '';
+      let howToTrade = '';
+      let skewHintText = '';
+
+      if (pcSkew > 8) {
+        actionColor = '#ef4444';
+        actionTitle = `${ticker}: PUTS ARE EXPENSIVE - SELL THEM`;
+        skewHintText = `🔴 HIGH PUT SKEW +${pcSkew.toFixed(0)}% - puts overpriced`;
+        whatItMeans = `OTM puts cost ${pcSkew.toFixed(0)}% MORE than OTM calls. Someone is paying up for downside protection. This is either FEAR or large hedging. Puts are relatively EXPENSIVE.`;
+        howToTrade = `→ SELL put skew: Put ratio spreads (sell 2 OTM, buy 1 ATM)
+→ Risk reversals: Sell OTM put, buy OTM call
+→ Put credit spreads have edge
+→ DON'T buy put spreads - you're paying up`;
+      } else if (pcSkew > 3) {
+        actionTitle = `${ticker}: NORMAL SKEW - NO EDGE`;
+        skewHintText = `Put +${pcSkew.toFixed(0)}% vs Call (normal)`;
+        whatItMeans = `Standard equity skew. Puts are ${pcSkew.toFixed(0)}% richer than calls - this is NORMAL for stocks (crash risk premium).`;
+        howToTrade = `→ No skew edge to exploit
+→ Trade based on direction/vol view
+→ Neither puts nor calls are mispriced`;
+      } else if (pcSkew < -3) {
+        actionColor = '#10b981';
+        actionTitle = `${ticker}: CALLS ARE EXPENSIVE - UNUSUAL`;
+        skewHintText = `🟢 CALL SKEW ${pcSkew.toFixed(0)}% - calls overpriced`;
+        whatItMeans = `OTM calls cost ${Math.abs(pcSkew).toFixed(0)}% MORE than OTM puts. This is RARE for equities. Someone is paying up for upside (M&A? squeeze? momentum?).`;
+        howToTrade = `→ SELL call skew: Call ratio spreads
+→ If bullish, buy stock + sell calls (overpriced)
+→ DON'T buy call spreads - you're overpaying
+→ Investigate WHY - could signal news`;
+      } else {
+        actionTitle = `${ticker}: FLAT SKEW - BALANCED`;
+        skewHintText = `FLAT skew (${pcSkew >= 0 ? '+' : ''}${pcSkew.toFixed(0)}%)`;
+        whatItMeans = `Puts and calls priced similarly. No fear, no greed - market is balanced.`;
+        howToTrade = `→ No skew edge
+→ Straddles/strangles fairly priced
+→ Direction bet = buy calls or puts at fair value`;
+      }
+
+      if (skewHint) {
+        skewHint.textContent = skewHintText;
+        skewHint.style.color = actionColor;
+      }
+
+      skewTip.innerHTML = `
+        <div class="tip-title" style="color:${actionColor}">${actionTitle}</div>
+        <div class="tip-short">Put ${putIV.toFixed(0)}% | ATM ${atmIV.toFixed(0)}% | Call ${callIV.toFixed(0)}%</div>
+        <div class="tip-detail">
+<strong>What This Means for ${ticker}:</strong>
+${whatItMeans}
+
+<strong>How to Trade It:</strong>
+${howToTrade}
+
+<strong>Raw Numbers:</strong>
+• 25Δ Put IV: ${putIV.toFixed(0)}%
+• ATM IV: ${atmIV.toFixed(0)}%
+• 25Δ Call IV: ${callIV.toFixed(0)}%
+• Skew: ${pcSkew >= 0 ? '+' : ''}${pcSkew.toFixed(1)}%
+        </div>
+      `;
+    } else {
+      // Reset to static default
+      const defaultTip = TEACHING_TIPS.skew;
+      skewTip.innerHTML = `
+        <div class="tip-title">${defaultTip.title}</div>
+        <div class="tip-short">${defaultTip.short}</div>
+        <div class="tip-detail">${defaultTip.detail}</div>
+      `;
+      if (skewHint) {
+        skewHint.textContent = 'Load a ticker to see skew';
+        skewHint.style.color = '#94a3b8';
+      }
+    }
+  }
+
+  // Expected Move tooltip - ACTIONABLE DATA INTERPRETATION
+  const expMoveTip = document.getElementById('sectionTip_expectedMove');
+  if (expMoveTip) {
+    if (ticker && spotPrice && avgIV) {
+      const daily = spotPrice * (avgIV / 100) * Math.sqrt(1 / 365);
+      const weekly = spotPrice * (avgIV / 100) * Math.sqrt(5 / 365);
+      const monthly = spotPrice * (avgIV / 100) * Math.sqrt(21 / 365);
+
+      const dailyPct = (daily / spotPrice * 100).toFixed(2);
+      const weeklyPct = (weekly / spotPrice * 100).toFixed(2);
+      const monthlyPct = (monthly / spotPrice * 100).toFixed(2);
+
+      const straddleCost = weekly * 0.8;
+      const straddlePct = (straddleCost / spotPrice * 100).toFixed(1);
+
+      const upperWeekly = (spotPrice + weekly).toFixed(2);
+      const lowerWeekly = (spotPrice - weekly).toFixed(2);
+
+      expMoveTip.innerHTML = `
+        <div class="tip-title">${ticker}: EXPECTED RANGE THIS WEEK</div>
+        <div class="tip-short">$${lowerWeekly} - $${upperWeekly} (68% confidence)</div>
+        <div class="tip-detail">
+<strong>What This Means:</strong>
+Based on ${avgIV.toFixed(0)}% IV, ${ticker} should stay between $${lowerWeekly} and $${upperWeekly} about 68% of the time by Friday.
+
+<strong>Practical Ranges:</strong>
+• Today: ±$${daily.toFixed(2)} (±${dailyPct}%)
+• This Week: ±$${weekly.toFixed(2)} (±${weeklyPct}%)
+• This Month: ±$${monthly.toFixed(2)} (±${monthlyPct}%)
+
+<strong>How to Use This:</strong>
+→ IRON CONDOR: Sell wings OUTSIDE $${lowerWeekly}/$${upperWeekly}
+→ STRADDLE BUYER: You need ${ticker} to move MORE than ±$${weekly.toFixed(2)} to profit
+→ STRADDLE SELLER: You profit if ${ticker} stays INSIDE this range
+→ STOP LOSS: Set stops >${weekly.toFixed(2)} away for breathing room
+
+<strong>ATM Straddle Cost:</strong>
+≈ $${straddleCost.toFixed(2)}/share (${straddlePct}% of stock price)
+→ Buyer needs ${straddlePct}%+ move to break even
+        </div>
+      `;
+    } else {
+      const defaultTip = TEACHING_TIPS.expectedMove;
+      expMoveTip.innerHTML = `
+        <div class="tip-title">${defaultTip.title}</div>
+        <div class="tip-short">${defaultTip.short}</div>
+        <div class="tip-detail">${defaultTip.detail}</div>
+      `;
+    }
+  }
+
+  // Vol Cone tooltip - ACTIONABLE DATA INTERPRETATION
+  const volConeTip = document.getElementById('sectionTip_volCone');
+  if (volConeTip) {
+    if (ticker && hv30 != null && avgIV != null) {
+      const vrp = avgIV - hv30;
+      const rvLevel = hv30 > 40 ? 'HIGH' : hv30 > 25 ? 'MODERATE' : 'LOW';
+
+      let actionTitle = '';
+      let actionColor = '#94a3b8';
+      let whatItMeans = '';
+      let howToTrade = '';
+
+      if (vrp > 15) {
+        actionColor = '#10b981';
+        actionTitle = `${ticker}: OPTIONS ARE EXPENSIVE - SELL PREMIUM`;
+        whatItMeans = `IV (${avgIV.toFixed(0)}%) is ${vrp.toFixed(0)} points ABOVE realized vol (${hv30.toFixed(0)}%). The market is pricing in MORE volatility than ${ticker} has actually delivered. You're getting PAID to sell vol.`;
+        howToTrade = `→ SELL PREMIUM: Iron condors, strangles, covered calls
+→ Edge: You're selling vol at ${avgIV.toFixed(0)}%, stock only moves at ${hv30.toFixed(0)}%
+→ Win rate favors sellers here
+→ Watch for: earnings, events that could spike RV`;
+      } else if (vrp > 5) {
+        actionColor = '#a3e635';
+        actionTitle = `${ticker}: OPTIONS SLIGHTLY RICH`;
+        whatItMeans = `IV (${avgIV.toFixed(0)}%) is ${vrp.toFixed(0)} points above RV (${hv30.toFixed(0)}%). Modest premium selling edge.`;
+        howToTrade = `→ Slight edge for premium sellers
+→ Not a strong signal alone
+→ Combine with term structure/skew for conviction`;
+      } else if (vrp < -10) {
+        actionColor = '#ef4444';
+        actionTitle = `${ticker}: OPTIONS ARE CHEAP - BUY VOL`;
+        whatItMeans = `IV (${avgIV.toFixed(0)}%) is ${Math.abs(vrp).toFixed(0)} points BELOW realized vol (${hv30.toFixed(0)}%). Market is UNDERPRICING volatility. ${ticker} has been moving MORE than options imply.`;
+        howToTrade = `→ BUY PREMIUM: Straddles, strangles, long options
+→ Edge: You're buying vol at ${avgIV.toFixed(0)}%, stock moves at ${hv30.toFixed(0)}%
+→ Even "expensive" looking options may be cheap
+→ Great for gamma scalping`;
+      } else if (vrp < -3) {
+        actionColor = '#fbbf24';
+        actionTitle = `${ticker}: OPTIONS SLIGHTLY CHEAP`;
+        whatItMeans = `IV (${avgIV.toFixed(0)}%) is ${Math.abs(vrp).toFixed(0)} points below RV (${hv30.toFixed(0)}%). Modest edge for vol buyers.`;
+        howToTrade = `→ Slight edge for premium buyers
+→ Long options have tailwind
+→ Combine with direction for best trades`;
+      } else {
+        actionTitle = `${ticker}: FAIR VALUE - NO VRP EDGE`;
+        whatItMeans = `IV (${avgIV.toFixed(0)}%) ≈ RV (${hv30.toFixed(0)}%). Options are fairly priced relative to recent realized volatility.`;
+        howToTrade = `→ No edge from vol mispricing
+→ Trade on direction, not vol view
+→ Focus on skew/structure instead`;
+      }
+
+      volConeTip.innerHTML = `
+        <div class="tip-title" style="color:${actionColor}">${actionTitle}</div>
+        <div class="tip-short">IV: ${avgIV.toFixed(0)}% | RV: ${hv30.toFixed(0)}% | VRP: ${vrp >= 0 ? '+' : ''}${vrp.toFixed(0)}%</div>
+        <div class="tip-detail">
+<strong>What This Means for ${ticker}:</strong>
+${whatItMeans}
+
+<strong>How to Trade It:</strong>
+${howToTrade}
+
+<strong>Reading the Cone:</strong>
+• Red marker = current 30-day realized vol (${hv30.toFixed(0)}%)
+• Purple marker = current implied vol (${avgIV.toFixed(0)}%)
+• Blue band = where RV typically falls (10th-90th percentile)
+${hv30 > 40 ? `\n⚠️ RV is HIGH (${hv30.toFixed(0)}%) - ${ticker} has been volatile. Be careful sizing.` : ''}
+        </div>
+      `;
+    } else {
+      // Reset to static default when no data
+      const defaultTip = TEACHING_TIPS.volCone;
+      volConeTip.innerHTML = `
+        <div class="tip-title">${defaultTip.title}</div>
+        <div class="tip-short">${defaultTip.short}</div>
+        <div class="tip-detail">${defaultTip.detail}</div>
+      `;
+    }
+  }
+
+  // Dealer Positioning tooltip (SIG-Level) - ACTIONABLE DATA INTERPRETATION
+  const dealerTip = document.getElementById('sectionTip_dealerPositioning');
+  if (dealerTip) {
+    if (ticker && gammaAnalysis && gammaAnalysis.regime) {
+      const regime = gammaAnalysis.regime;
+      const deltaFlow = gammaAnalysis.deltaFlow || {};
+      const charm = gammaAnalysis.charm || {};
+      const levels = gammaAnalysis.levels || {};
+      const gexProfile = gammaAnalysis.gexProfile || {};
+
+      // Format GEX values
+      const formatGex = (gex) => {
+        if (!gex && gex !== 0) return '--';
+        const absGex = Math.abs(gex);
+        if (absGex >= 1e9) return (gex / 1e9).toFixed(1) + 'B';
+        if (absGex >= 1e6) return (gex / 1e6).toFixed(1) + 'M';
+        if (absGex >= 1e3) return (gex / 1e3).toFixed(0) + 'K';
+        return gex.toFixed(0);
+      };
+
+      const netGex = gexProfile.netGEX || 0;
+      const gRatio = parseFloat(gammaAnalysis.callPutGEXRatio) || 0;
+
+      // Build ACTIONABLE interpretation based on current data
+      let actionTitle = '';
+      let actionColor = '#94a3b8';
+      let whatItMeans = '';
+      let howToTrade = '';
+
+      if (regime.regime === 'POSITIVE') {
+        actionColor = '#10b981';
+        actionTitle = `${ticker}: SELL THE RIPS, BUY THE DIPS`;
+        whatItMeans = `Dealers are LONG gamma → they sell into rallies, buy into dips. This SUPPRESSES volatility. ${ticker} will likely mean-revert today.`;
+        howToTrade = `→ FADE moves toward $${levels.callWall?.toFixed(0) || '--'} (call wall)
+→ Iron condors/butterflies WORK in this regime
+→ Don't chase breakouts - they'll likely fail
+→ Short straddles have tailwind`;
+      } else if (regime.regime === 'NEGATIVE_DEEP') {
+        actionColor = '#ef4444';
+        actionTitle = `${ticker}: DANGER - FOLLOW THE TREND`;
+        whatItMeans = `Dealers are deeply SHORT gamma below $${levels.volTrigger?.toFixed(0) || '--'}. Every move forces MORE hedging in the SAME direction. Moves ACCELERATE here.`;
+        howToTrade = `→ DO NOT fade moves - breakouts are REAL
+→ If it breaks $${levels.putWall?.toFixed(0) || '--'}, expect acceleration
+→ Straddles/strangles may pay off
+→ Short premium is DANGEROUS here`;
+      } else if (regime.regime === 'NEGATIVE') {
+        actionColor = '#f59e0b';
+        actionTitle = `${ticker}: MOMENTUM MODE - BE DIRECTIONAL`;
+        whatItMeans = `Dealers are SHORT gamma → hedging AMPLIFIES moves. ${ticker} is more likely to trend than mean-revert today.`;
+        howToTrade = `→ Trade WITH momentum, not against
+→ Breakout above $${levels.callWall?.toFixed(0) || '--'} = chase it
+→ Breakdown below $${levels.putWall?.toFixed(0) || '--'} = don't catch the knife
+→ Directional plays > premium selling`;
+      } else {
+        actionTitle = `${ticker}: NO CLEAR EDGE FROM POSITIONING`;
+        whatItMeans = `Near gamma-neutral. Dealer hedging won't strongly push price either way.`;
+        howToTrade = `→ Trade on fundamentals/technicals instead
+→ No strong gamma tailwind either direction
+→ Standard vol assumptions apply`;
+      }
+
+      // G-Ratio interpretation
+      let gRatioAction = '';
+      if (gRatio > 1.5) {
+        gRatioAction = `G-Ratio ${gRatio.toFixed(1)}x → Call gamma dominates. $${levels.callWall?.toFixed(0) || '--'} is STRONG resistance.`;
+      } else if (gRatio < 0.7 && gRatio > 0) {
+        gRatioAction = `G-Ratio ${gRatio.toFixed(1)}x → Put gamma dominates. $${levels.putWall?.toFixed(0) || '--'} support may BREAK if tested.`;
+      } else if (gRatio > 0) {
+        gRatioAction = `G-Ratio ${gRatio.toFixed(1)}x → Balanced. Neither wall dominates.`;
+      }
+
+      // Delta flow interpretation
+      let deltaAction = '';
+      if (deltaFlow.hedgingPressure) {
+        if (deltaFlow.netDelta > 0 && deltaFlow.intensity === 'HIGH') {
+          deltaAction = `🟢 ${deltaFlow.hedgingPressure} (${deltaFlow.intensity}) → Bullish pressure from hedging flows today.`;
+        } else if (deltaFlow.netDelta < 0 && deltaFlow.intensity === 'HIGH') {
+          deltaAction = `🔴 ${deltaFlow.hedgingPressure} (${deltaFlow.intensity}) → Bearish pressure from hedging flows today.`;
+        } else {
+          deltaAction = `${deltaFlow.hedgingPressure} (${deltaFlow.intensity}) → Moderate hedging impact.`;
+        }
+      }
+
+      // Charm/pinning interpretation
+      let charmAction = '';
+      if (charm.pinningStrike && charm.charmPressure !== 'WEAK') {
+        const pinDist = ((charm.pinningStrike - spotPrice) / spotPrice * 100).toFixed(1);
+        charmAction = `📌 PINNING: ${ticker} likely to gravitate toward $${charm.pinningStrike} by Friday close (${charm.charmPressure} - ${(charm.pinningStrength * 100).toFixed(0)}% near-term OI concentrated here).`;
+      }
+
+      dealerTip.innerHTML = `
+        <div class="tip-title" style="color:${actionColor}">${actionTitle}</div>
+        <div class="tip-short">Net GEX: ${formatGex(netGex)} | ${regime.label} regime</div>
+        <div class="tip-detail">
+<strong>What This Means for ${ticker} TODAY:</strong>
+${whatItMeans}
+
+<strong>How to Trade It:</strong>
+${howToTrade}
+
+<strong>Key Levels to Watch:</strong>
+• $${levels.callWall?.toFixed(0) || '--'} (${levels.callWallDist || '--'}%) = Call Wall (RESISTANCE)
+• $${levels.putWall?.toFixed(0) || '--'} (${levels.putWallDist || '--'}%) = Put Wall (SUPPORT)
+• $${levels.volTrigger?.toFixed(0) || '--'} (${levels.volTriggerDist || '--'}%) = Vol Trigger (DANGER if broken)
+${gRatioAction ? '\n' + gRatioAction : ''}
+${deltaAction ? '\n' + deltaAction : ''}
+${charmAction ? '\n' + charmAction : ''}
+        </div>
+      `;
+    } else {
+      // Reset to static default
+      const defaultTip = TEACHING_TIPS.dealerPositioning;
+      dealerTip.innerHTML = `
+        <div class="tip-title">${defaultTip.title}</div>
+        <div class="tip-short">${defaultTip.short}</div>
+        <div class="tip-detail">${defaultTip.detail}</div>
+      `;
+    }
+  }
+}
+
+// ============================================
+// DYNAMIC HINT UPDATES
+// Updates the small hint text below each stat value
+// ============================================
+
+function updateDynamicHints(metrics) {
+  const { ticker, ivRank, ivPct, hv30, vrp, expMove, pcRatio, volSetup, spotPrice, avgIV } = metrics;
+
+  // IV Rank hint
+  const ivRankHint = document.getElementById('optIvRankHint');
+  if (ivRankHint && ivRank != null) {
+    if (ivRank > 70) {
+      ivRankHint.textContent = 'HIGH - sell premium';
+      ivRankHint.style.color = '#ef4444';
+    } else if (ivRank < 30) {
+      ivRankHint.textContent = 'LOW - buy premium';
+      ivRankHint.style.color = '#10b981';
+    } else {
+      ivRankHint.textContent = 'NEUTRAL zone';
+      ivRankHint.style.color = '#f59e0b';
+    }
+  }
+
+  // IV Percentile hint
+  const ivPctHint = document.getElementById('optIvPctHint');
+  if (ivPctHint && ivPct != null) {
+    if (ivPct > 80) {
+      ivPctHint.textContent = 'rarely this high';
+      ivPctHint.style.color = '#ef4444';
+    } else if (ivPct < 20) {
+      ivPctHint.textContent = 'rarely this low';
+      ivPctHint.style.color = '#10b981';
+    } else {
+      ivPctHint.textContent = `>${ivPct.toFixed(0)}% of days`;
+      ivPctHint.style.color = '#94a3b8';
+    }
+  }
+
+  // HV30 hint
+  const hv30Hint = document.getElementById('optHv30Hint');
+  if (hv30Hint && hv30 != null && avgIV != null) {
+    const diff = avgIV - hv30;
+    if (diff > 10) {
+      hv30Hint.textContent = `IV +${diff.toFixed(0)}% above`;
+      hv30Hint.style.color = '#ef4444';
+    } else if (diff < -5) {
+      hv30Hint.textContent = `IV ${diff.toFixed(0)}% below`;
+      hv30Hint.style.color = '#10b981';
+    } else {
+      hv30Hint.textContent = 'IV ≈ HV';
+      hv30Hint.style.color = '#94a3b8';
+    }
+  }
+
+  // VRP hint
+  const vrpHint = document.getElementById('optVrpHint');
+  if (vrpHint && vrp != null) {
+    if (vrp > 15) {
+      vrpHint.textContent = 'EXPENSIVE';
+      vrpHint.style.color = '#ef4444';
+    } else if (vrp > 5) {
+      vrpHint.textContent = 'slight seller edge';
+      vrpHint.style.color = '#f59e0b';
+    } else if (vrp < -10) {
+      vrpHint.textContent = 'CHEAP';
+      vrpHint.style.color = '#10b981';
+    } else if (vrp < 0) {
+      vrpHint.textContent = 'slight buyer edge';
+      vrpHint.style.color = '#06b6d4';
+    } else {
+      vrpHint.textContent = 'fair value';
+      vrpHint.style.color = '#94a3b8';
+    }
+  }
+
+  // Expected Move hint
+  const expMoveHint = document.getElementById('optExpMoveHint');
+  if (expMoveHint && expMove != null && spotPrice) {
+    const pct = (expMove / spotPrice * 100).toFixed(1);
+    expMoveHint.textContent = `±${pct}% weekly`;
+    expMoveHint.style.color = '#94a3b8';
+  }
+
+  // P/C Ratio hint
+  const pcRatioHint = document.getElementById('optPcRatioHint');
+  if (pcRatioHint && pcRatio != null) {
+    if (pcRatio > 1.5) {
+      pcRatioHint.textContent = 'heavy put buying';
+      pcRatioHint.style.color = '#ef4444';
+    } else if (pcRatio > 1.0) {
+      pcRatioHint.textContent = 'bearish bias';
+      pcRatioHint.style.color = '#f59e0b';
+    } else if (pcRatio < 0.5) {
+      pcRatioHint.textContent = 'heavy call buying';
+      pcRatioHint.style.color = '#10b981';
+    } else if (pcRatio < 0.8) {
+      pcRatioHint.textContent = 'bullish bias';
+      pcRatioHint.style.color = '#06b6d4';
+    } else {
+      pcRatioHint.textContent = 'balanced flow';
+      pcRatioHint.style.color = '#94a3b8';
+    }
+  }
+
+  // Vol Setup hint
+  const volSetupHint = document.getElementById('optVolSetupHint');
+  if (volSetupHint && volSetup) {
+    const setupName = typeof volSetup === 'object' ? volSetup.setup : volSetup;
+    if (setupName.includes('SELL') || setupName === 'HIGH_VRP') {
+      volSetupHint.textContent = 'sell premium';
+      volSetupHint.style.color = '#ef4444';
+    } else if (setupName.includes('BUY') || setupName === 'NEGATIVE_VRP') {
+      volSetupHint.textContent = 'buy premium';
+      volSetupHint.style.color = '#10b981';
+    } else {
+      volSetupHint.textContent = 'no clear edge';
+      volSetupHint.style.color = '#94a3b8';
+    }
+  }
 }

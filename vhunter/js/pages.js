@@ -32,17 +32,14 @@ export function switchPage(page, shouldUpdateRoute = true) {
 
   // Toggle header elements visibility based on page
   const headerSearch = document.getElementById('headerSearch');
-  const headerSignal = document.getElementById('headerSignal');
   const historyStrip = document.getElementById('historyStrip');
 
   if (page === 'analyze') {
-    headerSearch.style.display = 'flex';
-    headerSignal.style.display = 'flex';
-    historyStrip.style.display = 'flex';
+    if (headerSearch) headerSearch.style.display = 'flex';
+    if (historyStrip) historyStrip.style.display = 'flex';
   } else {
-    headerSearch.style.display = 'none';
-    headerSignal.style.display = 'none';
-    historyStrip.style.display = 'none';
+    if (headerSearch) headerSearch.style.display = 'none';
+    if (historyStrip) historyStrip.style.display = 'none';
   }
 
   // Update URL

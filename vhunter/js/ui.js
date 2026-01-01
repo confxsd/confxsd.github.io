@@ -67,8 +67,14 @@ export function updateStatusBar(trend, momentum, volume, volatility) {
 }
 
 export function updateScore(score) {
-  $('sc').textContent = score;
-  $('sc').className = 'score ' + (score >= 55 ? 'b' : score <= 45 ? 's' : 'n');
+  const scEl = $('sc');
+  const sgEl = $('sg');
+  const biEl = $('bi');
+
+  if (scEl) {
+    scEl.textContent = score;
+    scEl.className = 'score ' + (score >= 55 ? 'b' : score <= 45 ? 's' : 'n');
+  }
 
   let signal;
   if (score >= 70) signal = 'STRONG BUY';
@@ -77,9 +83,13 @@ export function updateScore(score) {
   else if (score <= 45) signal = 'SELL';
   else signal = 'NEUTRAL';
 
-  $('sg').textContent = signal;
-  $('sg').className = 'sig ' + (score >= 55 ? 'b' : score <= 45 ? 's' : 'n');
-  $('bi').textContent = Math.abs(score - 50) + 'pts ' + (score > 50 ? 'bull' : score < 50 ? 'bear' : 'ntrl');
+  if (sgEl) {
+    sgEl.textContent = signal;
+    sgEl.className = 'sig ' + (score >= 55 ? 'b' : score <= 45 ? 's' : 'n');
+  }
+  if (biEl) {
+    biEl.textContent = Math.abs(score - 50) + 'pts ' + (score > 50 ? 'bull' : score < 50 ? 'bear' : 'ntrl');
+  }
 }
 
 export function updateIndicators(data) {
@@ -376,6 +386,7 @@ const TOOLTIP_MAPPINGS = [
 
   // Options page - Gamma/Greeks
   { selector: '.opt-subsection-title', text: 'Gamma Exposure', tipKey: 'vegaRisk' },
+  { selector: '.opt-subsection-title', text: 'Dealer Positioning', tipKey: 'dealerPositioning' },
 
   // Analyze page - VRP section
   { selector: '.vrp-label', text: 'VRP', tipKey: 'vrp' },

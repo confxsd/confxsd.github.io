@@ -5,7 +5,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
   padding: 10px 12px;
   background: #fff;
   border-bottom: 1px solid #e2e8f0;
@@ -13,6 +14,7 @@
 
 .options-search {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -31,6 +33,57 @@
   outline: none;
   border-color: #818cf8;
   background: #fff;
+}
+
+/* Options History Strip */
+.options-history {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  flex: 1;
+  min-width: 0;
+  padding: 0 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.options-history:empty {
+  display: none;
+}
+
+.btn-chain {
+  background: #334155;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-chain:hover {
+  background: #475569;
+}
+
+.btn-copy {
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 16px;
+  padding: 6px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-copy:hover {
+  background: #e2e8f0;
+}
+
+.btn-copy.copied {
+  background: #d1fae5;
+  border-color: #10b981;
 }
 
 .options-spot {
@@ -495,6 +548,12 @@
   display: flex;
   gap: 6px;
   margin-left: auto;
+  align-items: center;
+}
+
+.chain-filters {
+  display: flex;
+  gap: 6px;
 }
 
 .chain-controls select {

@@ -88,39 +88,9 @@
         <button onclick="run()" class="btn-search">→</button>
       </div>
 
-      <div class="header-signal" id="headerSignal">
-        <span class="score n" id="sc">--</span>
-        <span class="sig n" id="sg">WAIT</span>
-      </div>
-
-      <div class="header-actions">
-        <button onclick="run(true)" title="Refresh">↻</button>
-        <button onclick="exportData()" title="Copy">📋</button>
-        <button onclick="generateSummary()" title="AI Summary" class="btn-summary" id="btnSummary">AI</button>
-      </div>
-
       <span id="st" class="status-text"></span>
-      <span id="bi" class="bias-text"></span>
       <div class="header-history" id="historyStrip"></div>
     </header>
-
-    <!-- AI Summary Section (global - visible on all pages) -->
-    <div class="summary-section" id="summarySection" style="display:none">
-      <div class="summary-header" onclick="toggleSummary()">
-        <div class="summary-title">
-          <span class="summary-icon">AI</span>
-          <span>Summary</span>
-          <span class="summary-ticker" id="summaryTicker"></span>
-        </div>
-        <div class="summary-meta">
-          <span class="summary-time" id="summaryTime"></span>
-          <span class="summary-toggle" id="summaryToggle">▼</span>
-        </div>
-      </div>
-      <div class="summary-content" id="summaryContent">
-        <div class="summary-loading">Generating summary...</div>
-      </div>
-    </div>
 
     <!-- Page: Analyze -->
     <div class="page active" id="page-analyze">
@@ -608,10 +578,32 @@
         <div class="options-search">
           <input type="text" id="optTicker" placeholder="Enter ticker..." value="">
           <button onclick="loadOptionsData()" class="btn-primary">Analyze</button>
+          <button onclick="generateSummary()" title="AI Summary" class="btn-summary" id="btnSummary">AI</button>
+          <button onclick="openChainModal()" title="Options Chain" class="btn-chain">Options</button>
+          <button onclick="copyOptionsData()" title="Copy data for AI prompt" class="btn-copy" id="btnCopyData">📋</button>
         </div>
+        <div class="options-history" id="optionsHistoryStrip"></div>
         <div class="options-spot" id="optSpotInfo">
           <span class="spot-price">--</span>
           <span class="spot-change">--</span>
+        </div>
+      </div>
+
+      <!-- AI Summary Section -->
+      <div class="summary-section" id="summarySection" style="display:none">
+        <div class="summary-header" onclick="toggleSummary()">
+          <div class="summary-title">
+            <span class="summary-icon">AI</span>
+            <span>Summary</span>
+            <span class="summary-ticker" id="summaryTicker"></span>
+          </div>
+          <div class="summary-meta">
+            <span class="summary-time" id="summaryTime"></span>
+            <span class="summary-toggle" id="summaryToggle">▼</span>
+          </div>
+        </div>
+        <div class="summary-content" id="summaryContent">
+          <div class="summary-loading">Generating summary...</div>
         </div>
       </div>
 
@@ -686,7 +678,7 @@
             <!-- IV Term Structure -->
             <div class="opt-subsection">
               <div class="opt-subsection-title">IV Term Structure</div>
-              <div class="opt-subsection-hint">IV by expiration - rising = contango, falling = backwardation</div>
+              <div class="opt-subsection-hint" id="termStructureHint">IV by expiration - rising = contango, falling = backwardation</div>
               <div class="term-structure" id="optTermStructure">
                 <div class="term-bar"><div class="term-label">Weekly</div><div class="term-value">--</div><div class="term-fill" style="width:0%"></div></div>
                 <div class="term-bar"><div class="term-label">Monthly</div><div class="term-value">--</div><div class="term-fill" style="width:0%"></div></div>
@@ -697,7 +689,7 @@
             <!-- IV Skew -->
             <div class="opt-subsection">
               <div class="opt-subsection-title">Volatility Skew</div>
-              <div class="opt-subsection-hint">OTM Put IV vs ATM vs OTM Call IV - measures fear/greed</div>
+              <div class="opt-subsection-hint" id="skewHint">OTM Put IV vs ATM vs OTM Call IV - measures fear/greed</div>
               <div class="skew-display" id="optSkewDisplay">
                 <div class="skew-item"><span class="skew-label">25Δ Put</span><span class="skew-value r">--</span></div>
                 <div class="skew-item"><span class="skew-label">ATM</span><span class="skew-value">--</span></div>
@@ -1140,42 +1132,6 @@
           </div>
         </div>
 
-        <!-- Options Chain -->
-        <div class="opt-section opt-section-wide">
-          <div class="opt-section-header">
-            <span class="opt-section-icon">📋</span>
-            <span class="opt-section-title">Options Chain</span>
-            <div class="chain-controls">
-              <select id="optExpSelect" onchange="loadChainForExpiry()">
-                <option value="">Select Expiry</option>
-              </select>
-              <button class="chain-toggle active" data-show="all" onclick="toggleChainView('all')">All</button>
-              <button class="chain-toggle" data-show="itm" onclick="toggleChainView('itm')">ITM</button>
-              <button class="chain-toggle" data-show="otm" onclick="toggleChainView('otm')">OTM</button>
-            </div>
-          </div>
-          <div class="opt-section-body">
-            <div class="chain-wrapper">
-              <div class="chain-header">
-                <div class="chain-side calls">
-                  <span>Bid</span><span>Ask</span><span>Last</span><span>Vol</span><span>OI</span><span>IV</span><span>Delta</span>
-                </div>
-                <div class="chain-strike-header">Strike</div>
-                <div class="chain-side puts">
-                  <span>Delta</span><span>IV</span><span>OI</span><span>Vol</span><span>Last</span><span>Bid</span><span>Ask</span>
-                </div>
-              </div>
-              <div class="chain-body" id="optChainBody">
-                <div class="chain-loading">Select expiration to load chain</div>
-              </div>
-            </div>
-            <div class="chain-legend">
-              <span class="legend-item"><span class="legend-dot itm"></span>In-The-Money</span>
-              <span class="legend-item"><span class="legend-dot atm"></span>At-The-Money</span>
-              <span class="legend-item"><span class="legend-dot otm"></span>Out-Of-Money</span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </main>
@@ -1183,6 +1139,45 @@
 
 <!-- Sidebar Overlay (mobile) -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- Options Chain Modal -->
+<div class="modal" id="chainModal" onclick="if(event.target===this)closeChainModal()">
+  <div class="modal-content modal-wide">
+    <div class="modal-header">
+      <div class="chain-controls">
+        <select id="optExpSelect" onchange="loadChainForExpiry()">
+          <option value="">Select Expiry</option>
+        </select>
+        <div class="chain-filters">
+          <button class="chain-toggle active" data-show="all" onclick="toggleChainView('all')">All</button>
+          <button class="chain-toggle" data-show="itm" onclick="toggleChainView('itm')">ITM</button>
+          <button class="chain-toggle" data-show="otm" onclick="toggleChainView('otm')">OTM</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="chain-wrapper">
+        <div class="chain-header">
+          <div class="chain-side calls">
+            <span>Bid</span><span>Ask</span><span>Last</span><span>Vol</span><span>OI</span><span>IV</span><span>Delta</span>
+          </div>
+          <div class="chain-strike-header">Strike</div>
+          <div class="chain-side puts">
+            <span>Delta</span><span>IV</span><span>OI</span><span>Vol</span><span>Last</span><span>Bid</span><span>Ask</span>
+          </div>
+        </div>
+        <div class="chain-body" id="optChainBody">
+          <div class="chain-loading">Analyze a ticker to load options chain</div>
+        </div>
+      </div>
+      <div class="chain-legend">
+        <span class="legend-item"><span class="legend-dot itm"></span>ITM</span>
+        <span class="legend-item"><span class="legend-dot atm"></span>ATM</span>
+        <span class="legend-item"><span class="legend-dot otm"></span>OTM</span>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Position Modal -->
 <div class="modal" id="positionModal">

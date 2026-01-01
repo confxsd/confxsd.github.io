@@ -11,6 +11,8 @@ import { addToHistory } from './history.js';
 import { getFullIVAnalysis, recordIV } from './iv-history.js';
 import { recordGammaLevels, getWallShiftAnalysis } from './db.js';
 import { CONFIG } from './config.js';
+import { getCurrentPage } from './pages.js';
+import { optionsData } from './options-page.js';
 
 export let mktData = {};
 let skipCache = false;
@@ -37,7 +39,6 @@ export async function run(forceRefresh = false) {
 
     updateRoute('analyze', ticker);
     addToHistory(ticker);
-    showExistingSummary(ticker);
 
     if (prev.results?.[0]) {
       ui.updateCurrentPrice(prev.results[0]);
@@ -487,8 +488,8 @@ export function exportData() {
   }
 
   const d = mktData;
-  const score = parseInt(ui.$('sc').textContent) || 0;
-  const signal = ui.$('sg').textContent;
+  const score = parseInt(ui.$('sc')?.textContent) || 0;
+  const signal = ui.$('sg')?.textContent || '';
 
   const exportText = `[${d.ticker}] $${d.price.toFixed(2)} (${d.change >= 0 ? '+' : ''}${d.change.toFixed(1)}%) | Score: ${score}/100 ${signal}
 Vol: ${d.volume} (${d.rvol.toFixed(1)}x) | ATR: $${d.atr.toFixed(2)} | HV: ${d.vol.toFixed(0)}%
@@ -579,10 +580,44 @@ async function loadSummaryFromKV(ticker) {
 }
 
 export async function generateSummary() {
-  const ticker = ui.$('tk').value.toUpperCase().trim();
-  if (!ticker || !mktData.price) {
-    alert('Run analysis first before generating summary.');
+  // Get ticker from appropriate page input
+  const page = getCurrentPage();
+  const tickerInput = page === 'options' ? ui.$('optTicker') : ui.$('tk');
+  const ticker = tickerInput?.value?.toUpperCase().trim();
+
+  if (!ticker) {
+    alert('Enter a ticker first.');
     return;
+  }
+
+  // Determine which data source to use
+  let dataForPrompt;
+  if (page === 'options') {
+    if (!optionsData.spotPrice || optionsData.ticker !== ticker) {
+      alert('Analyze the ticker first before generating summary.');
+      return;
+    }
+    // Build compatible data object from optionsData
+    dataForPrompt = {
+      ticker: optionsData.ticker,
+      price: optionsData.spotPrice,
+      change: optionsData.changePct || 0,
+      // Options-specific data
+      ivRank: optionsData.ivAnalysis?.ivRank,
+      ivPct: optionsData.ivAnalysis?.ivPercentile,
+      hv30: optionsData.hv30,
+      vrp: optionsData.vrpMetrics?.vrp,
+      volSetup: optionsData.volSetup,
+      gexMetrics: optionsData.gexMetrics,
+      gammaAnalysis: optionsData.gammaAnalysis,
+      gammaRatio: optionsData.gammaRatio
+    };
+  } else {
+    if (!mktData.price) {
+      alert('Run analysis first before generating summary.');
+      return;
+    }
+    dataForPrompt = mktData;
   }
 
   const section = ui.$('summarySection');
@@ -600,7 +635,7 @@ export async function generateSummary() {
   btn.classList.add('loading');
 
   try {
-    const prompt = buildSummaryPrompt(mktData);
+    const prompt = buildSummaryPrompt(dataForPrompt);
     const response = await fetchClaude(prompt, true); // Always fresh for summaries
 
     // Save to KV storage

@@ -9,7 +9,7 @@ import { loadWatchlist, setRunCallback as setWatchlistRunCallback } from './watc
 import { loadNotes, setRunCallback as setNotesRunCallback } from './notes.js';
 import { loadFeed, setRunCallback as setFeedRunCallback } from './feed.js';
 import { run } from './analysis.js';
-import { loadOptionsData } from './options-page.js';
+import { loadOptionsData, initOptionsPage } from './options-page.js';
 
 // Import modules for side effects (window bindings)
 import './portfolio.js';
@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
   ui.$('tm').textContent = new Date().toLocaleString();
   initCharts();
   renderHistory();
+  initOptionsPage();
   restoreCollapsedSections();
 
   // Inject teaching tooltips

@@ -8,11 +8,12 @@ import {
 } from './indicators.js';
 import * as volTools from './vol-tools.js';
 import { getCurrentThesis } from './feed.js';
-import { updateDynamicTooltips } from './teaching-tips.js';
+import { updateDynamicTooltips, updateSectionTooltips } from './teaching-tips.js';
 // Advanced gamma analytics (SIG-level dealer positioning)
 import * as gammaTools from './gamma.js';
+import { addToHistory, setOptionsSearchCallback, renderOptionsHistory } from './history.js';
 
-let optionsData = {
+export let optionsData = {
   ticker: null,
   spotPrice: 0,
   change: 0,
@@ -39,7 +40,11 @@ let optionsData = {
 
 export async function loadOptionsData() {
   const ticker = document.getElementById('optTicker').value.toUpperCase().trim();
-  if (!ticker) return;
+  if (!ticker) {
+    // Reset to empty state when no ticker
+    resetOptionsDisplay();
+    return;
+  }
 
   document.querySelector('.spot-price').textContent = 'Loading...';
   document.querySelector('.spot-change').textContent = '';
@@ -92,6 +97,9 @@ export async function loadOptionsData() {
     populateExpiryDropdown(options);
     autoPopulateEarningsVol(options);
     runOptionsAiAnalysis(ticker);
+
+    // Add ticker to history and update the history strip
+    addToHistory(ticker);
 
   } catch (e) {
     console.error('Options load error:', e);
@@ -181,6 +189,17 @@ function processOptionsPageData(options, spotPrice) {
   const skew = calculateSkewData(strikeData, spotPrice, avgIV);
   updateVolToolsUI(avgIV, termStructure, skew, pcRatioVol);
 
+  // Update section tooltips with actual data
+  updateSectionTooltips({
+    ticker: optionsData.ticker,
+    termStructure,
+    skew,
+    spotPrice,
+    avgIV,
+    hv30: optionsData.hv30,
+    gammaAnalysis: optionsData.gammaAnalysis
+  });
+
   // Update educational components
   updateThreeLenses();
   updateVolatilityCone();
@@ -200,7 +219,15 @@ function calculateSkewData(strikeData, spotPrice, avgIV) {
   const callIV = strikeData[otmCallStrike]?.callIV.length > 0 ?
     avg(strikeData[otmCallStrike].callIV) * 100 : atmIV;
 
-  return volTools.calcPutCallSkew(putIV, callIV, atmIV);
+  const skewResult = volTools.calcPutCallSkew(putIV, callIV, atmIV);
+  // Include raw IV values for tooltip display
+  return {
+    ...skewResult,
+    putIV,
+    atmIV,
+    callIV,
+    pcSkew: putIV - callIV // Put-Call skew difference
+  };
 }
 
 function updateQuickStats(avgIV, hv30, spotPrice, pcRatio, termStructure) {
@@ -642,9 +669,15 @@ export function toggleChainView(view) {
 
   const rows = document.querySelectorAll('.chain-row');
   rows.forEach(row => {
-    if (view === 'all') row.style.display = '';
-    else if (view === 'itm') row.style.display = (row.classList.contains('itm-call') || row.classList.contains('itm-put')) ? '' : 'none';
-    else if (view === 'otm') row.style.display = (!row.classList.contains('itm-call') && !row.classList.contains('itm-put') && !row.classList.contains('atm')) ? '' : 'none';
+    if (view === 'all') {
+      row.style.display = '';
+    } else if (view === 'itm') {
+      // ITM: strikes at or below spot (ITM calls, includes ATM as reference)
+      row.style.display = (row.classList.contains('itm-call') || row.classList.contains('atm')) ? '' : 'none';
+    } else if (view === 'otm') {
+      // OTM: strikes at or above spot (OTM calls, includes ATM as reference)
+      row.style.display = (row.classList.contains('itm-put') || row.classList.contains('atm')) ? '' : 'none';
+    }
   });
 }
 
@@ -1199,6 +1232,241 @@ ${(t.risks || []).map(r => `- ${r}`).join('\n') || '- None identified'}`;
   return context;
 }
 
+// Chain Modal functions
+export function openChainModal() {
+  document.getElementById('chainModal').classList.add('active');
+}
+
+export function closeChainModal() {
+  document.getElementById('chainModal').classList.remove('active');
+}
+
+// Reset options display to empty state
+function resetOptionsDisplay() {
+  // Reset optionsData
+  optionsData.ticker = null;
+  optionsData.spotPrice = 0;
+  optionsData.options = null;
+  optionsData.ivAnalysis = null;
+  optionsData.vrpMetrics = null;
+  optionsData.gexMetrics = null;
+  optionsData.gammaAnalysis = null;
+
+  // Reset spot display
+  document.querySelector('.spot-price').textContent = '--';
+  document.querySelector('.spot-change').textContent = '';
+  document.querySelector('.spot-change').className = 'spot-change';
+
+  // Reset quick stats
+  const statIds = ['optIvRank', 'optIvPct', 'optHv30', 'optIvHvDiff', 'optExpMove', 'optPcRatio', 'optVolSetup'];
+  statIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.textContent = '--';
+      el.className = el.className.replace(/\s*(high|low|neutral|g|r|y)\s*/g, ' ').trim();
+    }
+  });
+
+  // Reset term structure
+  document.querySelectorAll('#optTermStructure .term-value').forEach(el => el.textContent = '--');
+  document.querySelectorAll('#optTermStructure .term-fill').forEach(el => el.style.width = '0%');
+
+  // Reset skew
+  document.querySelectorAll('#optSkewDisplay .skew-value').forEach(el => el.textContent = '--');
+  const pcSkew = document.getElementById('optPcSkew');
+  if (pcSkew) pcSkew.textContent = '--';
+
+  // Reset expected moves
+  ['optExpDaily', 'optExpWeekly', 'optExpMonthly'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '--';
+  });
+
+  // Reset flow section
+  ['optCallVol', 'optPutVol', 'optCallOi', 'optPutOi', 'optNetFlow', 'optVolRatio', 'optOiRatio', 'optOiChange'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '--';
+  });
+  document.getElementById('optCallVolBar')?.style.setProperty('width', '50%');
+  document.getElementById('optPutVolBar')?.style.setProperty('width', '50%');
+  document.getElementById('optCallOiBar')?.style.setProperty('width', '50%');
+  document.getElementById('optPutOiBar')?.style.setProperty('width', '50%');
+  document.getElementById('optSentimentMarker')?.style.setProperty('left', '50%');
+  const sentimentVal = document.getElementById('optSentimentValue');
+  if (sentimentVal) sentimentVal.textContent = '--';
+
+  // Reset strikes/levels
+  ['optMpWeekly', 'optMpMonthly', 'optMpQuarterly', 'optGexFlip', 'optGexCallWall', 'optGexPutWall', 'optNetGex'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '--';
+  });
+  ['optMpWeeklyDist', 'optMpMonthlyDist', 'optMpQuarterlyDist'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '';
+  });
+  ['optCallWalls', 'optPutWalls'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '--';
+  });
+
+  // Reset chain
+  document.getElementById('optChainBody').innerHTML = '<div class="chain-loading">Enter a ticker to analyze options</div>';
+  const expSelect = document.getElementById('optExpSelect');
+  if (expSelect) expSelect.innerHTML = '<option value="">Select Expiry</option>';
+
+  // Reset AI sections
+  document.getElementById('optAiInsight').innerHTML = '<div class="ai-loading" style="color:#94a3b8">Enter a ticker to get AI analysis</div>';
+  document.getElementById('optAiOpportunities').innerHTML = '';
+
+  // Hide summary section
+  const summarySection = document.getElementById('summarySection');
+  if (summarySection) summarySection.style.display = 'none';
+
+  // Reset section tooltips to static defaults
+  updateSectionTooltips({
+    ticker: null,
+    termStructure: null,
+    skew: null,
+    spotPrice: null,
+    avgIV: null,
+    hv30: null,
+    gammaAnalysis: null
+  });
+}
+
+// Copy all options data to clipboard for AI prompt
+export function copyOptionsData() {
+  if (!optionsData.ticker) {
+    alert('Load a ticker first');
+    return;
+  }
+
+  const d = optionsData;
+  const gex = d.gexMetrics || {};
+  const gamma = d.gammaAnalysis || {};
+  const levels = gamma.levels || {};
+  const regime = gamma.regime || {};
+  const iv = d.ivAnalysis || {};
+  const vrp = d.vrpMetrics || {};
+
+  // Get flow data from DOM
+  const callVol = document.getElementById('optCallVol')?.textContent || '--';
+  const putVol = document.getElementById('optPutVol')?.textContent || '--';
+  const callOI = document.getElementById('optCallOi')?.textContent || '--';
+  const putOI = document.getElementById('optPutOi')?.textContent || '--';
+  const pcRatioVol = document.getElementById('optVolRatio')?.textContent || '--';
+  const pcRatioOI = document.getElementById('optOiRatio')?.textContent || '--';
+  const sentiment = document.getElementById('optSentimentValue')?.textContent || '--';
+
+  // Get term structure
+  const termBars = document.querySelectorAll('#optTermStructure .term-bar');
+  const termValues = Array.from(termBars).map(bar =>
+    bar.querySelector('.term-value')?.textContent || '--'
+  );
+
+  // Get skew data
+  const skewItems = document.querySelectorAll('#optSkewDisplay .skew-value');
+  const putIV = skewItems[0]?.textContent || '--';
+  const atmIV = skewItems[1]?.textContent || '--';
+  const callIV = skewItems[2]?.textContent || '--';
+  const pcSkew = document.getElementById('optPcSkew')?.textContent || '--';
+
+  // Get max pain
+  const mpWeekly = document.getElementById('optMpWeekly')?.textContent || '--';
+  const mpMonthly = document.getElementById('optMpMonthly')?.textContent || '--';
+
+  // Get OI walls
+  const callWalls = document.getElementById('optCallWalls')?.textContent?.trim() || '--';
+  const putWalls = document.getElementById('optPutWalls')?.textContent?.trim() || '--';
+
+  // Format the data
+  const text = `OPTIONS DATA: ${d.ticker}
+====================
+
+SPOT & PRICE
+- Price: $${d.spotPrice.toFixed(2)}
+- Change: ${d.change >= 0 ? '+' : ''}$${d.change.toFixed(2)} (${d.changePct >= 0 ? '+' : ''}${d.changePct.toFixed(2)}%)
+
+VOLATILITY
+- IV Rank: ${iv.ivRank?.toFixed(0) || '--'}%
+- IV Percentile: ${iv.ivPercentile?.toFixed(0) || '--'}%
+- HV (30d): ${d.hv30?.toFixed(0) || '--'}%
+- VRP (IV-HV): ${vrp.vrp != null ? (vrp.vrp >= 0 ? '+' : '') + vrp.vrp.toFixed(0) : '--'}%
+- Vol Setup: ${d.volSetup?.setup || '--'}
+
+TERM STRUCTURE
+- Weekly: ${termValues[0]}
+- Monthly: ${termValues[1]}
+- Quarterly: ${termValues[2]}
+- 6-Month: ${termValues[3]}
+
+VOLATILITY SKEW
+- 25Δ Put IV: ${putIV}
+- ATM IV: ${atmIV}
+- 25Δ Call IV: ${callIV}
+- Put-Call Skew: ${pcSkew}
+
+EXPECTED MOVE (1 SD)
+- Daily: ${document.getElementById('optExpDaily')?.textContent || '--'}
+- Weekly: ${document.getElementById('optExpWeekly')?.textContent || '--'}
+- Monthly: ${document.getElementById('optExpMonthly')?.textContent || '--'}
+
+FLOW & SENTIMENT
+- Call Volume: ${callVol}
+- Put Volume: ${putVol}
+- Volume Ratio (C/P): ${pcRatioVol}
+- Call OI: ${callOI}
+- Put OI: ${putOI}
+- OI Ratio (P/C): ${pcRatioOI}
+- Sentiment: ${sentiment}
+
+KEY STRIKES & LEVELS
+- Max Pain (Weekly): ${mpWeekly}
+- Max Pain (Monthly): ${mpMonthly}
+- Call Walls: ${callWalls.replace(/\n/g, ', ')}
+- Put Walls: ${putWalls.replace(/\n/g, ', ')}
+
+GAMMA EXPOSURE (GEX)
+- Net GEX: ${gamma.netGEX ? gammaTools.formatGEX(gamma.netGEX) : gex.netGEXFormatted || '--'}
+- Regime: ${regime.regime || gex.regime || '--'}
+- Zero Gamma: $${levels.zeroGamma?.toFixed(0) || gex.gexZeroLine?.toFixed(0) || '--'}
+- Call Wall: $${levels.callWall?.toFixed(0) || gex.callWall?.toFixed(0) || '--'}
+- Put Wall: $${levels.putWall?.toFixed(0) || gex.putWall?.toFixed(0) || '--'}
+- Vol Trigger: $${levels.volTrigger?.toFixed(0) || '--'}
+
+DEALER POSITIONING
+- Delta Flow: ${gamma.deltaFlow?.hedgingPressure || '--'}
+- Charm Pin: $${gamma.charm?.pinningStrike || '--'}
+- G-Ratio: ${d.gammaRatio?.gammaRatioFormatted || '--'}
+- Trading Style: ${regime.tradingStyle || '--'}
+
+${d.earningsDate ? `EARNINGS
+- Date: ${d.earningsDate.toLocaleDateString()}
+- Days to Earnings: ${d.daysToEarnings}
+` : ''}
+---
+Analyze this options data and provide insights on positioning, potential moves, and trade ideas.`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('btnCopyData');
+    btn.classList.add('copied');
+    btn.textContent = '✓';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.textContent = '📋';
+    }, 2000);
+  }).catch(err => {
+    console.error('Copy failed:', err);
+    alert('Failed to copy to clipboard');
+  });
+}
+
+// Initialize options page history
+export function initOptionsPage() {
+  setOptionsSearchCallback(loadOptionsData);
+  renderOptionsHistory();
+}
+
 // Expose to window for onclick handlers
 window.loadOptionsData = loadOptionsData;
 window.loadChainForExpiry = loadChainForExpiry;
@@ -1206,3 +1474,6 @@ window.toggleChainView = toggleChainView;
 window.runOptionsScanner = runOptionsScanner;
 window.refreshOptionsAi = refreshOptionsAi;
 window.calcEarningsMove = calcEarningsMove;
+window.openChainModal = openChainModal;
+window.closeChainModal = closeChainModal;
+window.copyOptionsData = copyOptionsData;

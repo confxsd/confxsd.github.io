@@ -1,7 +1,7 @@
 # VHunter - AI Stock Signal Terminal
 
 ## Project Overview
-VHunter is an AI-powered stock analysis terminal that provides technical indicators, AI-generated trade ideas, and position tracking.
+VHunter is an AI-powered stock analysis terminal that provides technical indicators, AI-generated trade ideas, options analytics, and position tracking.
 
 ## Architecture
 
@@ -19,18 +19,89 @@ VHunter is an AI-powered stock analysis terminal that provides technical indicat
 
 ```
 vhunter/
-├── index.html          # Main HTML with sidebar navigation, 4 pages
-├── css/style.css       # All styles including responsive design
+├── index.html              # Main HTML with sidebar navigation, 6 pages
+├── css/
+│   ├── base.css            # CSS variables, reset, typography
+│   ├── layout.css          # App layout, sidebar, header
+│   ├── components.css      # Buttons, modals, forms, cards
+│   ├── analyze.css         # Overview/Analyze page styles
+│   ├── options.css         # Options terminal page styles
+│   ├── positions.css       # Positions page styles
+│   ├── watchlist.css       # Watchlist page styles
+│   ├── notes.css           # Notes page styles
+│   ├── feed.css            # Feed page styles
+│   ├── teaching.css        # Teaching tips popups
+│   └── responsive.css      # Mobile/tablet breakpoints
 ├── js/
-│   ├── app.js          # Main application logic, page switching, CRUD
-│   ├── api.js          # Polygon.io and Claude API calls via proxy
-│   ├── db.js           # Database API module (positions, watchlist, notes)
-│   ├── ui.js           # UI update functions
-│   ├── charts.js       # Chart.js chart rendering
-│   ├── indicators.js   # Technical indicator calculations
-│   ├── prompts.js      # AI prompt builders
-│   └── config.js       # Configuration (proxy URL, etc.)
+│   ├── app.js              # Main app initialization, global exports
+│   ├── api.js              # Polygon.io and Claude API calls via proxy
+│   ├── db.js               # Database API module (positions, watchlist, notes, feed)
+│   ├── config.js           # Configuration (proxy URL, etc.)
+│   ├── router.js           # Page routing and navigation
+│   ├── pages.js            # Page switching logic
+│   ├── ui.js               # UI update functions for analyze page
+│   ├── charts.js           # Chart.js chart rendering
+│   ├── indicators.js       # Technical indicator calculations
+│   ├── prompts.js          # AI prompt builders
+│   ├── analysis.js         # Stock analysis and AI insights
+│   ├── options-page.js     # Options terminal page logic
+│   ├── gamma.js            # GEX/DEX gamma exposure calculations
+│   ├── vol-tools.js        # Volatility tools (VRP, cone, straddle)
+│   ├── iv-history.js       # IV history and term structure
+│   ├── positions.js        # Positions page logic and P&L
+│   ├── watchlist.js        # Watchlist page and Hunt feature
+│   ├── notes.js            # Notes page logic
+│   ├── feed.js             # Feed page (signals, thesis, extract)
+│   ├── portfolio.js        # AI portfolio analysis
+│   ├── history.js          # Ticker history strip
+│   ├── cache.js            # Client-side caching utilities
+│   ├── utils.js            # Utility functions
+│   └── teaching-tips.js    # Interactive teaching tips
 ```
+
+## Pages
+
+### 1. Overview (Analyze)
+- Stock analysis with technical charts (Price, Volume, RSI, MACD, ADX, Bollinger, MFI, A/D, ATR)
+- Signal bars (Trend, Momentum, Volume, Volatility)
+- Technical signals panel
+- Key stats and money flow
+- AI thesis, trade ideas, news
+- Options flow and key levels
+- Volatility premium (VRP) gauge
+
+### 2. Options
+Professional quant-style options terminal:
+- **Volatility Analysis**: IV term structure, skew, expected moves, volatility cone
+- **Flow & Sentiment**: Call/Put volume, OI, sentiment gauge
+- **Key Strikes**: Max pain levels, OI walls, GEX zones, dealer positioning
+- **Vol Tools**: Multi-window VRP, straddle pricing, earnings vol extractor, three lenses framework
+- **Trade Scanner**: Filter by type, delta, DTE, IV rank
+- **AI Insight**: Market maker positioning, thesis-aligned opportunities
+
+### 3. Feed
+- Capture tweets, blog posts, charts, links
+- Image attachment support
+- AI-powered insight extraction
+- Thesis generation from accumulated signals
+- Filter by type (tweet, blog, chart)
+
+### 4. Positions
+- Track open/closed positions with real-time P&L
+- Support for long, short, call, put, short_call, short_put
+- AI portfolio analysis with risk score
+- Thesis alignment and expiry alerts
+- Win rate and performance stats
+
+### 5. Watchlist
+- Track tickers with price alerts
+- Hunt feature: Scan all tickers for options opportunities
+- Metrics: IV-HV, P/C ratio, put premium %, Vol/OI
+- AI-generated hunt summary
+
+### 6. Notes
+- Trading notes with tags
+- Filter by ticker
 
 ## API Endpoints (Cloudflare Worker)
 
@@ -59,6 +130,16 @@ Base URL: `https://vhunter-proxy.vhunter.workers.dev`
 - `PUT /api/notes/:id` - Update note
 - `DELETE /api/notes/:id` - Delete note
 
+### Feed API
+- `GET /api/feed` - Get user feed items
+- `POST /api/feed` - Create feed item
+- `PUT /api/feed/:id` - Update feed item
+- `DELETE /api/feed/:id` - Delete feed item
+
+### Thesis API
+- `GET /api/thesis` - Get user thesis
+- `POST /api/thesis` - Create/update thesis
+
 ## Database (Cloudflare D1)
 
 **Database Name**: `vhunter-db`
@@ -77,7 +158,7 @@ CREATE TABLE positions (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
   ticker TEXT NOT NULL,
-  type TEXT NOT NULL CHECK(type IN ('long', 'short', 'call', 'put')),
+  type TEXT NOT NULL CHECK(type IN ('long', 'short', 'call', 'put', 'short_call', 'short_put')),
   entry_price REAL NOT NULL,
   quantity REAL NOT NULL,
   entry_date TEXT NOT NULL,
@@ -121,42 +202,75 @@ CREATE TABLE notes (
 )
 ```
 
-## Current User Positions (as of Dec 27, 2025)
+#### feed
+```sql
+CREATE TABLE feed (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  type TEXT NOT NULL CHECK(type IN ('tweet', 'blog', 'chart', 'link')),
+  author TEXT,
+  content TEXT NOT NULL,
+  url TEXT,
+  images TEXT,
+  insights TEXT,
+  status TEXT DEFAULT 'raw' CHECK(status IN ('raw', 'processed')),
+  created_at TEXT,
+  updated_at TEXT
+)
+```
 
-User ID: `vhunter-serhat`
+#### thesis
+```sql
+CREATE TABLE thesis (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  content TEXT NOT NULL,
+  created_at TEXT,
+  updated_at TEXT
+)
+```
 
-| ID | Ticker | Type | Entry | Qty | Notes |
-|----|--------|------|-------|-----|-------|
-| pos-001 | IONQ | short | $47.82 | 130 | Short stock -130 shares @ $47.82 |
-| pos-002 | CVNA | put | $14.95 | 1 | CVNA 16JAN26 450 P |
-| pos-003 | IONQ | put | $3.52 | 2 | IONQ 23JAN26 49 P |
-| pos-004 | LMND | put | $5.37 | 1 | LMND 30JAN26 75 P |
-| pos-005 | RGTI | put | $1.70 | 4 | RGTI 23JAN26 23 P |
-| pos-006 | WDAY | put | $2.14 | 2 | WDAY 16JAN26 210 P |
-| pos-007 | WDAY | put | $3.15 | 6 | WDAY 23JAN26 210 P |
-
-### P&L Calculation Logic
+## P&L Calculation Logic
 
 For open positions, P&L is calculated in real-time:
 - **Long**: `(currentPrice - entryPrice) * quantity`
 - **Short**: `(entryPrice - currentPrice) * quantity`
-- **Put**: Intrinsic value = `max(0, strike - currentPrice)`, estimated option value includes ~30% time value
-- **Call**: Intrinsic value = `max(0, currentPrice - strike)`, estimated option value includes ~30% time value
+- **Long Put**: Intrinsic value = `max(0, strike - currentPrice)`, estimated option value includes ~30% time value
+- **Long Call**: Intrinsic value = `max(0, currentPrice - strike)`, estimated option value includes ~30% time value
+- **Short Call/Put**: Inverse of long options (profit when option loses value)
 
 Option notes format: `TICKER DDMMMYY STRIKE C/P` (e.g., "IONQ 23JAN26 49 P")
 
-## UI Structure
+## Key Features
 
-### Pages (sidebar navigation)
-1. **Analyze** - Stock analysis with charts, indicators, AI insights
-2. **Positions** - Track open/closed positions with P&L
-3. **Watchlist** - Track tickers with price alerts
-4. **Notes** - Trading notes with tags
+### Hunt Feature (Watchlist)
+Scans all watchlist tickers for options opportunities:
+- IV vs HV spread (volatility premium)
+- Put/Call ratio and flow analysis
+- Premium distribution (% in puts)
+- Volume/OI ratio (unusual activity)
+- Composite opportunity score
 
-### Key UI Elements
-- Sidebar: Fixed on desktop, slide-out on mobile (< 1024px)
-- Header: Search bar, signal score (only on Analyze page)
-- Modals: Position form, close position, watchlist, notes
+### AI Portfolio Analysis (Positions)
+- Portfolio risk score
+- Thesis alignment check
+- Expiry alerts for near-term options
+- Position-level signals
+- Actionable recommendations
+
+### Feed & Thesis
+- Capture market signals from various sources
+- AI extracts insights from raw signals
+- Update thesis synthesizes accumulated insights
+- Tracks raw vs processed signal counts
+
+### Options Terminal Features
+- **IV Term Structure**: Contango/backwardation analysis
+- **Volatility Skew**: 25-delta put/call skew
+- **Volatility Cone**: RV percentile by lookback window
+- **GEX Zones**: Gamma flip, call/put walls, vol trigger
+- **Dealer Positioning**: Delta flow, charm pin, G-ratio
+- **Three Lenses**: Cross-sectional, time series, fundamental vol analysis
 
 ## Development
 
@@ -185,3 +299,5 @@ npx wrangler d1 execute vhunter-db --remote --command "SELECT * FROM positions W
 2. **Position IDs**: String format (e.g., "pos-001"), not integers
 3. **Options Multiplier**: For options, quantity is contracts (each = 100 shares)
 4. **P&L Calculation**: Calculated on close: `(exit - entry) * qty * multiplier` where multiplier is -1 for short/put
+5. **Modular CSS**: Styles are split into multiple files for easier editing - edit the specific page CSS file
+6. **Teaching Tips**: Interactive tooltips explain options concepts (IV rank, VRP, expected move, etc.)
