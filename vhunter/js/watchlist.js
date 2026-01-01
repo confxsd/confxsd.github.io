@@ -126,7 +126,7 @@ export async function huntOptions() {
       }
     });
 
-    // Calculate cross-sectional rankings (Moontower-style)
+    // Calculate cross-sectional rankings
     if (huntResults.length > 1) {
       const vrpRanks = crossSectionalRank(huntResults, 'vrp');
       const ivRankRanks = crossSectionalRank(huntResults, 'ivRank');
@@ -286,7 +286,7 @@ async function fetchHuntData(ticker) {
 
     let score = 50;
 
-    // VRP scoring (key Moontower insight)
+    // VRP scoring
     if (vrp > 15) score += 18; // Very high premium - strong sell signal
     else if (vrp > 10) score += 12;
     else if (vrp > 5) score += 6;
@@ -338,7 +338,7 @@ async function fetchHuntData(ticker) {
       avgIV,
       hv30,
       ivHvDiff,
-      // VRP metrics (Moontower-style)
+      // VRP metrics
       vrp,
       ivRank,
       ivPercentile,
@@ -513,7 +513,7 @@ async function runHuntAiAnalysis(results) {
 
   const dataStr = results.slice(0, 5).map(r => {
     let line = `${r.ticker}: $${r.spotPrice.toFixed(2)} (${r.changePct >= 0 ? '+' : ''}${r.changePct.toFixed(1)}%)`;
-    // VRP metrics (Moontower-style)
+    // VRP metrics
     line += ` | VRP:${r.vrp != null ? (r.vrp >= 0 ? '+' : '') + r.vrp.toFixed(0) + '%' : '--'}`;
     line += ` IVRank:${r.ivRank != null ? r.ivRank.toFixed(0) + '%' : '--'}`;
     line += ` | P/C:${r.pcRatio.toFixed(2)} | Put$:${r.putPremiumPct.toFixed(0)}%`;
@@ -534,7 +534,7 @@ async function runHuntAiAnalysis(results) {
   const highVrp = results.filter(r => r.vrp > 10).length;
   const sellVega = results.filter(r => r.volSetup?.setup === 'SELL_VEGA' || r.volSetup?.setup === 'HIGH_VRP').length;
 
-  const prompt = `You are a professional volatility trader using Moontower-style VRP analysis.
+  const prompt = `You are a professional volatility trader using VRP analysis.
 
 WATCHLIST SCAN (sorted by opportunity score):
 ${dataStr}

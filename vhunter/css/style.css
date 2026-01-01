@@ -1446,7 +1446,7 @@ form { padding: 20px; }
 }
 
 /* ============================================
-   VOL TOOLS SECTION (Moontower-style)
+   VOL TOOLS SECTION
    ============================================ */
 
 /* Multi-Window VRP */
@@ -2893,11 +2893,7 @@ form { padding: 20px; }
   }
 
   .opt-stats-bar {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .opt-stat:last-child {
-    grid-column: span 1;
+    grid-template-columns: repeat(7, 1fr);
   }
 }
 
@@ -2925,8 +2921,8 @@ form { padding: 20px; }
     grid-template-columns: repeat(4, 1fr);
   }
 
-  .opt-stat:nth-last-child(-n+3) {
-    grid-column: span 1;
+  .opt-stats-bar .opt-stat:nth-child(7) {
+    grid-column: 4;
   }
 
   .options-grid {
@@ -2982,7 +2978,7 @@ form { padding: 20px; }
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .opt-stat:last-child {
+  .opt-stats-bar .opt-stat:nth-child(7) {
     grid-column: span 2;
   }
 
@@ -4351,7 +4347,7 @@ form { padding: 20px; }
 }
 
 /* ============================================
-   TEACHING TOOLTIPS - Moontower-style Education
+   TEACHING TOOLTIPS
    ============================================ */
 
 .teaching-tooltip {
@@ -4384,78 +4380,62 @@ form { padding: 20px; }
 
 .tip-popup {
   position: absolute;
-  bottom: calc(100% + 8px);
+  top: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
-  width: 320px;
+  width: 200px;
   background: #1e293b;
   color: #fff;
-  padding: 16px;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  padding: 8px 10px;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
   z-index: 1000;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
+  transition: opacity 0.15s;
   pointer-events: none;
 }
 
-.tip-popup::after {
+.tip-popup::before {
   content: '';
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  border: 8px solid transparent;
-  border-top-color: #1e293b;
+  border: 5px solid transparent;
+  border-bottom-color: #1e293b;
+}
+
+.tip-popup::after {
+  display: none;
 }
 
 .teaching-tooltip:hover .tip-popup {
   opacity: 1;
   visibility: visible;
-  transform: translateX(-50%) translateY(-4px);
   pointer-events: auto;
 }
 
 .tip-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #818cf8;
-  margin-bottom: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #a5b4fc;
+  margin-bottom: 3px;
 }
 
 .tip-short {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 10px;
   color: #e2e8f0;
-  margin-bottom: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #334155;
+  line-height: 1.4;
+  margin: 0;
+  padding: 0;
+  border: none;
 }
 
-.tip-detail {
-  font-size: 11px;
-  line-height: 1.6;
-  color: #cbd5e1;
-  white-space: pre-line;
-  margin-bottom: 10px;
-}
-
-.tip-quote {
-  font-size: 11px;
-  font-style: italic;
-  color: #a5b4fc;
-  padding: 10px;
-  background: rgba(129, 140, 248, 0.1);
-  border-left: 3px solid #818cf8;
-  border-radius: 0 6px 6px 0;
-  margin-bottom: 8px;
-}
-
+.tip-detail,
+.tip-quote,
 .tip-source {
-  font-size: 9px;
-  color: #64748b;
-  text-align: right;
+  display: none;
 }
 
 /* Right-aligned tooltips */
@@ -4465,15 +4445,16 @@ form { padding: 20px; }
   transform: translateX(0);
 }
 
-.teaching-tooltip:hover .tip-popup.tip-right {
-  transform: translateX(0) translateY(-4px);
+.tip-popup.tip-right::before {
+  left: auto;
+  right: 12px;
+  transform: none;
 }
 
 /* Mobile tooltip adjustments */
 @media (max-width: 600px) {
   .tip-popup {
-    width: 280px;
-    padding: 12px;
+    width: 180px;
   }
 }
 
@@ -4756,45 +4737,6 @@ form { padding: 20px; }
   padding: 8px;
   background: rgba(255,255,255,0.5);
   border-radius: 6px;
-}
-
-/* ============================================
-   MOONTOWER QUOTE BOX
-   ============================================ */
-
-.moontower-quote {
-  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
-  border-radius: 6px;
-  padding: 10px;
-  margin-top: 8px;
-  position: relative;
-  overflow: hidden;
-}
-
-.moontower-quote::before {
-  content: '"';
-  position: absolute;
-  top: -20px;
-  left: 10px;
-  font-size: 80px;
-  color: rgba(129, 140, 248, 0.15);
-  font-family: Georgia, serif;
-}
-
-.moontower-quote-text {
-  font-size: 11px;
-  font-style: italic;
-  color: #e2e8f0;
-  line-height: 1.5;
-  position: relative;
-  z-index: 1;
-}
-
-.moontower-quote-source {
-  font-size: 10px;
-  color: #a5b4fc;
-  margin-top: 6px;
-  text-align: right;
 }
 
 /* ============================================

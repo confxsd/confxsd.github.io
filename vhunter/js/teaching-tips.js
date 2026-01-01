@@ -1,6 +1,5 @@
 // VHunter Teaching Tips Module
-// Educational content inspired by Moontower.ai / Kris Abdelmessih
-// "Options are ALWAYS about vol" - Kris Abdelmessih
+// Educational content for options volatility trading
 
 // ============================================
 // TEACHING TIPS DATABASE
@@ -16,9 +15,7 @@ export const TEACHING_TIPS = {
 When VRP > 0: Options are "expensive" - sellers have edge
 When VRP < 0: Options are "cheap" - buyers have edge
 
-Key insight: VRP is like a point spread in sports betting. It represents the market's assessment of relative value between buyers and sellers.`,
-    moontower: 'The price of an option is primarily about volatility.',
-    source: 'Using Options Better - Moontower'
+Key insight: VRP is like a point spread in sports betting. It represents the market's assessment of relative value between buyers and sellers.`
   },
 
   ivRank: {
@@ -30,9 +27,7 @@ Example: If IV ranged from 20% to 80% over the past year, and current IV is 50%:
 IV Rank = (50-20)/(80-20) = 50%
 
 IV Rank > 50: IV is elevated relative to history
-IV Rank < 30: IV is relatively low`,
-    moontower: 'Context matters. A 30% IV is high for some stocks and low for others.',
-    source: 'IV Rank Primer - Moontower'
+IV Rank < 30: IV is relatively low`
   },
 
   ivPercentile: {
@@ -42,25 +37,21 @@ IV Rank < 30: IV is relatively low`,
 
 IV Percentile = 80% means: Current IV is higher than 80% of historical readings.
 
-Why it matters: IV Rank can be skewed by outliers. IV Percentile gives you a cleaner picture of how often IV has been this high.`,
-    moontower: 'Both metrics have value. Rank shows range position; Percentile shows frequency.',
-    source: 'IV Analytics - Moontower'
+Why it matters: IV Rank can be skewed by outliers. IV Percentile gives you a cleaner picture of how often IV has been this high.`
   },
 
   // Win Rates & Expectancy
   straddleWinRate: {
     title: 'Straddle Win Rate Reality',
     short: 'Fairly priced straddle loses 58% of the time',
-    detail: `Critical insight from Moontower: In Black-Scholes world, if you buy a straddle at fairly priced vol, your expectancy is zero BUT you expect to lose ~58% of the time.
+    detail: `In Black-Scholes world, if you buy a straddle at fairly priced vol, your expectancy is zero BUT you expect to lose ~58% of the time.
 
 Why? The most you can lose is the premium paid, but wins are theoretically unlimited. So wins are larger but less frequent.
 
 For sellers: 58% win rate, but each loss can exceed your wins.
 For buyers: 42% win rate, but winners are bigger.
 
-Zero expectancy doesn't mean equal outcomes!`,
-    moontower: 'Expectancy and win rate are not the same. You should expect to lose more often than you win for your expectancy to be zero since your wins are larger than your losses.',
-    source: 'Straddles, Volatility, and Win Rates - Moontower'
+Zero expectancy doesn't mean equal outcomes!`
   },
 
   expectedMove: {
@@ -72,9 +63,7 @@ This gives you the 1 standard deviation range. Statistically, the stock should s
 
 ATM Straddle ≈ 0.8 × Expected Move
 
-So if expected move is $10, the ATM straddle should cost about $8.`,
-    moontower: 'The straddle is the market\'s best guess at how much the stock will move.',
-    source: 'Option Pricing Fundamentals - Moontower'
+So if expected move is $10, the ATM straddle should cost about $8.`
   },
 
   // Term Structure
@@ -90,9 +79,7 @@ Inverted (Backwardation): Short-dated options have higher IV
 - Front month premium is elevated
 
 Forward Vol: The implied vol between two expirations
-If 30-day IV is 42% and 20-day IV is 40%, the 20-30 day forward vol must be HIGHER than 42%.`,
-    moontower: 'Volatility term structure from multiple angles shows you where the market\'s concerns are concentrated.',
-    source: 'Understanding Implied Forwards - Moontower'
+If 30-day IV is 42% and 20-day IV is 40%, the 20-30 day forward vol must be HIGHER than 42%.`
   },
 
   // Vega & Greeks
@@ -105,9 +92,7 @@ Near-term vols fluctuate more. A 1-week option might see IV move 10 points, whil
 
 Normalized Vega: Scale vega by √time to compare risk across tenors.
 
-A 4x longer option has 2x the vega, but if short-term IV is twice as volatile, they carry EQUAL practical risk.`,
-    moontower: 'Vega ≠ Vega Risk. Risk requires considering both vega magnitude AND volatility of volatility.',
-    source: 'Understanding Vega Risk - Moontower'
+A 4x longer option has 2x the vega, but if short-term IV is twice as volatile, they carry EQUAL practical risk.`
   },
 
   greeksAsPnL: {
@@ -121,9 +106,7 @@ Theta P&L: Time decay (your cost of gamma)
 Vega P&L: Profit from IV changes
 
 For delta-hedged positions, Gamma vs Theta is your realized vol bet.
-If RV > IV, gamma profits exceed theta decay = profit.`,
-    moontower: 'After stripping out delta, an option\'s return becomes a function of both implied and realized volatility.',
-    source: 'Dynamic Hedging & P/L Decomposition - Moontower'
+If RV > IV, gamma profits exceed theta decay = profit.`
   },
 
   // Three Lenses Framework
@@ -142,9 +125,7 @@ Fundamental: What justifies the volatility?
 - Is there an event (earnings, FDA)?
 - Has the business changed?
 
-Use all three lenses before trading.`,
-    moontower: 'A durable way of seeing based on lots of pain. This is the stuff of salt mines. The way traders think.',
-    source: 'Primer Framework - Moontower'
+Use all three lenses before trading.`
   },
 
   // Edge Sources
@@ -166,9 +147,7 @@ Use all three lenses before trading.`,
    - Use longer-dated options, vega plays
    - Edge: timing IV moves
 
-Knowing your edge keeps you from drifting.`,
-    moontower: 'Having a clear P/L driver keeps you from drifting into a driver that you didn\'t have an opinion on.',
-    source: 'Trade Expressions & Structures - Moontower'
+Knowing your edge keeps you from drifting.`
   },
 
   // Skew
@@ -183,16 +162,14 @@ Call Skew: OTM calls trade at higher IV
 - Indicates fear of upside gaps
 - Common in M&A targets, meme stocks
 
-Skew flattening often precedes big moves.`,
-    moontower: 'Skew "corrects" theoretical distributions to match real market behavior.',
-    source: 'Option Education Screencast - Moontower'
+Skew flattening often precedes big moves.`
   },
 
   // Risk Management
   positionSizing: {
     title: 'Position Sizing',
     short: 'Trade small as you learn',
-    detail: `Kris's rule: "If you are uncomfortable you are too big."
+    detail: `If you are uncomfortable, you are too big.
 
 Work backward from acceptable risk:
 1. Define max loss you can tolerate
@@ -200,9 +177,7 @@ Work backward from acceptable risk:
 3. NOT the other way around
 
 Don't size from "how much premium can I collect."
-Size from "how much can I afford to lose."`,
-    moontower: 'Trade small as you learn. If you are uncomfortable you are too big.',
-    source: 'VRP Trading Mission - Moontower'
+Size from "how much can I afford to lose."`
   },
 
   // Covered Calls Reality
@@ -217,9 +192,7 @@ You're still betting on volatility!
 Ask: Is the IV I'm selling at actually expensive?
 If IV is at 30% and historical RV is 35%, you're GIVING away edge.
 
-Evaluate covered calls the same way you'd evaluate any vol trade.`,
-    moontower: 'Evaluate covered call suitability the same way you\'d evaluate any volatility trade—based on whether implied volatility justifies the premium.',
-    source: 'VRP Trading Mission - Moontower'
+Evaluate covered calls the same way you'd evaluate any vol trade.`
   },
 
   // Multiple VRPs
@@ -236,9 +209,7 @@ A stock with 16% daily RV might show:
 - 35% weekly RV
 - 78% point-to-point
 
-This creates a RANGE of possible VRPs, not a single reference. Professional traders monitor all windows.`,
-    moontower: 'A stock showing 16% daily realized vol might display 35% when measured weekly, or 78% when annualizing point-to-point moves.',
-    source: 'Option Market Point Spread - Moontower'
+This creates a RANGE of possible VRPs, not a single reference. Professional traders monitor all windows.`
   },
 
   // Volatility Cone
@@ -252,9 +223,7 @@ Key insight: Short-term RV (5-day) has a wider range than long-term RV (60-day).
 Use the cone to:
 1. See if current RV is extreme
 2. Understand typical RV ranges
-3. Identify when IV is mispriced vs RV`,
-    moontower: 'The standard deviation of realized volatility itself declines as the sampling period lengthens.',
-    source: 'Volatility Cones - Moontower'
+3. Identify when IV is mispriced vs RV`
   },
 
   // Path Dependence
@@ -267,9 +236,7 @@ A stock going from 100 to 110 in a straight line vs whipsawing wildly to 110 pro
 Gamma scalpers profit from whipsaw.
 Theta collectors hate it.
 
-Even "right" directional calls can lose money if the path is wrong or IV collapses.`,
-    moontower: 'If you sold that $150 strike call for $6 you still lose 10% of the time even if the long-run expectancy is positive.',
-    source: 'VRP Trading - Moontower'
+Even "right" directional calls can lose money if the path is wrong or IV collapses.`
   },
 
   // Exit Discipline
@@ -285,9 +252,7 @@ Exit if:
 - Vol has normalized
 - Better opportunities exist elsewhere
 
-The market's current valuation matters more than what you paid.`,
-    moontower: 'Exit if your thesis dissolves, regardless of current P&L. The market\'s valuation matters more than your entry price.',
-    source: 'VRP Trading Mission - Moontower'
+The market's current valuation matters more than what you paid.`
   }
 };
 
@@ -306,8 +271,6 @@ export function createTooltip(tipKey) {
         <div class="tip-title">${tip.title}</div>
         <div class="tip-short">${tip.short}</div>
         <div class="tip-detail">${tip.detail}</div>
-        ${tip.moontower ? `<div class="tip-quote">"${tip.moontower}"</div>` : ''}
-        <div class="tip-source">- ${tip.source}</div>
       </div>
     </div>
   `;
@@ -327,17 +290,12 @@ export function getDetailedTip(tipKey) {
   return tip ? tip.detail : '';
 }
 
-export function getMoontowerQuote(tipKey) {
-  const tip = TEACHING_TIPS[tipKey];
-  return tip?.moontower || '';
-}
-
 // ============================================
 // WIN RATE CALCULATOR
 // ============================================
 
 export function getStraddleWinRateInfo(straddlePct) {
-  // Based on Moontower: Fair straddle loses ~58% of the time
+  // Fair straddle loses ~58% of the time
   // But if straddle is cheap/expensive, win rate shifts
 
   const fairWinRate = 42; // For buyer
@@ -475,8 +433,7 @@ export function getRiskContext(position, portfolioSize) {
   return {
     riskLevel,
     positionPct: positionPct.toFixed(1),
-    advice,
-    moontower: 'Trade small as you learn. If you are uncomfortable you are too big.'
+    advice
   };
 }
 

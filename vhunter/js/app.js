@@ -51,6 +51,9 @@ document.addEventListener('DOMContentLoaded', () => {
   renderHistory();
   restoreCollapsedSections();
 
+  // Inject teaching tooltips
+  ui.injectTooltips();
+
   // Handle initial route
   const { page, ticker } = parseRoute();
   if (ticker) {

@@ -1,6 +1,6 @@
 /* @section:teaching - Tooltips, Education, Win Rate, Vol Cone */
 
-/* Teaching Tooltips */
+/* Teaching Tooltips - Minimal, consistent with system */
 .teaching-tooltip {
   position: relative;
   display: inline-flex;
@@ -9,111 +9,87 @@
 }
 
 .tip-icon {
+  width: 11px;
+  height: 11px;
+  background: #64748b;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 8px;
+  font-weight: 600;
+  margin-left: 3px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 14px;
-  height: 14px;
-  background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
-  color: #fff;
-  border-radius: 50%;
-  font-size: 9px;
-  font-weight: 700;
-  margin-left: 4px;
-  flex-shrink: 0;
-  transition: transform 0.15s, box-shadow 0.15s;
+  opacity: 0.4;
 }
 
 .teaching-tooltip:hover .tip-icon {
-  transform: scale(1.2);
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+  opacity: 0.7;
 }
 
 .tip-popup {
   position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  width: 320px;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 240px;
+  max-height: 320px;
+  overflow-y: auto;
   background: #1e293b;
-  color: #fff;
-  padding: 16px;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  color: #94a3b8;
+  padding: 10px 12px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   z-index: 1000;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
+  transition: opacity 0.12s;
   pointer-events: none;
+  font-size: 10px;
+  line-height: 1.5;
+  text-transform: none;
 }
 
-.tip-popup::after {
+.tip-popup::before {
   content: '';
   position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 8px solid transparent;
-  border-top-color: #1e293b;
+  bottom: 100%;
+  left: 12px;
+  border: 5px solid transparent;
+  border-bottom-color: #1e293b;
 }
 
 .teaching-tooltip:hover .tip-popup {
   opacity: 1;
   visibility: visible;
-  transform: translateX(-50%) translateY(-4px);
   pointer-events: auto;
 }
 
 .tip-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #818cf8;
-  margin-bottom: 6px;
+  font-weight: 500;
+  color: #cbd5e1;
+  margin-bottom: 4px;
+  text-transform: none;
 }
 
 .tip-short {
-  font-size: 12px;
-  font-weight: 600;
-  color: #e2e8f0;
-  margin-bottom: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #334155;
+  color: #64748b;
+  margin-bottom: 8px;
 }
 
 .tip-detail {
-  font-size: 11px;
-  line-height: 1.6;
-  color: #cbd5e1;
   white-space: pre-line;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .tip-quote {
-  font-size: 11px;
   font-style: italic;
-  color: #a5b4fc;
-  padding: 10px;
-  background: rgba(129, 140, 248, 0.1);
-  border-left: 3px solid #818cf8;
-  border-radius: 0 6px 6px 0;
-  margin-bottom: 8px;
+  color: #64748b;
+  margin-bottom: 6px;
 }
 
 .tip-source {
   font-size: 9px;
-  color: #64748b;
-  text-align: right;
-}
-
-/* Right-aligned tooltips */
-.tip-popup.tip-right {
-  left: auto;
-  right: 0;
-  transform: translateX(0);
-}
-
-.teaching-tooltip:hover .tip-popup.tip-right {
-  transform: translateX(0) translateY(-4px);
+  color: #475569;
 }
 
 /* Three Lenses Framework */
@@ -373,42 +349,6 @@
   padding: 8px;
   background: rgba(255,255,255,0.5);
   border-radius: 6px;
-}
-
-/* Moontower Quote Box */
-.moontower-quote {
-  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
-  border-radius: 10px;
-  padding: 14px;
-  margin-top: 12px;
-  position: relative;
-  overflow: hidden;
-}
-
-.moontower-quote::before {
-  content: '"';
-  position: absolute;
-  top: -20px;
-  left: 10px;
-  font-size: 80px;
-  color: rgba(129, 140, 248, 0.15);
-  font-family: Georgia, serif;
-}
-
-.moontower-quote-text {
-  font-size: 12px;
-  font-style: italic;
-  color: #e2e8f0;
-  line-height: 1.6;
-  position: relative;
-  z-index: 1;
-}
-
-.moontower-quote-source {
-  font-size: 10px;
-  color: #a5b4fc;
-  margin-top: 10px;
-  text-align: right;
 }
 
 /* Straddle Win Rate Visual */

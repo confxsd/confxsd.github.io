@@ -1,5 +1,5 @@
 // VHunter Volatility Tools Module
-// Advanced volatility analytics inspired by Moontower.ai / Kris Abdelmessih
+// Advanced volatility analytics for options trading
 
 // ============================================
 // STRADDLE & EXPECTED MOVE CALCULATIONS

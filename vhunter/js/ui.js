@@ -1,6 +1,10 @@
 // UI Module - DOM manipulation and updates
+import { createTooltip, TEACHING_TIPS } from './teaching-tips.js';
 
 export const $ = (id) => document.getElementById(id);
+
+// Re-export for use in other modules
+export { createTooltip, TEACHING_TIPS };
 
 export function formatNumber(n) {
   if (Math.abs(n) >= 1e9) return (n / 1e9).toFixed(1) + 'B';
@@ -353,4 +357,69 @@ function buildVRPPanelHTML(vrpMetrics, ivAnalysis, volSetup) {
     </div>
     ${volSetup?.description ? `<div class="vrp-hint">${volSetup.description}</div>` : ''}
   `;
+}
+
+// ============================================
+// TEACHING TOOLTIPS INJECTION
+// ============================================
+
+// Mapping of selectors to tooltip keys
+const TOOLTIP_MAPPINGS = [
+  // Options page - Quick Stats Bar
+  { selector: '.opt-stat-label', text: 'IV Rank', tipKey: 'ivRank' },
+  { selector: '.opt-stat-label', text: 'IV Percentile', tipKey: 'ivPercentile' },
+  { selector: '.opt-stat-label', text: 'VRP', tipKey: 'vrp' },
+  { selector: '.opt-stat-label', text: 'Exp Move', tipKey: 'expectedMove' },
+  { selector: '.opt-stat-label', text: 'Vol Setup', tipKey: 'edgeSources' },
+
+  // Options page - Volatility Analysis section
+  { selector: '.opt-subsection-title', text: 'IV Term Structure', tipKey: 'termStructure' },
+  { selector: '.opt-subsection-title', text: 'Volatility Skew', tipKey: 'skew' },
+  { selector: '.opt-subsection-title', text: 'Expected Moves', tipKey: 'expectedMove' },
+  { selector: '.opt-subsection-title', text: 'Volatility Cone', tipKey: 'volCone' },
+  { selector: '.opt-subsection-title', text: 'VRP Analysis', tipKey: 'multiWindowVRP' },
+  { selector: '.opt-subsection-title', text: 'Straddle Pricing', tipKey: 'straddleWinRate' },
+
+  // Options page - Gamma/Greeks
+  { selector: '.opt-subsection-title', text: 'Gamma Exposure', tipKey: 'vegaRisk' },
+
+  // Analyze page - VRP section
+  { selector: '.vrp-label', text: 'VRP', tipKey: 'vrp' },
+  { selector: '.vrp-label', text: 'IV Rank', tipKey: 'ivRank' },
+  { selector: '.vrp-label', text: 'IV Percentile', tipKey: 'ivPercentile' },
+
+  // Three Lenses Framework
+  { selector: '.lens-name', text: 'Cross-Sectional', tipKey: 'threeLenses' },
+  { selector: '.lens-name', text: 'Time Series', tipKey: 'threeLenses' },
+  { selector: '.lens-name', text: 'Fundamental', tipKey: 'threeLenses' },
+];
+
+export function injectTooltips() {
+  TOOLTIP_MAPPINGS.forEach(({ selector, text, tipKey }) => {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach(el => {
+      // Check if text matches (partial match)
+      if (el.textContent.includes(text) && !el.querySelector('.teaching-tooltip')) {
+        const tooltipHTML = createTooltip(tipKey);
+        if (tooltipHTML) {
+          el.insertAdjacentHTML('beforeend', tooltipHTML);
+        }
+      }
+    });
+  });
+
+  // Also add tooltip to the Three Lenses section header
+  const threeLensesTitle = document.querySelector('.opt-subsection-title');
+  document.querySelectorAll('.opt-subsection-title').forEach(el => {
+    if (el.textContent.includes('Three Lenses') && !el.querySelector('.teaching-tooltip')) {
+      el.insertAdjacentHTML('beforeend', createTooltip('threeLenses'));
+    }
+  });
+
+  // Win Rate section
+  document.querySelectorAll('.winrate-title').forEach(el => {
+    if (!el.querySelector('.teaching-tooltip')) {
+      el.insertAdjacentHTML('beforeend', createTooltip('straddleWinRate'));
+    }
+  });
 }

@@ -44,7 +44,7 @@
   }
 
   .opt-stats-bar {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(7, 1fr);
   }
 
   /* FAB */
@@ -400,7 +400,11 @@
   }
 
   .opt-stats-bar {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .opt-stats-bar .opt-stat:nth-child(7) {
+    grid-column: 4;
   }
 
   .options-grid {
@@ -497,8 +501,14 @@
 
   /* Teaching Tooltips */
   .tip-popup {
-    width: 280px;
-    padding: 12px;
+    width: 260px;
+    left: 0;
+    transform: none;
+  }
+  .tip-popup::before,
+  .tip-popup::after {
+    left: 20px;
+    transform: none;
   }
 }
 
@@ -540,6 +550,10 @@
   /* Options */
   .opt-stats-bar {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .opt-stats-bar .opt-stat:nth-child(7) {
+    grid-column: span 2;
   }
 
   .opt-stat {

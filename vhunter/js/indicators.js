@@ -180,7 +180,6 @@ export function calcSMA(prices, period) {
 
 // ============================================
 // VOLATILITY RISK PREMIUM (VRP) ANALYTICS
-// Inspired by Moontower.ai / Kris Abdelmessih
 // ============================================
 
 // Calculate Realized Volatility using log returns (proper method)
@@ -242,7 +241,7 @@ export function calcTermSteepness(frontIV, backIV) {
   return ((backIV - frontIV) / frontIV) * 100;
 }
 
-// Classify volatility trade setup (Moontower-style)
+// Classify volatility trade setup based on VRP metrics
 export function classifyVolSetup(metrics) {
   const { ivRank, vrp, rvRank, termSteepness, iv } = metrics;
 
