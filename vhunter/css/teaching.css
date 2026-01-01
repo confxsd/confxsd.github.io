@@ -21,9 +21,12 @@
   align-items: center;
   justify-content: center;
   opacity: 0.4;
+  cursor: help;
+  vertical-align: middle;
 }
 
-.teaching-tooltip:hover .tip-icon {
+.teaching-tooltip:hover .tip-icon,
+.opt-stat:hover .tip-icon {
   opacity: 0.7;
 }
 
@@ -58,7 +61,42 @@
   border-bottom-color: #1e293b;
 }
 
+/* Stat bar tooltips - wider for dynamic content */
+.opt-stat .tip-popup {
+  width: 280px;
+  max-height: 400px;
+}
+
+.opt-stat .tip-popup::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 20px;
+  border: 5px solid transparent;
+  border-bottom-color: #1e293b;
+}
+
+/* Right-aligned tooltips for rightmost stats */
+.opt-stat:nth-child(n+5) .tip-popup,
+.tip-popup.tip-right {
+  left: auto;
+  right: 0;
+}
+
+.opt-stat:nth-child(n+5) .tip-popup::before,
+.tip-popup.tip-right::before {
+  left: auto;
+  right: 12px;
+}
+
 .teaching-tooltip:hover .tip-popup {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* Show tooltip when hovering stats with ? icon */
+.opt-stat:has(.tip-icon):hover .tip-popup {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
@@ -79,6 +117,17 @@
 .tip-detail {
   white-space: pre-line;
   margin-bottom: 8px;
+}
+
+.tip-detail strong {
+  color: #e2e8f0;
+  display: block;
+  margin-top: 8px;
+  margin-bottom: 2px;
+}
+
+.tip-detail strong:first-child {
+  margin-top: 0;
 }
 
 .tip-quote {

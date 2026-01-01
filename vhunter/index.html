@@ -599,39 +599,59 @@
       <!-- Quick Stats Bar -->
       <div class="opt-stats-bar" id="optStatsBar">
         <div class="opt-stat">
-          <div class="opt-stat-label">IV Rank</div>
+          <div class="opt-stat-label">IV Rank <span class="tip-icon" data-tip="ivRank">?</span></div>
           <div class="opt-stat-value" id="optIvRank">--</div>
-          <div class="opt-stat-hint">vs 52-week range</div>
+          <div class="opt-stat-hint" id="optIvRankHint">vs 52-week range</div>
+          <div class="tip-popup" id="tipIvRank">
+            <div class="tip-title">IV Rank</div>
+            <div class="tip-detail">Where current IV sits in its 52-week range. Analyze a ticker to see dynamic insights.</div>
+          </div>
         </div>
         <div class="opt-stat">
-          <div class="opt-stat-label">IV Percentile</div>
+          <div class="opt-stat-label">IV Percentile <span class="tip-icon" data-tip="ivPct">?</span></div>
           <div class="opt-stat-value" id="optIvPct">--</div>
-          <div class="opt-stat-hint">% days lower</div>
+          <div class="opt-stat-hint" id="optIvPctHint">% days lower</div>
+          <div class="tip-popup" id="tipIvPct">
+            <div class="tip-title">IV Percentile</div>
+            <div class="tip-detail">% of days over the past year with lower IV. Analyze a ticker to see dynamic insights.</div>
+          </div>
         </div>
         <div class="opt-stat">
           <div class="opt-stat-label">HV (30d)</div>
           <div class="opt-stat-value" id="optHv30">--</div>
-          <div class="opt-stat-hint">realized vol</div>
+          <div class="opt-stat-hint" id="optHv30Hint">realized vol</div>
         </div>
         <div class="opt-stat vrp-stat">
-          <div class="opt-stat-label">VRP (IV-HV)</div>
+          <div class="opt-stat-label">VRP (IV-HV) <span class="tip-icon" data-tip="vrp">?</span></div>
           <div class="opt-stat-value" id="optIvHvDiff">--</div>
-          <div class="opt-stat-hint">vol premium</div>
+          <div class="opt-stat-hint" id="optVrpHint">vol premium</div>
+          <div class="tip-popup" id="tipVrp">
+            <div class="tip-title">Volatility Risk Premium</div>
+            <div class="tip-detail">IV minus realized vol. Positive = options expensive, negative = options cheap. Analyze a ticker to see dynamic insights.</div>
+          </div>
         </div>
         <div class="opt-stat">
-          <div class="opt-stat-label">Exp Move</div>
+          <div class="opt-stat-label">Exp Move <span class="tip-icon" data-tip="expMove">?</span></div>
           <div class="opt-stat-value" id="optExpMove">--</div>
-          <div class="opt-stat-hint">to next exp</div>
+          <div class="opt-stat-hint" id="optExpMoveHint">to next exp</div>
+          <div class="tip-popup" id="tipExpMove">
+            <div class="tip-title">Expected Move</div>
+            <div class="tip-detail">1 standard deviation move based on IV. Stock stays within this range ~68% of the time. Analyze a ticker to see dynamic insights.</div>
+          </div>
         </div>
         <div class="opt-stat">
           <div class="opt-stat-label">P/C Ratio</div>
           <div class="opt-stat-value" id="optPcRatio">--</div>
-          <div class="opt-stat-hint">volume</div>
+          <div class="opt-stat-hint" id="optPcRatioHint">volume</div>
         </div>
         <div class="opt-stat vol-setup-stat">
-          <div class="opt-stat-label">Vol Setup</div>
+          <div class="opt-stat-label">Vol Setup <span class="tip-icon" data-tip="volSetup">?</span></div>
           <div class="opt-stat-value vrp-badge" id="optVolSetup">--</div>
-          <div class="opt-stat-hint">trade signal</div>
+          <div class="opt-stat-hint" id="optVolSetupHint">trade signal</div>
+          <div class="tip-popup" id="tipVolSetup">
+            <div class="tip-title">Volatility Setup</div>
+            <div class="tip-detail">Combined signal from IV rank and VRP. Suggests whether to buy or sell premium. Analyze a ticker to see dynamic insights.</div>
+          </div>
         </div>
       </div>
 
@@ -929,14 +949,14 @@
                 <div class="winrate-grid">
                   <div class="winrate-stat">
                     <div class="winrate-label">Buyer Wins</div>
-                    <div class="winrate-value buyer">42%</div>
+                    <div class="winrate-value buyer" id="buyerWinRate">42%</div>
                   </div>
                   <div class="winrate-stat">
                     <div class="winrate-label">Seller Wins</div>
-                    <div class="winrate-value seller">58%</div>
+                    <div class="winrate-value seller" id="sellerWinRate">58%</div>
                   </div>
                 </div>
-                <div class="winrate-insight">
+                <div class="winrate-insight" id="winrateInsight">
                   A fairly priced straddle has 0 expectancy but loses ~58% of the time. Buyers win less often, but wins are larger. Zero expectancy ≠ equal outcomes!
                 </div>
               </div>

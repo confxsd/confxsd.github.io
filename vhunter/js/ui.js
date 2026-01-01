@@ -364,14 +364,8 @@ function buildVRPPanelHTML(vrpMetrics, ivAnalysis, volSetup) {
 // ============================================
 
 // Mapping of selectors to tooltip keys
+// Note: Quick Stats Bar (.opt-stat-label) now uses dynamic tooltips in index.html + teaching-tips.js
 const TOOLTIP_MAPPINGS = [
-  // Options page - Quick Stats Bar
-  { selector: '.opt-stat-label', text: 'IV Rank', tipKey: 'ivRank' },
-  { selector: '.opt-stat-label', text: 'IV Percentile', tipKey: 'ivPercentile' },
-  { selector: '.opt-stat-label', text: 'VRP', tipKey: 'vrp' },
-  { selector: '.opt-stat-label', text: 'Exp Move', tipKey: 'expectedMove' },
-  { selector: '.opt-stat-label', text: 'Vol Setup', tipKey: 'edgeSources' },
-
   // Options page - Volatility Analysis section
   { selector: '.opt-subsection-title', text: 'IV Term Structure', tipKey: 'termStructure' },
   { selector: '.opt-subsection-title', text: 'Volatility Skew', tipKey: 'skew' },
@@ -398,8 +392,9 @@ export function injectTooltips() {
   TOOLTIP_MAPPINGS.forEach(({ selector, text, tipKey }) => {
     const elements = document.querySelectorAll(selector);
     elements.forEach(el => {
-      // Check if text matches (partial match)
-      if (el.textContent.includes(text) && !el.querySelector('.teaching-tooltip')) {
+      // Check if text matches (partial match) and no existing tooltip
+      const hasTooltip = el.querySelector('.teaching-tooltip') || el.querySelector('.tip-icon');
+      if (el.textContent.includes(text) && !hasTooltip) {
         const tooltipHTML = createTooltip(tipKey);
         if (tooltipHTML) {
           el.insertAdjacentHTML('beforeend', tooltipHTML);

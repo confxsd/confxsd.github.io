@@ -58,7 +58,7 @@
 /* Quick Stats Bar */
 .opt-stats-bar {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   gap: 1px;
   background: #e2e8f0;
 }
@@ -67,6 +67,7 @@
   background: #fff;
   padding: 8px 10px;
   text-align: center;
+  position: relative;
 }
 
 .opt-stat-label {

@@ -8,6 +8,7 @@ import {
 } from './indicators.js';
 import * as volTools from './vol-tools.js';
 import { getCurrentThesis } from './feed.js';
+import { updateDynamicTooltips } from './teaching-tips.js';
 // Advanced gamma analytics (SIG-level dealer positioning)
 import * as gammaTools from './gamma.js';
 
@@ -270,6 +271,20 @@ function updateQuickStats(avgIV, hv30, spotPrice, pcRatio, termStructure) {
     );
     setupBadge.title = volSetup.description;
   }
+
+  // Update dynamic tooltips with current data
+  updateDynamicTooltips({
+    ticker: optionsData.ticker,
+    ivRank,
+    ivPct,
+    hv30,
+    vrp,
+    expMove,
+    pcRatio,
+    volSetup,
+    spotPrice,
+    avgIV
+  });
 }
 
 function updateVolatilitySection(expiryIV, avgIV, spotPrice, strikeData) {
@@ -855,6 +870,11 @@ function updateStraddleCalc(iv, daysToExpiry = 30) {
   setEl('straddlePct', stats.straddlePct + '%');
   setEl('expMoveAmt', '$' + stats.expectedMove);
   setEl('straddleBE', '±' + stats.breakeven + '%');
+
+  // Update dynamic win rates
+  setEl('buyerWinRate', stats.buyerWinRate + '%');
+  setEl('sellerWinRate', stats.sellerWinRate + '%');
+  setEl('winrateInsight', stats.insight);
 }
 
 // Auto-populate Earnings Vol Extractor from options data

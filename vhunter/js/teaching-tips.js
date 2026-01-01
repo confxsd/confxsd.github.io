@@ -438,6 +438,152 @@ export function getRiskContext(position, portfolioSize) {
 }
 
 // ============================================
+// DYNAMIC STAT TOOLTIPS
+// ============================================
+
+export function updateDynamicTooltips(metrics) {
+  const { ticker, ivRank, ivPct, hv30, vrp, expMove, pcRatio, volSetup, spotPrice, avgIV } = metrics;
+
+  // IV Rank tooltip
+  const tipIvRank = document.getElementById('tipIvRank');
+  if (tipIvRank && ivRank != null) {
+    const ivRankLevel = ivRank > 70 ? 'HIGH' : ivRank > 50 ? 'ELEVATED' : ivRank > 30 ? 'MODERATE' : 'LOW';
+    const ivRankSignal = ivRank > 70 ? '🔴 Premium selling favorable' :
+                         ivRank < 30 ? '🟢 Premium buying favorable' : '🟡 Neutral zone';
+    tipIvRank.innerHTML = `
+      <div class="tip-title">IV Rank: ${ivRank.toFixed(0)}% - ${ivRankLevel}</div>
+      <div class="tip-detail">
+<strong>What it means:</strong>
+Current IV is higher than ${ivRank.toFixed(0)}% of readings over the past year.
+
+<strong>Signal:</strong> ${ivRankSignal}
+
+<strong>Context for ${ticker}:</strong>
+${ivRank > 70 ? `IV is near 52-week highs. Options are relatively expensive. Consider selling premium if thesis supports.` :
+  ivRank < 30 ? `IV is near 52-week lows. Options are relatively cheap. Good time to buy protection or speculate.` :
+  `IV is in the middle of its historical range. No strong directional bias from IV alone.`}
+      </div>
+    `;
+  }
+
+  // IV Percentile tooltip
+  const tipIvPct = document.getElementById('tipIvPct');
+  if (tipIvPct && ivPct != null) {
+    tipIvPct.innerHTML = `
+      <div class="tip-title">IV Percentile: ${ivPct.toFixed(0)}%</div>
+      <div class="tip-detail">
+<strong>What it means:</strong>
+${ivPct.toFixed(0)}% of trading days had lower IV than today.
+
+<strong>Why it matters:</strong>
+IV Percentile is less affected by outliers than IV Rank.
+${ivPct > ivRank + 10 ? `\n⚠️ Percentile > Rank suggests a few extreme spikes skewed the range.` : ''}
+${ivPct < ivRank - 10 ? `\n⚠️ Percentile < Rank suggests IV spent most time near current levels.` : ''}
+
+<strong>Trading implication:</strong>
+${ivPct > 80 ? `Very elevated - strong premium selling setup` :
+  ivPct < 20 ? `Very low - consider buying options` :
+  `Moderate - look at other factors`}
+      </div>
+    `;
+  }
+
+  // VRP tooltip
+  const tipVrp = document.getElementById('tipVrp');
+  if (tipVrp && vrp != null) {
+    const vrpSignal = vrp > 15 ? 'SELL VOL' : vrp > 5 ? 'SLIGHT SELL' : vrp < -10 ? 'BUY VOL' : vrp < 0 ? 'SLIGHT BUY' : 'NEUTRAL';
+    tipVrp.innerHTML = `
+      <div class="tip-title">VRP: ${vrp >= 0 ? '+' : ''}${vrp.toFixed(1)}% - ${vrpSignal}</div>
+      <div class="tip-detail">
+<strong>Formula:</strong> IV (${avgIV?.toFixed(1) || '--'}%) - HV30 (${hv30?.toFixed(1) || '--'}%) = ${vrp.toFixed(1)}%
+
+<strong>Interpretation:</strong>
+${vrp > 15 ? `🔴 Options are EXPENSIVE
+Market is pricing in ${vrp.toFixed(0)}% more vol than realized.
+Edge: Premium sellers` :
+  vrp > 5 ? `🟡 Options slightly expensive
+Modest edge for premium sellers.` :
+  vrp < -10 ? `🟢 Options are CHEAP
+Market is underpricing realized vol by ${Math.abs(vrp).toFixed(0)}%.
+Edge: Premium buyers` :
+  vrp < 0 ? `🟡 Options slightly cheap
+Modest edge for premium buyers.` :
+  `⚪ Options fairly priced
+No clear edge from VRP alone.`}
+
+<strong>Win Rate Context:</strong>
+At-the-money straddle sellers win ~58% of the time but each loss can exceed wins. VRP tells you if the odds are tilted further in your favor.
+      </div>
+    `;
+  }
+
+  // Expected Move tooltip
+  const tipExpMove = document.getElementById('tipExpMove');
+  if (tipExpMove && expMove != null && spotPrice) {
+    const expMovePct = (expMove / spotPrice * 100).toFixed(1);
+    const upperBound = (spotPrice + expMove).toFixed(2);
+    const lowerBound = (spotPrice - expMove).toFixed(2);
+    tipExpMove.innerHTML = `
+      <div class="tip-title">Expected Move: ±$${expMove.toFixed(2)} (${expMovePct}%)</div>
+      <div class="tip-detail">
+<strong>1 SD Range (68% probability):</strong>
+$${lowerBound} to $${upperBound}
+
+<strong>What this means:</strong>
+Based on current IV, ${ticker} is expected to stay within ±$${expMove.toFixed(2)} about 68% of the time by next weekly expiration.
+
+<strong>ATM Straddle estimate:</strong>
+≈ $${(expMove * 0.8).toFixed(2)} (0.8 × expected move)
+
+<strong>Trading use:</strong>
+• Selling iron condors? Place wings outside this range
+• Buying straddles? You need a move > this to profit
+• Setting stops? This range guides realistic targets
+      </div>
+    `;
+  }
+
+  // Vol Setup tooltip
+  const tipVolSetup = document.getElementById('tipVolSetup');
+  if (tipVolSetup && volSetup) {
+    const setupName = typeof volSetup === 'object' ? volSetup.setup : volSetup;
+    const setupReason = typeof volSetup === 'object' ? volSetup.reason : '';
+
+    let setupAdvice = '';
+    if (setupName.includes('SELL') || setupName === 'HIGH_VRP') {
+      setupAdvice = `
+<strong>🔴 Sell Premium Setup</strong>
+Consider: Short straddles, iron condors, credit spreads
+Target: Collect premium, profit from time decay
+Risk: Large moves against position`;
+    } else if (setupName.includes('BUY') || setupName === 'NEGATIVE_VRP') {
+      setupAdvice = `
+<strong>🟢 Buy Premium Setup</strong>
+Consider: Long straddles, debit spreads, protective puts
+Target: Profit from large moves or IV expansion
+Risk: Time decay works against you`;
+    } else {
+      setupAdvice = `
+<strong>🟡 Neutral / Mixed Setup</strong>
+No strong directional vol bias.
+Consider: Wait for better setup or trade directionally`;
+    }
+
+    tipVolSetup.innerHTML = `
+      <div class="tip-title">Vol Setup: ${setupName.replace(/_/g, ' ')}</div>
+      <div class="tip-detail">
+${setupReason ? `<strong>Why:</strong> ${setupReason}\n\n` : ''}${setupAdvice}
+
+<strong>Key Metrics:</strong>
+• IV Rank: ${ivRank?.toFixed(0) || '--'}%
+• VRP: ${vrp >= 0 ? '+' : ''}${vrp?.toFixed(0) || '--'}%
+• P/C Ratio: ${pcRatio?.toFixed(2) || '--'}
+      </div>
+    `;
+  }
+}
+
+// ============================================
 // EDUCATIONAL ALERTS
 // ============================================
 

@@ -277,13 +277,30 @@ export function calcStraddleStats(iv, daysToExpiry, spotPrice) {
   const expectedMove = calcExpectedMove(spotPrice, iv, daysToExpiry);
   const expectedMovePct = (expectedMove / spotPrice) * 100;
 
-  // In Black-Scholes world:
-  // - Fairly priced straddle has 0 expectancy
-  // - But loses ~58% of the time (wins are larger)
-  const winRate = 42; // Approximate for ATM straddle
-
   // Break-even move needed
   const breakeven = straddlePct;
+
+  // Dynamic win rate based on straddle vs expected move
+  // Base: 42% buyer / 58% seller for fairly priced straddle
+  // Ratio < 1: straddle cheap vs expected move → buyer edge
+  // Ratio > 1: straddle expensive vs expected move → seller edge
+  const ratio = straddle / expectedMove;
+  const baseWinRate = 42;
+
+  // Adjust win rate: ~5% shift per 0.1 deviation from fair (capped)
+  const adjustment = Math.min(15, Math.max(-15, (1 - ratio) * 50));
+  const buyerWinRate = Math.round(baseWinRate + adjustment);
+  const sellerWinRate = 100 - buyerWinRate;
+
+  // Generate insight based on pricing
+  let insight;
+  if (ratio < 0.9) {
+    insight = `Straddle is CHEAP vs expected move (${(ratio * 100).toFixed(0)}%). Buyer edge: wins ${buyerWinRate}% of the time with larger payoffs.`;
+  } else if (ratio > 1.1) {
+    insight = `Straddle is EXPENSIVE vs expected move (${(ratio * 100).toFixed(0)}%). Seller edge: wins ${sellerWinRate}% of the time.`;
+  } else {
+    insight = `Fairly priced straddle. Buyers win ${buyerWinRate}% but wins are larger. Zero expectancy ≠ equal outcomes!`;
+  }
 
   return {
     straddlePrice: straddle.toFixed(2),
@@ -291,10 +308,11 @@ export function calcStraddleStats(iv, daysToExpiry, spotPrice) {
     expectedMove: expectedMove.toFixed(2),
     expectedMovePct: expectedMovePct.toFixed(2),
     breakeven: breakeven.toFixed(2),
-    approxWinRate: winRate,
-    // Ratio of straddle to expected move
-    payoffRatio: (straddle / expectedMove).toFixed(2),
-    interpretation: `Need ${breakeven.toFixed(1)}% move to break even. ~${winRate}% win rate if fairly priced.`
+    buyerWinRate,
+    sellerWinRate,
+    payoffRatio: ratio.toFixed(2),
+    insight,
+    interpretation: `Need ${breakeven.toFixed(1)}% move to break even. ~${buyerWinRate}% buyer win rate.`
   };
 }
 
