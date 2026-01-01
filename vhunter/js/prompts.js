@@ -318,3 +318,74 @@ Analyze this portfolio and provide output in EXACTLY this format:
 **RECOMMENDATIONS:**
 [3-4 specific, actionable recommendations prioritized by urgency. Include specific prices/levels where applicable]`;
 }
+
+// Comprehensive summary prompt - consolidates all analysis into actionable summary
+export function buildSummaryPrompt(data) {
+  const macroContext = buildMacroContext();
+  const vrpContext = buildVRPContext(data);
+  const gexContext = buildGEXContext(data);
+
+  return `You are a senior portfolio manager creating a concise executive summary for ${data.ticker}.
+
+${macroContext}
+
+---
+
+COMPLETE MARKET DATA FOR ${data.ticker}:
+
+PRICE ACTION:
+- Current: $${data.price} (${data.change > 0 ? '+' : ''}${data.change.toFixed(2)}%)
+- SMA20: $${data.sma20?.toFixed(2) || '--'} | SMA50: $${data.sma50?.toFixed(2) || '--'}
+- 52W Range: ${data.range52w || '--'}
+
+MOMENTUM & TREND:
+- RSI: ${data.rsi?.toFixed(1) || '--'} | MACD Histogram: ${data.macdH?.toFixed(2) || '--'}
+- ADX: ${data.adx?.toFixed(1) || '--'} (+DI: ${data.pdi?.toFixed(1) || '--'} / -DI: ${data.mdi?.toFixed(1) || '--'})
+- BB%: ${data.bbPct || '--'}% | MFI: ${data.mfi?.toFixed(1) || '--'}
+
+VOLUME:
+- Today: ${data.volume} (${data.rvol?.toFixed(1) || '--'}x avg)
+- Buy Flow: ${data.buyPct || '--'}% | A/D Trend: ${data.adlTrend?.toFixed(1) || '--'}%
+
+${vrpContext}
+
+OPTIONS FLOW:
+- Call Vol: ${data.callVol} | Put Vol: ${data.putVol} | P/C: ${data.pcRatio?.toFixed(2) || '--'}
+- Max Pain: Weekly $${data.maxPain || '--'} | Monthly $${data.maxPainMonthly || '--'}
+- Top Calls: ${data.topCalls} | Top Puts: ${data.topPuts}
+
+${gexContext}
+
+---
+
+Create a comprehensive yet concise summary in this EXACT format:
+
+**VERDICT:** [STRONG BUY | BUY | HOLD | SELL | STRONG SELL] - [one sentence thesis]
+
+**SCORE:** [0-100] - [Brief justification]
+
+**KEY INSIGHT:**
+[2-3 sentences on the most important thing to know about this stock right now. Focus on what makes this setup unique.]
+
+**TECHNICAL SETUP:**
+- Trend: [BULLISH | BEARISH | NEUTRAL] - [why]
+- Momentum: [STRONG | WEAKENING | BUILDING] - [key signal]
+- Key Support: $[price] | Resistance: $[price]
+
+**VOLATILITY EDGE:**
+- Vol Regime: [HIGH | NORMAL | LOW] with [VRP assessment]
+- Option Play: [SELL PREMIUM | BUY PREMIUM | NEUTRAL] - [specific structure suggestion]
+
+**DEALER POSITIONING:**
+[One sentence on GEX regime and what it means for expected price action]
+
+**RISK/REWARD:**
+- Risk: [Primary risk to this position]
+- Catalyst: [Upcoming catalyst or driver]
+- Timeframe: [SWING 1-5d | POSITION 1-4w | LONG-TERM]
+
+**TRADE IDEA:**
+[One specific, actionable trade with entry, stop, and target. Include option structure if applicable.]
+
+Keep it punchy and actionable. No fluff.`;
+}

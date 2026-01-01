@@ -4,12 +4,13 @@ import { updateCharts } from './charts.js';
 import * as indicators from './indicators.js';
 import * as gammaTools from './gamma.js';
 import * as ui from './ui.js';
-import { buildCombinedPrompt } from './prompts.js';
+import { buildCombinedPrompt, buildSummaryPrompt } from './prompts.js';
 import { calculateMaxPain } from './utils.js';
 import { updateRoute } from './router.js';
 import { addToHistory } from './history.js';
 import { getFullIVAnalysis, recordIV } from './iv-history.js';
 import { recordGammaLevels, getWallShiftAnalysis } from './db.js';
+import { CONFIG } from './config.js';
 
 export let mktData = {};
 let skipCache = false;
@@ -36,6 +37,7 @@ export async function run(forceRefresh = false) {
 
     updateRoute('analyze', ticker);
     addToHistory(ticker);
+    showExistingSummary(ticker);
 
     if (prev.results?.[0]) {
       ui.updateCurrentPrice(prev.results[0]);
@@ -539,7 +541,147 @@ export function shareAnalysis() {
   });
 }
 
+// ============================================
+// SUMMARY MANAGEMENT (via Cloudflare KV)
+// ============================================
+
+const getUserId = () => localStorage.getItem('vhunter_user_id') || 'vhunter-serhat';
+
+async function saveSummaryToKV(ticker, summary) {
+  try {
+    await fetch(`${CONFIG.PROXY_URL}/api/summary/${ticker}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': getUserId()
+      },
+      body: JSON.stringify({
+        summary,
+        price: mktData.price
+      })
+    });
+  } catch (e) {
+    console.error('Failed to save summary:', e);
+  }
+}
+
+async function loadSummaryFromKV(ticker) {
+  try {
+    const res = await fetch(`${CONFIG.PROXY_URL}/api/summary/${ticker}`, {
+      headers: { 'X-User-Id': getUserId() }
+    });
+    const data = await res.json();
+    return data.summary ? data : null;
+  } catch (e) {
+    console.error('Failed to load summary:', e);
+    return null;
+  }
+}
+
+export async function generateSummary() {
+  const ticker = ui.$('tk').value.toUpperCase().trim();
+  if (!ticker || !mktData.price) {
+    alert('Run analysis first before generating summary.');
+    return;
+  }
+
+  const section = ui.$('summarySection');
+  const content = ui.$('summaryContent');
+  const tickerEl = ui.$('summaryTicker');
+  const timeEl = ui.$('summaryTime');
+  const btn = ui.$('btnSummary');
+
+  // Show section and loading state
+  section.style.display = 'block';
+  section.classList.remove('collapsed');
+  ui.$('summaryToggle').textContent = '▼';
+  content.innerHTML = '<div class="summary-loading">Generating summary...</div>';
+  tickerEl.textContent = ticker;
+  btn.classList.add('loading');
+
+  try {
+    const prompt = buildSummaryPrompt(mktData);
+    const response = await fetchClaude(prompt, true); // Always fresh for summaries
+
+    // Save to KV storage
+    await saveSummaryToKV(ticker, response);
+
+    // Update UI
+    content.innerHTML = formatSummary(response);
+    timeEl.textContent = 'Just now';
+    btn.classList.remove('loading');
+    btn.classList.add('has-summary');
+  } catch (e) {
+    content.innerHTML = `<div class="summary-error">Error generating summary: ${e.message}</div>`;
+    btn.classList.remove('loading');
+  }
+}
+
+export async function showExistingSummary(ticker) {
+  const section = ui.$('summarySection');
+  const content = ui.$('summaryContent');
+  const tickerEl = ui.$('summaryTicker');
+  const timeEl = ui.$('summaryTime');
+  const btn = ui.$('btnSummary');
+
+  // Reset state
+  btn.classList.remove('has-summary');
+
+  const stored = await loadSummaryFromKV(ticker);
+
+  if (stored && stored.summary) {
+    section.style.display = 'block';
+    section.classList.remove('collapsed');
+    ui.$('summaryToggle').textContent = '▼';
+    content.innerHTML = formatSummary(stored.summary);
+    tickerEl.textContent = ticker;
+
+    // Format timestamp
+    const age = Date.now() - stored.timestamp;
+    const mins = Math.floor(age / 60000);
+    const hours = Math.floor(age / 3600000);
+    const days = Math.floor(age / 86400000);
+
+    if (days > 0) timeEl.textContent = `${days}d ago`;
+    else if (hours > 0) timeEl.textContent = `${hours}h ago`;
+    else if (mins > 0) timeEl.textContent = `${mins}m ago`;
+    else timeEl.textContent = 'Just now';
+
+    // Show price change since summary
+    if (stored.price && mktData.price) {
+      const priceDiff = ((mktData.price - stored.price) / stored.price * 100).toFixed(1);
+      if (Math.abs(parseFloat(priceDiff)) > 0.1) {
+        timeEl.textContent += ` (${priceDiff > 0 ? '+' : ''}${priceDiff}%)`;
+      }
+    }
+
+    btn.classList.add('has-summary');
+  } else {
+    section.style.display = 'none';
+  }
+}
+
+export function toggleSummary() {
+  const section = ui.$('summarySection');
+  const toggle = ui.$('summaryToggle');
+
+  section.classList.toggle('collapsed');
+  toggle.textContent = section.classList.contains('collapsed') ? '▶' : '▼';
+}
+
+function formatSummary(text) {
+  // Convert markdown-style formatting to HTML
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>')
+    .replace(/<br><br>/g, '</p><p>')
+    .replace(/^/, '<p>')
+    .replace(/$/, '</p>');
+}
+
 // Expose to window for onclick handlers
 window.run = run;
 window.exportData = exportData;
 window.shareAnalysis = shareAnalysis;
+window.generateSummary = generateSummary;
+window.toggleSummary = toggleSummary;
