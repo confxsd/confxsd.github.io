@@ -72,11 +72,28 @@ export async function updatePosition(id, updates) {
   });
 }
 
-export async function closePosition(id, exitPrice, exitDate = null) {
+export async function closePosition(id, exitPrice, position = null, exitDate = null) {
+  // Calculate P&L if position data is provided
+  let pnl = null;
+  if (position) {
+    const qty = position.quantity;
+    const entry = position.entry_price;
+    const type = position.type;
+    const isOption = ['put', 'call', 'short_put', 'short_call'].includes(type);
+    const multiplier = isOption ? 100 : 1;
+
+    if (type === 'long' || type === 'call' || type === 'put') {
+      pnl = (exitPrice - entry) * qty * multiplier;
+    } else if (type === 'short' || type === 'short_call' || type === 'short_put') {
+      pnl = (entry - exitPrice) * qty * multiplier;
+    }
+  }
+
   return updatePosition(id, {
     status: 'closed',
     exit_price: exitPrice,
-    exit_date: exitDate || new Date().toISOString().split('T')[0]
+    exit_date: exitDate || new Date().toISOString().split('T')[0],
+    pnl: pnl
   });
 }
 
@@ -232,6 +249,25 @@ export function getWallShiftAnalysis(ticker) {
     },
     history: history.slice(0, 10)
   };
+}
+
+// ==================== TERMINAL ====================
+
+export async function getTerminalPanels() {
+  try {
+    const result = await dbFetch('/api/terminal');
+    return result?.tickers || [];
+  } catch (e) {
+    console.warn('Failed to get terminal panels:', e);
+    return [];
+  }
+}
+
+export async function saveTerminalPanels(tickers) {
+  return dbFetch('/api/terminal', {
+    method: 'POST',
+    body: JSON.stringify({ tickers })
+  });
 }
 
 // ==================== HELPERS ====================

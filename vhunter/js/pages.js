@@ -1,6 +1,7 @@
 // VHunter Page Navigation Module
 import * as ui from './ui.js';
 import { updateRoute } from './router.js';
+import { stopPolling } from './terminal.js';
 
 let currentPage = 'analyze';
 let pageLoaders = {};
@@ -18,6 +19,11 @@ export function registerPageLoaders(loaders) {
 }
 
 export function switchPage(page, shouldUpdateRoute = true) {
+  // Stop terminal polling if leaving terminal page
+  if (currentPage === 'terminal' && page !== 'terminal') {
+    stopPolling();
+  }
+
   currentPage = page;
 
   // Update nav items

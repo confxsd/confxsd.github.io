@@ -88,7 +88,30 @@ export async function loadPositions() {
     ]);
 
     positionsCache.open = Array.isArray(open) ? open : (open.data || []);
-    positionsCache.closed = Array.isArray(closed) ? closed : (closed.data || []);
+    const closedArr = Array.isArray(closed) ? closed : (closed.data || []);
+
+    // Calculate P&L for closed positions that don't have it stored
+    positionsCache.closed = closedArr.map(p => {
+      if (p.pnl !== null && p.pnl !== undefined) return p;
+
+      // Calculate P&L if missing
+      const qty = p.quantity;
+      const entry = p.entry_price;
+      const exit = p.exit_price;
+      const type = p.type;
+      const isOption = ['put', 'call', 'short_put', 'short_call'].includes(type);
+      const multiplier = isOption ? 100 : 1;
+
+      let pnl = 0;
+      if (exit && entry) {
+        if (type === 'long' || type === 'call' || type === 'put') {
+          pnl = (exit - entry) * qty * multiplier;
+        } else if (type === 'short' || type === 'short_call' || type === 'short_put') {
+          pnl = (entry - exit) * qty * multiplier;
+        }
+      }
+      return { ...p, pnl };
+    });
 
     const positionsWithInfo = positionsCache.open.map(p => {
       // Parse option info from notes, handling both long and short options
@@ -199,9 +222,24 @@ export function renderPositions(status) {
                 <small>(${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(0)}%)</small>
               </span>
               <span class="col-actions">
-                <button class="btn-icon btn-success" onclick="openClosePositionModal('${p.id}')" title="Close">✓</button>
-                <button class="btn-icon" onclick="analyzePosition('${optInfo ? optInfo.ticker : p.ticker}')" title="Analyze">📊</button>
-                <button class="btn-icon btn-danger" onclick="deletePosition('${p.id}')" title="Delete">✕</button>
+                <button class="btn-icon btn-success" onclick="openClosePositionModal('${p.id}')" title="Close Position">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </button>
+                <button class="btn-icon" onclick="analyzePosition('${optInfo ? optInfo.ticker : p.ticker}')" title="Analyze">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                  </svg>
+                </button>
+                <button class="btn-icon btn-danger" onclick="deletePosition('${p.id}')" title="Delete">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
               </span>
             </div>
           `;
@@ -209,20 +247,62 @@ export function renderPositions(status) {
       </div>
     `;
   } else {
-    container.innerHTML = positions.map(p => {
-      const pnlClass = p.pnl > 0 ? 'positive' : p.pnl < 0 ? 'negative' : '';
-      const pnlText = p.pnl !== null ? (p.pnl >= 0 ? '+' : '') + '$' + p.pnl.toFixed(2) : '--';
+    // Sort closed positions by exit_date descending (most recent first)
+    const sortedPositions = [...positions].sort((a, b) => {
+      const dateA = a.exit_date ? new Date(a.exit_date) : new Date(0);
+      const dateB = b.exit_date ? new Date(b.exit_date) : new Date(0);
+      return dateB - dateA;
+    });
 
-      return `
-        <div class="position-row-closed">
-          <span class="ticker">${p.ticker}</span>
-          <span class="type-badge ${p.type}">${p.type}</span>
-          <span class="entry">$${p.entry_price.toFixed(2)} → $${(p.exit_price || 0).toFixed(2)}</span>
-          <span class="pnl ${pnlClass}">${pnlText}</span>
-          <button class="btn-icon btn-danger" onclick="deletePosition('${p.id}')" title="Delete">✕</button>
+    container.innerHTML = `
+      <div class="positions-table closed-table">
+        <div class="positions-header closed-header">
+          <span class="col-ticker">Ticker</span>
+          <span class="col-type">Type</span>
+          <span class="col-qty">Qty</span>
+          <span class="col-entry">Entry</span>
+          <span class="col-exit">Exit</span>
+          <span class="col-pnl">P&L</span>
+          <span class="col-date">Date</span>
+          <span class="col-actions"></span>
         </div>
-      `;
-    }).join('');
+        ${sortedPositions.map(p => {
+          const pnl = p.pnl || 0;
+          const pnlClass = pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : '';
+          const pnlText = (pnl >= 0 ? '+' : '') + '$' + Math.abs(pnl).toFixed(0);
+          const isOption = ['put', 'call', 'short_put', 'short_call'].includes(p.type);
+          const costBasis = isOption ? p.entry_price * p.quantity * 100 : p.entry_price * p.quantity;
+          const pnlPct = costBasis > 0 ? (pnl / costBasis) * 100 : 0;
+          const typeLabel = p.type.replace('_', ' ');
+          const exitDate = p.exit_date ? new Date(p.exit_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '--';
+
+          return `
+            <div class="position-row closed-row ${pnlClass}">
+              <span class="col-ticker">
+                <strong>${p.ticker}</strong>
+              </span>
+              <span class="col-type"><span class="type-badge ${p.type.replace('_', '-')}">${typeLabel}</span></span>
+              <span class="col-qty">${p.quantity}</span>
+              <span class="col-entry">$${p.entry_price.toFixed(2)}</span>
+              <span class="col-exit">$${(p.exit_price || 0).toFixed(2)}</span>
+              <span class="col-pnl ${pnlClass}">
+                <strong>${pnlText}</strong>
+                <small>(${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(0)}%)</small>
+              </span>
+              <span class="col-date">${exitDate}</span>
+              <span class="col-actions">
+                <button class="btn-icon btn-danger" onclick="deletePosition('${p.id}')" title="Delete">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
   }
 }
 
@@ -230,25 +310,81 @@ export function updatePositionStats() {
   const open = positionsCache.open || [];
   const closed = positionsCache.closed || [];
 
+  // Count stats
   document.getElementById('openCount').textContent = open.length;
   document.getElementById('closedCount').textContent = closed.length;
 
+  // Unrealized P&L (open positions)
   const unrealizedPnl = open.reduce((sum, p) => sum + (p.unrealizedPnL || 0), 0);
   const unrealizedEl = document.getElementById('unrealizedPnl');
   if (unrealizedEl) {
-    unrealizedEl.textContent = (unrealizedPnl >= 0 ? '+' : '') + '$' + unrealizedPnl.toFixed(0);
-    unrealizedEl.className = 'stat-value ' + (unrealizedPnl > 0 ? 'positive' : unrealizedPnl < 0 ? 'negative' : '');
+    unrealizedEl.textContent = (unrealizedPnl >= 0 ? '+' : '') + '$' + formatPnl(unrealizedPnl);
+    unrealizedEl.className = 'pnl-breakdown-value ' + (unrealizedPnl > 0 ? 'positive' : unrealizedPnl < 0 ? 'negative' : '');
   }
 
+  // Realized P&L (closed positions)
   const realizedPnl = closed.reduce((sum, p) => sum + (p.pnl || 0), 0);
+  const realizedEl = document.getElementById('realizedPnl');
+  if (realizedEl) {
+    realizedEl.textContent = (realizedPnl >= 0 ? '+' : '') + '$' + formatPnl(realizedPnl);
+    realizedEl.className = 'pnl-breakdown-value ' + (realizedPnl > 0 ? 'positive' : realizedPnl < 0 ? 'negative' : '');
+  }
+
+  // Total P&L
   const totalPnl = unrealizedPnl + realizedPnl;
   const pnlEl = document.getElementById('totalPnl');
-  pnlEl.textContent = (totalPnl >= 0 ? '+' : '') + '$' + totalPnl.toFixed(0);
-  pnlEl.className = 'stat-value ' + (totalPnl > 0 ? 'positive' : totalPnl < 0 ? 'negative' : '');
+  if (pnlEl) {
+    pnlEl.textContent = (totalPnl >= 0 ? '+' : '') + '$' + formatPnl(totalPnl);
+    pnlEl.className = 'pnl-hero-value ' + (totalPnl > 0 ? 'positive' : totalPnl < 0 ? 'negative' : '');
+  }
 
-  const wins = closed.filter(p => p.pnl > 0).length;
-  const winRate = closed.length > 0 ? (wins / closed.length * 100).toFixed(0) : '--';
-  document.getElementById('winRate').textContent = winRate + '%';
+  // Win/Loss calculations
+  const wins = closed.filter(p => p.pnl > 0);
+  const losses = closed.filter(p => p.pnl < 0);
+  const winRate = closed.length > 0 ? (wins.length / closed.length * 100).toFixed(0) : '--';
+  const winRateEl = document.getElementById('winRate');
+  if (winRateEl) {
+    winRateEl.textContent = winRate + (winRate !== '--' ? '%' : '');
+  }
+
+  // Average win
+  const avgWin = wins.length > 0 ? wins.reduce((sum, p) => sum + p.pnl, 0) / wins.length : 0;
+  const avgWinEl = document.getElementById('avgWin');
+  if (avgWinEl) {
+    avgWinEl.textContent = '+$' + formatPnl(avgWin);
+  }
+
+  // Average loss
+  const avgLoss = losses.length > 0 ? Math.abs(losses.reduce((sum, p) => sum + p.pnl, 0) / losses.length) : 0;
+  const avgLossEl = document.getElementById('avgLoss');
+  if (avgLossEl) {
+    avgLossEl.textContent = '-$' + formatPnl(avgLoss);
+  }
+
+  // Profit factor (gross profit / gross loss)
+  const grossProfit = wins.reduce((sum, p) => sum + p.pnl, 0);
+  const grossLoss = Math.abs(losses.reduce((sum, p) => sum + p.pnl, 0));
+  const profitFactor = grossLoss > 0 ? (grossProfit / grossLoss).toFixed(2) : (grossProfit > 0 ? '∞' : '--');
+  const pfEl = document.getElementById('profitFactor');
+  if (pfEl) {
+    pfEl.textContent = profitFactor;
+    pfEl.className = 'perf-value ' + (parseFloat(profitFactor) >= 1.5 ? 'positive' : parseFloat(profitFactor) < 1 ? 'negative' : '');
+  }
+
+  // Best trade
+  const bestTrade = closed.length > 0 ? Math.max(...closed.map(p => p.pnl || 0)) : 0;
+  const bestTradeEl = document.getElementById('bestTrade');
+  if (bestTradeEl) {
+    bestTradeEl.textContent = '+$' + formatPnl(Math.max(0, bestTrade));
+  }
+}
+
+function formatPnl(value) {
+  const absValue = Math.abs(value);
+  if (absValue >= 1000) {
+    return (absValue / 1000).toFixed(1) + 'k';
+  }
+  return absValue.toFixed(0);
 }
 
 export function switchPositionTab(tab) {
@@ -321,8 +457,11 @@ export async function confirmClosePosition(e) {
   const id = document.getElementById('closePositionId').value;
   const exitPrice = parseFloat(document.getElementById('exitPrice').value);
 
+  // Find the position to calculate P&L
+  const position = positionsCache.open.find(p => p.id === id);
+
   try {
-    await db.closePosition(id, exitPrice);
+    await db.closePosition(id, exitPrice, position);
     closeCloseModal();
     loadPositions();
   } catch (e) {

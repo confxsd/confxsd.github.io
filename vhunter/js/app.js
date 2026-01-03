@@ -10,6 +10,7 @@ import { loadNotes, setRunCallback as setNotesRunCallback } from './notes.js';
 import { loadFeed, setRunCallback as setFeedRunCallback } from './feed.js';
 import { run } from './analysis.js';
 import { loadOptionsData, initOptionsPage } from './options-page.js';
+import { initTerminal, startPolling, stopPolling } from './terminal.js';
 
 // Import modules for side effects (window bindings)
 import './portfolio.js';
@@ -21,13 +22,19 @@ setWatchlistRunCallback(() => run());
 setNotesRunCallback(() => run());
 setFeedRunCallback(() => run());
 
+// Terminal page handler (start/stop polling)
+function loadTerminal() {
+  startPolling();
+}
+
 // Register page loaders
 registerPageLoaders({
   positions: loadPositions,
   watchlist: loadWatchlist,
   notes: loadNotes,
   options: loadOptionsData,
-  feed: loadFeed
+  feed: loadFeed,
+  terminal: loadTerminal
 });
 
 // Initialize router with change handler
@@ -50,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initCharts();
   renderHistory();
   initOptionsPage();
+  initTerminal();
   restoreCollapsedSections();
 
   // Inject teaching tooltips

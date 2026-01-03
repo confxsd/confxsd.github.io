@@ -136,6 +136,36 @@
   .sbar .sub { font-size: 10px; }
   .sbar .s { padding: 8px; }
 
+  /* P&L Dashboard - mobile */
+  .pnl-dashboard { padding: 12px; }
+  .pnl-hero-card { padding: 16px; }
+  .pnl-hero-value { font-size: 28px; }
+  .pnl-breakdown { gap: 12px; }
+  .pnl-breakdown-value { font-size: 14px; }
+  .performance-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .perf-card { padding: 10px; gap: 8px; }
+  .perf-icon { width: 28px; height: 28px; font-size: 10px; }
+  .perf-label { font-size: 9px; }
+  .perf-value { font-size: 13px; }
+  .perf-sub { font-size: 8px; }
+
+  /* Closed positions table - mobile */
+  .closed-header { display: none; }
+  .closed-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+  .closed-row .col-ticker { flex: 1; min-width: 0; }
+  .closed-row .col-type { flex-shrink: 0; }
+  .closed-row .col-qty,
+  .closed-row .col-entry,
+  .closed-row .col-exit,
+  .closed-row .col-date { display: none; }
+  .closed-row .col-pnl { flex-shrink: 0; min-width: 70px; text-align: right; }
+  .closed-row .col-actions { flex-shrink: 0; }
+
   /* AI Insights - mobile optimized */
   .ai-insights-grid { grid-template-columns: 1fr; gap: 8px; }
   .insight-card { padding: 12px; }
@@ -560,6 +590,20 @@
 
 /* Small Mobile: < 480px */
 @media (max-width: 480px) {
+  /* P&L Dashboard - extra small */
+  .pnl-hero-card { padding: 14px; }
+  .pnl-hero-value { font-size: 24px; margin-bottom: 10px; }
+  .pnl-breakdown { flex-wrap: wrap; gap: 8px; padding-top: 10px; }
+  .pnl-breakdown-plus { display: none; }
+  .pnl-breakdown-item { flex: 1; min-width: 80px; }
+  .pnl-breakdown-label { font-size: 9px; }
+  .pnl-breakdown-value { font-size: 13px; }
+  .performance-grid { grid-template-columns: repeat(2, 1fr); }
+  .perf-card { padding: 8px; gap: 6px; }
+  .perf-icon { width: 24px; height: 24px; font-size: 9px; }
+  .perf-label { font-size: 8px; }
+  .perf-value { font-size: 12px; }
+
   .header-row { padding: 8px 10px; }
   .header-search input { padding: 10px 12px; }
   .btn-go { padding: 10px 14px; font-size: 13px; }

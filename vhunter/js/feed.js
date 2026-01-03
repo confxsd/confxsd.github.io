@@ -88,6 +88,34 @@ export async function extractInsights() {
   }
 }
 
+// Reprocess ALL feed items (including already processed)
+export async function reprocessAllInsights() {
+  if (!confirm('This will reprocess ALL feed items, overriding existing insights. Uses significant API credits. Continue?')) return;
+
+  const btn = document.getElementById('reprocessBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Reprocessing...';
+  }
+
+  try {
+    const result = await feedFetch('/api/feed/extract?reprocess=all', { method: 'POST' });
+    if (result.processed > 0) {
+      showToast(`Reprocessed ${result.processed} items`);
+      loadFeed();
+    } else {
+      showToast(result.message || 'No items to reprocess');
+    }
+  } catch (e) {
+    showToast('Reprocess failed: ' + e.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Reprocess All';
+    }
+  }
+}
+
 // Update thesis with processed insights
 export async function updateThesis() {
   if (!confirm('This will use API credits. Continue?')) return;
@@ -146,44 +174,232 @@ function renderThesis(card, thesis) {
   }
 
   const t = thesis.thesis_data;
-
-  // Build conviction bar
   const conviction = t.conviction || 5;
   const convictionClass = conviction >= 7 ? 'high' : conviction >= 4 ? 'medium' : 'low';
 
-  // Build vol view if available
-  const volView = t.volatilityView;
-  const volHtml = volView ? `
-    <div class="thesis-row">
-      <span class="thesis-label">Vol View:</span>
-      <span class="thesis-value">${volView.level} / ${volView.direction} → ${volView.strategy}</span>
+  // Executive summary section
+  const execSummaryHtml = t.executiveSummary ? `
+    <div class="thesis-section">
+      <div class="thesis-section-title">Executive Summary</div>
+      <div class="thesis-section-content">${t.executiveSummary}</div>
     </div>` : '';
 
-  // Build factor tilts if available
+  // Market analysis section
+  const marketAnalysis = t.marketAnalysis;
+  const marketHtml = marketAnalysis ? `
+    <div class="thesis-section collapsible" data-section="market">
+      <div class="thesis-section-title" onclick="toggleThesisSection('market')">
+        Market Analysis <span class="collapse-icon">▼</span>
+      </div>
+      <div class="thesis-section-body">
+        ${marketAnalysis.currentState ? `<div class="thesis-row"><span class="thesis-label">Current State:</span><span class="thesis-value">${marketAnalysis.currentState}</span></div>` : ''}
+        ${marketAnalysis.keyDrivers?.length ? `<div class="thesis-row"><span class="thesis-label">Key Drivers:</span><span class="thesis-value">${marketAnalysis.keyDrivers.join('; ')}</span></div>` : ''}
+        ${marketAnalysis.technicalPicture ? `<div class="thesis-row"><span class="thesis-label">Technicals:</span><span class="thesis-value">${marketAnalysis.technicalPicture}</span></div>` : ''}
+        ${marketAnalysis.sentimentReading ? `<div class="thesis-row"><span class="thesis-label">Sentiment:</span><span class="thesis-value">${marketAnalysis.sentimentReading}</span></div>` : ''}
+        ${marketAnalysis.intermarketSignals ? `<div class="thesis-row"><span class="thesis-label">Intermarket:</span><span class="thesis-value">${marketAnalysis.intermarketSignals}</span></div>` : ''}
+      </div>
+    </div>` : '';
+
+  // Themes section (new format with objects)
+  const themes = t.themes || [];
+  const themesHtml = themes.length ? `
+    <div class="thesis-section collapsible" data-section="themes">
+      <div class="thesis-section-title" onclick="toggleThesisSection('themes')">
+        Themes (${themes.length}) <span class="collapse-icon">▼</span>
+      </div>
+      <div class="thesis-section-body">
+        ${themes.map(theme => typeof theme === 'string' ? `<div class="thesis-theme-item">${theme}</div>` : `
+          <div class="thesis-theme-item">
+            <div class="theme-name">${theme.name} <span class="theme-conviction ${theme.conviction}">${theme.conviction}</span></div>
+            ${theme.description ? `<div class="theme-desc">${theme.description}</div>` : ''}
+            ${theme.trades?.length ? `<div class="theme-trades">Trades: ${theme.trades.join(', ')}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>` : '';
+
+  // Sector analysis (new format)
+  const sectorAnalysis = t.sectorAnalysis;
+  const sectorsHtml = sectorAnalysis ? `
+    <div class="thesis-section collapsible" data-section="sectors">
+      <div class="thesis-section-title" onclick="toggleThesisSection('sectors')">
+        Sector Analysis <span class="collapse-icon">▼</span>
+      </div>
+      <div class="thesis-section-body">
+        ${sectorAnalysis.overweight?.length ? `
+          <div class="thesis-subsection">
+            <div class="thesis-label ow">Overweight:</div>
+            ${sectorAnalysis.overweight.map(s => typeof s === 'string' ? `<div class="sector-item">${s}</div>` : `
+              <div class="sector-item">
+                <strong>${s.sector}</strong>: ${s.rationale}
+                ${s.tickers?.length ? `<span class="sector-tickers">[${s.tickers.join(', ')}]</span>` : ''}
+              </div>
+            `).join('')}
+          </div>` : ''}
+        ${sectorAnalysis.underweight?.length ? `
+          <div class="thesis-subsection">
+            <div class="thesis-label uw">Underweight:</div>
+            ${sectorAnalysis.underweight.map(s => typeof s === 'string' ? `<div class="sector-item">${s}</div>` : `
+              <div class="sector-item">
+                <strong>${s.sector}</strong>: ${s.rationale}
+                ${s.tickers?.length ? `<span class="sector-tickers">[${s.tickers.join(', ')}]</span>` : ''}
+              </div>
+            `).join('')}
+          </div>` : ''}
+        ${sectorAnalysis.avoid?.length ? `
+          <div class="thesis-subsection">
+            <div class="thesis-label avoid">Avoid:</div>
+            <div class="sector-item">${sectorAnalysis.avoid.join(', ')}</div>
+          </div>` : ''}
+      </div>
+    </div>` : (t.sectors ? `
+    <div class="thesis-row"><span class="thesis-label">OW:</span><span class="thesis-value ow">${(t.sectors?.ow || []).join(', ')}</span></div>
+    <div class="thesis-row"><span class="thesis-label">UW:</span><span class="thesis-value uw">${(t.sectors?.uw || []).join(', ')}</span></div>
+    ${t.sectors?.avoid?.length ? `<div class="thesis-row"><span class="thesis-label">Avoid:</span><span class="thesis-value avoid">${t.sectors.avoid.join(', ')}</span></div>` : ''}` : '');
+
+  // Ticker intelligence section
+  const tickerIntel = t.tickerIntelligence || [];
+  const tickerHtml = tickerIntel.length ? `
+    <div class="thesis-section collapsible" data-section="tickers">
+      <div class="thesis-section-title" onclick="toggleThesisSection('tickers')">
+        Ticker Intelligence (${tickerIntel.length}) <span class="collapse-icon">▼</span>
+      </div>
+      <div class="thesis-section-body">
+        ${tickerIntel.map(ti => `
+          <div class="ticker-intel-item">
+            <div class="ticker-header">
+              <span class="ticker-symbol" onclick="analyzeTicker('${ti.ticker}')">${ti.ticker}</span>
+              <span class="ticker-bias ${ti.netBias}">${ti.netBias}</span>
+              <span class="ticker-signals">${ti.signalCount} signals</span>
+            </div>
+            ${ti.tradingView ? `<div class="ticker-view">${ti.tradingView}</div>` : ''}
+            ${ti.technicals ? `<div class="ticker-technicals">${ti.technicals}</div>` : ''}
+            ${ti.catalyst ? `<div class="ticker-catalyst">Catalyst: ${ti.catalyst}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>` : '';
+
+  // Volatility analysis
+  const volAnalysis = t.volatilityAnalysis || t.volatilityView;
+  const volHtml = volAnalysis ? `
+    <div class="thesis-section collapsible" data-section="vol">
+      <div class="thesis-section-title" onclick="toggleThesisSection('vol')">
+        Volatility Analysis <span class="collapse-icon">▼</span>
+      </div>
+      <div class="thesis-section-body">
+        <div class="thesis-row">
+          <span class="thesis-label">Level:</span>
+          <span class="thesis-value">${volAnalysis.currentLevel || volAnalysis.level} / ${volAnalysis.direction}</span>
+        </div>
+        ${volAnalysis.termStructure ? `<div class="thesis-row"><span class="thesis-label">Term Structure:</span><span class="thesis-value">${volAnalysis.termStructure}</span></div>` : ''}
+        ${volAnalysis.skew ? `<div class="thesis-row"><span class="thesis-label">Skew:</span><span class="thesis-value">${volAnalysis.skew}</span></div>` : ''}
+        <div class="thesis-row"><span class="thesis-label">Strategy:</span><span class="thesis-value">${volAnalysis.strategy}</span></div>
+        ${volAnalysis.trades?.length ? `<div class="thesis-row"><span class="thesis-label">Vol Trades:</span><span class="thesis-value">${volAnalysis.trades.join('; ')}</span></div>` : ''}
+      </div>
+    </div>` : '';
+
+  // Key levels
+  const levels = t.keyLevels;
+  const levelsHtml = levels ? `
+    <div class="thesis-section collapsible" data-section="levels">
+      <div class="thesis-section-title" onclick="toggleThesisSection('levels')">
+        Key Levels <span class="collapse-icon">▼</span>
+      </div>
+      <div class="thesis-section-body">
+        ${levels.SPX ? `<div class="thesis-row"><span class="thesis-label">SPX:</span><span class="thesis-value">S: ${Array.isArray(levels.SPX.support) ? levels.SPX.support.join(', ') : levels.SPX.support} | R: ${Array.isArray(levels.SPX.resistance) ? levels.SPX.resistance.join(', ') : levels.SPX.resistance}${levels.SPX.commentary ? ` (${levels.SPX.commentary})` : ''}</span></div>` : ''}
+        ${levels.QQQ ? `<div class="thesis-row"><span class="thesis-label">QQQ:</span><span class="thesis-value">S: ${Array.isArray(levels.QQQ.support) ? levels.QQQ.support.join(', ') : levels.QQQ.support} | R: ${Array.isArray(levels.QQQ.resistance) ? levels.QQQ.resistance.join(', ') : levels.QQQ.resistance}</span></div>` : ''}
+        ${levels.VIX ? `<div class="thesis-row"><span class="thesis-label">VIX:</span><span class="thesis-value">${levels.VIX.floor}-${levels.VIX.ceiling}${levels.VIX.commentary ? ` (${levels.VIX.commentary})` : ''}</span></div>` : ''}
+        ${levels.other?.length ? levels.other.filter(l => l.ticker).map(l => `<div class="thesis-row"><span class="thesis-label">${l.ticker}:</span><span class="thesis-value">${l.levels}${l.commentary ? ` (${l.commentary})` : ''}</span></div>`).join('') : ''}
+      </div>
+    </div>` : '';
+
+  // Catalyst calendar
+  const catalysts = t.catalystCalendar || t.catalysts || [];
+  const catalystsHtml = catalysts.length ? `
+    <div class="thesis-section collapsible" data-section="catalysts">
+      <div class="thesis-section-title" onclick="toggleThesisSection('catalysts')">
+        Catalysts (${catalysts.length}) <span class="collapse-icon">▼</span>
+      </div>
+      <div class="thesis-section-body">
+        ${catalysts.map(c => typeof c === 'string' ? `<div class="catalyst-item">${c}</div>` : `
+          <div class="catalyst-item">
+            <span class="catalyst-date">${c.date}</span>
+            <span class="catalyst-event">${c.event}</span>
+            <span class="catalyst-impact ${c.impact}">${c.impact}</span>
+            ${c.tradingImplication ? `<div class="catalyst-impl">${c.tradingImplication}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>` : '';
+
+  // Risk matrix
+  const risks = t.riskMatrix || t.risks || [];
+  const risksHtml = risks.length ? `
+    <div class="thesis-section collapsible" data-section="risks">
+      <div class="thesis-section-title" onclick="toggleThesisSection('risks')">
+        Risks (${risks.length}) <span class="collapse-icon">▼</span>
+      </div>
+      <div class="thesis-section-body">
+        ${risks.map(r => typeof r === 'string' ? `<div class="risk-item">${r}</div>` : `
+          <div class="risk-item">
+            <div class="risk-header">
+              <span class="risk-name">${r.risk}</span>
+              <span class="risk-prob ${r.probability}">P: ${r.probability}</span>
+              <span class="risk-impact ${r.impact}">I: ${r.impact}</span>
+            </div>
+            ${r.trigger ? `<div class="risk-trigger">Trigger: ${r.trigger}</div>` : ''}
+            ${r.hedge ? `<div class="risk-hedge">Hedge: ${r.hedge}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>` : '';
+
+  // Trade recommendations
+  const trades = t.tradeRecommendations || t.tradeIdeas || [];
+  const tradesHtml = trades.length ? `
+    <div class="thesis-section collapsible" data-section="trades">
+      <div class="thesis-section-title" onclick="toggleThesisSection('trades')">
+        Trade Recommendations (${trades.length}) <span class="collapse-icon">▼</span>
+      </div>
+      <div class="thesis-section-body">
+        ${trades.map(tr => typeof tr === 'string' ? `<div class="trade-item">${tr}</div>` : `
+          <div class="trade-item">
+            <div class="trade-idea">${tr.idea} <span class="trade-conviction ${tr.conviction}">${tr.conviction}</span></div>
+            ${tr.rationale ? `<div class="trade-rationale">${tr.rationale}</div>` : ''}
+            <div class="trade-levels">
+              ${tr.entry ? `Entry: ${tr.entry}` : ''} ${tr.target ? `| Target: ${tr.target}` : ''} ${tr.stop ? `| Stop: ${tr.stop}` : ''}
+            </div>
+            ${tr.timeframe ? `<div class="trade-timeframe">Timeframe: ${tr.timeframe}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>` : '';
+
+  // Raw signal summary
+  const rawSummaryHtml = t.rawSignalSummary ? `
+    <div class="thesis-section collapsible collapsed" data-section="raw">
+      <div class="thesis-section-title" onclick="toggleThesisSection('raw')">
+        Raw Signal Summary <span class="collapse-icon">▶</span>
+      </div>
+      <div class="thesis-section-body hidden">
+        <div class="thesis-raw-summary">${t.rawSignalSummary}</div>
+      </div>
+    </div>` : '';
+
+  // Contraindicators
+  const contraHtml = t.contraindicators?.length ? `
+    <div class="thesis-section">
+      <div class="thesis-section-title">Thesis Invalidators</div>
+      <div class="thesis-section-content contra">${t.contraindicators.join('; ')}</div>
+    </div>` : '';
+
+  // Factor tilts (compact)
   const factors = t.factorTilts;
   const factorHtml = factors ? `
     <div class="thesis-row">
-      <span class="thesis-label">Tilts:</span>
-      <span class="thesis-value">${factors.style} | ${factors.size} | ${factors.geography}</span>
-    </div>` : '';
-
-  // Build trade ideas if available
-  const tradeIdeas = t.tradeIdeas || [];
-  const tradesHtml = tradeIdeas.length ? `
-    <div class="thesis-trades">
-      <span class="thesis-label">Trade Ideas:</span>
-      <ul>${tradeIdeas.map(idea => `<li>${idea}</li>`).join('')}</ul>
-    </div>` : '';
-
-  // Build key levels if available
-  const levels = t.keyLevels;
-  const levelsHtml = levels && (levels.SPX?.support || levels.VIX?.floor) ? `
-    <div class="thesis-row">
-      <span class="thesis-label">Key Levels:</span>
-      <span class="thesis-value">
-        ${levels.SPX?.support ? `SPX ${levels.SPX.support}-${levels.SPX.resistance}` : ''}
-        ${levels.VIX?.floor ? `| VIX ${levels.VIX.floor}-${levels.VIX.ceiling}` : ''}
-      </span>
+      <span class="thesis-label">Factor Tilts:</span>
+      <span class="thesis-value">${factors.style?.tilt || factors.style} | ${factors.size?.tilt || factors.size} | ${factors.geography?.tilt || factors.geography}</span>
     </div>` : '';
 
   card.innerHTML = `
@@ -195,36 +411,33 @@ function renderThesis(card, thesis) {
     </div>
     ${t.primaryThesis ? `<div class="thesis-primary">${t.primaryThesis}</div>` : ''}
     <div class="thesis-narrative">${t.narrative}</div>
-    <div class="thesis-row">
-      <span class="thesis-label">Themes:</span>
-      <span class="thesis-value">${(t.themes || []).join(', ')}</span>
-    </div>
-    <div class="thesis-row">
-      <span class="thesis-label">OW:</span>
-      <span class="thesis-value ow">${(t.sectors?.ow || []).join(', ')}</span>
-    </div>
-    <div class="thesis-row">
-      <span class="thesis-label">UW:</span>
-      <span class="thesis-value uw">${(t.sectors?.uw || []).join(', ')}</span>
-    </div>
-    ${t.sectors?.avoid?.length ? `
-    <div class="thesis-row">
-      <span class="thesis-label">Avoid:</span>
-      <span class="thesis-value avoid">${t.sectors.avoid.join(', ')}</span>
-    </div>` : ''}
+    ${execSummaryHtml}
+    ${marketHtml}
+    ${themesHtml}
+    ${sectorsHtml}
+    ${tickerHtml}
     ${factorHtml}
     ${volHtml}
     ${levelsHtml}
-    <div class="thesis-row">
-      <span class="thesis-label">Catalysts:</span>
-      <span class="thesis-value">${(t.catalysts || []).join(', ')}</span>
-    </div>
-    <div class="thesis-row">
-      <span class="thesis-label">Risks:</span>
-      <span class="thesis-value risks">${(t.risks || []).join(', ')}</span>
-    </div>
-    ${tradesHtml}`;
+    ${catalystsHtml}
+    ${risksHtml}
+    ${tradesHtml}
+    ${contraHtml}
+    ${rawSummaryHtml}`;
 }
+
+// Toggle collapsible thesis sections
+window.toggleThesisSection = function(section) {
+  const sectionEl = document.querySelector(`.thesis-section[data-section="${section}"]`);
+  if (!sectionEl) return;
+  const body = sectionEl.querySelector('.thesis-section-body');
+  const icon = sectionEl.querySelector('.collapse-icon');
+  if (body && icon) {
+    body.classList.toggle('hidden');
+    sectionEl.classList.toggle('collapsed');
+    icon.textContent = body.classList.contains('hidden') ? '▶' : '▼';
+  }
+};
 
 // Get current thesis for use in prompts
 export function getCurrentThesis() {
@@ -315,9 +528,20 @@ function renderFeedItem(item) {
 
   const insightHtml = insight ? `
     <div class="feed-insight">
-      <span class="insight-direction ${insight.direction}">${insight.direction}</span>
-      <span class="insight-signal">${insight.signal}</span>
-      <span class="insight-theme">${insight.theme}</span>
+      <div class="insight-header">
+        <span class="insight-direction ${insight.direction}">${insight.direction}</span>
+        <span class="insight-theme">${insight.theme}</span>
+        <span class="insight-conviction ${insight.conviction}">${insight.conviction}</span>
+        ${insight.timeframe ? `<span class="insight-timeframe">${insight.timeframe}</span>` : ''}
+      </div>
+      <div class="insight-signal">${insight.signal}</div>
+      ${insight.tickers?.length ? `<div class="insight-tickers">${insight.tickers.map(t => `<span class="insight-ticker" onclick="analyzeTicker('${t}')">${t}</span>`).join('')}</div>` : ''}
+      ${insight.tradingImplication ? `<div class="insight-trade"><strong>Trade:</strong> ${insight.tradingImplication}</div>` : ''}
+      ${insight.dataPoints?.levels?.length ? `<div class="insight-levels"><strong>Levels:</strong> ${insight.dataPoints.levels.join(', ')}</div>` : ''}
+      ${insight.dataPoints?.flows ? `<div class="insight-flows"><strong>Flow:</strong> ${insight.dataPoints.flows}</div>` : ''}
+      ${insight.catalyst ? `<div class="insight-catalyst"><strong>Catalyst:</strong> ${insight.catalyst}</div>` : ''}
+      ${insight.riskToSignal ? `<div class="insight-risk"><strong>Invalidates if:</strong> ${insight.riskToSignal}</div>` : ''}
+      ${insight.chartAnalysis ? `<div class="insight-chart">${insight.chartAnalysis.pattern ? `<span class="chart-pattern">${insight.chartAnalysis.pattern}</span>` : ''}${insight.chartAnalysis.trend ? ` <span class="chart-trend">${insight.chartAnalysis.trend}</span>` : ''}${insight.chartAnalysis.technicalNote ? ` - ${insight.chartAnalysis.technicalNote}` : ''}</div>` : ''}
     </div>` : '';
 
   return `
@@ -531,6 +755,7 @@ window.closeFeedModal = closeFeedModal;
 window.saveFeedItem = saveFeedItem;
 window.handleImageUpload = handleImageUpload;
 window.extractInsights = extractInsights;
+window.reprocessAllInsights = reprocessAllInsights;
 window.updateThesis = updateThesis;
 
 window.removePreviewImage = function(index) {

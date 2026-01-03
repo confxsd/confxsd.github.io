@@ -456,16 +456,21 @@
   margin: 4px 0;
 }
 
-/* Feed Insight Display */
+/* Feed Insight Display - Enhanced */
 .feed-insight {
   background: #f8fafc;
   border-radius: 6px;
-  padding: 8px 10px;
+  padding: 10px 12px;
   margin: 8px 0;
+  border-left: 3px solid #818cf8;
+}
+
+.insight-header {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
   flex-wrap: wrap;
+  margin-bottom: 6px;
 }
 
 .insight-direction {
@@ -474,7 +479,6 @@
   padding: 2px 6px;
   border-radius: 3px;
   text-transform: uppercase;
-  flex-shrink: 0;
 }
 
 .insight-direction.risk-off,
@@ -483,20 +487,128 @@
 .insight-direction.bullish { background: #dcfce7; color: #166534; }
 .insight-direction.neutral { background: #f1f5f9; color: #64748b; }
 
-.insight-signal {
-  font-size: 11px;
-  color: #334155;
-  flex: 1;
-  min-width: 0;
-}
-
 .insight-theme {
   font-size: 9px;
   color: #818cf8;
   background: #eef2ff;
   padding: 2px 6px;
   border-radius: 3px;
-  flex-shrink: 0;
+}
+
+.insight-conviction {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.insight-conviction.high { background: #dcfce7; color: #166534; }
+.insight-conviction.medium { background: #fef3c7; color: #92400e; }
+.insight-conviction.low { background: #f1f5f9; color: #64748b; }
+
+.insight-timeframe {
+  font-size: 9px;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.insight-signal {
+  font-size: 12px;
+  color: #1e293b;
+  line-height: 1.5;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.insight-tickers {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.insight-ticker {
+  background: #818cf8;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.insight-ticker:hover {
+  background: #6366f1;
+}
+
+.insight-trade {
+  font-size: 11px;
+  color: #166534;
+  background: #dcfce7;
+  padding: 6px 8px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+
+.insight-trade strong {
+  color: #14532d;
+}
+
+.insight-levels,
+.insight-flows,
+.insight-catalyst {
+  font-size: 10px;
+  color: #475569;
+  margin-bottom: 4px;
+}
+
+.insight-levels strong,
+.insight-flows strong,
+.insight-catalyst strong {
+  color: #1e293b;
+}
+
+.insight-catalyst {
+  color: #b45309;
+}
+
+.insight-risk {
+  font-size: 10px;
+  color: #991b1b;
+  background: #fee2e2;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-top: 6px;
+}
+
+.insight-risk strong {
+  color: #7f1d1d;
+}
+
+.insight-chart {
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.chart-pattern {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+.chart-trend {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 2px 6px;
+  border-radius: 3px;
 }
 
 /* Feed item processed state */
@@ -506,4 +618,328 @@
 
 .feed-item.raw {
   border-left: 3px solid #fbbf24;
+}
+
+/* Expanded Thesis Sections */
+.thesis-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #334155;
+}
+
+.thesis-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.thesis-section.collapsible .thesis-section-title:hover {
+  color: #f1f5f9;
+}
+
+.collapse-icon {
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+
+.thesis-section-body {
+  padding-left: 4px;
+}
+
+.thesis-section-body.hidden {
+  display: none;
+}
+
+.thesis-section-content {
+  font-size: 12px;
+  color: #e2e8f0;
+  line-height: 1.5;
+}
+
+.thesis-section-content.contra {
+  color: #fbbf24;
+  font-style: italic;
+}
+
+/* Theme items */
+.thesis-theme-item {
+  background: rgba(255,255,255,0.05);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+
+.theme-name {
+  font-weight: 600;
+  color: #f1f5f9;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-conviction {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.theme-conviction.high { background: #22c55e; color: #fff; }
+.theme-conviction.medium { background: #f59e0b; color: #1e293b; }
+.theme-conviction.low { background: #64748b; color: #fff; }
+
+.theme-desc {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+.theme-trades {
+  font-size: 10px;
+  color: #818cf8;
+  margin-top: 4px;
+}
+
+/* Sector analysis */
+.thesis-subsection {
+  margin-bottom: 10px;
+}
+
+.thesis-subsection .thesis-label {
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.sector-item {
+  font-size: 11px;
+  color: #e2e8f0;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.sector-item:last-child {
+  border-bottom: none;
+}
+
+.sector-tickers {
+  color: #818cf8;
+  font-size: 10px;
+  margin-left: 4px;
+}
+
+/* Ticker intelligence */
+.ticker-intel-item {
+  background: rgba(255,255,255,0.05);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+
+.ticker-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.ticker-symbol {
+  font-weight: 700;
+  color: #818cf8;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.ticker-symbol:hover {
+  text-decoration: underline;
+}
+
+.ticker-bias {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.ticker-bias.bullish { background: #dcfce7; color: #166534; }
+.ticker-bias.bearish { background: #fee2e2; color: #991b1b; }
+.ticker-bias.neutral { background: #f1f5f9; color: #64748b; }
+
+.ticker-signals {
+  font-size: 9px;
+  color: #64748b;
+  margin-left: auto;
+}
+
+.ticker-view {
+  font-size: 11px;
+  color: #e2e8f0;
+}
+
+.ticker-technicals {
+  font-size: 10px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.ticker-catalyst {
+  font-size: 10px;
+  color: #fbbf24;
+  margin-top: 4px;
+}
+
+/* Catalyst items */
+.catalyst-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  flex-wrap: wrap;
+}
+
+.catalyst-item:last-child {
+  border-bottom: none;
+}
+
+.catalyst-date {
+  font-size: 10px;
+  font-weight: 600;
+  color: #818cf8;
+  min-width: 70px;
+}
+
+.catalyst-event {
+  font-size: 11px;
+  color: #e2e8f0;
+  flex: 1;
+}
+
+.catalyst-impact {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.catalyst-impact.high { background: #ef4444; color: #fff; }
+.catalyst-impact.medium { background: #f59e0b; color: #1e293b; }
+.catalyst-impact.low { background: #64748b; color: #fff; }
+
+.catalyst-impl {
+  font-size: 10px;
+  color: #94a3b8;
+  width: 100%;
+  padding-left: 78px;
+}
+
+/* Risk items */
+.risk-item {
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+
+.risk-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.risk-name {
+  font-size: 11px;
+  color: #f87171;
+  font-weight: 500;
+  flex: 1;
+}
+
+.risk-prob, .risk-impact {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.risk-prob { background: rgba(255,255,255,0.1); color: #94a3b8; }
+.risk-impact { background: rgba(255,255,255,0.1); color: #94a3b8; }
+.risk-prob.high, .risk-impact.high { color: #f87171; }
+.risk-prob.medium, .risk-impact.medium { color: #fbbf24; }
+
+.risk-trigger, .risk-hedge {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+.risk-hedge {
+  color: #4ade80;
+}
+
+/* Trade recommendations */
+.trade-item {
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-left: 3px solid #6366f1;
+}
+
+.trade-idea {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trade-conviction {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.trade-conviction.high { background: #22c55e; color: #fff; }
+.trade-conviction.medium { background: #f59e0b; color: #1e293b; }
+.trade-conviction.low { background: #64748b; color: #fff; }
+
+.trade-rationale {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+.trade-levels {
+  font-size: 10px;
+  color: #818cf8;
+  margin-top: 6px;
+}
+
+.trade-timeframe {
+  font-size: 9px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* Raw signal summary */
+.thesis-raw-summary {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  background: rgba(0,0,0,0.2);
+  padding: 10px;
+  border-radius: 6px;
+  max-height: 300px;
+  overflow-y: auto;
 }

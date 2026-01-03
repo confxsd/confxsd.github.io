@@ -27,14 +27,15 @@
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/positions.css">
+  <link rel="stylesheet" href="css/positions.css?v=2">
   <link rel="stylesheet" href="css/analyze.css">
   <link rel="stylesheet" href="css/notes.css">
   <link rel="stylesheet" href="css/options.css">
   <link rel="stylesheet" href="css/watchlist.css">
   <link rel="stylesheet" href="css/feed.css">
+  <link rel="stylesheet" href="css/terminal.css?v=3">
   <link rel="stylesheet" href="css/teaching.css">
-  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/responsive.css?v=2">
 </head>
 <body>
 
@@ -58,6 +59,10 @@
       <a href="#" class="nav-item" data-page="feed" onclick="event.preventDefault(); switchPage('feed')">
         <span class="nav-icon">📡</span>
         <span class="nav-label">Feed</span>
+      </a>
+      <a href="#" class="nav-item" data-page="terminal" onclick="event.preventDefault(); switchPage('terminal')">
+        <span class="nav-icon">🖥</span>
+        <span class="nav-label">Terminal</span>
       </a>
       <a href="#" class="nav-item" data-page="positions" onclick="event.preventDefault(); switchPage('positions')">
         <span class="nav-icon">💼</span>
@@ -322,6 +327,7 @@
         <div class="header-actions">
           <span class="api-warning" title="Uses Claude API credits">$</span>
           <button class="btn-secondary" id="extractBtn" onclick="extractInsights()">Extract</button>
+          <button class="btn-secondary" id="reprocessBtn" onclick="reprocessAllInsights()">Reprocess All</button>
           <button class="btn-secondary" id="updateThesisBtn" onclick="updateThesis()">Update Thesis</button>
           <button class="btn-primary" onclick="openFeedModal()">+ Add</button>
         </div>
@@ -369,6 +375,18 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Page: Terminal -->
+    <div class="page" id="page-terminal">
+      <div class="terminal-header">
+        <h1>Terminal</h1>
+        <div class="terminal-add">
+          <input type="text" id="terminal-ticker-input" placeholder="SPX, GOLD, BTC..." maxlength="10">
+          <button id="terminal-add-btn">+ Add</button>
+        </div>
+      </div>
+      <div class="terminal-grid" id="terminal-grid"></div>
     </div>
 
     <!-- Page: Positions -->
@@ -432,27 +450,70 @@
         </div>
       </div>
 
-      <!-- Position Stats - Compact -->
-      <div class="stats-row compact">
-        <div class="stat-card highlight">
-          <div class="stat-label">Unrealized</div>
-          <div class="stat-value" id="unrealizedPnl">$0</div>
+      <!-- Position Dashboard -->
+      <div class="pnl-dashboard">
+        <!-- Total P&L Hero Card -->
+        <div class="pnl-hero-card">
+          <div class="pnl-hero-label">Total P&L</div>
+          <div class="pnl-hero-value" id="totalPnl">$0</div>
+          <div class="pnl-breakdown">
+            <div class="pnl-breakdown-item">
+              <span class="pnl-breakdown-label">Realized</span>
+              <span class="pnl-breakdown-value" id="realizedPnl">$0</span>
+            </div>
+            <span class="pnl-breakdown-plus">+</span>
+            <div class="pnl-breakdown-item">
+              <span class="pnl-breakdown-label">Unrealized</span>
+              <span class="pnl-breakdown-value" id="unrealizedPnl">$0</span>
+            </div>
+          </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-label">Total P&L</div>
-          <div class="stat-value" id="totalPnl">$0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Open</div>
-          <div class="stat-value" id="openCount">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Win Rate</div>
-          <div class="stat-value" id="winRate">--%</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Closed</div>
-          <div class="stat-value" id="closedCount">0</div>
+
+        <!-- Performance Metrics -->
+        <div class="performance-grid">
+          <div class="perf-card">
+            <div class="perf-icon win-icon">W</div>
+            <div class="perf-content">
+              <div class="perf-label">Win Rate</div>
+              <div class="perf-value" id="winRate">--%</div>
+            </div>
+          </div>
+          <div class="perf-card">
+            <div class="perf-icon trades-icon">T</div>
+            <div class="perf-content">
+              <div class="perf-label">Trades</div>
+              <div class="perf-value"><span id="openCount">0</span> / <span id="closedCount">0</span></div>
+              <div class="perf-sub">Open / Closed</div>
+            </div>
+          </div>
+          <div class="perf-card">
+            <div class="perf-icon avgwin-icon">+</div>
+            <div class="perf-content">
+              <div class="perf-label">Avg Win</div>
+              <div class="perf-value positive" id="avgWin">$0</div>
+            </div>
+          </div>
+          <div class="perf-card">
+            <div class="perf-icon avgloss-icon">-</div>
+            <div class="perf-content">
+              <div class="perf-label">Avg Loss</div>
+              <div class="perf-value negative" id="avgLoss">$0</div>
+            </div>
+          </div>
+          <div class="perf-card">
+            <div class="perf-icon pf-icon">PF</div>
+            <div class="perf-content">
+              <div class="perf-label">Profit Factor</div>
+              <div class="perf-value" id="profitFactor">--</div>
+            </div>
+          </div>
+          <div class="perf-card">
+            <div class="perf-icon best-icon">B</div>
+            <div class="perf-content">
+              <div class="perf-label">Best Trade</div>
+              <div class="perf-value positive" id="bestTrade">$0</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1371,6 +1432,6 @@
 <!-- FAB Button (Mobile) -->
 <button class="fab" id="fabButton" onclick="openFeedModal()">+</button>
 
-<script type="module" src="js/app.js"></script>
+<script type="module" src="js/app.js?v=2"></script>
 </body>
 </html>
