@@ -618,6 +618,58 @@ ${setupReason ? `<strong>Why:</strong> ${setupReason}\n\n` : ''}${setupAdvice}
       </div>
     `;
   }
+
+  // P/C Ratio tooltip
+  const tipPcRatio = document.getElementById('tipPcRatio');
+  if (tipPcRatio && pcRatio != null) {
+    let biasLabel = '';
+    let biasColor = '#94a3b8';
+    let biasExplanation = '';
+
+    if (pcRatio > 1.5) {
+      biasLabel = 'HEAVY PUT BUYING';
+      biasColor = '#ef4444';
+      biasExplanation = `🔴 Aggressive bearish sentiment. Traders are paying up for downside protection or betting on a drop.`;
+    } else if (pcRatio > 1.0) {
+      biasLabel = 'BEARISH BIAS';
+      biasColor = '#f59e0b';
+      biasExplanation = `🟠 More puts trading than calls. Slightly cautious sentiment - could be hedging or directional bets.`;
+    } else if (pcRatio < 0.5) {
+      biasLabel = 'HEAVY CALL BUYING';
+      biasColor = '#10b981';
+      biasExplanation = `🟢 Aggressive bullish sentiment. Traders are paying up for upside exposure.`;
+    } else if (pcRatio < 0.8) {
+      biasLabel = 'BULLISH BIAS';
+      biasColor = '#06b6d4';
+      biasExplanation = `🔵 More calls trading than puts. Optimistic sentiment - traders positioning for upside.`;
+    } else {
+      biasLabel = 'BALANCED';
+      biasColor = '#94a3b8';
+      biasExplanation = `⚪ Roughly equal put and call volume. No strong directional signal from flow.`;
+    }
+
+    tipPcRatio.innerHTML = `
+      <div class="tip-title" style="color:${biasColor}">${ticker}: P/C Ratio ${pcRatio.toFixed(2)} - ${biasLabel}</div>
+      <div class="tip-detail">
+<strong>Timeline:</strong> ALL expirations combined (aggregate volume)
+
+<strong>What This Means:</strong>
+${biasExplanation}
+
+<strong>How to Interpret:</strong>
+• < 0.5: Heavy call buying - very bullish
+• 0.5 - 0.8: Bullish bias - more call activity
+• 0.8 - 1.0: Balanced - neutral flow
+• 1.0 - 1.5: Bearish bias - more put activity
+• > 1.5: Heavy put buying - very bearish
+
+<strong>Context:</strong>
+This ratio uses total volume across all expirations, giving you a snapshot of overall market sentiment today.
+${pcRatio < 0.7 ? `\n⚠️ Very low P/C often seen at local tops. Contrarians watch for reversal.` : ''}
+${pcRatio > 1.3 ? `\n⚠️ Very high P/C can signal fear. Contrarians may see opportunity.` : ''}
+      </div>
+    `;
+  }
 }
 
 // ============================================
@@ -1176,23 +1228,23 @@ function updateDynamicHints(metrics) {
     expMoveHint.style.color = '#94a3b8';
   }
 
-  // P/C Ratio hint
+  // P/C Ratio hint - shows timeline + bias
   const pcRatioHint = document.getElementById('optPcRatioHint');
   if (pcRatioHint && pcRatio != null) {
     if (pcRatio > 1.5) {
-      pcRatioHint.textContent = 'heavy put buying';
+      pcRatioHint.textContent = 'all exp • heavy puts';
       pcRatioHint.style.color = '#ef4444';
     } else if (pcRatio > 1.0) {
-      pcRatioHint.textContent = 'bearish bias';
+      pcRatioHint.textContent = 'all exp • bearish';
       pcRatioHint.style.color = '#f59e0b';
     } else if (pcRatio < 0.5) {
-      pcRatioHint.textContent = 'heavy call buying';
+      pcRatioHint.textContent = 'all exp • heavy calls';
       pcRatioHint.style.color = '#10b981';
     } else if (pcRatio < 0.8) {
-      pcRatioHint.textContent = 'bullish bias';
+      pcRatioHint.textContent = 'all exp • bullish';
       pcRatioHint.style.color = '#06b6d4';
     } else {
-      pcRatioHint.textContent = 'balanced flow';
+      pcRatioHint.textContent = 'all exp • balanced';
       pcRatioHint.style.color = '#94a3b8';
     }
   }

@@ -34,8 +34,16 @@ export function formatAI(text) {
 }
 
 export function updateCurrentPrice(data) {
-  const change = data.c - data.o;
-  const pct = (change / data.o) * 100;
+  // Use real-time change data if available from snapshot, otherwise calculate
+  let change, pct;
+  if (data.todaysChange != null && data.todaysChangePerc != null) {
+    change = data.todaysChange;
+    pct = data.todaysChangePerc;
+  } else {
+    const basePrice = data.prevClose || data.o;
+    change = data.c - basePrice;
+    pct = (change / basePrice) * 100;
+  }
 
   $('pr').textContent = '$' + data.c.toFixed(2);
   $('pr').className = 'v ' + (change >= 0 ? 'g' : 'r');

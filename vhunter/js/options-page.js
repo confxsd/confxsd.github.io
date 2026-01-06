@@ -67,8 +67,14 @@ export async function loadOptionsData() {
     const spot = prev.results[0];
     optionsData.ticker = ticker;
     optionsData.spotPrice = spot.c;
-    optionsData.change = spot.c - spot.o;
-    optionsData.changePct = ((spot.c - spot.o) / spot.o) * 100;
+    // Use real-time change data if available from snapshot, otherwise calculate from open
+    if (spot.todaysChange != null && spot.todaysChangePerc != null) {
+      optionsData.change = spot.todaysChange;
+      optionsData.changePct = spot.todaysChangePerc;
+    } else {
+      optionsData.change = spot.c - (spot.prevClose || spot.o);
+      optionsData.changePct = ((spot.c - (spot.prevClose || spot.o)) / (spot.prevClose || spot.o)) * 100;
+    }
     optionsData.options = options;
 
     // Parse earnings date from ticker details

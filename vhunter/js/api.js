@@ -36,11 +36,38 @@ export async function fetchTickerData(ticker) {
   const to = new Date();
   const fr = new Date(to - CONFIG.HISTORY_DAYS * 24 * 60 * 60 * 1000);
 
-  // Get price data
-  const [prev, aggs] = await Promise.all([
-    fetchPolygon(`/v2/aggs/ticker/${ticker}/prev`),
+  // Get price data - use snapshot for real-time, prev as fallback
+  const [snapshot, aggs] = await Promise.all([
+    fetchPolygon(`/v2/snapshot/locale/us/markets/stocks/tickers/${ticker}`).catch(() => null),
     fetchPolygon(`/v2/aggs/ticker/${ticker}/range/1/day/${fr.toISOString().split('T')[0]}/${to.toISOString().split('T')[0]}?adjusted=true&sort=asc`)
   ]);
+
+  // Build prev-compatible response from snapshot or fallback to prev endpoint
+  let prev;
+  if (snapshot?.ticker) {
+    const t = snapshot.ticker;
+    // Use real-time data from snapshot
+    const currentPrice = t.lastTrade?.p || t.day?.c || t.prevDay?.c;
+    const prevClose = t.prevDay?.c || currentPrice;
+    prev = {
+      results: [{
+        c: currentPrice,
+        o: t.day?.o || prevClose,
+        h: t.day?.h || currentPrice,
+        l: t.day?.l || currentPrice,
+        v: t.day?.v || 0,
+        vw: t.day?.vw || currentPrice,
+        // Include extra snapshot data
+        todaysChange: t.todaysChange,
+        todaysChangePerc: t.todaysChangePerc,
+        prevClose: prevClose,
+        updated: t.updated
+      }]
+    };
+  } else {
+    // Fallback to prev endpoint if snapshot fails
+    prev = await fetchPolygon(`/v2/aggs/ticker/${ticker}/prev`);
+  }
 
   // Cache the stock price for positions module
   if (prev?.results?.[0]?.c) {
