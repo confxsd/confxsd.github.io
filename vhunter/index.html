@@ -35,6 +35,7 @@
   <link rel="stylesheet" href="css/feed.css">
   <link rel="stylesheet" href="css/terminal.css?v=3">
   <link rel="stylesheet" href="css/teaching.css">
+  <link rel="stylesheet" href="css/strategy.css">
   <link rel="stylesheet" href="css/responsive.css?v=2">
 </head>
 <body>
@@ -75,6 +76,10 @@
       <a href="#" class="nav-item" data-page="notes" onclick="event.preventDefault(); switchPage('notes')">
         <span class="nav-icon">📝</span>
         <span class="nav-label">Notes</span>
+      </a>
+      <a href="#" class="nav-item" data-page="strategy" onclick="event.preventDefault(); switchPage('strategy')">
+        <span class="nav-icon">🎯</span>
+        <span class="nav-label">Strategy</span>
       </a>
     </nav>
     <div class="sidebar-footer">
@@ -1199,6 +1204,250 @@
 
       </div>
     </div>
+
+    <!-- Page: Strategy -->
+    <div class="page" id="page-strategy">
+      <div class="page-header">
+        <h1>Strategy</h1>
+        <div class="header-actions">
+          <button class="btn-secondary" onclick="refreshAllFocusStocks()">Refresh</button>
+          <button class="btn-primary" onclick="openFocusStockModal()">+ Focus Stock</button>
+        </div>
+      </div>
+
+      <!-- Focus Stock Selector -->
+      <div class="focus-selector">
+        <div class="focus-tabs" id="focusTabs">
+          <div class="empty-state-inline" id="noFocusStocks">
+            <span>No focus stocks yet. Add one to start tracking.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIG Incentive Dashboard -->
+      <div class="sig-dashboard" id="sigDashboard" style="display:none">
+        <!-- Stock Header -->
+        <div class="sig-header">
+          <div class="sig-ticker" id="sigTicker">--</div>
+          <div class="sig-price">
+            <span class="sig-spot" id="sigSpot">$--</span>
+            <span class="sig-change" id="sigChange">--</span>
+          </div>
+          <div class="sig-regime" id="sigRegime">--</div>
+        </div>
+
+        <!-- Gamma Zone Visual -->
+        <div class="section" id="sec-gex">
+          <div class="section-header" onclick="toggleSection('sec-gex')">
+            <span class="section-title">Gamma Levels & Zones</span>
+            <span class="section-toggle">▼</span>
+          </div>
+          <div class="section-content gex-compact">
+            <!-- Price Zone Gauge -->
+            <div class="gex-zone-container">
+              <div class="gex-zone-header">
+                <span class="gex-regime-badge" id="sigGexRegime">--</span>
+                <span class="gex-net" id="sigNetGex">Net GEX: --</span>
+              </div>
+              <div class="gex-zone-gauge" id="gexZoneGauge">
+                <div class="gex-zone put-zone"></div>
+                <div class="gex-zone neutral-zone"></div>
+                <div class="gex-zone call-zone"></div>
+                <div class="gex-spot-marker" id="gexSpotMarker"></div>
+              </div>
+              <div class="gex-zone-labels">
+                <span class="gex-label-left" id="gexPutLabel">Put Wall</span>
+                <span class="gex-label-center">Zero Gamma</span>
+                <span class="gex-label-right" id="gexCallLabel">Call Wall</span>
+              </div>
+            </div>
+
+            <!-- Level Cards Grid -->
+            <div class="gex-cards">
+              <div class="gex-card call-wall">
+                <div class="gex-card-icon">▲</div>
+                <div class="gex-card-content">
+                  <div class="gex-card-label">Call Wall</div>
+                  <div class="gex-card-price" id="sigCallWall">--</div>
+                  <div class="gex-card-dist" id="sigCallWallDist">--</div>
+                </div>
+              </div>
+              <div class="gex-card zero-gamma">
+                <div class="gex-card-icon">◆</div>
+                <div class="gex-card-content">
+                  <div class="gex-card-label">Zero Gamma</div>
+                  <div class="gex-card-price" id="sigZeroGamma">--</div>
+                  <div class="gex-card-dist" id="sigZeroGammaDist">--</div>
+                </div>
+              </div>
+              <div class="gex-card put-wall">
+                <div class="gex-card-icon">▼</div>
+                <div class="gex-card-content">
+                  <div class="gex-card-label">Put Wall</div>
+                  <div class="gex-card-price" id="sigPutWall">--</div>
+                  <div class="gex-card-dist" id="sigPutWallDist">--</div>
+                </div>
+              </div>
+              <div class="gex-card vol-trigger">
+                <div class="gex-card-icon">⚡</div>
+                <div class="gex-card-content">
+                  <div class="gex-card-label">Vol Trigger</div>
+                  <div class="gex-card-price" id="sigVolTrigger">--</div>
+                  <div class="gex-card-dist" id="sigVolTriggerDist">--</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Max Pain & Dealer Row -->
+            <div class="gex-bottom-row">
+              <div class="gex-maxpain-group">
+                <div class="gex-group-title">Max Pain Magnets</div>
+                <div class="gex-mini-cards">
+                  <div class="gex-mini-card">
+                    <span class="mini-label">Weekly</span>
+                    <span class="mini-value" id="sigMpWeekly">--</span>
+                    <span class="mini-dist" id="sigMpWeeklyDist">--</span>
+                  </div>
+                  <div class="gex-mini-card">
+                    <span class="mini-label">Monthly</span>
+                    <span class="mini-value" id="sigMpMonthly">--</span>
+                    <span class="mini-dist" id="sigMpMonthlyDist">--</span>
+                  </div>
+                  <div class="gex-mini-card">
+                    <span class="mini-label">6-Month</span>
+                    <span class="mini-value" id="sigMp6m">--</span>
+                    <span class="mini-dist" id="sigMp6mDist">--</span>
+                  </div>
+                </div>
+              </div>
+              <div class="gex-dealer-group">
+                <div class="gex-group-title">Dealer Flow</div>
+                <div class="gex-dealer-items">
+                  <div class="dealer-item">
+                    <span class="dealer-label">Delta</span>
+                    <span class="dealer-value" id="sigDeltaFlow">--</span>
+                  </div>
+                  <div class="dealer-item">
+                    <span class="dealer-label">Charm Pin</span>
+                    <span class="dealer-value" id="sigCharmPin">--</span>
+                  </div>
+                  <div class="dealer-item">
+                    <span class="dealer-label">DEX Bias</span>
+                    <span class="dealer-value" id="sigDexBias">--</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Alerts -->
+            <div class="gex-alerts" id="sigAlerts"></div>
+          </div>
+        </div>
+
+        <!-- AI Strategy Section -->
+        <div class="section" id="sec-ai-strategy">
+          <div class="section-header" onclick="toggleSection('sec-ai-strategy')">
+            <span class="section-title">AI Strategy</span>
+            <span class="section-toggle">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="cell" style="grid-column:span 6">
+              <div class="ai-strategy-header">
+                <button class="btn-primary btn-ai" onclick="generateAIStrategy()">Generate Strategy</button>
+                <span class="ai-status" id="aiStrategyStatus"></span>
+              </div>
+
+              <!-- Extracted Trade Cards -->
+              <div class="trade-cards" id="tradeCards" style="display:none">
+                <!-- Cards populated by JS -->
+              </div>
+
+              <!-- AI Analysis (collapsible) -->
+              <details class="ai-details" id="aiDetails">
+                <summary>View Full Analysis</summary>
+                <div class="ai-strategy-output" id="aiStrategyOutput">
+                  <div class="ai-strategy-empty">
+                    Click "Generate Strategy" to get AI-powered trade recommendations.
+                  </div>
+                </div>
+              </details>
+            </div>
+          </div>
+        </div>
+
+        <!-- Position Sizing Section -->
+        <div class="section" id="sec-sizing">
+          <div class="section-header" onclick="toggleSection('sec-sizing')">
+            <span class="section-title">Position Sizing</span>
+            <span class="section-toggle">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="cell" style="grid-column:span 3">
+              <div class="t">Risk Calculator</div>
+              <div class="sizing-inputs">
+                <div class="sizing-row">
+                  <label>Account Size</label>
+                  <input type="number" id="psAccountSize" value="50000" step="1000">
+                </div>
+                <div class="sizing-row">
+                  <label>Risk % per Trade</label>
+                  <input type="number" id="psRiskPct" value="2" step="0.5" min="0.5" max="10">
+                </div>
+                <div class="sizing-row">
+                  <label>Entry Price</label>
+                  <input type="number" id="psEntry" step="0.01">
+                </div>
+                <div class="sizing-row">
+                  <label>Stop Loss</label>
+                  <input type="number" id="psStop" step="0.01">
+                </div>
+                <button class="btn-primary btn-sm" onclick="calculatePositionSize()">Calculate</button>
+              </div>
+            </div>
+            <div class="cell" style="grid-column:span 3">
+              <div class="t">Position Metrics</div>
+              <div class="sizing-results">
+                <div class="dr"><span class="l">Risk Amount</span><span class="v r" id="psRiskAmount">$--</span></div>
+                <div class="dr"><span class="l">Stop Distance</span><span class="v" id="psStopDistance">--</span></div>
+                <div class="dr"><span class="l">Position Size (Shares)</span><span class="v" id="psShares">--</span></div>
+                <div class="dr"><span class="l">Position Value</span><span class="v" id="psValue">$--</span></div>
+                <div class="dr"><span class="l">% of Account</span><span class="v" id="psPctAccount">--</span></div>
+              </div>
+              <div class="sizing-suggestions" id="sizingSuggestions">
+                <strong>ATR-Based Suggestion:</strong><br>
+                Analyze a focus stock to see ATR-based stop suggestions
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- My Thesis Section -->
+        <div class="section" id="sec-thesis">
+          <div class="section-header" onclick="toggleSection('sec-thesis')">
+            <span class="section-title">My Thesis</span>
+            <span class="section-toggle">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="cell" style="grid-column:span 6">
+              <div class="thesis-display" id="thesisDisplay">
+                <!-- Rendered markdown thesis will appear here -->
+              </div>
+              <div class="thesis-editor">
+                <div class="thesis-actions">
+                  <button class="btn-sm btn-secondary" onclick="toggleThesisEdit()">Edit</button>
+                  <label class="btn-sm btn-secondary" style="cursor:pointer">
+                    Upload .md
+                    <input type="file" id="thesisFileUpdate" accept=".md,.txt" onchange="handleThesisFileUpdate(event)" style="display:none">
+                  </label>
+                </div>
+                <textarea id="sigThesis" rows="6" placeholder="Document your thesis for this stock..." style="display:none"></textarea>
+                <button class="btn-sm btn-primary" id="saveThesisBtn" onclick="saveStockThesis()" style="display:none">Save Thesis</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -1428,6 +1677,35 @@
       <div class="form-actions">
         <button type="button" class="btn-secondary" onclick="closeFeedModal()">Cancel</button>
         <button type="submit" class="btn-primary">Save Signal</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Focus Stock Modal -->
+<div class="modal" id="focusStockModal">
+  <div class="modal-content modal-sm">
+    <div class="modal-header">
+      <h2>Add Focus Stock</h2>
+      <button class="modal-close" onclick="closeFocusStockModal()">x</button>
+    </div>
+    <form id="focusStockForm" onsubmit="saveFocusStock(event)">
+      <div class="form-group">
+        <label>Ticker</label>
+        <input type="text" id="focusTicker" required placeholder="IONQ, TSLA, etc.">
+      </div>
+      <div class="form-group">
+        <label>Upload Thesis (.md file)</label>
+        <input type="file" id="focusThesisFile" accept=".md,.txt" onchange="handleThesisFileUpload(event)">
+        <div class="file-preview" id="thesisFilePreview"></div>
+      </div>
+      <div class="form-group">
+        <label>Or Enter Thesis Manually</label>
+        <textarea id="focusThesisInput" rows="4" placeholder="Why are you tracking this stock? What's your thesis?"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" onclick="closeFocusStockModal()">Cancel</button>
+        <button type="submit" class="btn-primary">Add Stock</button>
       </div>
     </form>
   </div>

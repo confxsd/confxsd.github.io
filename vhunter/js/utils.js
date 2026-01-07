@@ -1,9 +1,10 @@
 // VHunter Shared Utilities
 
 export function formatNum(n) {
+  if (n == null || isNaN(n)) return '--';
   if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
   if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
-  return n.toString();
+  return n.toFixed(2);
 }
 
 export function avg(arr) {

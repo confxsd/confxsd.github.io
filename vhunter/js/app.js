@@ -8,6 +8,7 @@ import { loadPositions, setRunCallback as setPositionsRunCallback } from './posi
 import { loadWatchlist, setRunCallback as setWatchlistRunCallback } from './watchlist.js';
 import { loadNotes, setRunCallback as setNotesRunCallback } from './notes.js';
 import { loadFeed, setRunCallback as setFeedRunCallback } from './feed.js';
+import { loadStrategy, setRunCallback as setStrategyRunCallback } from './strategy.js';
 import { run } from './analysis.js';
 import { loadOptionsData, initOptionsPage } from './options-page.js';
 import { initTerminal, startPolling, stopPolling } from './terminal.js';
@@ -21,6 +22,7 @@ setPositionsRunCallback(() => run());
 setWatchlistRunCallback(() => run());
 setNotesRunCallback(() => run());
 setFeedRunCallback(() => run());
+setStrategyRunCallback(() => run());
 
 // Terminal page handler (start/stop polling)
 function loadTerminal() {
@@ -34,7 +36,8 @@ registerPageLoaders({
   notes: loadNotes,
   options: loadOptionsData,
   feed: loadFeed,
-  terminal: loadTerminal
+  terminal: loadTerminal,
+  strategy: loadStrategy
 });
 
 // Initialize router with change handler
