@@ -6,6 +6,18 @@ import { stopPolling } from './terminal.js';
 let currentPage = 'analyze';
 let pageLoaders = {};
 
+const pageTitles = {
+  analyze: '',
+  options: 'Options Terminal',
+  feed: 'Feed',
+  terminal: 'Terminal',
+  positions: 'Positions',
+  watchlist: 'Watchlist',
+  notes: 'Notes',
+  strategy: 'Strategy',
+  macro: 'Macro Dashboard'
+};
+
 export function getCurrentPage() {
   return currentPage;
 }
@@ -39,6 +51,12 @@ export function switchPage(page, shouldUpdateRoute = true) {
   // Toggle header elements visibility based on page
   const headerSearch = document.getElementById('headerSearch');
   const historyStrip = document.getElementById('historyStrip');
+  const pageTitle = document.getElementById('pageTitle');
+
+  // Update page title (empty for analyze, CSS :empty hides it)
+  if (pageTitle) {
+    pageTitle.textContent = pageTitles[page] || '';
+  }
 
   if (page === 'analyze') {
     if (headerSearch) headerSearch.style.display = 'flex';

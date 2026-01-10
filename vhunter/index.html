@@ -20,12 +20,14 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Modular CSS - organized for AI editing -->
   <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/layout.css?v=2">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/positions.css?v=2">
   <link rel="stylesheet" href="css/analyze.css">
@@ -36,6 +38,7 @@
   <link rel="stylesheet" href="css/terminal.css?v=3">
   <link rel="stylesheet" href="css/teaching.css">
   <link rel="stylesheet" href="css/strategy.css">
+  <link rel="stylesheet" href="css/macro.css?v=5">
   <link rel="stylesheet" href="css/responsive.css?v=2">
 </head>
 <body>
@@ -81,6 +84,10 @@
         <span class="nav-icon">🎯</span>
         <span class="nav-label">Strategy</span>
       </a>
+      <a href="#" class="nav-item" data-page="macro" onclick="event.preventDefault(); switchPage('macro')">
+        <span class="nav-icon">🌍</span>
+        <span class="nav-label">Macro</span>
+      </a>
     </nav>
     <div class="sidebar-footer">
       <div class="time" id="tm"></div>
@@ -92,6 +99,7 @@
     <!-- Top Header - Minimal -->
     <header class="top-header">
       <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+      <span class="page-title" id="pageTitle"></span>
 
       <div class="header-search" id="headerSearch">
         <input type="text" id="tk" value="TSLA" placeholder="Search ticker">
@@ -1448,6 +1456,169 @@
         </div>
       </div>
     </div>
+
+    <!-- Page: Macro -->
+    <div class="page" id="page-macro">
+      <div class="macro-header">
+        <div class="macro-controls">
+          <span class="macro-last-update" id="macroLastUpdate">--</span>
+          <button class="btn-secondary btn-sm" onclick="refreshMacro()">Refresh</button>
+          <button class="btn-icon" onclick="openMacroSettings()" title="Settings">&#9881;</button>
+        </div>
+      </div>
+
+      <!-- Market Regime Bar -->
+      <div class="macro-regime-bar" id="macroRegimeBar">
+        <div class="regime-header">
+          <div class="regime-label">MARKET REGIME</div>
+          <div class="regime-value neutral">LOADING...</div>
+        </div>
+      </div>
+
+      <!-- AI Analysis Content (collapsible) -->
+      <div class="macro-ai-section collapsed" id="macroAiSection">
+        <div class="macro-ai-header" onclick="toggleMacroAi()">
+          <div class="macro-ai-title">
+            <span class="macro-ai-icon">AI</span>
+            <span>Market Analysis</span>
+            <span class="macro-ai-time" id="macroAiTime"></span>
+          </div>
+          <div class="macro-ai-meta">
+            <button class="macro-ai-refresh" onclick="event.stopPropagation(); generateMacroAnalysis()" title="Generate new analysis">↻</button>
+            <span class="macro-ai-toggle" id="macroAiToggle">▼</span>
+          </div>
+        </div>
+        <div class="macro-ai-content" id="macroAiContent">
+          <div class="macro-ai-empty">
+            <p>Click ↻ to generate market analysis</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Row -->
+      <div class="macro-quick-metrics" id="macroQuickMetrics">
+        <div class="metric-card"><div class="metric-label">Loading...</div></div>
+      </div>
+
+      <!-- Rotation Metrics Row -->
+      <div class="macro-metrics-section">
+        <div class="macro-metrics-label">ROTATION & FLOW SIGNALS</div>
+        <div class="macro-rotation-metrics" id="macroRotationMetrics">
+          <div class="metric-card"><div class="metric-label">Loading...</div></div>
+        </div>
+      </div>
+
+      <!-- Sector Heatmap -->
+      <div class="macro-section macro-section-full">
+        <div class="macro-section-header">
+          <span class="macro-section-title">Sector Performance</span>
+          <span class="macro-section-summary" id="sectorSummary">--</span>
+        </div>
+        <div class="sector-heatmap" id="sectorHeatmap">
+          <div class="macro-loading">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Main Grid -->
+      <div class="macro-grid">
+        <!-- Indices Section -->
+        <div class="macro-section">
+          <div class="macro-section-header">
+            <span class="macro-section-title">Indices</span>
+          </div>
+          <div class="asset-cards" id="indicesCards">
+            <div class="macro-loading">Loading...</div>
+          </div>
+        </div>
+
+        <!-- Bonds Section -->
+        <div class="macro-section">
+          <div class="macro-section-header">
+            <span class="macro-section-title">Bonds</span>
+          </div>
+          <div class="asset-cards" id="bondsCards">
+            <div class="macro-loading">Loading...</div>
+          </div>
+        </div>
+
+        <!-- Commodities Section -->
+        <div class="macro-section">
+          <div class="macro-section-header">
+            <span class="macro-section-title">Commodities</span>
+          </div>
+          <div class="asset-cards" id="commoditiesCards">
+            <div class="macro-loading">Loading...</div>
+          </div>
+        </div>
+
+        <!-- Mag7 Section -->
+        <div class="macro-section macro-section-wide">
+          <div class="macro-section-header">
+            <span class="macro-section-title">Mega-Cap Tech</span>
+            <span class="macro-section-summary" id="mag7Summary">--</span>
+          </div>
+          <div id="mag7Cards">
+            <div class="macro-loading">Loading...</div>
+          </div>
+        </div>
+
+        <!-- Correlations Section -->
+        <div class="macro-section">
+          <div class="macro-section-header">
+            <span class="macro-section-title">Cross-Asset</span>
+          </div>
+          <div class="correlations-grid" id="correlationsGrid">
+            <div class="macro-loading">Loading...</div>
+          </div>
+        </div>
+
+        <!-- Calendar Section -->
+        <div class="macro-section macro-section-wide">
+          <div class="macro-section-header">
+            <span class="macro-section-title">Economic Calendar</span>
+            <span class="macro-section-date" id="calendarDate">--</span>
+          </div>
+          <div class="calendar-list" id="calendarList">
+            <div class="calendar-empty">
+              <button class="btn-secondary btn-sm" onclick="fetchEconomicCalendar()">Fetch Today's Events</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Modal -->
+      <div class="modal" id="macroSettingsModal">
+        <div class="modal-content modal-sm">
+          <button class="modal-close" onclick="closeMacroSettings()">&times;</button>
+          <div class="modal-header">
+            <h2>Macro Settings</h2>
+          </div>
+          <form id="macroSettingsForm" onsubmit="saveMacroSettings(event)">
+            <div class="form-group">
+              <label>Auto-refresh interval</label>
+              <select id="macroRefreshInterval">
+                <option value="0">Manual only</option>
+                <option value="30000">30 seconds</option>
+                <option value="60000" selected>1 minute</option>
+                <option value="300000">5 minutes</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Custom Mag7 Tickers (comma-separated)</label>
+              <input type="text" id="customMag7" placeholder="AAPL,MSFT,GOOGL...">
+            </div>
+            <div class="form-group">
+              <label>Additional Indices (ETFs)</label>
+              <input type="text" id="customIndices" placeholder="XLF,XLE,XLK...">
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" onclick="closeMacroSettings()">Cancel</button>
+              <button type="submit" class="btn-primary">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -1714,6 +1885,6 @@
 <!-- FAB Button (Mobile) -->
 <button class="fab" id="fabButton" onclick="openFeedModal()">+</button>
 
-<script type="module" src="js/app.js?v=2"></script>
+<script type="module" src="js/app.js?v=9"></script>
 </body>
 </html>

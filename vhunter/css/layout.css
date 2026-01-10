@@ -151,6 +151,17 @@
 
 .menu-btn:hover { background: #f1f5f9; }
 
+/* Page Title in Header */
+.page-title {
+  font-weight: 700;
+  font-size: 18px;
+  color: #1e293b;
+}
+
+.page-title:empty {
+  display: none;
+}
+
 /* Search - pill style */
 .header-search {
   display: flex;

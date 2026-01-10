@@ -3,7 +3,7 @@ import * as ui from './ui.js';
 import { initCharts } from './charts.js';
 import { parseRoute, initRouter } from './router.js';
 import { renderHistory, setSearchCallback } from './history.js';
-import { switchPage, registerPageLoaders, restoreCollapsedSections, getCurrentPage } from './pages.js';
+import { switchPage, registerPageLoaders, restoreCollapsedSections, getCurrentPage } from './pages.js?v=2';
 import { loadPositions, setRunCallback as setPositionsRunCallback } from './positions.js';
 import { loadWatchlist, setRunCallback as setWatchlistRunCallback } from './watchlist.js';
 import { loadNotes, setRunCallback as setNotesRunCallback } from './notes.js';
@@ -12,6 +12,7 @@ import { loadStrategy, setRunCallback as setStrategyRunCallback } from './strate
 import { run } from './analysis.js';
 import { loadOptionsData, initOptionsPage } from './options-page.js';
 import { initTerminal, startPolling, stopPolling } from './terminal.js';
+import { loadMacro } from './macro.js';
 
 // Import modules for side effects (window bindings)
 import './portfolio.js';
@@ -37,7 +38,8 @@ registerPageLoaders({
   options: loadOptionsData,
   feed: loadFeed,
   terminal: loadTerminal,
-  strategy: loadStrategy
+  strategy: loadStrategy,
+  macro: loadMacro
 });
 
 // Initialize router with change handler
