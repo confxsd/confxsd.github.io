@@ -15,16 +15,33 @@ const DEFAULT_INDICES = [
 
 const DEFAULT_VIX = { ticker: 'UVXY', name: 'VIX', isVix: true };
 
-const DEFAULT_BONDS = [
-  { ticker: 'TLT', name: '20Y Treasury' },
-  { ticker: 'IEF', name: '10Y Treasury' },
-  { ticker: 'SHY', name: '2Y Treasury' }
+// Bond/Rate ETFs - inverse relationship to yields
+const DEFAULT_RATES = [
+  { ticker: 'SHY', name: '1-3Y Tsy', label: '2Y' },
+  { ticker: 'IEI', name: '3-7Y Tsy', label: '5Y' },
+  { ticker: 'IEF', name: '7-10Y Tsy', label: '10Y' },
+  { ticker: 'TLT', name: '20Y+ Tsy', label: '20Y' }
 ];
+
+// Keep for backward compatibility
+const DEFAULT_BONDS = DEFAULT_RATES;
 
 const DEFAULT_COMMODITIES = [
   { ticker: 'GLD', name: 'Gold' },
   { ticker: 'SLV', name: 'Silver' },
-  { ticker: 'USO', name: 'Oil' }
+  { ticker: 'USO', name: 'Oil' },
+  { ticker: 'UNG', name: 'NatGas' },
+  { ticker: 'CPER', name: 'Copper' },
+  { ticker: 'DBA', name: 'Agri' },
+  { ticker: 'BITO', name: 'Bitcoin' }
+];
+
+// Global Indices ETFs
+const GLOBAL_INDICES = [
+  { ticker: 'VGK', name: 'Europe' },
+  { ticker: 'FXI', name: 'China' },
+  { ticker: 'EWJ', name: 'Japan' },
+  { ticker: 'VEA', name: 'Dev Ex-US' }
 ];
 
 // Rotation & Flow ETFs
@@ -180,6 +197,500 @@ Trading: IWM strength = bullish breadth signal`
   }
 };
 
+// Detailed tooltips for data items - key insight first, then explanation
+const DATA_TIPS = {
+  // Indices
+  SPY: 'THE benchmark. S&P 500 tracks 500 largest US companies. If SPY is down, most stocks are down.',
+  QQQ: 'Tech-heavy = high beta. Nasdaq 100 is 50%+ tech. Leads in risk-on, drops harder in selloffs.',
+  DIA: 'Old economy proxy. Dow 30 = industrials, financials. Lags tech rallies, holds better in corrections.',
+  IWM: 'Risk appetite gauge. Small caps need liquidity + confidence. IWM leading = broad risk-on.',
+  UVXY: 'FEAR INDEX. VIX spikes = market stress. <15 complacent, 20+ caution, 30+ panic/opportunity.',
+  // Rates (Bond ETFs - inverse to yields)
+  SHY: 'Fed policy proxy. 1-3Y bonds move with rate expectations. Rising = Fed hawkish.',
+  IEI: 'Mid-curve rates. 3-7Y bonds balance growth vs Fed outlook.',
+  IEF: '10Y benchmark. Most watched rate globally. Mortgage rates, equity valuations key off this.',
+  TLT: 'Duration risk. 20Y+ bonds = max rate sensitivity. Flight to safety bid in crashes.',
+  // Commodities
+  GLD: 'Crisis hedge. Gold rises on: inflation fears, USD weakness, geopolitical risk, real rates falling.',
+  SLV: 'Industrial + precious. Silver has more beta than gold. Outperforms in commodity rallies.',
+  USO: 'Global demand proxy. Oil up = growth optimism OR supply fear. Watch vs equity correlation.',
+  UNG: 'Weather + energy. Natgas is volatile, seasonal. Winter demand, LNG exports key drivers.',
+  CPER: 'Dr. Copper = economic health. Copper demand = construction, EVs, infrastructure spending.',
+  DBA: 'Inflation input. Agriculture prices feed into CPI. Weather, supply chains matter.',
+  BITO: 'Risk-on extreme. Bitcoin = liquidity barometer. Leads risk appetite, high correlation to QQQ.',
+  // Global Indices
+  VGK: 'Europe exposure. Financials heavy, energy. Weak euro helps, rates hurt.',
+  FXI: 'China Large-Cap proxy. Policy-driven, volatile. Property, tech regulation risks.',
+  EWJ: 'Japan = weak yen play. Exporters benefit from yen weakness. BOJ policy key.',
+  VEA: 'Non-US developed. Diversification from US. Currency exposure matters.',
+  // Rotation ETFs
+  IWF: 'Growth factor. Russell 1000 Growth = momentum, high P/E. Leads in low rate environment.',
+  IWD: 'Value factor. Russell 1000 Value = dividends, low P/E. Outperforms in rising rate environment.',
+  HYG: 'Credit risk appetite. High yield bonds = junk. Spreads tighten in risk-on, blow out in stress.',
+  LQD: 'Quality credit. Investment grade corps. Flight to quality within credit.',
+  UUP: 'Dollar strength. Strong USD = headwind for commodities, EM, multinationals. Liquidity drain.',
+  EEM: 'EM risk proxy. Emerging markets need: weak USD, global growth, commodity demand.',
+  XLP: 'Defensive staples. Toothpaste, food, tobacco. Steady demand regardless of economy.',
+  XLY: 'Consumer health. Discretionary = confidence. Amazon, Tesla, Home Depot. Risk-on sector.',
+  // Sectors
+  XLK: 'Tech dominates. ~30% of S&P. AAPL, MSFT, NVDA. Growth + quality factor exposure.',
+  XLF: 'Rate sensitive. Banks profit from yield curve steepness. Insurance, asset managers.',
+  XLV: 'Defensive growth. Healthcare = steady demand. Pharma, insurers, biotech mix.',
+  XLC: 'GOOGL + META heavy. Communication services. Ad revenue = economic bellwether.',
+  XLI: 'Economic cycle. Industrials lead in early cycle recovery. Defense, aerospace, machinery.',
+  XLE: 'Oil beta. Energy = pure commodity play. High dividend, volatile with crude.',
+  XLU: 'Bond proxy. Utilities = yield + safety. Underperforms in rising rate environment.',
+  XLRE: 'Rate sensitive. Real estate = leverage. Benefits from low rates, hurt by higher.',
+  XLB: 'Commodity input. Materials = mining, chemicals. Inflation + growth play.',
+  // Mag7 & Leaders
+  AAPL: 'Cash king. Services growth key. iPhone cycles, China exposure risks.',
+  MSFT: 'Cloud + AI. Azure growth, enterprise sticky. Safest mega-cap.',
+  GOOGL: 'Ad monopoly. Search + YouTube. AI threat/opportunity. Antitrust risk.',
+  AMZN: 'AWS = profit. E-commerce = revenue. Consumer bellwether.',
+  META: 'Ad recovery. Instagram, WhatsApp moats. Metaverse spend risk.',
+  NVDA: 'AI kingmaker. GPU monopoly for AI training. Valuation = growth must continue.',
+  TSLA: 'Musk premium/risk. EV leader but competition rising. High beta meme-ish.',
+  AVGO: 'AI infrastructure. Networking, custom chips. Dividend growth.',
+  AMD: 'NVDA challenger. CPU + GPU competition. Data center key driver.',
+  NFLX: 'Streaming winner. Password crackdown worked. Ad tier growth.',
+  CRM: 'Enterprise SaaS. AI features key. Integration + platform play.',
+  ORCL: 'Cloud pivot. Database legacy + cloud growth. AI infrastructure.',
+  ADBE: 'Creative monopoly. Photoshop, PDF. AI features + pricing power.'
+};
+
+// Quick metric tooltips - conclusion first, then explanation
+const METRIC_TIPS = {
+  YIELD: 'STEEP = growth ahead, FLAT = slowdown. Spread between 10Y and 2Y Treasury yields. Inverted curve historically precedes recession.',
+  RISK: 'Positive = RISK-ON. Compares SPY (stocks) vs TLT (bonds). Money flowing to stocks = bullish, to bonds = defensive.',
+  VOL: 'Your fear gauge. VIX <15 = complacent (buy protection cheap), 20+ = elevated, 30+ = panic (contrarian opportunity).',
+  'TECH/VAL': 'Shows market preference. QQQ vs IWD spread. Positive = growth/momentum favored, Negative = value/dividend rotation.',
+  GOLD: 'Safe haven signal. Gold rising with stocks = inflation fear. Gold up, stocks down = risk-off flight.',
+  BREADTH: 'Rally health check. How many indices positive? 4/4 = strong, 1-2/4 = narrow/risky rally, may reverse.'
+};
+
+// Rotation card tooltips - conclusion first, then explanation
+const ROTATION_TIPS = {
+  growthValue: 'GROWTH leading = momentum, AI, tech bid. VALUE leading = dividends, financials, energy favored. Extreme spreads mean-revert.',
+  creditSpread: 'TIGHT spreads = risk-on, no stress. WIDE spreads = credit fear, reduce risk. HYG vs LQD shows junk vs quality preference.',
+  dollarStrength: 'Strong USD = HEADWIND for gold, commodities, EM, multinationals. Weak USD = tailwind for risk assets globally.',
+  emFlow: 'EM outperforming = global risk-on cycle, weak dollar. US outperforming = flight to quality, dollar strength.',
+  defensiveRotation: 'STAPLES leading = late cycle, caution. DISCRETIONARY leading = consumer confident, early cycle risk-on.',
+  qualitySpread: 'Large caps leading = flight to quality, caution. Small caps leading = risk appetite, liquidity abundant, bullish breadth.'
+};
+
+// Strip section tooltips - dynamic with current data
+const STRIP_TIPS = {
+  IDX: {
+    title: 'US Market Indices',
+    getContent: () => {
+      const spy = macroData['SPY'];
+      const qqq = macroData['QQQ'];
+      const iwm = macroData['IWM'];
+      const vix = macroData['UVXY'];
+
+      let status = 'Loading...';
+      if (spy && qqq) {
+        const allUp = spy.changePercent > 0 && qqq.changePercent > 0;
+        const allDown = spy.changePercent < 0 && qqq.changePercent < 0;
+        const techLeading = qqq.changePercent > spy.changePercent;
+        const smallCapStrong = iwm && iwm.changePercent > spy.changePercent;
+
+        if (allUp && smallCapStrong) status = '🟢 RISK-ON: Broad rally, small caps leading';
+        else if (allUp && techLeading) status = '🟢 RISK-ON: Tech leading the rally';
+        else if (allUp) status = '🟢 RISK-ON: Markets higher';
+        else if (allDown) status = '🔴 RISK-OFF: Broad selling pressure';
+        else status = '🟡 MIXED: Rotation in progress';
+      }
+
+      return `<div class="tip-status">${status}</div>
+<div class="tip-detail">SPY = S&P 500 benchmark (large cap)
+QQQ = Nasdaq 100 (tech-heavy, higher beta)
+DIA = Dow 30 (old economy, industrials)
+IWM = Russell 2000 (small caps, risk appetite)
+VIX = Fear gauge (inverse to confidence)</div>`;
+    }
+  },
+  RATE: {
+    title: 'Treasury Rates (Bond ETFs)',
+    getContent: () => {
+      const tlt = macroData['TLT'];
+      const shy = macroData['SHY'];
+
+      let status = 'Loading...';
+      if (tlt && shy) {
+        const spread = tlt.changePercent - shy.changePercent;
+        if (spread > 0.1) status = '🟢 STEEPENING: Growth expectations rising';
+        else if (spread < -0.1) status = '🔴 FLATTENING: Slowdown signal, Fed too tight';
+        else status = '🟡 STABLE: Curve holding steady';
+      }
+
+      return `<div class="tip-status">${status}</div>
+<div class="tip-detail">These are BOND ETFs (inverse to yields):
+• Bond price UP = Yields DOWN
+• Bond price DOWN = Yields UP
+
+SHY (2Y) = Fed policy expectations
+IEI (5Y) = Mid-curve, balanced view
+IEF (10Y) = Key benchmark for mortgages
+TLT (20Y+) = Duration risk, flight to safety
+
+CURVE = TLT vs SHY spread. Steep = growth, Flat = caution.</div>`;
+    }
+  },
+  CMDY: {
+    title: 'Commodities',
+    getContent: () => {
+      const gld = macroData['GLD'];
+      const uso = macroData['USO'];
+      const cper = macroData['CPER'];
+
+      let status = 'Loading...';
+      if (gld && uso) {
+        const goldUp = gld.changePercent > 0.2;
+        const oilUp = uso.changePercent > 0.5;
+        const copperUp = cper && cper.changePercent > 0.3;
+
+        if (goldUp && !oilUp) status = '🟡 SAFE HAVEN: Gold bid, risk-off tone';
+        else if (oilUp && copperUp) status = '🟢 GROWTH BID: Industrial commodities strong';
+        else if (goldUp && oilUp) status = '⚠️ INFLATION: All commodities rising';
+        else status = '🟡 NEUTRAL: Mixed commodity signals';
+      }
+
+      return `<div class="tip-status">${status}</div>
+<div class="tip-detail">GLD = Gold (fear/inflation hedge)
+SLV = Silver (industrial + precious)
+USO = Oil (global demand proxy)
+UNG = Natural Gas (weather/energy)
+CPER = Copper ("Dr. Copper" = economy)
+DBA = Agriculture (food inflation)
+BITO = Bitcoin (risk-on extreme)</div>`;
+    }
+  },
+  GLBL: {
+    title: 'Global Markets',
+    getContent: () => {
+      const vgk = macroData['VGK'];
+      const fxi = macroData['FXI'];
+      const ewj = macroData['EWJ'];
+      const spy = macroData['SPY'];
+
+      let status = 'Loading...';
+      if (spy) {
+        const usLeading = vgk && fxi && (spy.changePercent > vgk.changePercent && spy.changePercent > fxi.changePercent);
+        const globalRally = vgk && fxi && vgk.changePercent > 0 && fxi.changePercent > 0;
+
+        if (usLeading) status = '🇺🇸 US OUTPERFORMING: Dollar strength, flight to quality';
+        else if (globalRally) status = '🌍 GLOBAL RISK-ON: International markets strong';
+        else status = '🟡 MIXED: Regional divergence';
+      }
+
+      return `<div class="tip-status">${status}</div>
+<div class="tip-detail">VGK = Europe (financials, energy heavy)
+FXI = China (policy-driven, volatile)
+EWJ = Japan (weak yen = exporters benefit)
+VEA = Developed Ex-US (diversification)
+
+US outperforming = strong dollar, safe haven
+Global leading = weak dollar, risk-on cycle</div>`;
+    }
+  }
+};
+
+// ============================================
+// AI DYNAMIC TOOLTIP SYSTEM - Centralized
+// ============================================
+
+// AI tooltip cache in memory (loaded from DB on demand)
+let aiTooltipCache = {};
+
+// Get user ID for DB operations
+function getUserId() {
+  return localStorage.getItem('vhunter_user_id') || 'vhunter-serhat';
+}
+
+// Fetch AI tooltip from DB
+async function fetchAiTooltipFromDb(section) {
+  try {
+    const response = await fetch(`https://vhunter-proxy.vhunter.workers.dev/api/macro-tooltips/${section}`, {
+      headers: { 'X-User-Id': getUserId() }
+    });
+    if (response.ok) {
+      const data = await response.json();
+      return data;
+    }
+    return null;
+  } catch (e) {
+    console.warn('Failed to fetch AI tooltip from DB:', e);
+    return null;
+  }
+}
+
+// Save AI tooltip to DB
+async function saveAiTooltipToDb(section, content) {
+  try {
+    await fetch(`https://vhunter-proxy.vhunter.workers.dev/api/macro-tooltips`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': getUserId()
+      },
+      body: JSON.stringify({ section, content })
+    });
+  } catch (e) {
+    console.warn('Failed to save AI tooltip to DB:', e);
+  }
+}
+
+// Build market context for AI prompts
+function buildMarketContext(section) {
+  const lines = [];
+
+  switch (section) {
+    case 'IDX':
+      lines.push('US INDICES TODAY:');
+      DEFAULT_INDICES.forEach(idx => {
+        const d = macroData[idx.ticker];
+        if (d) lines.push(`${idx.ticker}: $${d.price?.toFixed(2)} (${d.changePercent >= 0 ? '+' : ''}${d.changePercent?.toFixed(2)}%)`);
+      });
+      const vix = macroData[DEFAULT_VIX.ticker];
+      if (vix) lines.push(`VIX (UVXY): $${vix.price?.toFixed(2)} (${vix.changePercent >= 0 ? '+' : ''}${vix.changePercent?.toFixed(2)}%)`);
+      break;
+
+    case 'RATE':
+      lines.push('TREASURY BOND ETFS TODAY (inverse to yields):');
+      DEFAULT_RATES.forEach(rate => {
+        const d = macroData[rate.ticker];
+        if (d) lines.push(`${rate.label} (${rate.ticker}): $${d.price?.toFixed(2)} (${d.changePercent >= 0 ? '+' : ''}${d.changePercent?.toFixed(2)}%)`);
+      });
+      const tlt = macroData['TLT'];
+      const shy = macroData['SHY'];
+      if (tlt && shy) {
+        const spread = (tlt.changePercent - shy.changePercent).toFixed(2);
+        lines.push(`Curve spread (TLT-SHY): ${spread}%`);
+      }
+      break;
+
+    case 'CMDY':
+      lines.push('COMMODITIES TODAY:');
+      DEFAULT_COMMODITIES.forEach(comm => {
+        const d = macroData[comm.ticker];
+        if (d) lines.push(`${comm.name} (${comm.ticker}): $${d.price?.toFixed(2)} (${d.changePercent >= 0 ? '+' : ''}${d.changePercent?.toFixed(2)}%)`);
+      });
+      break;
+
+    case 'GLBL':
+      lines.push('GLOBAL INDICES TODAY:');
+      GLOBAL_INDICES.forEach(idx => {
+        const d = macroData[idx.ticker];
+        if (d) lines.push(`${idx.name} (${idx.ticker}): $${d.price?.toFixed(2)} (${d.changePercent >= 0 ? '+' : ''}${d.changePercent?.toFixed(2)}%)`);
+      });
+      const spy = macroData['SPY'];
+      if (spy) lines.push(`US (SPY): $${spy.price?.toFixed(2)} (${spy.changePercent >= 0 ? '+' : ''}${spy.changePercent?.toFixed(2)}%)`);
+      break;
+
+    case 'SECTOR':
+      lines.push('SECTOR PERFORMANCE TODAY:');
+      const sectors = DEFAULT_SECTORS.map(s => ({
+        ...s,
+        changePercent: macroData[s.ticker]?.changePercent || 0
+      })).sort((a, b) => b.changePercent - a.changePercent);
+      sectors.forEach(s => {
+        lines.push(`${s.name} (${s.ticker}): ${s.changePercent >= 0 ? '+' : ''}${s.changePercent.toFixed(2)}%`);
+      });
+      break;
+
+    case 'ROTATION':
+      lines.push('ROTATION SIGNALS TODAY:');
+      const m = metrics;
+      if (m.growthValue) lines.push(`Growth/Value (IWF-IWD): ${m.growthValue.signal} (${m.growthValue.value?.toFixed(2)}%)`);
+      if (m.creditSpread) lines.push(`Credit (HYG-LQD): ${m.creditSpread.signal} (${m.creditSpread.value?.toFixed(2)}%)`);
+      if (m.dollarStrength) lines.push(`Dollar (UUP): ${m.dollarStrength.signal} (${m.dollarStrength.value?.toFixed(2)}%)`);
+      if (m.emFlow) lines.push(`EM Flow (EEM-SPY): ${m.emFlow.signal} (${m.emFlow.value?.toFixed(2)}%)`);
+      if (m.defensiveRotation) lines.push(`Def/Cyc (XLP-XLY): ${m.defensiveRotation.signal} (${m.defensiveRotation.value?.toFixed(2)}%)`);
+      if (m.qualitySpread) lines.push(`Large/Small (SPY-IWM): ${m.qualitySpread.signal} (${m.qualitySpread.value?.toFixed(2)}%)`);
+      break;
+
+    default:
+      lines.push('No specific context available');
+  }
+
+  return lines.join('\n');
+}
+
+// AI prompt templates for each section
+const AI_TOOLTIP_PROMPTS = {
+  IDX: (context) => `You are a Bloomberg terminal analyst. Based on today's US index moves:
+
+${context}
+
+Give a 2-3 sentence insight about what this tells us about market sentiment today. Be specific about which indices are leading/lagging and what it means for positioning. End with one actionable takeaway.
+
+Format: Start with the key conclusion, then explain why.`,
+
+  RATE: (context) => `You are a rates strategist. Based on today's Treasury ETF moves:
+
+${context}
+
+Explain in 2-3 sentences what the yield curve is telling us today. Is it steepening or flattening? What does this mean for growth expectations and Fed policy? End with what this means for equity positioning.
+
+Remember: Bond prices move INVERSE to yields. TLT up = long rates falling.`,
+
+  CMDY: (context) => `You are a commodities analyst. Based on today's commodity moves:
+
+${context}
+
+In 2-3 sentences, explain what commodities are signaling about inflation, growth, and risk appetite today. Highlight any notable divergences (e.g., gold vs oil, copper vs gold). End with one trading implication.`,
+
+  GLBL: (context) => `You are a global macro strategist. Based on today's international market moves:
+
+${context}
+
+In 2-3 sentences, analyze the US vs international performance. Is the US outperforming or underperforming? What does this say about dollar strength, risk appetite, and global flows? End with one portfolio implication.`,
+
+  SECTOR: (context) => `You are an equity sector strategist. Based on today's sector performance:
+
+${context}
+
+In 2-3 sentences, identify the rotation happening today. Which sectors are leading/lagging? Is this a risk-on or risk-off rotation? What cycle stage does this suggest? End with which sectors to favor.`,
+
+  ROTATION: (context) => `You are a factor rotation analyst. Based on today's rotation signals:
+
+${context}
+
+In 2-3 sentences, synthesize what these cross-asset signals are telling us. Is money flowing to growth or value? Risk-on or defensive? What's the dollar doing and how does it affect other assets? End with the dominant theme today.`
+};
+
+// Generate AI insight for a section (always generates fresh, saves to DB)
+async function generateAiTooltip(section) {
+  const context = buildMarketContext(section);
+  const promptFn = AI_TOOLTIP_PROMPTS[section];
+
+  if (!promptFn) {
+    return 'AI insight not available for this section.';
+  }
+
+  const prompt = promptFn(context);
+
+  try {
+    const response = await fetchClaude(prompt, true);
+
+    // Cache in memory for current session
+    aiTooltipCache[section] = {
+      content: response,
+      timestamp: Date.now()
+    };
+
+    // Save to DB (async, don't wait)
+    saveAiTooltipToDb(section, response);
+
+    return response;
+  } catch (e) {
+    console.error('AI tooltip error:', e);
+    return `Failed to generate insight: ${e.message}`;
+  }
+}
+
+// Load cached AI tooltip (from memory or DB)
+async function loadCachedAiTooltip(section) {
+  // Check memory cache first
+  if (aiTooltipCache[section]) {
+    return aiTooltipCache[section].content;
+  }
+
+  // Try DB
+  const dbData = await fetchAiTooltipFromDb(section);
+  if (dbData && dbData.content) {
+    // Cache in memory
+    aiTooltipCache[section] = {
+      content: dbData.content,
+      timestamp: new Date(dbData.updated_at || dbData.created_at).getTime()
+    };
+    return dbData.content;
+  }
+
+  return null;
+}
+
+// Update tooltip with AI content (forceRefresh = generate new, otherwise try cache first)
+async function updateTooltipWithAi(section, tooltipEl, forceRefresh = false) {
+  const aiContentEl = tooltipEl.querySelector('.ai-tooltip-content');
+  const aiBtn = tooltipEl.querySelector('.ai-tooltip-btn');
+
+  if (!aiContentEl) return;
+
+  // Show loading state
+  aiContentEl.innerHTML = '<span class="ai-loading">Analyzing...</span>';
+  aiContentEl.classList.add('loading');
+  if (aiBtn) aiBtn.disabled = true;
+
+  try {
+    let insight;
+
+    if (!forceRefresh) {
+      // Try to load from cache/DB first
+      insight = await loadCachedAiTooltip(section);
+    }
+
+    if (!insight) {
+      // Generate fresh
+      insight = await generateAiTooltip(section);
+    }
+
+    aiContentEl.innerHTML = insight;
+    aiContentEl.classList.remove('loading');
+    aiContentEl.classList.add('loaded');
+
+    // Update button to show refresh icon
+    if (aiBtn) aiBtn.textContent = '↻';
+  } catch (e) {
+    aiContentEl.innerHTML = `<span class="ai-error">Error: ${e.message}</span>`;
+    aiContentEl.classList.remove('loading');
+  } finally {
+    if (aiBtn) aiBtn.disabled = false;
+  }
+}
+
+// Render strip label with tooltip icon and AI button (no pre-loading)
+function renderStripLabel(key, label) {
+  const tip = STRIP_TIPS[key];
+  if (!tip) return `<div class="data-strip-label">${label}</div>`;
+
+  const content = tip.getContent();
+
+  return `
+    <div class="data-strip-label">
+      <span class="strip-label-text">${label}</span>
+      <div class="macro-tooltip strip-tip" data-tip-key="${key}">
+        <span class="tooltip-icon">?</span>
+        <div class="tooltip-content tooltip-with-ai">
+          <div class="tooltip-title">${tip.title}</div>
+          <div class="tooltip-text">${content}</div>
+          <div class="ai-tooltip-section">
+            <div class="ai-tooltip-header">
+              <span class="ai-label">AI Insight</span>
+              <button class="ai-tooltip-btn" onclick="event.stopPropagation(); window.loadAiTooltip('${key}', this.closest('.macro-tooltip'))">
+                ✨
+              </button>
+            </div>
+            <div class="ai-tooltip-content">
+              <span class="ai-placeholder">Click ✨ for AI insight</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Load AI tooltip on click (tries cache/DB first, then generates)
+window.loadAiTooltip = async function(section, tooltipEl) {
+  const aiContentEl = tooltipEl.querySelector('.ai-tooltip-content');
+
+  // If already loaded, refresh instead
+  const isLoaded = aiContentEl?.classList.contains('loaded');
+  await updateTooltipWithAi(section, tooltipEl, isLoaded);
+};
+
 let settings = {};
 let refreshInterval = null;
 let macroData = {};
@@ -211,8 +722,9 @@ function getAllTickers() {
   const tickers = new Set();
   DEFAULT_INDICES.forEach(i => tickers.add(i.ticker));
   tickers.add(DEFAULT_VIX.ticker);
-  DEFAULT_BONDS.forEach(b => tickers.add(b.ticker));
+  DEFAULT_RATES.forEach(r => tickers.add(r.ticker));
   DEFAULT_COMMODITIES.forEach(c => tickers.add(c.ticker));
+  GLOBAL_INDICES.forEach(g => tickers.add(g.ticker));
   DEFAULT_SECTORS.forEach(s => tickers.add(s.ticker));
   ROTATION_ETFS.forEach(r => tickers.add(r.ticker));
   const mag7List = settings.mag7 || DEFAULT_MAG7;
@@ -358,6 +870,8 @@ function processSnapshot(data) {
   const prevClose = data.prevDay?.c || price;
   const change = data.todaysChange || (price - prevClose);
   const changePercent = data.todaysChangePerc || (prevClose ? ((change / prevClose) * 100) : 0);
+  const todayVol = data.day?.v || 0;
+  const prevVol = data.prevDay?.v || todayVol; // Use prev day volume as baseline
   return {
     price,
     prevClose,
@@ -365,7 +879,9 @@ function processSnapshot(data) {
     changePercent,
     high: data.day?.h || price,
     low: data.day?.l || price,
-    volume: data.day?.v || 0,
+    volume: todayVol,
+    prevVolume: prevVol,
+    avgVolume: prevVol, // Use prev day as approximation for avg
     updated: data.updated
   };
 }
@@ -375,9 +891,11 @@ async function fetchAllMacroData() {
   const allTickers = getAllTickers();
   console.log('Fetching macro data for:', allTickers);
 
-  const results = await Promise.allSettled(
-    allTickers.map(ticker => fetchSnapshot(ticker))
-  );
+  // Fetch snapshots and sparklines in parallel
+  const [results] = await Promise.all([
+    Promise.allSettled(allTickers.map(ticker => fetchSnapshot(ticker))),
+    fetchRotationSparklines()
+  ]);
 
   allTickers.forEach((ticker, i) => {
     const result = results[i];
@@ -620,7 +1138,7 @@ function renderRegimeBar() {
   `;
 }
 
-// Render quick metrics row
+// Render quick metrics row - compact strip layout
 function renderQuickMetrics() {
   const container = document.getElementById('macroQuickMetrics');
   if (!container) return;
@@ -633,59 +1151,78 @@ function renderQuickMetrics() {
     return 'neutral';
   };
 
-  container.innerHTML = `
-    <div class="metric-card">
-      <div class="metric-header">
-        <span class="metric-label">Yield Curve</span>
-        ${renderTooltip('yieldCurve')}
-      </div>
-      <div class="metric-signal ${getSignalClass(m.yieldCurve?.signal)}">${m.yieldCurve?.signal || '--'}</div>
-      <div class="metric-value">${m.yieldCurve?.value >= 0 ? '+' : ''}${(m.yieldCurve?.value || 0).toFixed(2)}%</div>
+  const metricsData = [
+    { label: 'YIELD', signal: m.yieldCurve?.signal, value: `${m.yieldCurve?.value >= 0 ? '+' : ''}${(m.yieldCurve?.value || 0).toFixed(2)}%` },
+    { label: 'RISK', signal: m.riskAppetite?.signal, value: `${m.riskAppetite?.value >= 0 ? '+' : ''}${(m.riskAppetite?.value || 0).toFixed(2)}%` },
+    { label: 'VOL', signal: m.volRegime?.signal, value: `$${(m.volRegime?.value || 0).toFixed(0)}` },
+    { label: 'TECH/VAL', signal: m.techValue?.signal, value: `${m.techValue?.value >= 0 ? '+' : ''}${(m.techValue?.value || 0).toFixed(2)}%` },
+    { label: 'GOLD', signal: m.goldSignal?.signal, value: `${m.goldSignal?.value >= 0 ? '+' : ''}${(m.goldSignal?.value || 0).toFixed(2)}%` },
+    { label: 'BREADTH', signal: m.breadth?.signal, value: `${m.breadth?.value || '--'}` }
+  ];
+
+  container.innerHTML = metricsData.map(item => {
+    const tip = METRIC_TIPS[item.label] || '';
+    return `
+    <div class="metric-card" data-tip="${tip}">
+      <span class="metric-label">${item.label}</span>
+      <span class="metric-signal ${getSignalClass(item.signal)}">${item.signal || '--'}</span>
+      <span class="metric-value">${item.value}</span>
     </div>
-    <div class="metric-card">
-      <div class="metric-header">
-        <span class="metric-label">Risk Appetite</span>
-        ${renderTooltip('riskAppetite')}
-      </div>
-      <div class="metric-signal ${getSignalClass(m.riskAppetite?.signal)}">${m.riskAppetite?.signal || '--'}</div>
-      <div class="metric-value">${m.riskAppetite?.value >= 0 ? '+' : ''}${(m.riskAppetite?.value || 0).toFixed(2)}%</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-header">
-        <span class="metric-label">Vol Regime</span>
-        ${renderTooltip('volRegime')}
-      </div>
-      <div class="metric-signal ${getSignalClass(m.volRegime?.signal)}">${m.volRegime?.signal || '--'}</div>
-      <div class="metric-value">$${(m.volRegime?.value || 0).toFixed(1)} (${m.volRegime?.change >= 0 ? '+' : ''}${(m.volRegime?.change || 0).toFixed(1)}%)</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-header">
-        <span class="metric-label">Tech vs Value</span>
-        ${renderTooltip('techValue')}
-      </div>
-      <div class="metric-signal ${getSignalClass(m.techValue?.signal)}">${m.techValue?.signal || '--'}</div>
-      <div class="metric-value">${m.techValue?.value >= 0 ? '+' : ''}${(m.techValue?.value || 0).toFixed(2)}%</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-header">
-        <span class="metric-label">Gold Signal</span>
-        ${renderTooltip('goldSignal')}
-      </div>
-      <div class="metric-signal ${getSignalClass(m.goldSignal?.signal)}">${m.goldSignal?.signal || '--'}</div>
-      <div class="metric-value">${m.goldSignal?.value >= 0 ? '+' : ''}${(m.goldSignal?.value || 0).toFixed(2)}%</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-header">
-        <span class="metric-label">Breadth</span>
-        ${renderTooltip('breadth')}
-      </div>
-      <div class="metric-signal ${getSignalClass(m.breadth?.signal)}">${m.breadth?.signal || '--'}</div>
-      <div class="metric-value">${m.breadth?.value || '--'} Up</div>
-    </div>
+  `;
+  }).join('');
+}
+
+// Generate mini sparkline SVG for rotation cards
+function generateMiniSparkline(ticker1, ticker2, width = 70, height = 16) {
+  const data1 = sparklineData[ticker1];
+  const data2 = ticker2 ? sparklineData[ticker2] : null;
+
+  if (!data1?.normalized?.length) return '';
+
+  const points1 = data1.normalized;
+  const points2 = data2?.normalized || [];
+
+  const allPoints = [...points1, ...points2];
+  const minVal = Math.min(...allPoints);
+  const maxVal = Math.max(...allPoints);
+  const range = maxVal - minVal || 1;
+  const padding = range * 0.15;
+  const adjMin = minVal - padding;
+  const adjMax = maxVal + padding;
+  const adjRange = adjMax - adjMin;
+
+  const pathPoints1 = points1.map((val, i) => {
+    const x = (i / (points1.length - 1)) * width;
+    const y = height - ((val - adjMin) / adjRange) * height;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const path1 = `M${pathPoints1.join(' L')}`;
+
+  const color1 = '#6366f1';
+  const color2 = '#f59e0b';
+
+  let path2 = '';
+  if (points2.length > 0) {
+    const pathPoints2 = points2.map((val, i) => {
+      const x = (i / (points2.length - 1)) * width;
+      const y = height - ((val - adjMin) / adjRange) * height;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    path2 = `M${pathPoints2.join(' L')}`;
+  }
+
+  const zeroY = height - ((0 - adjMin) / adjRange) * height;
+
+  return `
+    <svg class="rotation-sparkline" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+      <line x1="0" y1="${zeroY.toFixed(1)}" x2="${width}" y2="${zeroY.toFixed(1)}" stroke="#e2e8f0" stroke-width="0.5" stroke-dasharray="2,1"/>
+      ${path2 ? `<path d="${path2}" fill="none" stroke="${color2}" stroke-width="1" opacity="0.5"/>` : ''}
+      <path d="${path1}" fill="none" stroke="${color1}" stroke-width="1.5"/>
+    </svg>
   `;
 }
 
-// Render rotation metrics row with enhanced visual design
+// Render rotation metrics row - compact strip layout with sparklines
 function renderRotationMetrics() {
   const container = document.getElementById('macroRotationMetrics');
   if (!container) return;
@@ -708,57 +1245,21 @@ function renderRotationMetrics() {
     return 'flat';
   };
 
-  // Arrow icon SVG
+  // Compact arrow icon SVG
   const getArrowIcon = (direction) => {
-    if (direction === 'up') return '<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M6 2L10 7H2L6 2Z"/><rect x="5" y="6" width="2" height="4" rx="0.5"/></svg>';
-    if (direction === 'down') return '<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M6 10L2 5H10L6 10Z"/><rect x="5" y="2" width="2" height="4" rx="0.5"/></svg>';
-    return '<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><rect x="2" y="5" width="8" height="2" rx="1"/></svg>';
+    if (direction === 'up') return '<svg width="8" height="8" viewBox="0 0 10 10" fill="currentColor"><path d="M5 1L9 6H1L5 1Z"/></svg>';
+    if (direction === 'down') return '<svg width="8" height="8" viewBox="0 0 10 10" fill="currentColor"><path d="M5 9L1 4H9L5 9Z"/></svg>';
+    return '<svg width="8" height="8" viewBox="0 0 10 10" fill="currentColor"><rect x="1" y="4" width="8" height="2" rx="1"/></svg>';
   };
 
-  // Rotation card definitions with ticker comparisons
+  // Rotation card definitions with sparkline tickers
   const rotationCards = [
-    {
-      key: 'growthValue',
-      label: 'Growth/Value',
-      ticker1: 'IWF',
-      ticker2: 'IWD',
-      data: m.growthValue
-    },
-    {
-      key: 'creditSpread',
-      label: 'Credit',
-      ticker1: 'HYG',
-      ticker2: 'LQD',
-      data: m.creditSpread
-    },
-    {
-      key: 'dollarStrength',
-      label: 'Dollar',
-      ticker1: 'UUP',
-      ticker2: null,
-      data: m.dollarStrength
-    },
-    {
-      key: 'emFlow',
-      label: 'EM Flow',
-      ticker1: 'EEM',
-      ticker2: 'SPY',
-      data: m.emFlow
-    },
-    {
-      key: 'defensiveRotation',
-      label: 'Def/Cyc',
-      ticker1: 'XLP',
-      ticker2: 'XLY',
-      data: m.defensiveRotation
-    },
-    {
-      key: 'qualitySpread',
-      label: 'Cap Size',
-      ticker1: 'SPY',
-      ticker2: 'IWM',
-      data: m.qualitySpread
-    }
+    { key: 'growthValue', label: 'GRW/VAL', data: m.growthValue, t1: 'IWF', t2: 'IWD' },
+    { key: 'creditSpread', label: 'CREDIT', data: m.creditSpread, t1: 'HYG', t2: 'LQD' },
+    { key: 'dollarStrength', label: 'DOLLAR', data: m.dollarStrength, t1: 'UUP', t2: null },
+    { key: 'emFlow', label: 'EM FLOW', data: m.emFlow, t1: 'EEM', t2: 'SPY' },
+    { key: 'defensiveRotation', label: 'DEF/CYC', data: m.defensiveRotation, t1: 'XLP', t2: 'XLY' },
+    { key: 'qualitySpread', label: 'LG/SM', data: m.qualitySpread, t1: 'SPY', t2: 'IWM' }
   ];
 
   container.innerHTML = rotationCards.map(card => {
@@ -767,41 +1268,21 @@ function renderRotationMetrics() {
     const signalClass = getSignalClass(signal);
     const arrowClass = getArrowClass(signal);
     const arrowIcon = getArrowIcon(arrowClass);
-    const isStrong = Math.abs(value) >= 0.5;
     const valueClass = value >= 0 ? 'positive' : 'negative';
-
-    // Generate sparkline SVG and get colors
-    const sparkline = generateSparklineSVG(card.ticker1, card.ticker2);
-
-    // Legend for the sparklines with dynamic colors
-    const legendHtml = card.ticker2 ? `
-      <div class="sparkline-legend">
-        <span class="legend-item"><span class="legend-line" style="background:${sparkline.color1}"></span>${card.ticker1}</span>
-        <span class="legend-item"><span class="legend-line" style="background:${sparkline.color2}"></span>${card.ticker2}</span>
-      </div>
-    ` : `
-      <div class="sparkline-legend">
-        <span class="legend-item"><span class="legend-line" style="background:${sparkline.color1}"></span>${card.ticker1}</span>
-      </div>
-    `;
+    const sparkline = generateMiniSparkline(card.t1, card.t2);
+    const tip = ROTATION_TIPS[card.key] || '';
 
     return `
-      <div class="rotation-card ${signalClass} ${isStrong ? 'strong-signal' : ''}" data-key="${card.key}">
+      <div class="rotation-card ${signalClass}" data-key="${card.key}" data-tip="${tip}">
         <div class="rotation-header">
           <span class="rotation-label">${card.label}</span>
-          ${renderTooltip(card.key)}
         </div>
         <div class="rotation-signal-row">
           <div class="rotation-arrow ${arrowClass}">${arrowIcon}</div>
           <span class="rotation-signal-text ${signalClass}">${signal}</span>
-        </div>
-        <div class="rotation-sparkline-wrap">
-          ${sparkline.svg}
-          ${legendHtml}
-        </div>
-        <div class="rotation-value">
           <span class="rotation-value-num ${valueClass}">${value >= 0 ? '+' : ''}${value.toFixed(2)}%</span>
         </div>
+        ${sparkline ? `<div class="rotation-sparkline-wrap">${sparkline}</div>` : ''}
       </div>
     `;
   }).join('');
@@ -836,28 +1317,85 @@ function renderAssetCard(ticker, name, data, options = {}) {
   `;
 }
 
+// Render data strip item
+function renderDataItem(ticker, data, options = {}) {
+  const { isVix = false, label = null } = options;
+  const tip = DATA_TIPS[ticker] || '';
+  const tipAttr = tip ? `data-tip="${tip}"` : '';
+
+  if (!data) {
+    return `
+      <div class="data-item ${isVix ? 'vix' : ''}" data-ticker="${ticker}" ${tipAttr}>
+        <span class="data-item-ticker">${label || ticker}</span>
+        <span class="data-item-price">--</span>
+        <span class="data-item-change flat">--</span>
+      </div>
+    `;
+  }
+
+  const changeClass = data.changePercent > 0.05 ? 'up' : data.changePercent < -0.05 ? 'down' : 'flat';
+  const priceDisplay = data.price >= 1000 ? data.price.toFixed(0) : data.price >= 100 ? data.price.toFixed(1) : data.price.toFixed(2);
+  const changeDisplay = `${data.changePercent >= 0 ? '+' : ''}${data.changePercent.toFixed(2)}%`;
+
+  return `
+    <div class="data-item ${isVix ? 'vix' : ''}" data-ticker="${ticker}" ${tipAttr} onclick="window.macroAnalyzeTicker && macroAnalyzeTicker('${ticker}')">
+      <span class="data-item-ticker">${label || ticker}</span>
+      <span class="data-item-price">${priceDisplay}</span>
+      <span class="data-item-change ${changeClass}">${changeDisplay}</span>
+    </div>
+  `;
+}
+
 // Render indices section
 function renderIndices() {
   const container = document.getElementById('indicesCards');
   if (!container) return;
 
-  let html = DEFAULT_INDICES.map(idx =>
-    renderAssetCard(idx.ticker, idx.name, macroData[idx.ticker])
+  const items = DEFAULT_INDICES.map(idx =>
+    renderDataItem(idx.ticker, macroData[idx.ticker])
   ).join('');
 
-  html += renderAssetCard(DEFAULT_VIX.ticker, DEFAULT_VIX.name, macroData[DEFAULT_VIX.ticker], { isVix: true });
+  const vixItem = renderDataItem(DEFAULT_VIX.ticker, macroData[DEFAULT_VIX.ticker], { isVix: true, label: 'VIX' });
 
-  container.innerHTML = html;
+  container.innerHTML = `
+    <div class="data-strip">
+      ${renderStripLabel('IDX', 'IDX')}
+      <div class="data-strip-items"><div class="data-strip-items-inner">${items}${vixItem}</div></div>
+    </div>
+  `;
 }
 
-// Render bonds section
+// Render treasury rates section
 function renderBonds() {
   const container = document.getElementById('bondsCards');
   if (!container) return;
 
-  container.innerHTML = DEFAULT_BONDS.map(bond =>
-    renderAssetCard(bond.ticker, bond.name, macroData[bond.ticker])
+  // Calculate curve steepness: TLT vs SHY (long vs short duration)
+  const tlt = macroData['TLT'];
+  const shy = macroData['SHY'];
+  const curveMove = tlt && shy ? (tlt.changePercent - shy.changePercent).toFixed(2) : null;
+  const isSteepening = curveMove && parseFloat(curveMove) > 0.1;
+  const isFlattening = curveMove && parseFloat(curveMove) < -0.1;
+
+  const items = DEFAULT_RATES.map(rate =>
+    renderDataItem(rate.ticker, macroData[rate.ticker], { label: rate.label })
   ).join('');
+
+  // Curve indicator
+  const curveItem = curveMove !== null ? `
+    <div class="data-item curve" data-tip="CURVE SHAPE = economic signal. STEEP (TLT outperforming) = growth expectations rising. FLAT/INVERTED = recession warning, Fed too tight.">
+      <span class="data-item-ticker">CURVE</span>
+      <span class="data-item-price">${isSteepening ? 'STEEP' : isFlattening ? 'FLAT' : 'HOLD'}</span>
+      <span class="data-item-change ${isSteepening ? 'up' : isFlattening ? 'down' : 'flat'}">${curveMove > 0 ? '+' : ''}${curveMove}%</span>
+    </div>
+  ` : '';
+
+  container.innerHTML = `
+    <div class="data-strip">
+      ${renderStripLabel('RATE', 'RATE')}
+      <div class="data-strip-items"><div class="data-strip-items-inner">${items}${curveItem}</div></div>
+    </div>
+  `;
 }
 
 // Render commodities section
@@ -865,12 +1403,45 @@ function renderCommodities() {
   const container = document.getElementById('commoditiesCards');
   if (!container) return;
 
-  container.innerHTML = DEFAULT_COMMODITIES.map(comm =>
-    renderAssetCard(comm.ticker, comm.name, macroData[comm.ticker])
+  const items = DEFAULT_COMMODITIES.map(comm =>
+    renderDataItem(comm.ticker, macroData[comm.ticker])
   ).join('');
+
+  container.innerHTML = `
+    <div class="data-strip">
+      ${renderStripLabel('CMDY', 'CMDY')}
+      <div class="data-strip-items"><div class="data-strip-items-inner">${items}</div></div>
+    </div>
+  `;
 }
 
-// Render Mag7 as professional list
+// Render global indices section
+function renderGlobalIndices() {
+  const container = document.getElementById('globalIndicesCards');
+  if (!container) return;
+
+  const items = GLOBAL_INDICES.map(idx =>
+    renderDataItem(idx.ticker, macroData[idx.ticker])
+  ).join('');
+
+  container.innerHTML = `
+    <div class="data-strip">
+      ${renderStripLabel('GLBL', 'GLBL')}
+      <div class="data-strip-items"><div class="data-strip-items-inner">${items}</div></div>
+    </div>
+  `;
+}
+
+// Format volume for display (e.g., 1.2M, 450K)
+function formatVolume(vol) {
+  if (!vol || vol === 0) return '--';
+  if (vol >= 1e9) return (vol / 1e9).toFixed(1) + 'B';
+  if (vol >= 1e6) return (vol / 1e6).toFixed(1) + 'M';
+  if (vol >= 1e3) return (vol / 1e3).toFixed(0) + 'K';
+  return vol.toString();
+}
+
+// Render Mag7 as compact professional list with all metrics on single line
 function renderMag7() {
   const container = document.getElementById('mag7Cards');
   const summaryEl = document.getElementById('mag7Summary');
@@ -878,15 +1449,16 @@ function renderMag7() {
 
   const mag7List = settings.mag7 || DEFAULT_MAG7;
 
-  // Build list HTML
+  // Build compact list HTML with all columns
   let html = `
     <div class="mag7-list">
       <div class="mag7-list-header">
-        <span>Symbol</span>
-        <span>Name</span>
-        <span>Price</span>
-        <span>Chg</span>
-        <span>Chg%</span>
+        <span>SYM</span>
+        <span>NAME</span>
+        <span>PRICE</span>
+        <span>CHG%</span>
+        <span>VOL</span>
+        <span>V/AVG</span>
       </div>
   `;
 
@@ -894,15 +1466,17 @@ function renderMag7() {
     const ticker = typeof item === 'string' ? item : item.ticker;
     const name = typeof item === 'string' ? item : item.name;
     const data = macroData[ticker];
+    const tip = DATA_TIPS[ticker] || name;
 
     if (!data) {
       html += `
-        <div class="mag7-list-row loading" data-ticker="${ticker}">
+        <div class="mag7-list-row loading" data-ticker="${ticker}" title="${tip}">
           <span class="mag7-list-ticker">${ticker}</span>
           <span class="mag7-list-name">${name}</span>
           <span class="mag7-list-price">--</span>
-          <span class="mag7-list-change">--</span>
           <span class="mag7-list-change-pct">--</span>
+          <span class="mag7-list-vol">--</span>
+          <span class="mag7-list-volratio">--</span>
         </div>
       `;
       return;
@@ -911,16 +1485,23 @@ function renderMag7() {
     const changeClass = data.changePercent >= 0 ? 'positive' : 'negative';
     const rowClass = data.changePercent >= 0 ? 'positive-row' : 'negative-row';
     const priceDisplay = data.price >= 1000 ? data.price.toFixed(0) : data.price.toFixed(2);
-    const changeDollar = `${data.change >= 0 ? '+' : ''}${data.change.toFixed(2)}`;
     const changePct = `${data.changePercent >= 0 ? '+' : ''}${data.changePercent.toFixed(2)}%`;
+    const volDisplay = formatVolume(data.volume);
+
+    // Vol/Avg ratio - use avgVolume if available, otherwise estimate based on typical patterns
+    const avgVol = data.avgVolume || data.volume; // fallback to current vol if no avg
+    const volRatio = avgVol > 0 ? (data.volume / avgVol) : 1;
+    const volRatioDisplay = volRatio.toFixed(1) + 'x';
+    const volRatioClass = volRatio >= 1.5 ? 'high' : volRatio <= 0.7 ? 'low' : 'normal';
 
     html += `
-      <div class="mag7-list-row ${rowClass}" data-ticker="${ticker}" onclick="window.macroAnalyzeTicker && macroAnalyzeTicker('${ticker}')">
+      <div class="mag7-list-row ${rowClass}" data-ticker="${ticker}" title="${tip}" onclick="window.macroAnalyzeTicker && macroAnalyzeTicker('${ticker}')">
         <span class="mag7-list-ticker">${ticker}</span>
         <span class="mag7-list-name">${name}</span>
         <span class="mag7-list-price">$${priceDisplay}</span>
-        <span class="mag7-list-change ${changeClass}">${changeDollar}</span>
         <span class="mag7-list-change-pct ${changeClass}">${changePct}</span>
+        <span class="mag7-list-vol">${volDisplay}</span>
+        <span class="mag7-list-volratio ${volRatioClass}">${volRatioDisplay}</span>
       </div>
     `;
   });
@@ -940,7 +1521,7 @@ function renderMag7() {
     const changeClass = avgChange >= 0 ? 'positive' : 'negative';
     summaryEl.innerHTML = `
       <span class="${changeClass}">${avgChange >= 0 ? '+' : ''}${avgChange.toFixed(2)}%</span>
-      <span class="mag7-ratio">${upCount}/${mag7Data.length} up</span>
+      <span class="mag7-ratio">${upCount}/${mag7Data.length}</span>
     `;
   }
 }
@@ -990,7 +1571,7 @@ function renderCorrelations() {
   }).join('');
 }
 
-// Render sector heatmap
+// Render sector heatmap - flexbox with proportional widths
 function renderSectorHeatmap() {
   const container = document.getElementById('sectorHeatmap');
   const summaryEl = document.getElementById('sectorSummary');
@@ -1005,7 +1586,7 @@ function renderSectorHeatmap() {
       price: data?.price || 0,
       hasData: !!data
     };
-  }).sort((a, b) => b.changePercent - a.changePercent);
+  });
 
   // Calculate summary stats
   const validSectors = sectors.filter(s => s.hasData);
@@ -1025,14 +1606,23 @@ function renderSectorHeatmap() {
   // Find max absolute change for color scaling
   const maxAbsChange = Math.max(...sectors.map(s => Math.abs(s.changePercent)), 0.5);
 
-  // Render heatmap tiles
-  container.innerHTML = sectors.map(sector => {
+  // Total weight for calculating flex basis
+  const totalWeight = sectors.reduce((sum, s) => sum + s.weight, 0);
+
+  // Render flexbox tiles with proportional widths
+  container.innerHTML = `<div class="sector-flex-grid">` + sectors.map(sector => {
+    // Calculate flex basis as percentage of total weight
+    const flexBasis = ((sector.weight / totalWeight) * 100).toFixed(1);
+    // Minimum width based on weight
+    const minWidth = sector.weight >= 10 ? '80px' : sector.weight >= 5 ? '60px' : '50px';
+    const tip = DATA_TIPS[sector.ticker] || `${sector.name} Sector`;
+
     if (!sector.hasData) {
       return `
-        <div class="heatmap-tile loading" style="flex: ${sector.weight}">
-          <div class="heatmap-ticker">${sector.ticker}</div>
-          <div class="heatmap-name">${sector.name}</div>
-          <div class="heatmap-change">--</div>
+        <div class="sector-tile" style="flex: ${sector.weight} 1 ${minWidth};" data-ticker="${sector.ticker}" data-tip="${tip}">
+          <div class="sector-ticker">${sector.ticker}</div>
+          <div class="sector-name">${sector.name}</div>
+          <div class="sector-change">--</div>
         </div>
       `;
     }
@@ -1044,36 +1634,34 @@ function renderSectorHeatmap() {
     // Generate color based on performance
     let bgColor, textColor;
     if (isPositive) {
-      // Green: base green that gets darker/richer with intensity
       const h = 142;
-      const s = 60 + intensity * 30; // 60-90%
-      const l = 42 - intensity * 17; // 42-25%
+      const s = 60 + intensity * 30;
+      const l = 42 - intensity * 17;
       bgColor = `hsl(${h}, ${s}%, ${l}%)`;
       textColor = '#fff';
     } else if (isNegative) {
-      // Red: always clearly red, gets darker with intensity
       const h = 0;
-      const s = 65 + intensity * 25; // 65-90%
-      const l = 45 - intensity * 15; // 45-30%
+      const s = 65 + intensity * 25;
+      const l = 45 - intensity * 15;
       bgColor = `hsl(${h}, ${s}%, ${l}%)`;
       textColor = '#fff';
     } else {
-      // Exactly zero - neutral gray
       bgColor = '#94a3b8';
       textColor = '#fff';
     }
 
     return `
-      <div class="heatmap-tile"
-           style="flex: ${sector.weight}; background: ${bgColor}; color: ${textColor}"
+      <div class="sector-tile"
+           style="flex: ${sector.weight} 1 ${minWidth}; background: ${bgColor}; color: ${textColor}"
            onclick="window.macroAnalyzeTicker && macroAnalyzeTicker('${sector.ticker}')"
-           data-ticker="${sector.ticker}">
-        <div class="heatmap-ticker">${sector.ticker}</div>
-        <div class="heatmap-name">${sector.name}</div>
-        <div class="heatmap-change">${sector.changePercent >= 0 ? '+' : ''}${sector.changePercent.toFixed(2)}%</div>
+           data-ticker="${sector.ticker}"
+           data-tip="${tip}">
+        <div class="sector-ticker">${sector.ticker}</div>
+        <div class="sector-name">${sector.name}</div>
+        <div class="sector-change">${sector.changePercent >= 0 ? '+' : ''}${sector.changePercent.toFixed(2)}%</div>
       </div>
     `;
-  }).join('');
+  }).join('') + `</div>`;
 }
 
 // Render calendar date
@@ -1096,6 +1684,7 @@ function renderAll() {
   renderRotationMetrics();
   renderSectorHeatmap();
   renderIndices();
+  renderGlobalIndices();
   renderBonds();
   renderCommodities();
   renderMag7();
@@ -1107,7 +1696,7 @@ function renderAll() {
 // Show loading state
 function showLoading() {
   const loadingHtml = '<div class="macro-loading">Loading...</div>';
-  ['sectorHeatmap', 'indicesCards', 'bondsCards', 'commoditiesCards', 'mag7Cards'].forEach(id => {
+  ['sectorHeatmap', 'indicesCards', 'globalIndicesCards', 'bondsCards', 'commoditiesCards', 'mag7Cards'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = loadingHtml;
   });
@@ -1135,16 +1724,16 @@ function stopAutoRefresh() {
 
 // Main loader function
 export async function loadMacro() {
-  console.log('loadMacro called');
+  console.log('[MACRO] loadMacro called');
   try {
     loadSettings();
+    console.log('[MACRO] showing loading state');
     showLoading();
+    console.log('[MACRO] fetching data...');
     await fetchAllMacroData();
+    console.log('[MACRO] rendering...');
     renderAll();
-    // Fetch sparklines in background (don't block initial render)
-    fetchRotationSparklines().then(() => {
-      renderRotationMetrics(); // Re-render with sparklines
-    });
+    console.log('[MACRO] done');
     startAutoRefresh();
   } catch (e) {
     console.error('loadMacro error:', e);
@@ -1153,6 +1742,11 @@ export async function loadMacro() {
       if (el) el.innerHTML = `<div class="macro-loading" style="color:#ef4444">Error: ${e.message}</div>`;
     });
   }
+}
+
+// Cleanup function - call when leaving macro page
+export function unloadMacro() {
+  stopAutoRefresh();
 }
 
 // Refresh macro data manually
@@ -1508,3 +2102,4 @@ window.fetchEconomicCalendar = fetchEconomicCalendar;
 window.macroAnalyzeTicker = macroAnalyzeTicker;
 window.toggleMacroAi = toggleMacroAi;
 window.generateMacroAnalysis = generateMacroAnalysis;
+window.unloadMacro = unloadMacro;

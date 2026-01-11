@@ -37,6 +37,7 @@
   <link rel="stylesheet" href="css/feed.css">
   <link rel="stylesheet" href="css/terminal.css?v=3">
   <link rel="stylesheet" href="css/teaching.css">
+  <link rel="stylesheet" href="css/tooltip.css">
   <link rel="stylesheet" href="css/strategy.css">
   <link rel="stylesheet" href="css/macro.css?v=5">
   <link rel="stylesheet" href="css/responsive.css?v=2">
@@ -1467,51 +1468,55 @@
         </div>
       </div>
 
-      <!-- Market Regime Bar -->
+      <!-- Market Regime Strip -->
       <div class="macro-regime-bar" id="macroRegimeBar">
         <div class="regime-header">
-          <div class="regime-label">MARKET REGIME</div>
-          <div class="regime-value neutral">LOADING...</div>
+          <div class="regime-label">REGIME</div>
+          <div class="regime-value neutral">--</div>
         </div>
       </div>
 
-      <!-- AI Analysis Content (collapsible) -->
+      <!-- AI Analysis (collapsible) -->
       <div class="macro-ai-section collapsed" id="macroAiSection">
         <div class="macro-ai-header" onclick="toggleMacroAi()">
           <div class="macro-ai-title">
             <span class="macro-ai-icon">AI</span>
-            <span>Market Analysis</span>
+            <span>Analysis</span>
             <span class="macro-ai-time" id="macroAiTime"></span>
           </div>
           <div class="macro-ai-meta">
-            <button class="macro-ai-refresh" onclick="event.stopPropagation(); generateMacroAnalysis()" title="Generate new analysis">↻</button>
+            <button class="macro-ai-refresh" onclick="event.stopPropagation(); generateMacroAnalysis()" title="Generate">↻</button>
             <span class="macro-ai-toggle" id="macroAiToggle">▼</span>
           </div>
         </div>
         <div class="macro-ai-content" id="macroAiContent">
-          <div class="macro-ai-empty">
-            <p>Click ↻ to generate market analysis</p>
-          </div>
+          <div class="macro-ai-empty"><p>Click ↻ to generate</p></div>
         </div>
       </div>
 
-      <!-- Quick Metrics Row -->
+      <!-- Quick Metrics Strip -->
       <div class="macro-quick-metrics" id="macroQuickMetrics">
-        <div class="metric-card"><div class="metric-label">Loading...</div></div>
+        <div class="metric-card"><span class="metric-label">Loading...</span></div>
       </div>
 
-      <!-- Rotation Metrics Row -->
+      <!-- Rotation Metrics Strip -->
       <div class="macro-metrics-section">
-        <div class="macro-metrics-label">ROTATION & FLOW SIGNALS</div>
+        <div class="macro-metrics-label">ROTATION</div>
         <div class="macro-rotation-metrics" id="macroRotationMetrics">
-          <div class="metric-card"><div class="metric-label">Loading...</div></div>
+          <div class="rotation-card"><span class="rotation-label">Loading...</span></div>
         </div>
       </div>
 
-      <!-- Sector Heatmap -->
+      <!-- Bloomberg Strips: Indices, Global, Rates, Commodities -->
+      <div id="indicesCards"></div>
+      <div id="globalIndicesCards"></div>
+      <div id="bondsCards"></div>
+      <div id="commoditiesCards"></div>
+
+      <!-- Sector Weighted Grid -->
       <div class="macro-section macro-section-full">
         <div class="macro-section-header">
-          <span class="macro-section-title">Sector Performance</span>
+          <span class="macro-section-title">Sectors</span>
           <span class="macro-section-summary" id="sectorSummary">--</span>
         </div>
         <div class="sector-heatmap" id="sectorHeatmap">
@@ -1519,68 +1524,35 @@
         </div>
       </div>
 
-      <!-- Main Grid -->
+      <!-- Bottom Grid: Cross-Asset, Mega-Cap, Calendar -->
       <div class="macro-grid">
-        <!-- Indices Section -->
-        <div class="macro-section">
-          <div class="macro-section-header">
-            <span class="macro-section-title">Indices</span>
-          </div>
-          <div class="asset-cards" id="indicesCards">
-            <div class="macro-loading">Loading...</div>
-          </div>
-        </div>
-
-        <!-- Bonds Section -->
-        <div class="macro-section">
-          <div class="macro-section-header">
-            <span class="macro-section-title">Bonds</span>
-          </div>
-          <div class="asset-cards" id="bondsCards">
-            <div class="macro-loading">Loading...</div>
-          </div>
-        </div>
-
-        <!-- Commodities Section -->
-        <div class="macro-section">
-          <div class="macro-section-header">
-            <span class="macro-section-title">Commodities</span>
-          </div>
-          <div class="asset-cards" id="commoditiesCards">
-            <div class="macro-loading">Loading...</div>
-          </div>
-        </div>
-
-        <!-- Mag7 Section -->
-        <div class="macro-section macro-section-wide">
-          <div class="macro-section-header">
-            <span class="macro-section-title">Mega-Cap Tech</span>
-            <span class="macro-section-summary" id="mag7Summary">--</span>
-          </div>
-          <div id="mag7Cards">
-            <div class="macro-loading">Loading...</div>
-          </div>
-        </div>
-
-        <!-- Correlations Section -->
         <div class="macro-section">
           <div class="macro-section-header">
             <span class="macro-section-title">Cross-Asset</span>
           </div>
           <div class="correlations-grid" id="correlationsGrid">
-            <div class="macro-loading">Loading...</div>
+            <div class="macro-loading">--</div>
           </div>
         </div>
 
-        <!-- Calendar Section -->
         <div class="macro-section macro-section-wide">
           <div class="macro-section-header">
-            <span class="macro-section-title">Economic Calendar</span>
+            <span class="macro-section-title">Mega-Cap</span>
+            <span class="macro-section-summary" id="mag7Summary">--</span>
+          </div>
+          <div id="mag7Cards">
+            <div class="macro-loading">--</div>
+          </div>
+        </div>
+
+        <div class="macro-section">
+          <div class="macro-section-header">
+            <span class="macro-section-title">Calendar</span>
             <span class="macro-section-date" id="calendarDate">--</span>
           </div>
           <div class="calendar-list" id="calendarList">
             <div class="calendar-empty">
-              <button class="btn-secondary btn-sm" onclick="fetchEconomicCalendar()">Fetch Today's Events</button>
+              <button class="btn-secondary btn-sm" onclick="fetchEconomicCalendar()">Fetch Events</button>
             </div>
           </div>
         </div>

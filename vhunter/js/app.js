@@ -3,7 +3,7 @@ import * as ui from './ui.js';
 import { initCharts } from './charts.js';
 import { parseRoute, initRouter } from './router.js';
 import { renderHistory, setSearchCallback } from './history.js';
-import { switchPage, registerPageLoaders, restoreCollapsedSections, getCurrentPage } from './pages.js?v=2';
+import { switchPage, registerPageLoaders, restoreCollapsedSections, getCurrentPage } from './pages.js';
 import { loadPositions, setRunCallback as setPositionsRunCallback } from './positions.js';
 import { loadWatchlist, setRunCallback as setWatchlistRunCallback } from './watchlist.js';
 import { loadNotes, setRunCallback as setNotesRunCallback } from './notes.js';
@@ -13,6 +13,8 @@ import { run } from './analysis.js';
 import { loadOptionsData, initOptionsPage } from './options-page.js';
 import { initTerminal, startPolling, stopPolling } from './terminal.js';
 import { loadMacro } from './macro.js';
+import { initTooltips } from './tooltip.js';
+import { initTooltipPositioning } from './tooltip-position.js';
 
 // Import modules for side effects (window bindings)
 import './portfolio.js';
@@ -31,6 +33,8 @@ function loadTerminal() {
 }
 
 // Register page loaders
+console.log('[APP] About to register page loaders');
+console.log('[APP] loadMacro:', loadMacro);
 registerPageLoaders({
   positions: loadPositions,
   watchlist: loadWatchlist,
@@ -41,6 +45,7 @@ registerPageLoaders({
   strategy: loadStrategy,
   macro: loadMacro
 });
+console.log('[APP] Page loaders registered');
 
 // Initialize router with change handler
 initRouter(({ page, ticker }) => {
@@ -64,6 +69,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initOptionsPage();
   initTerminal();
   restoreCollapsedSections();
+
+  // Initialize tooltip system
+  initTooltips();
 
   // Inject teaching tooltips
   ui.injectTooltips();

@@ -472,3 +472,84 @@
   flex-shrink: 0;
   margin-top: 1px;
 }
+
+/* ============================================
+   PORTAL TOOLTIP ARROW CLASSES
+   Used by tooltip-position.js for dynamic positioning
+   ============================================ */
+
+/* Arrow pointing up (tooltip below trigger) */
+.tip-popup.arrow-bottom::before,
+.tooltip-content.arrow-bottom::before {
+  bottom: 100% !important;
+  top: auto !important;
+  left: var(--arrow-left, 50%) !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+  border-bottom-color: #1e293b !important;
+  border-top-color: transparent !important;
+  border-left-color: transparent !important;
+  border-right-color: transparent !important;
+}
+
+/* Arrow pointing down (tooltip above trigger) */
+.tip-popup.arrow-top::before,
+.tooltip-content.arrow-top::before {
+  top: 100% !important;
+  bottom: auto !important;
+  left: var(--arrow-left, 50%) !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+  border-top-color: #1e293b !important;
+  border-bottom-color: transparent !important;
+  border-left-color: transparent !important;
+  border-right-color: transparent !important;
+}
+
+/* ============================================
+   MOBILE RESPONSIVE
+   ============================================ */
+
+@media (max-width: 640px) {
+  /* Three lenses responsive */
+  .three-lenses {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .lens-card {
+    padding: 10px;
+  }
+
+  /* Win rate box responsive */
+  .winrate-box {
+    padding: 10px;
+  }
+
+  .winrate-grid {
+    gap: 6px;
+  }
+
+  .winrate-stat {
+    padding: 8px;
+  }
+
+  .winrate-value {
+    font-size: 16px;
+  }
+
+  /* Vol cone responsive */
+  .cone-row {
+    flex-wrap: wrap;
+  }
+
+  .cone-period {
+    width: 40px;
+    font-size: 9px;
+  }
+
+  .cone-percentile {
+    min-width: 35px;
+    font-size: 9px;
+  }
+}

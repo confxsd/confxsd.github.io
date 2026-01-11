@@ -36,6 +36,11 @@ export function switchPage(page, shouldUpdateRoute = true) {
     stopPolling();
   }
 
+  // Stop macro auto-refresh if leaving macro page
+  if (currentPage === 'macro' && page !== 'macro' && window.unloadMacro) {
+    window.unloadMacro();
+  }
+
   currentPage = page;
 
   // Update nav items
@@ -73,8 +78,14 @@ export function switchPage(page, shouldUpdateRoute = true) {
   }
 
   // Load data for the page
+  console.log('[PAGES] switchPage called for:', page);
+  console.log('[PAGES] pageLoaders:', Object.keys(pageLoaders));
+  console.log('[PAGES] pageLoaders[page]:', pageLoaders[page]);
   if (pageLoaders[page]) {
+    console.log('[PAGES] calling loader for:', page);
     pageLoaders[page]();
+  } else {
+    console.log('[PAGES] no loader found for:', page);
   }
 
   // Close sidebar on mobile after navigation

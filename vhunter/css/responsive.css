@@ -575,17 +575,7 @@
   /* Three Lenses */
   .three-lenses { grid-template-columns: 1fr; }
 
-  /* Teaching Tooltips */
-  .tip-popup {
-    width: 260px;
-    left: 0;
-    transform: none;
-  }
-  .tip-popup::before,
-  .tip-popup::after {
-    left: 20px;
-    transform: none;
-  }
+  /* Teaching Tooltips - handled in teaching.css with mobile positioning */
 }
 
 /* Small Mobile: < 480px */
