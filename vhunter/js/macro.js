@@ -650,7 +650,7 @@ async function updateTooltipWithAi(section, tooltipEl, forceRefresh = false) {
   }
 }
 
-// Render strip label with tooltip icon and AI button (no pre-loading)
+// Render strip label with tooltip icon (AI insights loaded via global refresh)
 function renderStripLabel(key, label) {
   const tip = STRIP_TIPS[key];
   if (!tip) return `<div class="data-strip-label">${label}</div>`;
@@ -662,18 +662,13 @@ function renderStripLabel(key, label) {
       <span class="strip-label-text">${label}</span>
       <div class="macro-tooltip strip-tip" data-tip-key="${key}">
         <span class="tooltip-icon">?</span>
-        <div class="tooltip-content tooltip-with-ai">
+        <div class="tooltip-content">
           <div class="tooltip-title">${tip.title}</div>
           <div class="tooltip-text">${content}</div>
           <div class="ai-tooltip-section">
-            <div class="ai-tooltip-header">
-              <span class="ai-label">AI Insight</span>
-              <button class="ai-tooltip-btn" onclick="event.stopPropagation(); window.loadAiTooltip('${key}', this.closest('.macro-tooltip'))">
-                ✨
-              </button>
-            </div>
-            <div class="ai-tooltip-content">
-              <span class="ai-placeholder">Click ✨ for AI insight</span>
+            <div class="ai-label">AI Insight</div>
+            <div class="ai-tooltip-content" data-ai-section="${key}">
+              <span class="ai-placeholder">Generate AI Analysis to see insight</span>
             </div>
           </div>
         </div>
@@ -682,14 +677,57 @@ function renderStripLabel(key, label) {
   `;
 }
 
-// Load AI tooltip on click (tries cache/DB first, then generates)
-window.loadAiTooltip = async function(section, tooltipEl) {
-  const aiContentEl = tooltipEl.querySelector('.ai-tooltip-content');
+// Refresh all AI tooltips at once (called from main AI analysis button)
+async function refreshAllAiTooltips() {
+  const sections = ['IDX', 'RATE', 'CMDY', 'GLBL', 'SECTOR', 'ROTATION'];
 
-  // If already loaded, refresh instead
-  const isLoaded = aiContentEl?.classList.contains('loaded');
-  await updateTooltipWithAi(section, tooltipEl, isLoaded);
-};
+  // Update all tooltip content elements to show loading state
+  sections.forEach(section => {
+    const contentEls = document.querySelectorAll(`[data-ai-section="${section}"]`);
+    contentEls.forEach(el => {
+      el.innerHTML = '<span class="ai-loading">Analyzing...</span>';
+      el.classList.remove('loaded');
+    });
+  });
+
+  // Generate insights in parallel
+  const results = await Promise.allSettled(
+    sections.map(section => generateAiTooltip(section))
+  );
+
+  // Update tooltip content with results
+  sections.forEach((section, i) => {
+    const result = results[i];
+    const contentEls = document.querySelectorAll(`[data-ai-section="${section}"]`);
+
+    if (result.status === 'fulfilled' && result.value) {
+      contentEls.forEach(el => {
+        el.innerHTML = result.value;
+        el.classList.add('loaded');
+      });
+    } else {
+      contentEls.forEach(el => {
+        el.innerHTML = `<span class="ai-error">Failed to generate</span>`;
+      });
+    }
+  });
+}
+
+// Load cached AI tooltips from DB
+async function loadCachedAiTooltips() {
+  const sections = ['IDX', 'RATE', 'CMDY', 'GLBL', 'SECTOR', 'ROTATION'];
+
+  for (const section of sections) {
+    const cached = await loadCachedAiTooltip(section);
+    if (cached) {
+      const contentEls = document.querySelectorAll(`[data-ai-section="${section}"]`);
+      contentEls.forEach(el => {
+        el.innerHTML = cached;
+        el.classList.add('loaded');
+      });
+    }
+  }
+}
 
 let settings = {};
 let refreshInterval = null;
@@ -1691,6 +1729,7 @@ function renderAll() {
   renderCorrelations();
   renderCalendarDate();
   loadCachedAiAnalysis();
+  loadCachedAiTooltips();
 }
 
 // Show loading state
@@ -2054,6 +2093,9 @@ Rules:
       console.warn('Failed to cache AI analysis:', e);
     }
 
+    // Also refresh all tooltip AI insights
+    refreshAllAiTooltips();
+
   } catch (e) {
     console.error('AI analysis error:', e);
     container.innerHTML = `
@@ -2102,4 +2144,5 @@ window.fetchEconomicCalendar = fetchEconomicCalendar;
 window.macroAnalyzeTicker = macroAnalyzeTicker;
 window.toggleMacroAi = toggleMacroAi;
 window.generateMacroAnalysis = generateMacroAnalysis;
+window.refreshAllAiTooltips = refreshAllAiTooltips;
 window.unloadMacro = unloadMacro;

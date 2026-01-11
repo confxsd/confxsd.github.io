@@ -111,7 +111,8 @@
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  width: 320px;
+  width: 300px;
+  max-width: calc(100vw - 20px);
   background: #1e293b;
   color: #94a3b8;
   padding: 12px 14px;
@@ -172,18 +173,11 @@
   white-space: pre-line;
 }
 
-/* AI Tooltip Section */
+/* AI Tooltip Section - shown via global AI analysis */
 .ai-tooltip-section {
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid #334155;
-}
-
-.ai-tooltip-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
 }
 
 .ai-label {
@@ -192,43 +186,13 @@
   color: #60a5fa;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-}
-
-.ai-tooltip-btn {
-  background: #3b82f6;
-  border: none;
-  color: #fff;
-  width: 22px;
-  height: 22px;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s, transform 0.15s;
-}
-
-.ai-tooltip-btn:hover {
-  background: #2563eb;
-  transform: scale(1.05);
-}
-
-.ai-tooltip-btn:disabled {
-  background: #475569;
-  cursor: not-allowed;
-  transform: none;
+  margin-bottom: 6px;
 }
 
 .ai-tooltip-content {
   font-size: 10px;
   line-height: 1.55;
   color: #cbd5e1;
-  min-height: 24px;
-}
-
-.ai-tooltip-content.loading {
-  color: #60a5fa;
 }
 
 .ai-tooltip-content.loaded {
@@ -255,11 +219,6 @@
 
 .ai-error {
   color: #f87171;
-}
-
-/* Wider tooltip for AI content */
-.tooltip-with-ai {
-  width: 380px;
 }
 
 .data-strip-items {
@@ -1201,6 +1160,7 @@
   top: calc(100% + 6px);
   left: 0;
   width: 260px;
+  max-width: calc(100vw - 20px);
   max-height: 300px;
   overflow-y: auto;
   background: #1e293b;
@@ -1290,8 +1250,7 @@
   content: attr(data-tip);
   position: absolute;
   bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
   background: #1e293b;
   color: #e2e8f0;
   padding: 8px 12px;
@@ -1299,7 +1258,7 @@
   font-size: 10px;
   line-height: 1.5;
   width: max-content;
-  max-width: 280px;
+  max-width: min(280px, calc(100vw - 40px));
   white-space: normal;
   text-align: left;
   opacity: 0;
@@ -1324,8 +1283,7 @@
   content: attr(data-tip);
   position: absolute;
   bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
   background: #1e293b;
   color: #e2e8f0;
   padding: 8px 12px;
@@ -1333,7 +1291,7 @@
   font-size: 10px;
   line-height: 1.5;
   width: max-content;
-  max-width: 260px;
+  max-width: min(260px, calc(100vw - 40px));
   white-space: normal;
   text-align: left;
   opacity: 0;
@@ -1360,15 +1318,14 @@
   content: attr(data-tip);
   position: absolute;
   top: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
   background: #1e293b;
   color: #e2e8f0;
   padding: 10px 14px;
   border-radius: 4px;
   font-size: 10px;
   width: max-content;
-  max-width: 300px;
+  max-width: min(300px, calc(100vw - 40px));
   white-space: normal;
   text-align: left;
   opacity: 0;
