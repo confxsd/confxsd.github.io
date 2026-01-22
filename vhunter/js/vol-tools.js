@@ -121,13 +121,14 @@ export function calcPutCallSkew(put25dIV, call25dIV, atmIV) {
 // Compare IV vs RV across multiple lookback windows
 // ============================================
 
-export function calcMultiWindowVRP(iv, prices) {
-  if (!prices || prices.length < 60) {
+export function calcMultiWindowVRP(iv, data) {
+  if (!data || data.length < 60) {
     return { error: 'Insufficient price history' };
   }
 
   // Use standardized RV calculation from financial-math module
-  const windows = finMath.calcRealizedVolatilityMulti(prices);
+  // Accepts either OHLC bars or close prices (Yang-Zhang when available)
+  const windows = finMath.calcRealizedVolatilityMulti(data);
 
   // Calculate VRP for each window
   const vrp = {};
@@ -169,9 +170,9 @@ export function calcMultiWindowVRP(iv, prices) {
 // Shows typical RV ranges for different lookback periods
 // ============================================
 
-export function buildVolatilityCone(prices, currentIV) {
+export function buildVolatilityCone(data, currentIV) {
   // Reduced requirement to 60 days for more practical use
-  if (!prices || prices.length < 60) {
+  if (!data || data.length < 60) {
     return { error: 'Need at least 60 days of data for volatility cone' };
   }
 
@@ -181,9 +182,9 @@ export function buildVolatilityCone(prices, currentIV) {
 
   windows.forEach(window => {
     const rvSeries = [];
-    for (let i = window + 1; i <= prices.length; i++) {
-      // Use standardized RV calculation for each historical point
-      const slice = prices.slice(0, i);
+    for (let i = window + 1; i <= data.length; i++) {
+      // Use standardized RV calculation (Yang-Zhang when OHLC available)
+      const slice = data.slice(0, i);
       const rv = finMath.calcRealizedVolatility(slice, window);
       if (rv !== null) {
         rvSeries.push(rv);

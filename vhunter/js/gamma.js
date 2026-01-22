@@ -3,10 +3,28 @@
 // Based on dealer positioning and hedging mechanics
 
 // ============================================
+// CONFIGURATION
+// ============================================
+
+// Current Fed Funds rate - update quarterly or fetch dynamically
+// As of Jan 2026: ~4.25-4.50% (should be updated based on Fed decisions)
+let RISK_FREE_RATE = 0.0425;
+
+// Set risk-free rate dynamically (can be called from API)
+export function setRiskFreeRate(rate) {
+  RISK_FREE_RATE = rate;
+}
+
+// Get current risk-free rate
+export function getRiskFreeRate() {
+  return RISK_FREE_RATE;
+}
+
+// ============================================
 // CORE GEX CALCULATIONS
 // ============================================
 
-// Standard normal CDF approximation
+// Standard normal CDF approximation (Abramowitz-Stegun)
 function normCDF(x) {
   const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
   const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
@@ -31,7 +49,7 @@ function calcD1(spot, strike, t, r, iv) {
 // Estimate Delta if not provided by API
 export function estimateDelta(spot, strike, dte, iv, isCall) {
   const t = Math.max(dte, 1) / 365;
-  const r = 0.05; // Risk-free rate assumption
+  const r = RISK_FREE_RATE;
   const sigma = iv > 1 ? iv / 100 : iv; // Handle both 0.3 and 30% formats
 
   const d1 = calcD1(spot, strike, t, r, sigma);
@@ -41,7 +59,7 @@ export function estimateDelta(spot, strike, dte, iv, isCall) {
 // Estimate Gamma if not provided by API
 export function estimateGamma(spot, strike, dte, iv) {
   const t = Math.max(dte, 1) / 365;
-  const r = 0.05;
+  const r = RISK_FREE_RATE;
   const sigma = iv > 1 ? iv / 100 : iv;
 
   if (sigma <= 0 || t <= 0) return 0;
@@ -50,13 +68,43 @@ export function estimateGamma(spot, strike, dte, iv) {
   return normPDF(d1) / (spot * sigma * Math.sqrt(t));
 }
 
+/**
+ * Validate gamma value from API
+ * Returns true if gamma seems reasonable, false if suspect
+ */
+function validateGamma(gamma, spot, strike, dte, iv) {
+  if (gamma === null || gamma === undefined) return false;
+  if (gamma < 0) return false; // Gamma is always positive
+  if (gamma > 1) return false; // Gamma can't exceed 1 per share
+
+  // Cross-check with estimated gamma (allow 50% tolerance)
+  const estimated = estimateGamma(spot, strike, dte, iv);
+  if (estimated > 0) {
+    const ratio = gamma / estimated;
+    if (ratio < 0.5 || ratio > 2.0) return false; // API gamma is way off
+  }
+
+  return true;
+}
+
 // ============================================
 // GEX (GAMMA EXPOSURE) CALCULATIONS
 // ============================================
 
 /**
  * Calculate GEX for a single option contract
- * GEX = Gamma × OI × 100 × Spot
+ *
+ * PROFESSIONAL FORMULA:
+ * GEX = Gamma × OI × 100 × Spot² × 0.01
+ *
+ * This gives us: $ of stock dealers must trade per 1% move in underlying
+ *
+ * Derivation:
+ * - Gamma (Γ) = ∂Δ/∂S (change in delta per $1 move)
+ * - For 1% move: ΔS = S × 0.01
+ * - Change in delta = Γ × ΔS = Γ × S × 0.01
+ * - $ of stock to trade = Δ change × S × OI × 100 shares
+ * - GEX = Γ × S × 0.01 × S × OI × 100 = Γ × OI × 100 × S² × 0.01
  *
  * Key insight: Market makers are typically SHORT options
  * - When MM is short a CALL, they have NEGATIVE gamma exposure
@@ -77,19 +125,23 @@ export function calcContractGEX(option, spotPrice) {
 
   if (oi === 0) return 0;
 
+  const expDate = details.expiration_date;
+  const dte = Math.ceil((new Date(expDate) - new Date()) / (1000 * 60 * 60 * 24));
+
   // Get gamma from API or estimate
   let gamma = option.greeks?.gamma;
-  if (!gamma || gamma === 0) {
-    const expDate = details.expiration_date;
-    const dte = Math.ceil((new Date(expDate) - new Date()) / (1000 * 60 * 60 * 24));
+
+  // Validate API gamma - if suspect, use our estimate
+  if (!validateGamma(gamma, spotPrice, strike, dte, iv)) {
     gamma = estimateGamma(spotPrice, strike, dte, iv);
   }
 
-  // GEX in dollar terms ($ change in MM delta per 1% move)
+  // CORRECT PROFESSIONAL GEX FORMULA:
+  // GEX = Gamma × OI × 100 × Spot² × 0.01 ($ per 1% move)
+  const gex = gamma * oi * 100 * spotPrice * spotPrice * 0.01;
+
   // Calls: MM is short calls → negative gamma → flip to positive (stabilizing)
   // Puts: MM is short puts → positive gamma → flip to negative (destabilizing below)
-  const gex = gamma * oi * 100 * spotPrice;
-
   return isCall ? gex : -gex;
 }
 

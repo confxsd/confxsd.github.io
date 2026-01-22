@@ -23,6 +23,7 @@ export let optionsData = {
   options: null,
   historicalIV: [],
   hv30: 0,
+  bars: [], // Full OHLC bars for Yang-Zhang volatility
   prices: [],
   vrpMetrics: null,
   ivAnalysis: null,
@@ -95,10 +96,12 @@ export async function loadOptionsData() {
     }
 
     if (aggs?.results?.length > 0) {
-      const prices = aggs.results.map(d => d.c);
-      optionsData.prices = prices;
-      // Use standardized volatility calculation for consistency with overview page
-      optionsData.hv30 = finMath.calcRealizedVolatility(prices, 30) || 0;
+      const bars = aggs.results; // Full OHLC bars
+      const prices = bars.map(d => d.c);
+      optionsData.bars = bars; // Store for Yang-Zhang
+      optionsData.prices = prices; // Keep for backwards compatibility
+      // Use Yang-Zhang volatility (professional grade) when OHLC available
+      optionsData.hv30 = finMath.calcRealizedVolatility(bars, 30) || 0;
     }
 
     updateSpotDisplay();
@@ -215,6 +218,36 @@ function processOptionsPageData(options, spotPrice) {
 }
 
 function calculateSkewData(strikeData, spotPrice, avgIV) {
+  // Use delta-normalized skew (professional method)
+  // This finds actual 25-delta options instead of arbitrary % bands
+  const allOptions = optionsData.options?.all || [];
+
+  if (allOptions.length > 0) {
+    // PROFESSIONAL: Use delta-based strike selection
+    const deltaSkew = finMath.calcDeltaNormalizedSkew(allOptions, spotPrice);
+
+    if (!deltaSkew.error) {
+      return {
+        putSkew: deltaSkew.putSkew,
+        callSkew: deltaSkew.callSkew,
+        skewDiff: deltaSkew.skewDiff,
+        interpretation: deltaSkew.interpretation,
+        putIV: deltaSkew.put25dIV,
+        atmIV: deltaSkew.atmIV,
+        callIV: deltaSkew.call25dIV,
+        pcSkew: deltaSkew.riskReversal, // Risk reversal = call IV - put IV
+        riskReversal: deltaSkew.riskReversal,
+        butterfly: deltaSkew.butterfly,
+        // Include strikes for display
+        put25dStrike: deltaSkew.put25dStrike,
+        atmStrike: deltaSkew.atmStrike,
+        call25dStrike: deltaSkew.call25dStrike,
+        method: 'delta-normalized' // Flag for UI
+      };
+    }
+  }
+
+  // FALLBACK: Use old method if delta-based fails
   const strikes = Object.keys(strikeData).map(Number).sort((a, b) => a - b);
   const atmStrike = strikes.reduce((prev, curr) =>
     Math.abs(curr - spotPrice) < Math.abs(prev - spotPrice) ? curr : prev, strikes[0]);
@@ -229,13 +262,13 @@ function calculateSkewData(strikeData, spotPrice, avgIV) {
     avg(strikeData[otmCallStrike].callIV) * 100 : atmIV;
 
   const skewResult = volTools.calcPutCallSkew(putIV, callIV, atmIV);
-  // Include raw IV values for tooltip display
   return {
     ...skewResult,
     putIV,
     atmIV,
     callIV,
-    pcSkew: putIV - callIV // Put-Call skew difference
+    pcSkew: putIV - callIV,
+    method: 'spot-percent' // Flag that this is fallback
   };
 }
 
@@ -338,20 +371,27 @@ function updateVolatilitySection(expiryIV, avgIV, spotPrice, strikeData) {
     bar.querySelector('.term-fill').style.width = (ivs[i] / maxIV * 100) + '%';
   });
 
-  const strikes = Object.keys(strikeData).map(Number).sort((a, b) => a - b);
-  const atmStrike = strikes.reduce((prev, curr) => Math.abs(curr - spotPrice) < Math.abs(prev - spotPrice) ? curr : prev, strikes[0]);
-  const otmPutStrike = strikes.filter(s => s < atmStrike * 0.92)[0] || atmStrike;
-  const otmCallStrike = strikes.filter(s => s > atmStrike * 1.08).pop() || atmStrike;
-
-  const atmIV = strikeData[atmStrike] ? avg([...strikeData[atmStrike].callIV, ...strikeData[atmStrike].putIV]) * 100 : avgIV;
-  const putIV = strikeData[otmPutStrike]?.putIV.length > 0 ? avg(strikeData[otmPutStrike].putIV) * 100 : atmIV;
-  const callIV = strikeData[otmCallStrike]?.callIV.length > 0 ? avg(strikeData[otmCallStrike].callIV) * 100 : atmIV;
+  // Use delta-normalized skew (professional method)
+  const skewData = calculateSkewData(strikeData, spotPrice, avgIV);
 
   const skewItems = document.querySelectorAll('#optSkewDisplay .skew-item');
-  if (skewItems[0]) skewItems[0].querySelector('.skew-value').textContent = putIV.toFixed(0) + '%';
-  if (skewItems[1]) skewItems[1].querySelector('.skew-value').textContent = atmIV.toFixed(0) + '%';
-  if (skewItems[2]) skewItems[2].querySelector('.skew-value').textContent = callIV.toFixed(0) + '%';
-  document.getElementById('optPcSkew').textContent = (putIV - callIV >= 0 ? '+' : '') + (putIV - callIV).toFixed(1) + '%';
+  if (skewItems[0]) {
+    const label = skewData.method === 'delta-normalized' ? '25Δ Put' : 'OTM Put';
+    skewItems[0].querySelector('.skew-label').textContent = label;
+    skewItems[0].querySelector('.skew-value').textContent = skewData.putIV?.toFixed(0) + '%' || '--';
+  }
+  if (skewItems[1]) {
+    skewItems[1].querySelector('.skew-value').textContent = skewData.atmIV?.toFixed(0) + '%' || '--';
+  }
+  if (skewItems[2]) {
+    const label = skewData.method === 'delta-normalized' ? '25Δ Call' : 'OTM Call';
+    skewItems[2].querySelector('.skew-label').textContent = label;
+    skewItems[2].querySelector('.skew-value').textContent = skewData.callIV?.toFixed(0) + '%' || '--';
+  }
+
+  // Show risk reversal (call IV - put IV) for professional display
+  const rr = skewData.riskReversal || (skewData.putIV - skewData.callIV);
+  document.getElementById('optPcSkew').textContent = (rr >= 0 ? '+' : '') + rr?.toFixed(1) + '%' || '--';
 
   // Use standardized expected move calculations for consistency
   const daily = finMath.calcExpectedMove(spotPrice, avgIV, 1);
@@ -855,11 +895,13 @@ function updateVolToolsUI(avgIV, termStructure, skew, pcRatio) {
 }
 
 function updateMultiWindowVRP(iv) {
-  if (!optionsData.prices || optionsData.prices.length < 60) {
+  // Use bars for Yang-Zhang if available, otherwise fall back to prices
+  const data = optionsData.bars?.length >= 60 ? optionsData.bars : optionsData.prices;
+  if (!data || data.length < 60) {
     return;
   }
 
-  const result = volTools.calcMultiWindowVRP(iv, optionsData.prices);
+  const result = volTools.calcMultiWindowVRP(iv, data);
   if (result.error) return;
 
   // Update each window row
@@ -1136,15 +1178,16 @@ function updateThreeLenses() {
 // ============================================
 
 function updateVolatilityCone() {
-  const prices = optionsData.prices;
+  // Use bars for Yang-Zhang if available, otherwise fall back to prices
+  const data = optionsData.bars?.length >= 60 ? optionsData.bars : optionsData.prices;
   const iv = optionsData.ivAnalysis?.currentIV || 0;
 
-  if (!prices || prices.length < 60) {
+  if (!data || data.length < 60) {
     // Not enough data for cone
     return;
   }
 
-  const cone = volTools.buildVolatilityCone(prices, iv);
+  const cone = volTools.buildVolatilityCone(data, iv);
   if (cone.error) return;
 
   const periods = ['5d', '10d', '20d', '30d'];

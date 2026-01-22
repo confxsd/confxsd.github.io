@@ -184,9 +184,10 @@ export function calcSMA(prices, period) {
 // ============================================
 
 // Calculate Realized Volatility using standardized calculation
+// Uses Yang-Zhang when OHLC bars provided, close-to-close otherwise
 // Wrapper around financial-math for backwards compatibility
-export function calcRealizedVol(prices, window = 30) {
-  return finMath.calcRealizedVolatility(prices, window);
+export function calcRealizedVol(data, window = 30) {
+  return finMath.calcRealizedVolatility(data, window);
 }
 
 // Calculate multiple RV windows for comparison
@@ -398,8 +399,9 @@ export function crossSectionalRank(tickers, metricKey) {
 }
 
 // Calculate volatility metrics bundle for a ticker
-export function calcVolatilityMetrics(prices, avgIV, termStructure = null) {
-  const rvMulti = calcRealizedVolMulti(prices);
+// Accepts either close prices or OHLC bars (Yang-Zhang when bars provided)
+export function calcVolatilityMetrics(data, avgIV, termStructure = null) {
+  const rvMulti = calcRealizedVolMulti(data);
   const rv30 = rvMulti.rv30;
   const vrp = calcVRP(avgIV, rv30);
   const vrpRatio = calcVRPRatio(avgIV, rv30);

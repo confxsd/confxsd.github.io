@@ -86,9 +86,9 @@ function processHistoricalData(ticker, data) {
   const sma20Arr = indicators.calcSMA(prices, 20);
   const sma50Arr = indicators.calcSMA(prices, 50);
 
-  // Calculate volatility using standardized log returns (industry standard)
-  // Uses 30-day window for HV30 to match options page calculations
-  const vol = finMath.calcRealizedVolatility(prices, 30) || 0;
+  // Calculate volatility using Yang-Zhang estimator (professional grade)
+  // Pass OHLC bars for best accuracy - handles overnight gaps and drift
+  const vol = finMath.calcRealizedVolatility(data, 30) || 0;
 
   // Relative volume
   const avgVol = indicators.average(volumes.slice(-20));
@@ -191,7 +191,8 @@ function processHistoricalData(ticker, data) {
   mktData = {
     ticker,
     price: currentPrice,
-    prices, // Store full price array for VRP/RV calculations
+    prices, // Store close prices for backwards compatibility
+    bars: data, // Store full OHLC bars for Yang-Zhang volatility
     change: ((currentPrice - data[data.length - 2].c) / data[data.length - 2].c) * 100,
     volume: ui.formatNumber(lastBar.v),
     rvol,
@@ -318,13 +319,15 @@ function processOptionsData(options, spotPrice) {
     sixMonth: avg(expiryIV.sixMonth)
   };
 
-  // Calculate VRP metrics using stored price data
+  // Calculate VRP metrics using stored bar/price data
+  // Uses Yang-Zhang when OHLC bars available
   let vrpMetrics = null;
   let ivAnalysis = null;
   let volSetup = null;
 
-  if (mktData.prices && avgIV > 0) {
-    vrpMetrics = indicators.calcVolatilityMetrics(mktData.prices, avgIV, termStructure);
+  const volData = mktData.bars?.length > 0 ? mktData.bars : mktData.prices;
+  if (volData && avgIV > 0) {
+    vrpMetrics = indicators.calcVolatilityMetrics(volData, avgIV, termStructure);
     ivAnalysis = getFullIVAnalysis(mktData.ticker, avgIV);
 
     // Classify the volatility setup
