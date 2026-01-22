@@ -18,6 +18,7 @@ import { initTooltipPositioning } from './tooltip-position.js';
 
 // Import modules for side effects (window bindings)
 import './portfolio.js';
+import './llm-export.js';
 
 // Initialize callbacks to avoid circular dependencies
 setSearchCallback(() => run());

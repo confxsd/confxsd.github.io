@@ -833,7 +833,12 @@ export function calcTermSteepness(frontIV, backIV) {
 
 /**
  * Standard normal CDF approximation
- * Using Abramowitz and Stegun approximation
+ * Using Abramowitz and Stegun approximation 7.1.26 for erf(x)
+ *
+ * Φ(x) = 0.5 × (1 + erf(x/√2))
+ *
+ * The coefficients below approximate erf(x), so we must scale x by √2
+ * to get the standard normal CDF.
  */
 export function normCDF(x) {
   const a1 = 0.254829592;
@@ -844,10 +849,11 @@ export function normCDF(x) {
   const p = 0.3275911;
 
   const sign = x < 0 ? -1 : 1;
-  const absX = Math.abs(x);
+  // CRITICAL: Scale by √2 for CDF approximation via erf
+  const scaledX = Math.abs(x) / Math.sqrt(2);
 
-  const t = 1 / (1 + p * absX);
-  const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-absX * absX);
+  const t = 1 / (1 + p * scaledX);
+  const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-scaledX * scaledX);
 
   return 0.5 * (1 + sign * y);
 }

@@ -362,7 +362,7 @@ form { padding: 20px; }
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #818cf8;
+  background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
   color: #fff;
   border: none;
   font-size: 28px;
@@ -370,7 +370,7 @@ form { padding: 20px; }
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(129,140,248,0.4);
   z-index: 100;
-  display: none;
+  display: flex; /* Always visible */
   align-items: center;
   justify-content: center;
   transition: transform 0.2s, box-shadow 0.2s;
@@ -383,4 +383,81 @@ form { padding: 20px; }
 
 .fab:active {
   transform: scale(0.95);
+}
+
+.fab.copied {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+}
+
+/* LLM Modal Styles */
+.llm-modal-body {
+  padding: 16px;
+}
+
+.llm-status {
+  margin: 12px 0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  display: none;
+}
+
+.llm-status.loading {
+  display: block;
+  background: #eef2ff;
+  color: #6366f1;
+}
+
+.llm-status.success {
+  display: block;
+  background: #ecfdf5;
+  color: #10b981;
+}
+
+.llm-status.error {
+  display: block;
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.llm-preview {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #475569;
+  white-space: pre-wrap;
+  word-break: break-word;
+  display: none;
+}
+
+.llm-preview.visible {
+  display: block;
+}
+
+.llm-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.llm-preview-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.llm-preview-stats span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }

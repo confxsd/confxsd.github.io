@@ -1856,8 +1856,42 @@
   </div>
 </div>
 
-<!-- FAB Button (Mobile) -->
-<button class="fab" id="fabButton" onclick="openFeedModal()">+</button>
+<!-- LLM Export Modal -->
+<div class="modal" id="llmModal" onclick="if(event.target===this)closeLLMModal()">
+  <div class="modal-content" style="max-width: 600px;">
+    <div class="modal-header">
+      <h2>Copy for LLM</h2>
+      <button class="modal-close" onclick="closeLLMModal()">×</button>
+    </div>
+    <div class="llm-modal-body">
+      <form id="llmForm" onsubmit="submitLLMForm(event)">
+        <div class="form-row">
+          <div class="form-group" style="flex: 1;">
+            <label>Ticker</label>
+            <input type="text" id="llmTicker" placeholder="TSLA" style="text-transform: uppercase;" autocomplete="off">
+          </div>
+          <button type="submit" class="btn-primary" id="llmFetchBtn" style="margin-top: 24px; height: 40px;">
+            Fetch & Copy
+          </button>
+        </div>
+      </form>
+      <div id="llmStatus" class="llm-status"></div>
+      <div id="llmPreview" class="llm-preview"></div>
+      <div class="form-actions" id="llmActions" style="display: none;">
+        <button type="button" class="btn-secondary" onclick="closeLLMModal()">Close</button>
+        <button type="button" class="btn-primary" id="llmCopyBtn" onclick="copyLLMData()">Copy Again</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAB Button - Copy for LLM -->
+<button class="fab" id="fabButton" onclick="openLLMModal()" title="Copy for LLM">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+  </svg>
+</button>
 
 <script type="module" src="js/app.js?v=9"></script>
 </body>

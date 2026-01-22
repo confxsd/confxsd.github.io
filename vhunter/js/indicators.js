@@ -1,5 +1,6 @@
 // Technical Indicators Module
 import * as finMath from './financial-math.js';
+import { estimateGamma as estimateGammaFromBS } from './gamma.js';
 
 export function average(arr) {
   return arr.reduce((s, v) => s + v, 0) / arr.length;
@@ -459,13 +460,25 @@ export function calcGEX(options, spotPrice) {
   const strikeGEX = {};
 
   for (const o of options) {
-    const gamma = o.greeks?.gamma;
+    let gamma = o.greeks?.gamma;
     const oi = o.open_interest || 0;
     const type = o.details?.contract_type;
     const strike = o.details?.strike_price;
+    const iv = o.implied_volatility || 0.3;
 
-    // Skip if no gamma or no OI
-    if (!gamma || gamma <= 0 || oi <= 0 || !type || !strike) continue;
+    // Skip if no OI or missing required data
+    if (oi <= 0 || !type || !strike) continue;
+
+    // Calculate DTE for gamma estimation
+    const expDate = o.details?.expiration_date;
+    const dte = expDate ? Math.ceil((new Date(expDate) - new Date()) / (1000 * 60 * 60 * 24)) : 30;
+
+    // If gamma is missing or invalid, estimate it using Black-Scholes
+    // This aligns with gamma.js approach for consistency
+    if (!gamma || gamma <= 0 || gamma > 1) {
+      gamma = estimateGammaFromBS(spotPrice, strike, dte, iv);
+      if (!gamma || gamma <= 0) continue; // Skip if estimation also fails
+    }
 
     // GEX formula: gamma × OI × 100 shares × spot² × 0.01
     // This gives us $ of stock to trade per 1% underlying move
