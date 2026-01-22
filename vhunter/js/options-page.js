@@ -12,6 +12,8 @@ import { updateDynamicTooltips, updateSectionTooltips } from './teaching-tips.js
 // Advanced gamma analytics (SIG-level dealer positioning)
 import * as gammaTools from './gamma.js';
 import { addToHistory, setOptionsSearchCallback, renderOptionsHistory } from './history.js';
+// Standardized financial calculations for consistency
+import * as finMath from './financial-math.js';
 
 export let optionsData = {
   ticker: null,
@@ -95,7 +97,8 @@ export async function loadOptionsData() {
     if (aggs?.results?.length > 0) {
       const prices = aggs.results.map(d => d.c);
       optionsData.prices = prices;
-      optionsData.hv30 = calculateHistoricalVolatility(prices, 30);
+      // Use standardized volatility calculation for consistency with overview page
+      optionsData.hv30 = finMath.calcRealizedVolatility(prices, 30) || 0;
     }
 
     updateSpotDisplay();
@@ -285,8 +288,8 @@ function updateQuickStats(avgIV, hv30, spotPrice, pcRatio, termStructure) {
   vrpEl.title = vrp > 10 ? 'Options expensive - consider selling premium' :
     vrp < -5 ? 'Options cheap - consider buying premium' : 'Fair value';
 
-  // Expected move
-  const expMove = spotPrice * (avgIV / 100) * Math.sqrt(5 / 365);
+  // Expected move (weekly - 5 trading days) using standardized calculation
+  const expMove = finMath.calcExpectedMove(spotPrice, avgIV, 5);
   document.getElementById('optExpMove').textContent = '±$' + expMove.toFixed(2);
 
   // P/C Ratio
@@ -350,9 +353,10 @@ function updateVolatilitySection(expiryIV, avgIV, spotPrice, strikeData) {
   if (skewItems[2]) skewItems[2].querySelector('.skew-value').textContent = callIV.toFixed(0) + '%';
   document.getElementById('optPcSkew').textContent = (putIV - callIV >= 0 ? '+' : '') + (putIV - callIV).toFixed(1) + '%';
 
-  const daily = spotPrice * (avgIV / 100) * Math.sqrt(1 / 365);
-  const weekly = spotPrice * (avgIV / 100) * Math.sqrt(5 / 365);
-  const monthly = spotPrice * (avgIV / 100) * Math.sqrt(21 / 365);
+  // Use standardized expected move calculations for consistency
+  const daily = finMath.calcExpectedMove(spotPrice, avgIV, 1);
+  const weekly = finMath.calcExpectedMove(spotPrice, avgIV, 5);
+  const monthly = finMath.calcExpectedMove(spotPrice, avgIV, 21);
   document.getElementById('optExpDaily').textContent = `$${(spotPrice - daily).toFixed(2)} - $${(spotPrice + daily).toFixed(2)}`;
   document.getElementById('optExpWeekly').textContent = `$${(spotPrice - weekly).toFixed(2)} - $${(spotPrice + weekly).toFixed(2)}`;
   document.getElementById('optExpMonthly').textContent = `$${(spotPrice - monthly).toFixed(2)} - $${(spotPrice + monthly).toFixed(2)}`;

@@ -13,6 +13,7 @@ import { recordGammaLevels, getWallShiftAnalysis } from './db.js';
 import { CONFIG } from './config.js';
 import { getCurrentPage } from './pages.js';
 import { optionsData } from './options-page.js';
+import * as finMath from './financial-math.js';
 
 export let mktData = {};
 let skipCache = false;
@@ -85,13 +86,9 @@ function processHistoricalData(ticker, data) {
   const sma20Arr = indicators.calcSMA(prices, 20);
   const sma50Arr = indicators.calcSMA(prices, 50);
 
-  // Calculate volatility
-  const returns = [];
-  for (let i = 1; i < prices.length; i++) {
-    returns.push((prices[i] - prices[i - 1]) / prices[i - 1]);
-  }
-  const avgReturn = indicators.average(returns);
-  const vol = Math.sqrt(returns.reduce((s, r) => s + Math.pow(r - avgReturn, 2), 0) / returns.length) * Math.sqrt(252) * 100;
+  // Calculate volatility using standardized log returns (industry standard)
+  // Uses 30-day window for HV30 to match options page calculations
+  const vol = finMath.calcRealizedVolatility(prices, 30) || 0;
 
   // Relative volume
   const avgVol = indicators.average(volumes.slice(-20));
@@ -344,8 +341,9 @@ function processOptionsData(options, spotPrice) {
   const monthlyMaxPain = calculateMaxPain(options.monthly);
   const sixMonthMaxPain = calculateMaxPain(options.sixMonth);
 
-  const expMove = (spotPrice * (avgIV / 100) * Math.sqrt(30 / 365)).toFixed(2);
-  ui.$('eM').textContent = '±$' + expMove;
+  // Use standardized expected move calculation (30-day)
+  const expMove = finMath.calcExpectedMove(spotPrice, avgIV, 30);
+  ui.$('eM').textContent = '±$' + expMove.toFixed(2);
 
   calls.sort((a, b) => b.volume - a.volume);
   puts.sort((a, b) => b.volume - a.volume);

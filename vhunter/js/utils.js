@@ -1,4 +1,5 @@
 // VHunter Shared Utilities
+import * as finMath from './financial-math.js';
 
 export function formatNum(n) {
   if (n == null || isNaN(n)) return '--';
@@ -91,15 +92,11 @@ export function calculateMaxPain(optionsArray) {
   return maxPainStrike;
 }
 
+// Calculate Historical Volatility using standardized function
+// Wrapper for backwards compatibility
 export function calculateHistoricalVolatility(prices, days) {
-  if (prices.length < days + 1) days = prices.length - 1;
-  const returns = [];
-  for (let i = prices.length - days; i < prices.length; i++) {
-    returns.push(Math.log(prices[i] / prices[i - 1]));
-  }
-  const avgReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
-  const variance = returns.reduce((s, r) => s + Math.pow(r - avgReturn, 2), 0) / returns.length;
-  return Math.sqrt(variance) * Math.sqrt(252) * 100;
+  const result = finMath.calcRealizedVolatility(prices, days);
+  return result !== null ? result : 0;
 }
 
 // Parse option from notes format: "IONQ 23JAN26 49 P"

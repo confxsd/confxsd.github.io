@@ -1,4 +1,5 @@
 // Technical Indicators Module
+import * as finMath from './financial-math.js';
 
 export function average(arr) {
   return arr.reduce((s, v) => s + v, 0) / arr.length;
@@ -182,63 +183,46 @@ export function calcSMA(prices, period) {
 // VOLATILITY RISK PREMIUM (VRP) ANALYTICS
 // ============================================
 
-// Calculate Realized Volatility using log returns (proper method)
+// Calculate Realized Volatility using standardized calculation
+// Wrapper around financial-math for backwards compatibility
 export function calcRealizedVol(prices, window = 30) {
-  if (prices.length < window + 1) return null;
-  const returns = [];
-  for (let i = prices.length - window; i < prices.length; i++) {
-    returns.push(Math.log(prices[i] / prices[i - 1]));
-  }
-  const mean = average(returns);
-  const variance = returns.reduce((s, r) => s + Math.pow(r - mean, 2), 0) / returns.length;
-  return Math.sqrt(variance) * Math.sqrt(252) * 100; // Annualized %
+  return finMath.calcRealizedVolatility(prices, window);
 }
 
 // Calculate multiple RV windows for comparison
+// Wrapper around financial-math for backwards compatibility
 export function calcRealizedVolMulti(prices) {
-  return {
-    rv5: calcRealizedVol(prices, 5),
-    rv10: calcRealizedVol(prices, 10),
-    rv20: calcRealizedVol(prices, 20),
-    rv30: calcRealizedVol(prices, 30),
-    rv60: prices.length >= 61 ? calcRealizedVol(prices, 60) : null
-  };
+  return finMath.calcRealizedVolatilityMulti(prices);
 }
 
 // VRP = IV - RV (positive = options expensive, negative = cheap)
+// Wrapper around financial-math for backwards compatibility
 export function calcVRP(impliedVol, realizedVol) {
-  if (impliedVol == null || realizedVol == null) return null;
-  return impliedVol - realizedVol;
+  return finMath.calcVRP(impliedVol, realizedVol);
 }
 
 // VRP as percentage of IV
+// Wrapper around financial-math for backwards compatibility
 export function calcVRPRatio(impliedVol, realizedVol) {
-  if (impliedVol == null || realizedVol == null || impliedVol === 0) return null;
-  return ((impliedVol - realizedVol) / impliedVol) * 100;
+  return finMath.calcVRPRatio(impliedVol, realizedVol);
 }
 
 // IV Rank: Where is current IV relative to 52-week range?
-// IV Rank = (Current IV - 52w Low) / (52w High - 52w Low) * 100
+// Wrapper around financial-math for backwards compatibility
 export function calcIVRank(currentIV, ivHistory) {
-  if (!ivHistory || ivHistory.length === 0 || currentIV == null) return null;
-  const min = Math.min(...ivHistory);
-  const max = Math.max(...ivHistory);
-  if (max === min) return 50; // No range
-  return ((currentIV - min) / (max - min)) * 100;
+  return finMath.calcIVRank(currentIV, ivHistory);
 }
 
 // IV Percentile: What % of historical IV readings are below current?
+// Wrapper around financial-math for backwards compatibility
 export function calcIVPercentile(currentIV, ivHistory) {
-  if (!ivHistory || ivHistory.length === 0 || currentIV == null) return null;
-  const below = ivHistory.filter(iv => iv < currentIV).length;
-  return (below / ivHistory.length) * 100;
+  return finMath.calcIVPercentile(currentIV, ivHistory);
 }
 
 // Term Structure Steepness: (Back month IV - Front month IV) / Front month IV
-// Positive = contango (normal), Negative = backwardation (fear)
+// Wrapper around financial-math for backwards compatibility
 export function calcTermSteepness(frontIV, backIV) {
-  if (frontIV == null || backIV == null || frontIV === 0) return null;
-  return ((backIV - frontIV) / frontIV) * 100;
+  return finMath.calcTermSteepness(frontIV, backIV);
 }
 
 // Classify volatility trade setup based on VRP metrics

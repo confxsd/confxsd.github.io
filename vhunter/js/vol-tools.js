@@ -1,29 +1,25 @@
 // VHunter Volatility Tools Module
 // Advanced volatility analytics for options trading
+import * as finMath from './financial-math.js';
 
 // ============================================
 // STRADDLE & EXPECTED MOVE CALCULATIONS
+// Using standardized calculations from financial-math.js
 // ============================================
 
 // ATM Straddle Approximation: Straddle = 0.8 × S × σ × √T
 export function calcStraddlePrice(spotPrice, iv, daysToExpiry) {
-  const ivDecimal = iv / 100;
-  const timeYears = daysToExpiry / 365;
-  return 0.8 * spotPrice * ivDecimal * Math.sqrt(timeYears);
+  return finMath.calcStraddlePrice(spotPrice, iv, daysToExpiry);
 }
 
 // Expected Move (1 SD): EM = S × σ × √T
 export function calcExpectedMove(spotPrice, iv, daysToExpiry) {
-  const ivDecimal = iv / 100;
-  const timeYears = daysToExpiry / 365;
-  return spotPrice * ivDecimal * Math.sqrt(timeYears);
+  return finMath.calcExpectedMove(spotPrice, iv, daysToExpiry);
 }
 
 // Expected Move as percentage
 export function calcExpectedMovePct(iv, daysToExpiry) {
-  const ivDecimal = iv / 100;
-  const timeYears = daysToExpiry / 365;
-  return ivDecimal * Math.sqrt(timeYears) * 100;
+  return finMath.calcExpectedMovePercent(iv, daysToExpiry);
 }
 
 // Derive IV from straddle price
@@ -35,8 +31,7 @@ export function calcIVFromStraddle(straddlePrice, spotPrice, daysToExpiry) {
 
 // Daily expected move from IV
 export function calcDailyMove(iv) {
-  // Daily vol = Annual vol / √252
-  return iv / 15.87; // ≈ √252
+  return finMath.calcDailyMove(iv);
 }
 
 // ============================================
@@ -131,25 +126,8 @@ export function calcMultiWindowVRP(iv, prices) {
     return { error: 'Insufficient price history' };
   }
 
-  // Calculate RV for multiple windows
-  const calcRV = (prices, window) => {
-    if (prices.length < window + 1) return null;
-    const returns = [];
-    for (let i = prices.length - window; i < prices.length; i++) {
-      returns.push(Math.log(prices[i] / prices[i - 1]));
-    }
-    const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
-    const variance = returns.reduce((s, r) => s + Math.pow(r - mean, 2), 0) / returns.length;
-    return Math.sqrt(variance) * Math.sqrt(252) * 100;
-  };
-
-  const windows = {
-    rv5: calcRV(prices, 5),
-    rv10: calcRV(prices, 10),
-    rv20: calcRV(prices, 20),
-    rv30: calcRV(prices, 30),
-    rv60: calcRV(prices, 60)
-  };
+  // Use standardized RV calculation from financial-math module
+  const windows = finMath.calcRealizedVolatilityMulti(prices);
 
   // Calculate VRP for each window
   const vrp = {};
@@ -203,16 +181,13 @@ export function buildVolatilityCone(prices, currentIV) {
 
   windows.forEach(window => {
     const rvSeries = [];
-    for (let i = window; i < prices.length; i++) {
-      const slice = prices.slice(i - window, i);
-      const returns = [];
-      for (let j = 1; j < slice.length; j++) {
-        returns.push(Math.log(slice[j] / slice[j - 1]));
+    for (let i = window + 1; i <= prices.length; i++) {
+      // Use standardized RV calculation for each historical point
+      const slice = prices.slice(0, i);
+      const rv = finMath.calcRealizedVolatility(slice, window);
+      if (rv !== null) {
+        rvSeries.push(rv);
       }
-      const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
-      const variance = returns.reduce((s, r) => s + Math.pow(r - mean, 2), 0) / returns.length;
-      const rv = Math.sqrt(variance) * Math.sqrt(252) * 100;
-      rvSeries.push(rv);
     }
 
     // Calculate percentiles
