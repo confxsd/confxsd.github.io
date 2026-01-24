@@ -14,7 +14,7 @@
   width: auto;
   height: auto;
   padding: 8px 14px;
-  font-size: 12px;
+  font-size: var(--t-base);
   font-weight: 600;
   border-radius: 6px;
 }
@@ -53,7 +53,7 @@
   border: none;
   padding: 8px 14px;
   font-weight: 600;
-  font-size: 12px;
+  font-size: var(--t-base);
   border-radius: 6px;
   cursor: pointer;
 }
@@ -68,7 +68,7 @@
 }
 
 .hunt-icon {
-  font-size: 14px;
+  font-size: var(--t-lg);
 }
 
 /* Hunt Results Section */
@@ -93,16 +93,16 @@
   gap: 10px;
   color: #fff;
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--t-md);
 }
 
 .hunt-badge {
-  font-size: 16px;
+  font-size: var(--t-xl);
 }
 
 .hunt-status {
   color: #818cf8;
-  font-size: 11px;
+  font-size: var(--t-sm);
   font-weight: 500;
 }
 
@@ -116,19 +116,19 @@
 .hunt-ai-loading {
   color: #94a3b8;
   font-style: italic;
-  font-size: 12px;
+  font-size: var(--t-base);
 }
 
 .hunt-ai-content {
   color: #e2e8f0;
-  font-size: 12px;
+  font-size: var(--t-base);
   line-height: 1.6;
   white-space: pre-wrap;
 }
 
 .hunt-ai-error {
   color: #f87171;
-  font-size: 12px;
+  font-size: var(--t-base);
 }
 
 /* Hunt Grid */
@@ -168,7 +168,7 @@
 }
 
 .hunt-card-ticker {
-  font-size: 15px;
+  font-size: var(--t-xl);
   font-weight: 700;
   color: #fff;
 }
@@ -179,7 +179,7 @@
   padding: 4px 8px;
   border-radius: 6px;
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--t-md);
 }
 
 .hunt-card.cold .hunt-card-score {
@@ -192,13 +192,13 @@
 
 .hunt-card-price {
   color: #e2e8f0;
-  font-size: 14px;
+  font-size: var(--t-lg);
   font-weight: 600;
   margin-bottom: 10px;
 }
 
-.hunt-card-price .positive { color: #22c55e; margin-left: 6px; font-size: 12px; }
-.hunt-card-price .negative { color: #ef4444; margin-left: 6px; font-size: 12px; }
+.hunt-card-price .positive { color: #22c55e; margin-left: 6px; font-size: var(--t-base); }
+.hunt-card-price .negative { color: #ef4444; margin-left: 6px; font-size: var(--t-base); }
 
 .hunt-card-metrics {
   display: grid;
@@ -216,14 +216,14 @@
 .hunt-metric-label {
   display: block;
   color: #94a3b8;
-  font-size: 9px;
+  font-size: var(--t-2xs);
   text-transform: uppercase;
   margin-bottom: 2px;
 }
 
 .hunt-metric-value {
   color: #e2e8f0;
-  font-size: 12px;
+  font-size: var(--t-base);
   font-weight: 600;
 }
 
@@ -243,7 +243,7 @@
 }
 
 .flow-label {
-  font-size: 11px;
+  font-size: var(--t-sm);
   font-weight: 600;
   color: #94a3b8;
 }
@@ -253,7 +253,7 @@
 
 .flow-detail {
   color: #64748b;
-  font-size: 10px;
+  font-size: var(--t-xs);
 }
 
 /* Unusual Activity Section */
@@ -266,7 +266,7 @@
 }
 
 .unusual-badge {
-  font-size: 10px;
+  font-size: var(--t-xs);
   font-weight: 700;
   padding: 3px 6px;
   border-radius: 4px;
@@ -286,7 +286,7 @@
 
 .unusual-detail {
   color: #e2e8f0;
-  font-size: 12px;
+  font-size: var(--t-base);
   font-weight: 600;
 }
 
@@ -298,7 +298,7 @@
 
 .unusual-reason {
   color: #f59e0b;
-  font-size: 10px;
+  font-size: var(--t-xs);
   margin-top: 2px;
 }
 
@@ -310,7 +310,7 @@
 }
 
 .mini-trade {
-  font-size: 9px;
+  font-size: var(--t-2xs);
   padding: 2px 6px;
   border-radius: 3px;
   background: #0f172a;
@@ -329,7 +329,7 @@
 
 .hunt-card-mp {
   color: #f59e0b;
-  font-size: 10px;
+  font-size: var(--t-xs);
   padding: 6px 8px;
   background: #0f172a;
   border-radius: 4px;
@@ -343,7 +343,7 @@
 
 .setup-badge {
   display: inline-block;
-  font-size: 9px;
+  font-size: var(--t-2xs);
   font-weight: 700;
   padding: 4px 10px;
   border-radius: 4px;
@@ -375,7 +375,7 @@
   border: none;
   padding: 6px 10px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: var(--t-sm);
   font-weight: 500;
   cursor: pointer;
 }
@@ -403,14 +403,14 @@
 }
 
 .hunt-stat-label {
-  font-size: 10px;
+  font-size: var(--t-xs);
   color: #64748b;
   text-transform: uppercase;
   margin-bottom: 4px;
 }
 
 .hunt-stat-value {
-  font-size: 16px;
+  font-size: var(--t-xl);
   font-weight: 700;
   color: #1e293b;
 }
@@ -438,7 +438,7 @@
   padding: 12px 14px;
   background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
-  font-size: 10px;
+  font-size: var(--t-xs);
   font-weight: 600;
   color: #64748b;
   text-transform: uppercase;
@@ -479,13 +479,13 @@
 }
 
 .col-ticker strong {
-  font-size: 13px;
+  font-size: var(--t-md);
   color: #1e293b;
 }
 
 .ticker-note {
   color: #94a3b8;
-  font-size: 10px;
+  font-size: var(--t-xs);
 }
 
 .col-price {
@@ -495,20 +495,20 @@
 }
 
 .price-val {
-  font-size: 12px;
+  font-size: var(--t-base);
   font-weight: 600;
   color: #1e293b;
 }
 
 .price-chg {
-  font-size: 10px;
+  font-size: var(--t-xs);
 }
 
 .price-chg.positive { color: #22c55e; }
 .price-chg.negative { color: #ef4444; }
 
 .col-metrics {
-  font-size: 11px;
+  font-size: var(--t-sm);
   font-weight: 500;
   color: #475569;
 }
@@ -527,7 +527,7 @@
   background: #f1f5f9;
   padding: 4px 8px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: var(--t-base);
   font-weight: 700;
   color: #64748b;
 }
@@ -555,7 +555,7 @@
   height: 28px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--t-base);
 }
 
 .col-actions .btn-icon:hover {
@@ -577,7 +577,7 @@
 }
 
 .legend-title {
-  font-size: 10px;
+  font-size: var(--t-xs);
   font-weight: 600;
   color: #64748b;
   text-transform: uppercase;
@@ -588,7 +588,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  font-size: 11px;
+  font-size: var(--t-sm);
   color: #475569;
 }
 

@@ -20,7 +20,7 @@
 }
 
 .terminal-header h1 {
-  font-size: 18px;
+  font-size: var(--t-2xl);
   font-weight: 700;
   color: #1e293b;
   margin: 0;
@@ -37,7 +37,7 @@
   padding: 8px 12px;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: var(--t-md);
   font-weight: 600;
   font-family: inherit;
   text-transform: uppercase;
@@ -62,7 +62,7 @@
   color: #fff;
   border: none;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: var(--t-md);
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s;
@@ -101,7 +101,7 @@
 }
 
 .panel-ticker {
-  font-size: 13px;
+  font-size: var(--t-md);
   font-weight: 700;
   color: #1e293b;
   letter-spacing: 0.02em;
@@ -115,7 +115,7 @@
 
 .tf-btn {
   padding: 3px 8px;
-  font-size: 10px;
+  font-size: var(--t-xs);
   font-weight: 600;
   font-family: inherit;
   color: #64748b;
@@ -140,7 +140,7 @@
   background: none;
   border: none;
   color: #94a3b8;
-  font-size: 16px;
+  font-size: var(--t-xl);
   cursor: pointer;
   padding: 0;
   margin-left: 8px;
@@ -179,13 +179,13 @@
 }
 
 .terminal-empty p {
-  font-size: 14px;
+  font-size: var(--t-lg);
   margin: 0;
 }
 
 /* Terminal Status */
 .terminal-status {
-  font-size: 11px;
+  font-size: var(--t-sm);
   color: #64748b;
 }
 

@@ -6,7 +6,7 @@
   color: #fff;
   border: none;
   padding: 10px 18px;
-  font-size: 13px;
+  font-size: var(--t-md);
   font-weight: 600;
   border-radius: 6px;
   cursor: pointer;
@@ -23,7 +23,7 @@
   color: #475569;
   border: 1px solid #e2e8f0;
   padding: 10px 18px;
-  font-size: 13px;
+  font-size: var(--t-md);
   font-weight: 600;
   border-radius: 6px;
   cursor: pointer;
@@ -36,7 +36,7 @@
 
 .btn-sm {
   padding: 6px 12px;
-  font-size: 11px;
+  font-size: var(--t-sm);
 }
 
 .btn-danger { background: #ef4444 !important; }
@@ -70,7 +70,7 @@
   background: #fff;
   color: #64748b;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--t-base);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -100,7 +100,7 @@
 }
 
 .stat-label {
-  font-size: 11px;
+  font-size: var(--t-sm);
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -108,7 +108,7 @@
 }
 
 .stat-value {
-  font-size: 24px;
+  font-size: var(--t-4xl);
   font-weight: 700;
   color: #1e293b;
 }
@@ -128,12 +128,12 @@
 }
 
 .stats-row.compact .stat-label {
-  font-size: 10px;
+  font-size: var(--t-xs);
   margin-bottom: 4px;
 }
 
 .stats-row.compact .stat-value {
-  font-size: 18px;
+  font-size: var(--t-2xl);
 }
 
 .stat-card.highlight {
@@ -152,7 +152,7 @@
   background: #f1f5f9;
   border: none;
   padding: 10px 20px;
-  font-size: 13px;
+  font-size: var(--t-md);
   font-weight: 600;
   color: #64748b;
   border-radius: 6px;
@@ -170,7 +170,7 @@
 
 /* Type badge */
 .type-badge {
-  font-size: 9px;
+  font-size: var(--t-2xs);
   font-weight: 600;
   padding: 3px 6px;
   border-radius: 3px;
@@ -185,7 +185,7 @@
 .type-badge.short-put { background: #f3e8ff; color: #7c3aed; }
 
 /* Alert */
-.alert { background: #fef2f2; padding: 8px 12px; font-size: 11px; display: none; color: #dc2626; }
+.alert { background: #fef2f2; padding: 8px 12px; font-size: var(--t-sm); display: none; color: #dc2626; }
 
 /* Empty State */
 .empty-state {
@@ -195,8 +195,8 @@
 }
 
 .empty-icon { font-size: 48px; margin-bottom: 16px; }
-.empty-text { font-size: 16px; font-weight: 600; color: #64748b; }
-.empty-hint { font-size: 13px; margin-top: 8px; }
+.empty-text { font-size: var(--t-xl); font-weight: 600; color: #64748b; }
+.empty-hint { font-size: var(--t-md); margin-top: 8px; }
 
 /* Modals */
 .modal {
@@ -234,7 +234,7 @@
 }
 
 .modal-header h2 {
-  font-size: 18px;
+  font-size: var(--t-2xl);
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -252,7 +252,7 @@
   right: 16px;
   background: none;
   border: none;
-  font-size: 24px;
+  font-size: var(--t-4xl);
   color: #94a3b8;
   cursor: pointer;
   padding: 0;
@@ -282,7 +282,7 @@ form { padding: 20px; }
 
 .form-group label {
   display: block;
-  font-size: 12px;
+  font-size: var(--t-base);
   font-weight: 600;
   color: #475569;
   margin-bottom: 6px;
@@ -295,7 +295,7 @@ form { padding: 20px; }
   padding: 10px 12px;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: var(--t-md);
   font-family: inherit;
   background: #f8fafc;
 }
@@ -321,7 +321,7 @@ form { padding: 20px; }
 .ai-badge {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
-  font-size: 9px;
+  font-size: var(--t-2xs);
   font-weight: 700;
   padding: 3px 8px;
   border-radius: 4px;
@@ -338,7 +338,7 @@ form { padding: 20px; }
   color: #fff;
   padding: 12px 20px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: var(--t-base);
   z-index: 1000;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s;
@@ -365,7 +365,7 @@ form { padding: 20px; }
   background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
   color: #fff;
   border: none;
-  font-size: 28px;
+  font-size: var(--t-5xl);
   font-weight: 300;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(129,140,248,0.4);
@@ -398,7 +398,7 @@ form { padding: 20px; }
   margin: 12px 0;
   padding: 8px 12px;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: var(--t-base);
   display: none;
 }
 
@@ -428,7 +428,7 @@ form { padding: 20px; }
   max-height: 300px;
   overflow-y: auto;
   font-family: 'Monaco', 'Consolas', monospace;
-  font-size: 10px;
+  font-size: var(--t-xs);
   line-height: 1.4;
   color: #475569;
   white-space: pre-wrap;
@@ -452,7 +452,7 @@ form { padding: 20px; }
 .llm-preview-stats {
   display: flex;
   gap: 16px;
-  font-size: 11px;
+  font-size: var(--t-sm);
   color: #64748b;
 }
 

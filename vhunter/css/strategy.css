@@ -11,7 +11,7 @@
 }
 
 #page-strategy .page-header h1 {
-  font-size: 18px;
+  font-size: var(--t-2xl);
   font-weight: 700;
   color: #1e293b;
   margin: 0;
@@ -41,7 +41,7 @@
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: var(--t-md);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
@@ -64,7 +64,7 @@
 .focus-tab-remove {
   opacity: 0.5;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--t-lg);
   line-height: 1;
 }
 
@@ -78,7 +78,7 @@
 
 .empty-state-inline {
   color: #64748b;
-  font-size: 13px;
+  font-size: var(--t-md);
   padding: 4px 0;
 }
 
@@ -98,7 +98,7 @@
 }
 
 .sig-ticker {
-  font-size: 24px;
+  font-size: var(--t-4xl);
   font-weight: 700;
   letter-spacing: 0.5px;
 }
@@ -110,12 +110,12 @@
 }
 
 .sig-spot {
-  font-size: 20px;
+  font-size: var(--t-3xl);
   font-weight: 600;
 }
 
 .sig-change {
-  font-size: 14px;
+  font-size: var(--t-lg);
 }
 
 .sig-change.positive { color: #34d399; }
@@ -125,7 +125,7 @@
   margin-left: auto;
   padding: 6px 14px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: var(--t-sm);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -162,7 +162,7 @@
 .gex-regime-badge {
   padding: 4px 12px;
   border-radius: 20px;
-  font-size: 11px;
+  font-size: var(--t-sm);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -175,7 +175,7 @@
 .gex-regime-badge.neutral { background: #fef3c7; color: #d97706; }
 
 .gex-net {
-  font-size: 12px;
+  font-size: var(--t-base);
   color: #64748b;
   font-weight: 500;
 }
@@ -238,7 +238,7 @@
   display: flex;
   justify-content: space-between;
   margin-top: 8px;
-  font-size: 10px;
+  font-size: var(--t-xs);
   color: #64748b;
 }
 
@@ -276,7 +276,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: var(--t-lg);
   flex-shrink: 0;
 }
 
@@ -291,7 +291,7 @@
 }
 
 .gex-card-label {
-  font-size: 10px;
+  font-size: var(--t-xs);
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.3px;
@@ -299,13 +299,13 @@
 }
 
 .gex-card-price {
-  font-size: 15px;
+  font-size: var(--t-xl);
   font-weight: 700;
   color: #1e293b;
 }
 
 .gex-card-dist {
-  font-size: 11px;
+  font-size: var(--t-sm);
   color: #64748b;
 }
 
@@ -328,7 +328,7 @@
 }
 
 .gex-group-title {
-  font-size: 11px;
+  font-size: var(--t-sm);
   font-weight: 600;
   color: #64748b;
   text-transform: uppercase;
@@ -352,7 +352,7 @@
 
 .mini-label {
   display: block;
-  font-size: 9px;
+  font-size: var(--t-2xs);
   color: #94a3b8;
   text-transform: uppercase;
   margin-bottom: 4px;
@@ -360,14 +360,14 @@
 
 .mini-value {
   display: block;
-  font-size: 13px;
+  font-size: var(--t-md);
   font-weight: 700;
   color: #d97706;
 }
 
 .mini-dist {
   display: block;
-  font-size: 10px;
+  font-size: var(--t-xs);
   color: #64748b;
 }
 
@@ -382,14 +382,14 @@
 
 .dealer-label {
   display: block;
-  font-size: 10px;
+  font-size: var(--t-xs);
   color: #94a3b8;
   margin-bottom: 2px;
 }
 
 .dealer-value {
   display: block;
-  font-size: 12px;
+  font-size: var(--t-base);
   font-weight: 600;
   color: #1e293b;
 }
@@ -403,7 +403,7 @@
 
 .gex-alerts:empty::before {
   content: 'No critical alerts';
-  font-size: 11px;
+  font-size: var(--t-sm);
   color: #94a3b8;
   font-style: italic;
 }
@@ -414,7 +414,7 @@
   gap: 8px;
   padding: 8px 12px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: var(--t-base);
   background: #fef3c7;
   color: #92400e;
   border-left: 3px solid #f59e0b;
@@ -456,7 +456,7 @@
 }
 
 .setup-type {
-  font-size: 11px;
+  font-size: var(--t-sm);
   font-weight: 700;
   padding: 4px 10px;
   border-radius: 4px;
@@ -470,7 +470,7 @@
 .setup-type.put { background: #fef3c7; color: #d97706; }
 
 .setup-conviction {
-  font-size: 10px;
+  font-size: var(--t-xs);
   font-weight: 600;
   padding: 3px 8px;
   border-radius: 3px;
@@ -484,7 +484,7 @@
   display: flex;
   justify-content: space-between;
   padding: 5px 0;
-  font-size: 11px;
+  font-size: var(--t-sm);
   border-bottom: 1px solid #e2e8f0;
 }
 
@@ -513,7 +513,7 @@
 .hedged-header { margin-bottom: 10px; }
 
 .hedged-bias {
-  font-size: 10px;
+  font-size: var(--t-xs);
   font-weight: 700;
   padding: 4px 10px;
   border-radius: 4px;
@@ -528,7 +528,7 @@
   display: flex;
   justify-content: space-between;
   padding: 5px 0;
-  font-size: 11px;
+  font-size: var(--t-sm);
   border-bottom: 1px solid #e2e8f0;
 }
 
@@ -558,7 +558,7 @@
 
 .sizing-row label {
   flex: 1;
-  font-size: 11px;
+  font-size: var(--t-sm);
   color: #64748b;
 }
 
@@ -567,7 +567,7 @@
   padding: 8px 12px;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: var(--t-base);
   text-align: right;
 }
 
@@ -585,7 +585,7 @@
   padding: 12px;
   background: #fef3c7;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: var(--t-sm);
   color: #92400e;
   line-height: 1.5;
 }
@@ -600,7 +600,7 @@
 .sig-alert {
   padding: 10px 12px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: var(--t-sm);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -612,11 +612,11 @@
 .sig-alert.info { background: #dbeafe; color: #1d4ed8; }
 .sig-alert.success { background: #d1fae5; color: #059669; }
 
-.sig-alert-icon { font-size: 14px; }
+.sig-alert-icon { font-size: var(--t-lg); }
 
 .sig-alert-empty {
   color: #94a3b8;
-  font-size: 11px;
+  font-size: var(--t-sm);
   font-style: italic;
 }
 
@@ -629,7 +629,7 @@
 }
 
 .ai-status {
-  font-size: 12px;
+  font-size: var(--t-base);
   color: #818cf8;
 }
 
@@ -673,7 +673,7 @@
 }
 
 .trade-card-type {
-  font-size: 10px;
+  font-size: var(--t-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -688,7 +688,7 @@
 .trade-card.spread .trade-card-type { background: #ede9fe; color: #7c3aed; }
 
 .trade-card-conviction {
-  font-size: 10px;
+  font-size: var(--t-xs);
   font-weight: 600;
   padding: 3px 8px;
   border-radius: 4px;
@@ -711,14 +711,14 @@
 }
 
 .trade-card-level .label {
-  font-size: 9px;
+  font-size: var(--t-2xs);
   color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
 
 .trade-card-level .value {
-  font-size: 13px;
+  font-size: var(--t-md);
   font-weight: 600;
   color: #1e293b;
 }
@@ -732,7 +732,7 @@
   margin-top: 12px;
   padding-top: 10px;
   border-top: 1px solid #f1f5f9;
-  font-size: 11px;
+  font-size: var(--t-sm);
   color: #64748b;
   line-height: 1.5;
 }
@@ -744,7 +744,7 @@
 
 .ai-details summary {
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--t-base);
   color: #64748b;
   padding: 8px 0;
   user-select: none;
@@ -769,19 +769,19 @@
 
 .ai-strategy-empty {
   color: #94a3b8;
-  font-size: 13px;
+  font-size: var(--t-md);
   text-align: center;
   padding: 30px 20px;
 }
 
 .ai-strategy-content {
-  font-size: 13px;
+  font-size: var(--t-md);
   line-height: 1.6;
   color: #334155;
 }
 
 .ai-strategy-content h3 {
-  font-size: 14px;
+  font-size: var(--t-lg);
   font-weight: 700;
   color: #1e293b;
   margin: 16px 0 8px 0;
@@ -794,7 +794,7 @@
 }
 
 .ai-strategy-content h4 {
-  font-size: 13px;
+  font-size: var(--t-md);
   font-weight: 600;
   color: #475569;
   margin: 12px 0 6px 0;
@@ -838,7 +838,7 @@
   background: #e2e8f0;
   padding: 2px 6px;
   border-radius: 3px;
-  font-size: 12px;
+  font-size: var(--t-base);
 }
 
 .btn-ai {
@@ -863,7 +863,7 @@
 }
 
 .thesis-content {
-  font-size: 13px;
+  font-size: var(--t-md);
   line-height: 1.6;
   color: #334155;
   max-height: 400px;
@@ -875,7 +875,7 @@
 }
 
 .thesis-content h2 {
-  font-size: 16px;
+  font-size: var(--t-xl);
   font-weight: 700;
   color: #1e293b;
   margin: 16px 0 8px 0;
@@ -888,14 +888,14 @@
 }
 
 .thesis-content h3 {
-  font-size: 14px;
+  font-size: var(--t-lg);
   font-weight: 600;
   color: #334155;
   margin: 12px 0 6px 0;
 }
 
 .thesis-content h4 {
-  font-size: 13px;
+  font-size: var(--t-md);
   font-weight: 600;
   color: #475569;
   margin: 10px 0 4px 0;
@@ -922,7 +922,7 @@
   background: #e2e8f0;
   padding: 2px 6px;
   border-radius: 3px;
-  font-size: 12px;
+  font-size: var(--t-base);
   font-family: 'SF Mono', Monaco, monospace;
 }
 
@@ -943,7 +943,7 @@
 
 .thesis-empty {
   color: #94a3b8;
-  font-size: 13px;
+  font-size: var(--t-md);
   font-style: italic;
   padding: 20px;
   text-align: center;
@@ -969,7 +969,7 @@
   padding: 12px;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: var(--t-md);
   font-family: inherit;
   resize: vertical;
   line-height: 1.5;
@@ -988,7 +988,7 @@
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: var(--t-sm);
   color: #166534;
 }
 
@@ -1020,7 +1020,7 @@
 
   .focus-tab {
     padding: 6px 12px;
-    font-size: 12px;
+    font-size: var(--t-base);
   }
 
   .gex-cards {

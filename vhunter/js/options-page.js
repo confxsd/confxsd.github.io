@@ -15,6 +15,10 @@ import { addToHistory, setOptionsSearchCallback, renderOptionsHistory } from './
 // Standardized financial calculations for consistency
 import * as finMath from './financial-math.js';
 
+// Live mode state
+let liveInterval = null;
+let isLiveMode = false;
+
 export let optionsData = {
   ticker: null,
   spotPrice: 0,
@@ -41,12 +45,18 @@ export let optionsData = {
   daysToEarnings: null
 };
 
-export async function loadOptionsData() {
+export async function loadOptionsData(skipAI = false) {
   const ticker = document.getElementById('optTicker').value.toUpperCase().trim();
   if (!ticker) {
     // Reset to empty state when no ticker
+    stopLiveMode();
     resetOptionsDisplay();
     return;
+  }
+
+  // Stop live mode if ticker changed
+  if (isLiveMode && optionsData.ticker && optionsData.ticker !== ticker) {
+    stopLiveMode();
   }
 
   document.querySelector('.spot-price').textContent = 'Loading...';
@@ -108,7 +118,11 @@ export async function loadOptionsData() {
     processOptionsPageData(options, optionsData.spotPrice);
     populateExpiryDropdown(options);
     autoPopulateEarningsVol(options);
-    runOptionsAiAnalysis(ticker);
+
+    // Skip AI analysis during live mode to avoid rate limits
+    if (!skipAI) {
+      runOptionsAiAnalysis(ticker);
+    }
 
     // Add ticker to history and update the history strip
     addToHistory(ticker);
@@ -1520,8 +1534,52 @@ export function initOptionsPage() {
   renderOptionsHistory();
 }
 
+// Live mode functions
+export function toggleLiveMode() {
+  const btn = document.getElementById('btnLive');
+  const ticker = document.getElementById('optTicker').value.toUpperCase().trim();
+
+  if (!isLiveMode) {
+    if (!ticker) {
+      alert('Enter a ticker first');
+      return;
+    }
+    // Start live mode
+    isLiveMode = true;
+    btn.classList.add('active');
+    btn.textContent = 'LIVE';
+
+    // Initial load if not already loaded
+    if (!optionsData.ticker || optionsData.ticker !== ticker) {
+      loadOptionsData(false);
+    }
+
+    // Start 1-second refresh interval
+    liveInterval = setInterval(() => {
+      loadOptionsData(true); // Skip AI during live updates
+    }, 1000);
+  } else {
+    stopLiveMode();
+  }
+}
+
+export function stopLiveMode() {
+  isLiveMode = false;
+  const btn = document.getElementById('btnLive');
+  if (btn) {
+    btn.classList.remove('active');
+    btn.textContent = 'Live';
+  }
+  if (liveInterval) {
+    clearInterval(liveInterval);
+    liveInterval = null;
+  }
+}
+
 // Expose to window for onclick handlers
 window.loadOptionsData = loadOptionsData;
+window.toggleLiveMode = toggleLiveMode;
+window.stopLiveMode = stopLiveMode;
 window.loadChainForExpiry = loadChainForExpiry;
 window.toggleChainView = toggleChainView;
 window.runOptionsScanner = runOptionsScanner;

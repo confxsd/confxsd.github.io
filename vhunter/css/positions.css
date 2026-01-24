@@ -17,7 +17,7 @@
 }
 
 .pnl-hero-label {
-  font-size: 11px;
+  font-size: var(--t-sm);
   font-weight: 600;
   color: #94a3b8;
   text-transform: uppercase;
@@ -53,14 +53,14 @@
 }
 
 .pnl-breakdown-label {
-  font-size: 10px;
+  font-size: var(--t-xs);
   color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .pnl-breakdown-value {
-  font-size: 16px;
+  font-size: var(--t-xl);
   font-weight: 700;
   color: #e2e8f0;
 }
@@ -69,7 +69,7 @@
 .pnl-breakdown-value.negative { color: #f87171; }
 
 .pnl-breakdown-plus {
-  font-size: 14px;
+  font-size: var(--t-lg);
   color: #64748b;
   font-weight: 600;
 }
@@ -104,7 +104,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: var(--t-base);
   font-weight: 800;
   flex-shrink: 0;
 }
@@ -121,7 +121,7 @@
 }
 
 .perf-label {
-  font-size: 10px;
+  font-size: var(--t-xs);
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.3px;
@@ -129,7 +129,7 @@
 }
 
 .perf-value {
-  font-size: 15px;
+  font-size: var(--t-xl);
   font-weight: 700;
   color: #1e293b;
 }
@@ -138,7 +138,7 @@
 .perf-value.negative { color: #ef4444; }
 
 .perf-sub {
-  font-size: 9px;
+  font-size: var(--t-2xs);
   color: #94a3b8;
 }
 
@@ -161,7 +161,7 @@
   padding: 10px 16px;
   background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
-  font-size: 10px;
+  font-size: var(--t-xs);
   font-weight: 600;
   color: #64748b;
   text-transform: uppercase;
@@ -175,7 +175,7 @@
   padding: 12px 16px;
   align-items: center;
   border-bottom: 1px solid #f1f5f9;
-  font-size: 12px;
+  font-size: var(--t-base);
   transition: background 0.15s;
 }
 
@@ -187,14 +187,14 @@
 .position-row.negative { background: linear-gradient(90deg, rgba(239,68,68,0.03) 0%, transparent 100%); }
 
 .col-ticker strong {
-  font-size: 13px;
+  font-size: var(--t-md);
   font-weight: 700;
   color: #1e293b;
   display: block;
 }
 
 .col-ticker small {
-  font-size: 10px;
+  font-size: var(--t-xs);
   color: #94a3b8;
 }
 
@@ -208,12 +208,12 @@
 }
 
 .col-pnl strong {
-  font-size: 13px;
+  font-size: var(--t-md);
   display: block;
 }
 
 .col-pnl small {
-  font-size: 10px;
+  font-size: var(--t-xs);
   color: #94a3b8;
 }
 
@@ -241,7 +241,7 @@
   padding: 10px 16px;
   background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
-  font-size: 10px;
+  font-size: var(--t-xs);
   font-weight: 600;
   color: #64748b;
   text-transform: uppercase;
@@ -255,7 +255,7 @@
   padding: 10px 16px;
   align-items: center;
   border-bottom: 1px solid #f1f5f9;
-  font-size: 12px;
+  font-size: var(--t-base);
   transition: background 0.15s;
 }
 
@@ -271,7 +271,7 @@
 }
 
 .col-date {
-  font-size: 11px;
+  font-size: var(--t-sm);
   color: #64748b;
 }
 
@@ -301,13 +301,13 @@
 }
 
 .position-ticker {
-  font-size: 18px;
+  font-size: var(--t-2xl);
   font-weight: 700;
   color: #1e293b;
 }
 
 .position-type {
-  font-size: 10px;
+  font-size: var(--t-xs);
   font-weight: 600;
   padding: 3px 8px;
   border-radius: 4px;
@@ -322,7 +322,7 @@
 .position-details {
   display: flex;
   gap: 20px;
-  font-size: 12px;
+  font-size: var(--t-base);
   color: #64748b;
 }
 
@@ -332,7 +332,7 @@
 }
 
 .position-pnl {
-  font-size: 16px;
+  font-size: var(--t-xl);
   font-weight: 700;
 }
 
@@ -340,7 +340,7 @@
 .position-pnl.negative { color: #ef4444; }
 
 .position-notes {
-  font-size: 11px;
+  font-size: var(--t-sm);
   color: #64748b;
   font-style: italic;
 }
@@ -353,7 +353,7 @@
 
 .position-actions button {
   padding: 6px 12px;
-  font-size: 11px;
+  font-size: var(--t-sm);
 }
 
 /* Position Signal Badges */
@@ -361,7 +361,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 9px;
+  font-size: var(--t-2xs);
   font-weight: 600;
   padding: 2px 6px;
   border-radius: 3px;
@@ -391,13 +391,13 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: var(--t-lg);
   font-weight: 700;
   color: #1e293b;
 }
 
 .ai-status {
-  font-size: 11px;
+  font-size: var(--t-sm);
   font-weight: 500;
   color: #818cf8;
 }
@@ -424,7 +424,7 @@
 }
 
 .insight-label {
-  font-size: 10px;
+  font-size: var(--t-xs);
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -439,13 +439,13 @@
 }
 
 .insight-value {
-  font-size: 18px;
+  font-size: var(--t-2xl);
   font-weight: 700;
   margin-bottom: 4px;
 }
 
 .insight-detail {
-  font-size: 10px;
+  font-size: var(--t-xs);
   color: #64748b;
 }
 
@@ -478,7 +478,7 @@
 }
 
 .ai-section-title {
-  font-size: 11px;
+  font-size: var(--t-sm);
   font-weight: 700;
   color: #475569;
   text-transform: uppercase;
@@ -498,7 +498,7 @@
 }
 
 .ai-section-content {
-  font-size: 12px;
+  font-size: var(--t-base);
   line-height: 1.6;
   color: #475569;
   white-space: pre-wrap;

@@ -21,18 +21,18 @@
 }
 
 .note-ticker {
-  font-size: 14px;
+  font-size: var(--t-lg);
   font-weight: 700;
   color: #818cf8;
 }
 
 .note-date {
-  font-size: 10px;
+  font-size: var(--t-xs);
   color: #94a3b8;
 }
 
 .note-content {
-  font-size: 12px;
+  font-size: var(--t-base);
   line-height: 1.6;
   color: #475569;
   white-space: pre-wrap;
@@ -46,7 +46,7 @@
 }
 
 .note-tag {
-  font-size: 10px;
+  font-size: var(--t-xs);
   background: #f1f5f9;
   color: #64748b;
   padding: 3px 8px;
@@ -75,7 +75,7 @@
 }
 
 .watchlist-ticker {
-  font-size: 18px;
+  font-size: var(--t-2xl);
   font-weight: 700;
   margin-bottom: 8px;
   display: flex;
@@ -84,13 +84,13 @@
 }
 
 .watchlist-alerts {
-  font-size: 11px;
+  font-size: var(--t-sm);
   color: #64748b;
   margin-bottom: 8px;
 }
 
 .watchlist-notes {
-  font-size: 11px;
+  font-size: var(--t-sm);
   color: #94a3b8;
   font-style: italic;
 }

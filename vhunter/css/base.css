@@ -1,8 +1,28 @@
 /* @section:base - Reset, Variables, Typography */
 
+:root {
+  /* Base scale - change this ONE value to scale all text */
+  --text-scale: 1;
+
+  /* Type scale using rem (relative to html font-size) */
+  --t-3xs: calc(0.5rem * var(--text-scale));   /* 8px at scale 1 */
+  --t-2xs: calc(0.5625rem * var(--text-scale)); /* 9px */
+  --t-xs: calc(0.625rem * var(--text-scale));   /* 10px */
+  --t-sm: calc(0.6875rem * var(--text-scale));  /* 11px */
+  --t-base: calc(0.75rem * var(--text-scale));  /* 12px */
+  --t-md: calc(0.8125rem * var(--text-scale));  /* 13px */
+  --t-lg: calc(0.875rem * var(--text-scale));   /* 14px */
+  --t-xl: calc(1rem * var(--text-scale));       /* 16px */
+  --t-2xl: calc(1.125rem * var(--text-scale));  /* 18px */
+  --t-3xl: calc(1.25rem * var(--text-scale));   /* 20px */
+  --t-4xl: calc(1.5rem * var(--text-scale));    /* 24px */
+  --t-5xl: calc(1.75rem * var(--text-scale));   /* 28px */
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html {
+  font-size: 16px; /* Base for rem calculations */
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
 }
@@ -11,16 +31,17 @@ body {
   font-family: 'Inter', system-ui, sans-serif;
   background: #f1f5f9;
   color: #1e293b;
-  font-size: 11px;
+  font-size: var(--t-md);
   font-weight: 500;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  line-height: 1.5;
 }
 
 /* Typography */
 .t {
-  font-size: 9px;
-  color: #94a3b8;
+  font-size: var(--t-xs);
+  color: #64748b;
   text-transform: uppercase;
   letter-spacing: .4px;
   margin-bottom: 6px;
