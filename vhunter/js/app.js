@@ -8,6 +8,7 @@ import { loadPositions, setRunCallback as setPositionsRunCallback } from './posi
 import { loadWatchlist, setRunCallback as setWatchlistRunCallback } from './watchlist.js';
 import { loadNotes, setRunCallback as setNotesRunCallback } from './notes.js';
 import { loadFeed, setRunCallback as setFeedRunCallback } from './feed.js';
+import { loadOpportunities, setRunCallback as setOpportunitiesRunCallback } from './opportunities.js';
 import { loadStrategy, setRunCallback as setStrategyRunCallback } from './strategy.js';
 import { run } from './analysis.js';
 import { loadOptionsData, initOptionsPage } from './options-page.js';
@@ -26,6 +27,7 @@ setPositionsRunCallback(() => run());
 setWatchlistRunCallback(() => run());
 setNotesRunCallback(() => run());
 setFeedRunCallback(() => run());
+setOpportunitiesRunCallback(() => run());
 setStrategyRunCallback(() => run());
 
 // Terminal page handler (start/stop polling)
@@ -42,6 +44,7 @@ registerPageLoaders({
   notes: loadNotes,
   options: loadOptionsData,
   feed: loadFeed,
+  opportunities: loadOpportunities,
   terminal: loadTerminal,
   strategy: loadStrategy,
   macro: loadMacro
