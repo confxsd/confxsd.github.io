@@ -101,8 +101,8 @@ export async function fetchLLMData() {
     actions.style.display = 'flex';
 
     const charCount = llmFormattedOutput.length;
-    const lineCount = llmFormattedOutput.split('\n').length;
-    showStatus(`Ready to copy: ${charCount.toLocaleString()} chars, ${lineCount} lines`, 'success');
+    const tokenEst = Math.ceil(charCount / 3.5); // ~3.5 chars per token average
+    showStatus(`Ready: ~${tokenEst} tokens (${charCount} chars)`, 'success');
 
   } catch (e) {
     showStatus(`Error: ${e.message}`, 'error');
@@ -310,192 +310,176 @@ function calculateOptionsMetrics(options, spotPrice, bars, prices, ticker) {
   };
 }
 
-// Format data for LLM consumption
+// Format data for LLM consumption - Token-optimized compact format
 function formatForLLM(data) {
   const d = data;
   const t = d.technicals;
   const o = d.options;
 
-  const formatNum = (v, decimals = 2) => v != null ? (typeof v === 'number' ? v.toFixed(decimals) : v) : '--';
-  const formatPct = (v) => v != null ? (v >= 0 ? '+' : '') + formatNum(v, 1) + '%' : '--';
-  const formatVol = (v) => {
-    if (v == null) return '--';
-    if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
-    if (v >= 1e3) return (v / 1e3).toFixed(0) + 'K';
-    return v.toFixed(0);
+  const n = (v, dec = 2) => v != null ? (typeof v === 'number' ? +v.toFixed(dec) : v) : null;
+  const vol = (v) => {
+    if (v == null) return null;
+    if (v >= 1e6) return +(v / 1e6).toFixed(1) + 'M';
+    if (v >= 1e3) return +(v / 1e3).toFixed(0) + 'K';
+    return +v.toFixed(0);
   };
-  const formatGEX = (val) => {
-    if (val == null) return '--';
+  const gex = (val) => {
+    if (val == null) return null;
     const abs = Math.abs(val);
-    if (abs >= 1e9) return (val / 1e9).toFixed(2) + 'B';
-    if (abs >= 1e6) return (val / 1e6).toFixed(2) + 'M';
-    if (abs >= 1e3) return (val / 1e3).toFixed(0) + 'K';
-    return val.toFixed(0);
+    if (abs >= 1e9) return +(val / 1e9).toFixed(2) + 'B';
+    if (abs >= 1e6) return +(val / 1e6).toFixed(2) + 'M';
+    if (abs >= 1e3) return +(val / 1e3).toFixed(0) + 'K';
+    return +val.toFixed(0);
   };
 
-  let output = `═══════════════════════════════════════════════════════════════════
-COMPREHENSIVE STOCK ANALYSIS: ${d.ticker}
-Generated: ${d.timestamp}
-═══════════════════════════════════════════════════════════════════
+  // Build compact data object
+  const out = {
+    ticker: d.ticker,
+    price: n(d.price.current),
+    chg: n(d.price.changePct, 1),
+    vol: vol(d.price.volume)
+  };
 
-┌─────────────────────────────────────────────────────────────────┐
-│ PRICE & OVERVIEW                                                │
-└─────────────────────────────────────────────────────────────────┘
-Price:          $${formatNum(d.price.current)}
-Daily Change:   ${formatPct(d.price.changePct)}
-Volume:         ${formatVol(d.price.volume)}`;
-
-  // Technical Analysis
+  // Technicals
   if (t && !t.error) {
-    output += `
-
-┌─────────────────────────────────────────────────────────────────┐
-│ TECHNICAL ANALYSIS                                              │
-└─────────────────────────────────────────────────────────────────┘
-MOMENTUM:
-  RSI (14):     ${formatNum(t.rsi, 1)} ${t.rsi > 70 ? '[OVERBOUGHT]' : t.rsi < 30 ? '[OVERSOLD]' : '[NEUTRAL]'}
-  MACD Hist:    ${formatNum(t.macdH, 3)} ${t.macdH > 0 ? '[BULLISH]' : '[BEARISH]'}
-  MFI (14):     ${formatNum(t.mfi, 1)} ${t.mfi > 80 ? '[OVERBOUGHT]' : t.mfi < 20 ? '[OVERSOLD]' : '[NEUTRAL]'}
-
-TREND:
-  ADX:          ${formatNum(t.adx, 1)} ${t.adx > 40 ? '[STRONG TREND]' : t.adx > 25 ? '[TRENDING]' : '[WEAK/RANGING]'}
-  +DI:          ${formatNum(t.pdi, 1)}
-  -DI:          ${formatNum(t.mdi, 1)}
-  DI Signal:    ${t.pdi > t.mdi ? '[BULLISH +DI > -DI]' : '[BEARISH +DI < -DI]'}
-
-MOVING AVERAGES:
-  SMA 20:       $${formatNum(t.sma20)}
-  SMA 50:       $${formatNum(t.sma50)}
-  Price vs SMA: ${d.price.current > t.sma20 && t.sma20 > t.sma50 ? '[BULLISH ALIGNMENT]' : d.price.current < t.sma20 && t.sma20 < t.sma50 ? '[BEARISH ALIGNMENT]' : '[MIXED]'}
-
-VOLATILITY:
-  Bollinger %B: ${formatNum(t.bbPct, 0)}% ${t.bbPct > 80 ? '[UPPER BAND]' : t.bbPct < 20 ? '[LOWER BAND]' : '[MID BAND]'}
-  ATR (14):     $${formatNum(t.atr)}
-  HV (30d):     ${formatNum(t.hv30, 1)}%
-
-VOLUME & FLOW:
-  Rel Volume:   ${formatNum(t.rvol, 1)}x ${t.rvol > 2 ? '[EXTREME]' : t.rvol > 1.3 ? '[HIGH]' : t.rvol < 0.7 ? '[LOW]' : '[NORMAL]'}
-  Buy Flow:     ${t.buyPct}% ${t.buyPct > 55 ? '[ACCUMULATION]' : t.buyPct < 45 ? '[DISTRIBUTION]' : '[NEUTRAL]'}
-  A/D Line:     ${formatPct(t.adlChange)} ${t.adlChange > 0 ? '[ACCUMULATING]' : '[DISTRIBUTING]'}`;
+    out.tech = {
+      rsi: n(t.rsi, 1),
+      macdH: n(t.macdH, 3),
+      mfi: n(t.mfi, 1),
+      adx: n(t.adx, 1),
+      pdi: n(t.pdi, 1),
+      mdi: n(t.mdi, 1),
+      sma20: n(t.sma20),
+      sma50: n(t.sma50),
+      bbPct: n(t.bbPct, 0),
+      atr: n(t.atr),
+      hv30: n(t.hv30, 1),
+      rvol: n(t.rvol, 1),
+      buyPct: t.buyPct,
+      adlChg: n(t.adlChange, 1)
+    };
+    // Signals
+    out.sig = {
+      mom: t.rsi > 70 ? 'OB' : t.rsi < 30 ? 'OS' : 'N',
+      macd: t.macdH > 0 ? '+' : '-',
+      trend: t.adx > 40 ? 'strong' : t.adx > 25 ? 'trend' : 'range',
+      di: t.pdi > t.mdi ? '+' : '-',
+      sma: d.price.current > t.sma20 && t.sma20 > t.sma50 ? 'bull' : d.price.current < t.sma20 && t.sma20 < t.sma50 ? 'bear' : 'mix',
+      bb: t.bbPct > 80 ? 'hi' : t.bbPct < 20 ? 'lo' : 'mid',
+      volFlow: t.rvol > 2 ? 'extreme' : t.rvol > 1.3 ? 'hi' : t.rvol < 0.7 ? 'lo' : 'norm',
+      flow: t.buyPct > 55 ? 'accum' : t.buyPct < 45 ? 'dist' : 'N'
+    };
   }
 
-  // Options Analysis
+  // Options
   if (o && !o.error) {
-    output += `
+    out.opt = {
+      callVol: vol(o.callVol),
+      putVol: vol(o.putVol),
+      pcRatio: n(o.pcRatio),
+      pcOI: n(o.pcOI),
+      topCalls: o.topCalls?.map(c => c.strike) || [],
+      topPuts: o.topPuts?.map(p => p.strike) || [],
+      maxPain: { w: o.maxPain?.weekly, m: o.maxPain?.monthly },
+      em30: n(o.expMove),
+      emPct: n(o.expMove / d.price.current * 100, 1)
+    };
+    out.opt.sent = o.pcRatio > 1.2 ? 'bear' : o.pcRatio < 0.7 ? 'bull' : 'N';
 
-┌─────────────────────────────────────────────────────────────────┐
-│ OPTIONS ANALYSIS                                                │
-└─────────────────────────────────────────────────────────────────┘
-FLOW:
-  Call Volume:  ${formatVol(o.callVol)}
-  Put Volume:   ${formatVol(o.putVol)}
-  P/C Ratio:    ${formatNum(o.pcRatio)} ${o.pcRatio > 1.2 ? '[BEARISH SENTIMENT]' : o.pcRatio < 0.7 ? '[BULLISH SENTIMENT]' : '[NEUTRAL]'}
-  P/C OI:       ${formatNum(o.pcOI)}
-
-KEY STRIKES:
-  Top Calls:    ${o.topCalls?.map(c => '$' + c.strike).join(', ') || '--'}
-  Top Puts:     ${o.topPuts?.map(p => '$' + p.strike).join(', ') || '--'}
-  Max Pain:     Weekly $${o.maxPain?.weekly || '--'} | Monthly $${o.maxPain?.monthly || '--'}
-
-EXPECTED MOVE:
-  30-Day EM:    ±$${formatNum(o.expMove)} (±${formatNum(o.expMove / d.price.current * 100, 1)}%)`;
-
-    // Volatility Analysis
+    // Volatility
     if (o.avgIV) {
       const vrp = o.vrpMetrics;
       const ivA = o.ivAnalysis;
-
-      output += `
-
-┌─────────────────────────────────────────────────────────────────┐
-│ VOLATILITY ANALYSIS                                             │
-└─────────────────────────────────────────────────────────────────┘
-IMPLIED VOLATILITY:
-  Current IV:   ${formatNum(o.avgIV, 1)}%
-  IV Rank:      ${formatNum(ivA?.ivRank, 0)}% ${ivA?.ivRank > 80 ? '[VERY HIGH - Top 20%]' : ivA?.ivRank > 60 ? '[HIGH]' : ivA?.ivRank < 20 ? '[VERY LOW - Bottom 20%]' : ivA?.ivRank < 40 ? '[LOW]' : '[MEDIUM]'}
-
-REALIZED VOLATILITY:
-  RV (30d):     ${formatNum(vrp?.rv30 || t?.hv30, 1)}%
-
-VRP (Volatility Risk Premium):
-  VRP:          ${vrp?.vrp != null ? formatPct(vrp.vrp) : '--'}
-  Signal:       ${vrp?.vrp > 10 ? '[SELL PREMIUM - Options Expensive]' : vrp?.vrp > 5 ? '[SLIGHT PREMIUM]' : vrp?.vrp < -5 ? '[BUY PREMIUM - Options Cheap]' : vrp?.vrp < 0 ? '[SLIGHT DISCOUNT]' : '[NEUTRAL]'}`;
-
+      out.vol = {
+        iv: n(o.avgIV, 1),
+        ivRank: n(ivA?.ivRank, 0),
+        rv30: n(vrp?.rv30 || t?.hv30, 1),
+        vrp: vrp?.vrp != null ? n(vrp.vrp, 1) : null,
+        termSteep: vrp?.termSteepness != null ? n(vrp.termSteepness, 1) : null
+      };
+      // Vol signals
+      out.vol.ivSig = ivA?.ivRank > 80 ? 'vhi' : ivA?.ivRank > 60 ? 'hi' : ivA?.ivRank < 20 ? 'vlo' : ivA?.ivRank < 40 ? 'lo' : 'mid';
+      out.vol.vrpSig = vrp?.vrp > 10 ? 'sell' : vrp?.vrp > 5 ? 'slight+' : vrp?.vrp < -5 ? 'buy' : vrp?.vrp < 0 ? 'slight-' : 'N';
       if (vrp?.termSteepness != null) {
-        output += `
-
-TERM STRUCTURE:
-  Steepness:    ${formatPct(vrp.termSteepness)}
-  Shape:        ${vrp.termSteepness > 10 ? '[CONTANGO - Back months expensive]' : vrp.termSteepness < -5 ? '[BACKWARDATION - Fear in market]' : '[FLAT]'}`;
+        out.vol.term = vrp.termSteepness > 10 ? 'contango' : vrp.termSteepness < -5 ? 'backwd' : 'flat';
       }
-
       if (o.volSetup) {
-        output += `
-
-VOL SETUP:
-  Classification: ${o.volSetup.setup?.replace(/_/g, ' ') || '--'}
-  Confidence:     ${o.volSetup.confidence || '--'}%
-  Recommendation: ${o.volSetup.description || '--'}`;
+        out.vol.setup = o.volSetup.setup;
+        out.vol.conf = o.volSetup.confidence;
       }
     }
 
-    // GEX Analysis
-    const gex = o.gexMetrics;
+    // GEX
+    const gexM = o.gexMetrics;
     const gamma = o.gammaAnalysis;
-    if (gex && !gex.error) {
-      const regime = gex.regime || 'UNKNOWN';
-      let regimeExplanation = '';
-      let tradingImplication = '';
-
-      if (regime === 'POSITIVE_GAMMA') {
-        regimeExplanation = '[DEALERS LONG GAMMA]';
-        tradingImplication = 'MEAN-REVERTING: Fade moves, sell vol, expect pinning. Dealers hedge BY SELLING rallies, BUYING dips.';
-      } else if (regime === 'NEGATIVE_GAMMA') {
-        regimeExplanation = '[DEALERS SHORT GAMMA]';
-        tradingImplication = 'TRENDING: Follow momentum, buy vol. Dealers hedge BY BUYING rallies, SELLING dips = AMPLIFICATION.';
-      } else {
-        regimeExplanation = '[NEAR NEUTRAL]';
-        tradingImplication = 'MIXED: No strong dealer-driven bias.';
-      }
-
-      output += `
-
-┌─────────────────────────────────────────────────────────────────┐
-│ GAMMA EXPOSURE (GEX) - Dealer Positioning                       │
-└─────────────────────────────────────────────────────────────────┘
-NET GEX:        ${gex.netGEXFormatted || formatGEX(gex.netGEX)}
-REGIME:         ${regime} ${regimeExplanation}
-
-KEY LEVELS:
-  Zero Gamma:   $${formatNum(gex.gexZeroLine, 0)} ${d.price.current > gex.gexZeroLine ? '[SPOT ABOVE - Stabilizing]' : '[SPOT BELOW - Amplifying]'}
-  Call Wall:    $${formatNum(gex.callWall, 0)} [RESISTANCE]
-  Put Wall:     $${formatNum(gex.putWall, 0)} [SUPPORT]
-
-TRADING IMPLICATION:
-${tradingImplication}`;
-
-      // Delta flow from gamma analysis
+    if (gexM && !gexM.error) {
+      out.gex = {
+        net: gexM.netGEXFormatted || gex(gexM.netGEX),
+        regime: gexM.regime === 'POSITIVE_GAMMA' ? '+gamma' : gexM.regime === 'NEGATIVE_GAMMA' ? '-gamma' : 'neutral',
+        zero: n(gexM.gexZeroLine, 0),
+        callWall: n(gexM.callWall, 0),
+        putWall: n(gexM.putWall, 0),
+        spotVsZero: d.price.current > gexM.gexZeroLine ? 'above' : 'below'
+      };
       if (gamma?.deltaFlow) {
-        output += `
-
-DELTA FLOW:     ${gamma.deltaFlow.hedgingPressure} (${gamma.deltaFlow.intensity})`;
+        out.gex.deltaFlow = gamma.deltaFlow.hedgingPressure;
+        out.gex.intensity = gamma.deltaFlow.intensity;
       }
-
-      // Charm/pinning
       if (gamma?.charm?.pinningStrike) {
-        output += `
-CHARM/PINNING:  ${gamma.charm.signal}`;
+        out.gex.charm = gamma.charm.signal;
       }
     }
   }
 
-  output += `
+  // Return as compact YAML-like format
+  return formatCompact(out);
+}
 
-═══════════════════════════════════════════════════════════════════
-END OF ANALYSIS
-═══════════════════════════════════════════════════════════════════`;
+// Format as compact readable output
+function formatCompact(obj) {
+  const lines = [`# ${obj.ticker} Analysis`];
+  lines.push(`price: ${obj.price} | chg: ${obj.chg}% | vol: ${obj.vol}`);
 
-  return output;
+  if (obj.tech) {
+    const t = obj.tech;
+    const s = obj.sig;
+    lines.push(`\n## Technicals`);
+    lines.push(`RSI:${t.rsi}(${s.mom}) MACD:${t.macdH}(${s.macd}) MFI:${t.mfi}`);
+    lines.push(`ADX:${t.adx}(${s.trend}) +DI:${t.pdi} -DI:${t.mdi}(${s.di})`);
+    lines.push(`SMA20:${t.sma20} SMA50:${t.sma50}(${s.sma})`);
+    lines.push(`BB%:${t.bbPct}(${s.bb}) ATR:${t.atr} HV30:${t.hv30}%`);
+    lines.push(`RVol:${t.rvol}x(${s.volFlow}) Buy:${t.buyPct}%(${s.flow}) ADL:${t.adlChg}%`);
+  }
+
+  if (obj.opt) {
+    const o = obj.opt;
+    lines.push(`\n## Options`);
+    lines.push(`Call:${o.callVol} Put:${o.putVol} P/C:${o.pcRatio}(${o.sent}) OI-P/C:${o.pcOI}`);
+    if (o.topCalls.length) lines.push(`TopCalls:${o.topCalls.join(',')}`);
+    if (o.topPuts.length) lines.push(`TopPuts:${o.topPuts.join(',')}`);
+    lines.push(`MaxPain W:${o.maxPain.w} M:${o.maxPain.m}`);
+    lines.push(`EM30: ±${o.em30}(±${o.emPct}%)`);
+  }
+
+  if (obj.vol) {
+    const v = obj.vol;
+    lines.push(`\n## Volatility`);
+    lines.push(`IV:${v.iv}% Rank:${v.ivRank}%(${v.ivSig}) RV30:${v.rv30}%`);
+    if (v.vrp != null) lines.push(`VRP:${v.vrp}%(${v.vrpSig})`);
+    if (v.term) lines.push(`Term:${v.termSteep}%(${v.term})`);
+    if (v.setup) lines.push(`Setup:${v.setup} Conf:${v.conf}%`);
+  }
+
+  if (obj.gex) {
+    const g = obj.gex;
+    lines.push(`\n## GEX`);
+    lines.push(`Net:${g.net} Regime:${g.regime}`);
+    lines.push(`Zero:${g.zero}(spot ${g.spotVsZero}) CallWall:${g.callWall} PutWall:${g.putWall}`);
+    if (g.deltaFlow) lines.push(`DeltaFlow:${g.deltaFlow}(${g.intensity})`);
+    if (g.charm) lines.push(`Charm:${g.charm}`);
+  }
+
+  return lines.join('\n');
 }
 
 // Form submit handler - fetches data and auto-copies
