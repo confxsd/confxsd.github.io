@@ -188,7 +188,7 @@ function renderThesis(card, thesis) {
   const marketAnalysis = t.marketAnalysis;
   const marketHtml = marketAnalysis ? `
     <div class="thesis-section collapsible" data-section="market">
-      <div class="thesis-section-title" onclick="toggleThesisSection('market')">
+      <div class="thesis-section-title" onclick="toggleThesisSection('market', event)">
         Market Analysis <span class="collapse-icon">▼</span>
       </div>
       <div class="thesis-section-body">
@@ -204,7 +204,7 @@ function renderThesis(card, thesis) {
   const themes = t.themes || [];
   const themesHtml = themes.length ? `
     <div class="thesis-section collapsible" data-section="themes">
-      <div class="thesis-section-title" onclick="toggleThesisSection('themes')">
+      <div class="thesis-section-title" onclick="toggleThesisSection('themes', event)">
         Themes (${themes.length}) <span class="collapse-icon">▼</span>
       </div>
       <div class="thesis-section-body">
@@ -222,7 +222,7 @@ function renderThesis(card, thesis) {
   const sectorAnalysis = t.sectorAnalysis;
   const sectorsHtml = sectorAnalysis ? `
     <div class="thesis-section collapsible" data-section="sectors">
-      <div class="thesis-section-title" onclick="toggleThesisSection('sectors')">
+      <div class="thesis-section-title" onclick="toggleThesisSection('sectors', event)">
         Sector Analysis <span class="collapse-icon">▼</span>
       </div>
       <div class="thesis-section-body">
@@ -261,7 +261,7 @@ function renderThesis(card, thesis) {
   const tickerIntel = t.tickerIntelligence || [];
   const tickerHtml = tickerIntel.length ? `
     <div class="thesis-section collapsible" data-section="tickers">
-      <div class="thesis-section-title" onclick="toggleThesisSection('tickers')">
+      <div class="thesis-section-title" onclick="toggleThesisSection('tickers', event)">
         Ticker Intelligence (${tickerIntel.length}) <span class="collapse-icon">▼</span>
       </div>
       <div class="thesis-section-body">
@@ -284,7 +284,7 @@ function renderThesis(card, thesis) {
   const volAnalysis = t.volatilityAnalysis || t.volatilityView;
   const volHtml = volAnalysis ? `
     <div class="thesis-section collapsible" data-section="vol">
-      <div class="thesis-section-title" onclick="toggleThesisSection('vol')">
+      <div class="thesis-section-title" onclick="toggleThesisSection('vol', event)">
         Volatility Analysis <span class="collapse-icon">▼</span>
       </div>
       <div class="thesis-section-body">
@@ -303,7 +303,7 @@ function renderThesis(card, thesis) {
   const levels = t.keyLevels;
   const levelsHtml = levels ? `
     <div class="thesis-section collapsible" data-section="levels">
-      <div class="thesis-section-title" onclick="toggleThesisSection('levels')">
+      <div class="thesis-section-title" onclick="toggleThesisSection('levels', event)">
         Key Levels <span class="collapse-icon">▼</span>
       </div>
       <div class="thesis-section-body">
@@ -318,7 +318,7 @@ function renderThesis(card, thesis) {
   const catalysts = t.catalystCalendar || t.catalysts || [];
   const catalystsHtml = catalysts.length ? `
     <div class="thesis-section collapsible" data-section="catalysts">
-      <div class="thesis-section-title" onclick="toggleThesisSection('catalysts')">
+      <div class="thesis-section-title" onclick="toggleThesisSection('catalysts', event)">
         Catalysts (${catalysts.length}) <span class="collapse-icon">▼</span>
       </div>
       <div class="thesis-section-body">
@@ -337,7 +337,7 @@ function renderThesis(card, thesis) {
   const risks = t.riskMatrix || t.risks || [];
   const risksHtml = risks.length ? `
     <div class="thesis-section collapsible" data-section="risks">
-      <div class="thesis-section-title" onclick="toggleThesisSection('risks')">
+      <div class="thesis-section-title" onclick="toggleThesisSection('risks', event)">
         Risks (${risks.length}) <span class="collapse-icon">▼</span>
       </div>
       <div class="thesis-section-body">
@@ -359,7 +359,7 @@ function renderThesis(card, thesis) {
   const trades = t.tradeRecommendations || t.tradeIdeas || [];
   const tradesHtml = trades.length ? `
     <div class="thesis-section collapsible" data-section="trades">
-      <div class="thesis-section-title" onclick="toggleThesisSection('trades')">
+      <div class="thesis-section-title" onclick="toggleThesisSection('trades', event)">
         Trade Recommendations (${trades.length}) <span class="collapse-icon">▼</span>
       </div>
       <div class="thesis-section-body">
@@ -379,7 +379,7 @@ function renderThesis(card, thesis) {
   // Raw signal summary
   const rawSummaryHtml = t.rawSignalSummary ? `
     <div class="thesis-section collapsible collapsed" data-section="raw">
-      <div class="thesis-section-title" onclick="toggleThesisSection('raw')">
+      <div class="thesis-section-title" onclick="toggleThesisSection('raw', event)">
         Raw Signal Summary <span class="collapse-icon">▶</span>
       </div>
       <div class="thesis-section-body hidden">
@@ -403,31 +403,35 @@ function renderThesis(card, thesis) {
     </div>` : '';
 
   card.innerHTML = `
-    <div class="thesis-header">
+    <div class="thesis-header" onclick="toggleOverallThesis()">
       <span class="thesis-regime ${t.regime}">${t.regime?.toUpperCase()}</span>
       <span class="thesis-bias ${t.bias}">${t.bias?.toUpperCase()}</span>
       <span class="thesis-conviction ${convictionClass}" title="Conviction ${conviction}/10">${conviction}/10</span>
       <span class="thesis-version">v${thesis.version} · ${thesis.signals_count} signals${t.timeHorizon ? ` · ${t.timeHorizon}` : ''}</span>
+      <span class="thesis-collapse-icon">▼</span>
     </div>
-    ${t.primaryThesis ? `<div class="thesis-primary">${t.primaryThesis}</div>` : ''}
-    <div class="thesis-narrative">${t.narrative}</div>
-    ${execSummaryHtml}
-    ${marketHtml}
-    ${themesHtml}
-    ${sectorsHtml}
-    ${tickerHtml}
-    ${factorHtml}
-    ${volHtml}
-    ${levelsHtml}
-    ${catalystsHtml}
-    ${risksHtml}
-    ${tradesHtml}
-    ${contraHtml}
-    ${rawSummaryHtml}`;
+    <div class="thesis-body">
+      ${t.primaryThesis ? `<div class="thesis-primary">${t.primaryThesis}</div>` : ''}
+      <div class="thesis-narrative">${t.narrative}</div>
+      ${execSummaryHtml}
+      ${marketHtml}
+      ${themesHtml}
+      ${sectorsHtml}
+      ${tickerHtml}
+      ${factorHtml}
+      ${volHtml}
+      ${levelsHtml}
+      ${catalystsHtml}
+      ${risksHtml}
+      ${tradesHtml}
+      ${contraHtml}
+      ${rawSummaryHtml}
+    </div>`;
 }
 
 // Toggle collapsible thesis sections
-window.toggleThesisSection = function(section) {
+window.toggleThesisSection = function(section, event) {
+  if (event) event.stopPropagation();
   const sectionEl = document.querySelector(`.thesis-section[data-section="${section}"]`);
   if (!sectionEl) return;
   const body = sectionEl.querySelector('.thesis-section-body');
@@ -438,6 +442,39 @@ window.toggleThesisSection = function(section) {
     icon.textContent = body.classList.contains('hidden') ? '▶' : '▼';
   }
 };
+
+// Toggle overall thesis card content (internal collapse)
+window.toggleOverallThesis = function() {
+  const card = document.getElementById('thesisCard');
+  if (!card) return;
+  const body = card.querySelector('.thesis-body');
+  const icon = card.querySelector('.thesis-collapse-icon');
+  if (body && icon) {
+    body.classList.toggle('hidden');
+    card.classList.toggle('collapsed');
+    icon.textContent = body.classList.contains('hidden') ? '▶' : '▼';
+  }
+};
+
+// Toggle entire thesis card visibility
+function toggleThesisCard() {
+  const wrapper = document.getElementById('thesisSectionWrapper');
+  const card = document.getElementById('thesisCard');
+  const icon = document.getElementById('thesisToggleIcon');
+  if (!wrapper || !card || !icon) return;
+
+  const isHidden = card.classList.toggle('hidden');
+  wrapper.classList.toggle('collapsed', isHidden);
+  icon.textContent = isHidden ? '▶' : '▼';
+}
+
+// Set up thesis section header click handler
+document.addEventListener('DOMContentLoaded', () => {
+  const header = document.getElementById('thesisSectionHeader');
+  if (header) {
+    header.addEventListener('click', toggleThesisCard);
+  }
+});
 
 // Get current thesis for use in prompts
 export function getCurrentThesis() {

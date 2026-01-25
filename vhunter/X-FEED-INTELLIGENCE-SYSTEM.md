@@ -14,8 +14,8 @@ Automated market intelligence pipeline that scrapes X/Twitter, extracts trading 
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    AUTOMATED PIPELINE                            │
-│         (Runs 6:00 AM + 5:30 PM EST via Cloudflare Cron)        │
+│                    AUTOMATED PIPELINE (4x Daily)                 │
+│    6:00 AM | 10:00 AM | 2:00 PM | 6:00 PM EST via Cron          │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -431,18 +431,20 @@ These get `status: 'noise'` and are excluded from briefings.
 
 ---
 
-## Cron Schedule
+## Cron Schedule (4x Daily)
 
 ```toml
 # wrangler.toml
 [triggers]
-crons = ["0 11 * * *", "30 22 * * *"]
+crons = ["0 11 * * *", "0 15 * * *", "0 19 * * *", "0 23 * * *"]
 ```
 
 | Cron | UTC | EST | Purpose |
 |------|-----|-----|---------|
 | `0 11 * * *` | 11:00 | 6:00 AM | Pre-market: overnight news, Asia/Europe |
-| `30 22 * * *` | 22:30 | 5:30 PM | Post-market: full day signals, EOD thesis |
+| `0 15 * * *` | 15:00 | 10:00 AM | Mid-morning: early session signals |
+| `0 19 * * *` | 19:00 | 2:00 PM | Afternoon: midday developments |
+| `0 23 * * *` | 23:00 | 6:00 PM | Post-market: EOD wrap-up, thesis update |
 
 ---
 
