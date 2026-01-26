@@ -14,6 +14,7 @@ import { CONFIG } from './config.js';
 import { getCurrentPage } from './pages.js';
 import { optionsData } from './options-page.js';
 import * as finMath from './financial-math.js';
+import { getFinancials, renderFinancialsHTML } from './financials.js';
 
 export let mktData = {};
 let skipCache = false;
@@ -52,6 +53,7 @@ export async function run(forceRefresh = false) {
     processOptionsData(options, aggs.results?.[aggs.results.length - 1]?.c || 0);
 
     loadNews(ticker);
+    loadFinancials(ticker);
 
     ui.setStatus('');
   } catch (e) {
@@ -479,6 +481,20 @@ async function loadNews(ticker) {
     newsOut.innerHTML = html;
   } catch (e) {
     newsOut.innerHTML = '<span style="color:#ef4444">Failed to load news</span>';
+  }
+}
+
+async function loadFinancials(ticker) {
+  const container = document.getElementById('financialsContent');
+  if (!container) return;
+
+  container.innerHTML = '<div class="financials-loading">Loading SEC financials...</div>';
+
+  try {
+    const data = await getFinancials(ticker);
+    container.innerHTML = renderFinancialsHTML(data);
+  } catch (e) {
+    container.innerHTML = `<div class="financials-error">Failed to load financials: ${e.message}</div>`;
   }
 }
 
