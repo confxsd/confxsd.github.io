@@ -302,20 +302,30 @@ function renderOpportunityCard(opp) {
   const directionIcon = opp.direction === 'long' ? '↑' : '↓';
 
   // Build source context HTML
-  const hasSourceContext = sourceContext.summary || sourceContext.keyDataPoints?.length;
+  const hasSourceContext = sourceContext.summary || sourceContext.keyDataPoints?.length || sourceContext.sourceExcerpt;
   const sourceContextHtml = hasSourceContext ? `
     <div class="opp-source-context">
+      ${sourceContext.feedAuthor ? `<div class="opp-feed-author">via @${sourceContext.feedAuthor}</div>` : ''}
       ${sourceContext.summary ? `<div class="opp-source-summary">${sourceContext.summary}</div>` : ''}
       ${sourceContext.keyDataPoints?.length ? `
         <div class="opp-key-data">
           ${sourceContext.keyDataPoints.map(dp => `<span class="opp-data-point">${dp}</span>`).join('')}
         </div>
       ` : ''}
-      ${sourceContext.optionsAnalysis && sourceContext.optionsAnalysis !== 'N/A' && sourceContext.optionsAnalysis !== 'none' ? `
+      ${sourceContext.optionsAnalysis && sourceContext.optionsAnalysis !== 'N/A' && sourceContext.optionsAnalysis !== 'none' && sourceContext.optionsAnalysis !== 'null' ? `
         <div class="opp-context-detail"><strong>Options:</strong> ${sourceContext.optionsAnalysis}</div>
       ` : ''}
-      ${sourceContext.technicalSetup && sourceContext.technicalSetup !== 'N/A' && sourceContext.technicalSetup !== 'none' ? `
+      ${sourceContext.technicalSetup && sourceContext.technicalSetup !== 'N/A' && sourceContext.technicalSetup !== 'none' && sourceContext.technicalSetup !== 'null' ? `
         <div class="opp-context-detail"><strong>Technicals:</strong> ${sourceContext.technicalSetup}</div>
+      ` : ''}
+      ${sourceContext.catalystDetail && sourceContext.catalystDetail !== 'none' ? `
+        <div class="opp-context-detail"><strong>Catalyst:</strong> ${sourceContext.catalystDetail}</div>
+      ` : ''}
+      ${sourceContext.aiAssessment ? `
+        <div class="opp-ai-assessment">
+          <span class="opp-rec opp-rec-${(sourceContext.recommendation || '').toLowerCase()}">${sourceContext.recommendation || ''}</span>
+          ${sourceContext.aiAssessment}
+        </div>
       ` : ''}
       ${sourceContext.sourceExcerpt ? `
         <div class="opp-source-excerpt">"${sourceContext.sourceExcerpt}"</div>
