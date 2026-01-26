@@ -143,8 +143,11 @@ export function calcADL(data) {
   let cumulative = 0;
 
   for (const bar of data) {
-    const mfm = ((bar.c - bar.l) - (bar.h - bar.c)) / ((bar.h - bar.l) || 1);
-    cumulative += mfm * bar.v;
+    const range = bar.h - bar.l;
+    // MFV = Volume * (2*Close - High - Low) / (High - Low)
+    // When High = Low (flat bar), MFV = 0
+    const mfv = range === 0 ? 0 : bar.v * (2 * bar.c - bar.h - bar.l) / range;
+    cumulative += mfv;
     adl.push(cumulative);
   }
 
