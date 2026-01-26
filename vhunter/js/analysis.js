@@ -84,7 +84,7 @@ function processHistoricalData(ticker, data) {
   const macd = indicators.calcMACD(prices);
   const macdH = macd.histogram[macd.histogram.length - 1];
   const bb = indicators.calcBollingerBands(prices);
-  const adl = indicators.calcADL(data);
+  const adl = indicators.calcADL(data, true); // Debug enabled - check console
   const sma20Arr = indicators.calcSMA(prices, 20);
   const sma50Arr = indicators.calcSMA(prices, 50);
 

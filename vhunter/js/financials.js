@@ -11,6 +11,10 @@ let tickerMapPromise = null;
 const factsCache = new Map();
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
+// Current timeframe state
+let currentTimeframe = 'annual'; // 'annual' | 'quarterly' | 'ttm'
+let currentTicker = null;
+
 /**
  * Fetch SEC data via proxy
  */

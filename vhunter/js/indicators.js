@@ -138,17 +138,28 @@ export function calcADX(data, period) {
   return { pdi, mdi, adx };
 }
 
-export function calcADL(data) {
+export function calcADL(data, debug = false) {
   const adl = [];
   let cumulative = 0;
 
-  for (const bar of data) {
+  if (debug) {
+    console.log('=== A/D Line Debug (first 10 bars) ===');
+    console.log('Date, Open, High, Low, Close, Volume, MFV, ADL');
+  }
+
+  for (let i = 0; i < data.length; i++) {
+    const bar = data[i];
     const range = bar.h - bar.l;
     // MFV = Volume * (2*Close - High - Low) / (High - Low)
     // When High = Low (flat bar), MFV = 0
     const mfv = range === 0 ? 0 : bar.v * (2 * bar.c - bar.h - bar.l) / range;
     cumulative += mfv;
     adl.push(cumulative);
+
+    if (debug && i < 10) {
+      const date = bar.t ? new Date(bar.t).toISOString().split('T')[0] : i;
+      console.log(`${date}, ${bar.o}, ${bar.h}, ${bar.l}, ${bar.c}, ${bar.v}, ${mfv.toFixed(0)}, ${cumulative.toFixed(0)}`);
+    }
   }
 
   return adl;
