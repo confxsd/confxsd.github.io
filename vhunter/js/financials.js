@@ -98,11 +98,79 @@ function extractMetric(facts, concept, form = '10-K', unit = 'USD') {
 }
 
 /**
+ * Extract quarterly values and compute TTM (Trailing Twelve Months)
+ */
+function extractQuarterlyMetric(facts, concept, unit = 'USD') {
+  const gaap = facts?.facts?.['us-gaap'];
+  if (!gaap || !gaap[concept]) return null;
+
+  const units = gaap[concept].units;
+  const unitData = units[unit] || units[Object.keys(units)[0]];
+  if (!unitData) return null;
+
+  // Get 10-Q values (quarterly filings)
+  const values = unitData
+    .filter(v => v.form === '10-Q')
+    .sort((a, b) => new Date(b.end) - new Date(a.end));
+
+  return values;
+}
+
+/**
+ * Calculate TTM by summing last 4 quarters
+ */
+function calculateTTM(facts, concept, unit = 'USD') {
+  const quarterlyValues = extractQuarterlyMetric(facts, concept, unit);
+  if (!quarterlyValues || quarterlyValues.length < 4) return null;
+
+  // Get unique quarters (dedupe by fy-fp)
+  const seen = new Set();
+  const unique = [];
+  for (const v of quarterlyValues) {
+    const key = `${v.fy}-${v.fp}`;
+    if (!seen.has(key) && v.fp !== 'FY') {
+      seen.add(key);
+      unique.push(v);
+    }
+    if (unique.length >= 4) break;
+  }
+
+  if (unique.length < 4) return null;
+
+  // Sum the last 4 quarters
+  const ttmVal = unique.reduce((sum, q) => sum + q.val, 0);
+  const latestQ = unique[0];
+
+  return {
+    val: ttmVal,
+    fy: latestQ.fy,
+    fp: 'TTM',
+    form: 'TTM',
+    end: latestQ.end,
+    quarters: unique
+  };
+}
+
+/**
  * Get latest value for a metric
  */
 function getLatestValue(facts, concept, form = '10-K') {
   const values = extractMetric(facts, concept, form);
   return values?.[0] || null;
+}
+
+/**
+ * Get latest quarterly value for a metric
+ */
+function getLatestQuarterlyValue(facts, concept) {
+  const values = extractQuarterlyMetric(facts, concept);
+  if (!values || values.length === 0) return null;
+
+  // Dedupe and get most recent quarter (not FY)
+  for (const v of values) {
+    if (v.fp !== 'FY') return v;
+  }
+  return null;
 }
 
 /**
@@ -118,6 +186,28 @@ function getHistoricalValues(facts, concept, form = '10-K', periods = 5) {
   for (const v of values) {
     const key = `${v.fy}-${v.fp}`;
     if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(v);
+    }
+    if (unique.length >= periods) break;
+  }
+
+  return unique.reverse(); // Oldest to newest
+}
+
+/**
+ * Get historical quarterly values (last N quarters)
+ */
+function getHistoricalQuarterlyValues(facts, concept, periods = 8) {
+  const values = extractQuarterlyMetric(facts, concept);
+  if (!values) return [];
+
+  // Dedupe by fiscal year-quarter (exclude FY entries)
+  const seen = new Set();
+  const unique = [];
+  for (const v of values) {
+    const key = `${v.fy}-${v.fp}`;
+    if (!seen.has(key) && v.fp !== 'FY') {
       seen.add(key);
       unique.push(v);
     }
@@ -168,14 +258,25 @@ function calcGrowth(current, previous) {
 
 /**
  * Main function: Get structured financials for a ticker
+ * @param {string} ticker - Stock ticker symbol
+ * @param {string} timeframe - 'annual' (10-K), 'quarterly' (10-Q), or 'ttm'
  */
-export async function getFinancials(ticker) {
+export async function getFinancials(ticker, timeframe = 'annual') {
   try {
     const facts = await fetchCompanyFacts(ticker);
     if (!facts) return { error: 'Company not found in SEC database' };
 
     const gaap = facts.facts?.['us-gaap'];
     if (!gaap) return { error: 'No US-GAAP data available' };
+
+    // Store current state
+    currentTicker = ticker;
+    currentTimeframe = timeframe;
+
+    const form = timeframe === 'quarterly' ? '10-Q' : '10-K';
+    const periods = timeframe === 'quarterly' ? 8 : 5;
+    const getHistFn = timeframe === 'quarterly' ? getHistoricalQuarterlyValues : getHistoricalValues;
+    const getLatestFn = timeframe === 'quarterly' ? getLatestQuarterlyValue : getLatestValue;
 
     // Revenue - try multiple possible concepts, pick the one with most recent data
     const revenueConcepts = [
@@ -184,36 +285,81 @@ export async function getFinancials(ticker) {
       'SalesRevenueNet',
       'RevenueFromContractWithCustomerIncludingAssessedTax'
     ];
+
     let revenueHistory = [];
     let bestRevenueYear = 0;
-    for (const concept of revenueConcepts) {
-      const hist = getHistoricalValues(facts, concept, '10-K', 5);
-      if (hist.length > 0) {
-        const latestYear = hist[hist.length - 1]?.fy || 0;
-        if (latestYear > bestRevenueYear) {
-          bestRevenueYear = latestYear;
-          revenueHistory = hist;
+
+    if (timeframe === 'ttm') {
+      // For TTM, find best revenue concept and calculate TTM
+      for (const concept of revenueConcepts) {
+        const ttm = calculateTTM(facts, concept);
+        if (ttm && ttm.fy > bestRevenueYear) {
+          bestRevenueYear = ttm.fy;
+          // For TTM, we show TTM value plus historical annual for context
+          const annualHist = getHistoricalValues(facts, concept, '10-K', 4);
+          revenueHistory = [...annualHist, ttm];
+        }
+      }
+    } else {
+      for (const concept of revenueConcepts) {
+        const hist = timeframe === 'quarterly'
+          ? getHistoricalQuarterlyValues(facts, concept, periods)
+          : getHistoricalValues(facts, concept, form, periods);
+        if (hist.length > 0) {
+          const latestYear = hist[hist.length - 1]?.fy || 0;
+          if (latestYear > bestRevenueYear) {
+            bestRevenueYear = latestYear;
+            revenueHistory = hist;
+          }
         }
       }
     }
 
     // Net Income
-    const netIncomeHistory = getHistoricalValues(facts, 'NetIncomeLoss', '10-K', 5);
+    let netIncomeHistory = [];
+    if (timeframe === 'ttm') {
+      const ttm = calculateTTM(facts, 'NetIncomeLoss');
+      const annualHist = getHistoricalValues(facts, 'NetIncomeLoss', '10-K', 4);
+      netIncomeHistory = ttm ? [...annualHist, ttm] : annualHist;
+    } else {
+      netIncomeHistory = getHistFn(facts, 'NetIncomeLoss', timeframe === 'quarterly' ? periods : form === '10-K' ? periods : periods);
+      if (timeframe !== 'quarterly') {
+        netIncomeHistory = getHistoricalValues(facts, 'NetIncomeLoss', form, periods);
+      }
+    }
 
     // EPS
-    const epsHistory = getHistoricalValues(facts, 'EarningsPerShareDiluted', '10-K', 5);
+    let epsHistory = [];
+    if (timeframe === 'ttm') {
+      const ttm = calculateTTM(facts, 'EarningsPerShareDiluted', 'USD/shares');
+      const annualHist = getHistoricalValues(facts, 'EarningsPerShareDiluted', '10-K', 4);
+      epsHistory = ttm ? [...annualHist, ttm] : annualHist;
+    } else if (timeframe === 'quarterly') {
+      epsHistory = getHistoricalQuarterlyValues(facts, 'EarningsPerShareDiluted', periods);
+    } else {
+      epsHistory = getHistoricalValues(facts, 'EarningsPerShareDiluted', form, periods);
+    }
 
-    // Balance Sheet Items (latest)
-    const assets = getLatestValue(facts, 'Assets');
-    const liabilities = getLatestValue(facts, 'Liabilities');
-    const equity = getLatestValue(facts, 'StockholdersEquity');
-    const cash = getLatestValue(facts, 'CashAndCashEquivalentsAtCarryingValue');
-    const debt = getLatestValue(facts, 'LongTermDebt') || getLatestValue(facts, 'LongTermDebtNoncurrent');
-    const totalDebt = getLatestValue(facts, 'DebtCurrent');
+    // Balance Sheet Items (always use latest available - typically from 10-K or most recent 10-Q)
+    const assets = getLatestValue(facts, 'Assets') || getLatestQuarterlyValue(facts, 'Assets');
+    const liabilities = getLatestValue(facts, 'Liabilities') || getLatestQuarterlyValue(facts, 'Liabilities');
+    const equity = getLatestValue(facts, 'StockholdersEquity') || getLatestQuarterlyValue(facts, 'StockholdersEquity');
+    const cash = getLatestValue(facts, 'CashAndCashEquivalentsAtCarryingValue') || getLatestQuarterlyValue(facts, 'CashAndCashEquivalentsAtCarryingValue');
+    const debt = getLatestValue(facts, 'LongTermDebt') || getLatestValue(facts, 'LongTermDebtNoncurrent') || getLatestQuarterlyValue(facts, 'LongTermDebt');
 
-    // Profitability
-    const grossProfit = getLatestValue(facts, 'GrossProfit');
-    const operatingIncome = getLatestValue(facts, 'OperatingIncomeLoss');
+    // Profitability - use appropriate timeframe
+    let grossProfit, operatingIncome;
+    if (timeframe === 'ttm') {
+      grossProfit = calculateTTM(facts, 'GrossProfit');
+      operatingIncome = calculateTTM(facts, 'OperatingIncomeLoss');
+    } else if (timeframe === 'quarterly') {
+      grossProfit = getLatestQuarterlyValue(facts, 'GrossProfit');
+      operatingIncome = getLatestQuarterlyValue(facts, 'OperatingIncomeLoss');
+    } else {
+      grossProfit = getLatestValue(facts, 'GrossProfit');
+      operatingIncome = getLatestValue(facts, 'OperatingIncomeLoss');
+    }
+
     const latestRevenue = revenueHistory[revenueHistory.length - 1];
     const latestNetIncome = netIncomeHistory[netIncomeHistory.length - 1];
 
@@ -225,17 +371,26 @@ export async function getFinancials(ticker) {
     const netMargin = latestRevenue && latestNetIncome
       ? latestNetIncome.val / latestRevenue.val : null;
 
-    // Calculate growth rates
-    const revenueGrowth = revenueHistory.length >= 2
-      ? calcGrowth(revenueHistory[revenueHistory.length - 1]?.val, revenueHistory[revenueHistory.length - 2]?.val)
-      : null;
-    const netIncomeGrowth = netIncomeHistory.length >= 2
-      ? calcGrowth(netIncomeHistory[netIncomeHistory.length - 1]?.val, netIncomeHistory[netIncomeHistory.length - 2]?.val)
-      : null;
+    // Calculate growth rates (YoY for quarterly, period-over-period otherwise)
+    let revenueGrowth = null;
+    let netIncomeGrowth = null;
+
+    if (timeframe === 'quarterly' && revenueHistory.length >= 5) {
+      // YoY growth for quarterly (compare to same quarter last year)
+      revenueGrowth = calcGrowth(revenueHistory[revenueHistory.length - 1]?.val, revenueHistory[revenueHistory.length - 5]?.val);
+      netIncomeGrowth = netIncomeHistory.length >= 5
+        ? calcGrowth(netIncomeHistory[netIncomeHistory.length - 1]?.val, netIncomeHistory[netIncomeHistory.length - 5]?.val)
+        : null;
+    } else if (revenueHistory.length >= 2) {
+      revenueGrowth = calcGrowth(revenueHistory[revenueHistory.length - 1]?.val, revenueHistory[revenueHistory.length - 2]?.val);
+      netIncomeGrowth = netIncomeHistory.length >= 2
+        ? calcGrowth(netIncomeHistory[netIncomeHistory.length - 1]?.val, netIncomeHistory[netIncomeHistory.length - 2]?.val)
+        : null;
+    }
 
     // Calculate ratios
-    const currentAssets = getLatestValue(facts, 'AssetsCurrent');
-    const currentLiabilities = getLatestValue(facts, 'LiabilitiesCurrent');
+    const currentAssets = getLatestValue(facts, 'AssetsCurrent') || getLatestQuarterlyValue(facts, 'AssetsCurrent');
+    const currentLiabilities = getLatestValue(facts, 'LiabilitiesCurrent') || getLatestQuarterlyValue(facts, 'LiabilitiesCurrent');
     const currentRatio = currentAssets && currentLiabilities
       ? currentAssets.val / currentLiabilities.val : null;
 
@@ -248,9 +403,22 @@ export async function getFinancials(ticker) {
     const roa = latestNetIncome && assets
       ? latestNetIncome.val / assets.val : null;
 
+    // Determine fiscal period label
+    let fiscalPeriod = null;
+    if (latestRevenue) {
+      if (timeframe === 'ttm') {
+        fiscalPeriod = 'TTM';
+      } else if (timeframe === 'quarterly') {
+        fiscalPeriod = `${latestRevenue.fp} ${latestRevenue.fy}`;
+      } else {
+        fiscalPeriod = `FY${latestRevenue.fy}`;
+      }
+    }
+
     return {
       entityName: facts.entityName,
       cik: facts.cik,
+      timeframe,
 
       // Income Statement
       income: {
@@ -290,7 +458,7 @@ export async function getFinancials(ticker) {
       },
 
       // Fiscal period info
-      fiscalPeriod: latestRevenue ? `FY${latestRevenue.fy}` : null
+      fiscalPeriod
     };
   } catch (e) {
     console.error('Financials fetch error:', e);
@@ -337,7 +505,16 @@ export function renderFinancialsHTML(data) {
     return `<div class="financials-error">${data.error}</div>`;
   }
 
-  const { income, balance, ratios, growth, fiscalPeriod } = data;
+  const { income, balance, ratios, growth, fiscalPeriod, timeframe = 'annual' } = data;
+
+  // Timeframe toggle HTML
+  const timeframeToggle = `
+    <div class="fin-timeframe-toggle">
+      <button class="fin-tf-btn ${timeframe === 'annual' ? 'active' : ''}" data-timeframe="annual">Annual</button>
+      <button class="fin-tf-btn ${timeframe === 'quarterly' ? 'active' : ''}" data-timeframe="quarterly">Quarterly</button>
+      <button class="fin-tf-btn ${timeframe === 'ttm' ? 'active' : ''}" data-timeframe="ttm">TTM</button>
+    </div>
+  `;
 
   // Latest values
   const latestRevenue = income.revenue[income.revenue.length - 1];
@@ -355,7 +532,8 @@ export function renderFinancialsHTML(data) {
   const leverageRating = getRating(ratios.debtToEquity, [0.3, 0.6, 1.0], true);
 
   // Format growth with arrow and context
-  const fmtGrowth = (g, label = 'YoY') => {
+  const growthLabel = timeframe === 'quarterly' ? 'YoY' : timeframe === 'ttm' ? 'vs PY' : 'YoY';
+  const fmtGrowth = (g, label = growthLabel) => {
     if (g === null) return '<span class="neutral">--</span>';
     const pct = (g * 100).toFixed(1);
     const cls = g >= 0 ? 'positive' : 'negative';
@@ -365,6 +543,7 @@ export function renderFinancialsHTML(data) {
   };
 
   // Mini sparkline for historical data
+  const periodSuffix = timeframe === 'quarterly' ? 'Q' : 'Y';
   const miniChart = (values, showYears = false) => {
     if (!values || values.length < 2) return '';
     const vals = values.map(v => v.val);
@@ -379,14 +558,14 @@ export function renderFinancialsHTML(data) {
     }).join(' ');
 
     const trend = vals[vals.length - 1] >= vals[0] ? '#4ade80' : '#f87171';
-    const years = values.length;
+    const periodCount = values.length;
 
     return `
       <div class="spark-container">
         <svg class="mini-chart" width="60" height="22" viewBox="0 0 60 22">
           <polyline points="${points}" fill="none" stroke="${trend}" stroke-width="1.5"/>
         </svg>
-        ${showYears ? `<span class="spark-years">${years}Y</span>` : ''}
+        ${showYears ? `<span class="spark-years">${periodCount}${periodSuffix}</span>` : ''}
       </div>
     `;
   };
@@ -407,6 +586,9 @@ export function renderFinancialsHTML(data) {
     ? Math.round((balance.cash / (balance.liabilities / 12)))
     : null;
 
+  // Determine SEC form label
+  const formLabel = timeframe === 'quarterly' ? 'SEC 10-Q' : timeframe === 'ttm' ? 'TTM' : 'SEC 10-K';
+
   return `
     <div class="fin-header">
       <div class="fin-score">
@@ -419,7 +601,8 @@ export function renderFinancialsHTML(data) {
         <span class="fin-badge ${roeRating.class}">Returns: ${roeRating.label}</span>
         <span class="fin-badge ${leverageRating.class}">Leverage: ${leverageRating.label}</span>
       </div>
-      <div class="fin-period-tag">${fiscalPeriod || ''} · SEC 10-K</div>
+      ${timeframeToggle}
+      <div class="fin-period-tag">${fiscalPeriod || ''} · ${formLabel}</div>
     </div>
 
     <div class="financials-grid">
@@ -572,6 +755,20 @@ export function renderFinancialsHTML(data) {
       </div>
     </div>
   `;
+}
+
+/**
+ * Get current timeframe state
+ */
+export function getCurrentTimeframe() {
+  return currentTimeframe;
+}
+
+/**
+ * Get current ticker
+ */
+export function getCurrentTicker() {
+  return currentTicker;
 }
 
 // Export for use in analysis.js

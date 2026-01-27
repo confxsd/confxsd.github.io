@@ -14,7 +14,7 @@ import { CONFIG } from './config.js';
 import { getCurrentPage } from './pages.js';
 import { optionsData } from './options-page.js';
 import * as finMath from './financial-math.js';
-import { getFinancials, renderFinancialsHTML } from './financials.js';
+import { getFinancials, renderFinancialsHTML, getCurrentTimeframe, getCurrentTicker } from './financials.js';
 
 export let mktData = {};
 let skipCache = false;
@@ -484,15 +484,25 @@ async function loadNews(ticker) {
   }
 }
 
-async function loadFinancials(ticker) {
+async function loadFinancials(ticker, timeframe = 'annual') {
   const container = document.getElementById('financialsContent');
   if (!container) return;
 
   container.innerHTML = '<div class="financials-loading">Loading SEC financials...</div>';
 
   try {
-    const data = await getFinancials(ticker);
+    const data = await getFinancials(ticker, timeframe);
     container.innerHTML = renderFinancialsHTML(data);
+
+    // Attach timeframe toggle event listeners
+    container.querySelectorAll('.fin-tf-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const newTimeframe = e.target.dataset.timeframe;
+        if (newTimeframe && newTimeframe !== getCurrentTimeframe()) {
+          loadFinancials(getCurrentTicker() || ticker, newTimeframe);
+        }
+      });
+    });
   } catch (e) {
     container.innerHTML = `<div class="financials-error">Failed to load financials: ${e.message}</div>`;
   }
