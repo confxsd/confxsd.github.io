@@ -1,16 +1,19 @@
-# VHunter - AI Stock Signal Terminal
+# VHunter - AI Market Intel Terminal
 
 ## Project Overview
+
 VHunter is an AI-powered stock analysis terminal that provides technical indicators, AI-generated trade ideas, options analytics, and position tracking.
 
 ## Architecture
 
 ### Frontend (This Directory)
+
 - **Location**: `/Users/serhat/Code/confxsd.github.io/vhunter/`
 - **Hosted at**: https://confxsd.github.io/vhunter/
 - **Tech**: Vanilla JS with ES modules, Chart.js
 
 ### Backend (Cloudflare Worker)
+
 - **Location**: `/Users/serhat/Code/vhunter-proxy/`
 - **Deployed at**: https://vhunter-proxy.vhunter.workers.dev
 - **Tech**: Cloudflare Worker with D1 database and KV cache
@@ -62,6 +65,7 @@ vhunter/
 ## Pages
 
 ### 1. Overview (Analyze)
+
 - Stock analysis with technical charts (Price, Volume, RSI, MACD, ADX, Bollinger, MFI, A/D, ATR)
 - Signal bars (Trend, Momentum, Volume, Volatility)
 - Technical signals panel
@@ -71,7 +75,9 @@ vhunter/
 - Volatility premium (VRP) gauge
 
 ### 2. Options
+
 Professional quant-style options terminal:
+
 - **Volatility Analysis**: IV term structure, skew, expected moves, volatility cone
 - **Flow & Sentiment**: Call/Put volume, OI, sentiment gauge
 - **Key Strikes**: Max pain levels, OI walls, GEX zones, dealer positioning
@@ -80,6 +86,7 @@ Professional quant-style options terminal:
 - **AI Insight**: Market maker positioning, thesis-aligned opportunities
 
 ### 3. Feed
+
 - Capture tweets, blog posts, charts, links
 - Image attachment support
 - AI-powered insight extraction
@@ -87,6 +94,7 @@ Professional quant-style options terminal:
 - Filter by type (tweet, blog, chart)
 
 ### 4. Positions
+
 - Track open/closed positions with real-time P&L
 - Support for long, short, call, put, short_call, short_put
 - AI portfolio analysis with risk score
@@ -94,12 +102,14 @@ Professional quant-style options terminal:
 - Win rate and performance stats
 
 ### 5. Watchlist
+
 - Track tickers with price alerts
 - Hunt feature: Scan all tickers for options opportunities
 - Metrics: IV-HV, P/C ratio, put premium %, Vol/OI
 - AI-generated hunt summary
 
 ### 6. Notes
+
 - Trading notes with tags
 - Filter by ticker
 
@@ -108,35 +118,42 @@ Professional quant-style options terminal:
 Base URL: `https://vhunter-proxy.vhunter.workers.dev`
 
 ### Market Data (Polygon.io Proxy)
+
 - `GET /polygon/*` - Proxies to Polygon.io API
 
 ### AI Analysis (Claude Proxy)
+
 - `POST /claude` - Proxies to Anthropic Claude API with KV caching
 
 ### Positions API
+
 - `GET /api/positions?status=open|closed` - Get user positions
 - `POST /api/positions` - Create position
 - `PUT /api/positions/:id` - Update position (close with exit_price)
 - `DELETE /api/positions/:id` - Delete position
 
 ### Watchlist API
+
 - `GET /api/watchlist` - Get user watchlist
 - `POST /api/watchlist` - Add to watchlist
 - `DELETE /api/watchlist/:id` - Remove from watchlist
 
 ### Notes API
+
 - `GET /api/notes?ticker=XXX` - Get notes (optional ticker filter)
 - `POST /api/notes` - Create note
 - `PUT /api/notes/:id` - Update note
 - `DELETE /api/notes/:id` - Delete note
 
 ### Feed API
+
 - `GET /api/feed` - Get user feed items
 - `POST /api/feed` - Create feed item
 - `PUT /api/feed/:id` - Update feed item
 - `DELETE /api/feed/:id` - Delete feed item
 
 ### Thesis API
+
 - `GET /api/thesis` - Get user thesis
 - `POST /api/thesis` - Create/update thesis
 
@@ -146,6 +163,7 @@ Base URL: `https://vhunter-proxy.vhunter.workers.dev`
 **Database ID**: `5b519be9-257c-4141-9164-359d959062ed`
 
 ### User Identification
+
 - User ID stored in `localStorage.getItem('vhunter_user_id')`
 - Default user: `vhunter-serhat`
 - Sent via `X-User-Id` header on all API requests
@@ -153,6 +171,7 @@ Base URL: `https://vhunter-proxy.vhunter.workers.dev`
 ### Tables
 
 #### positions
+
 ```sql
 CREATE TABLE positions (
   id TEXT PRIMARY KEY,
@@ -175,6 +194,7 @@ CREATE TABLE positions (
 ```
 
 #### watchlist
+
 ```sql
 CREATE TABLE watchlist (
   id TEXT PRIMARY KEY,
@@ -190,6 +210,7 @@ CREATE TABLE watchlist (
 ```
 
 #### notes
+
 ```sql
 CREATE TABLE notes (
   id TEXT PRIMARY KEY,
@@ -203,6 +224,7 @@ CREATE TABLE notes (
 ```
 
 #### feed
+
 ```sql
 CREATE TABLE feed (
   id TEXT PRIMARY KEY,
@@ -220,6 +242,7 @@ CREATE TABLE feed (
 ```
 
 #### thesis
+
 ```sql
 CREATE TABLE thesis (
   id TEXT PRIMARY KEY,
@@ -233,6 +256,7 @@ CREATE TABLE thesis (
 ## P&L Calculation Logic
 
 For open positions, P&L is calculated in real-time:
+
 - **Long**: `(currentPrice - entryPrice) * quantity`
 - **Short**: `(entryPrice - currentPrice) * quantity`
 - **Long Put**: Intrinsic value = `max(0, strike - currentPrice)`, estimated option value includes ~30% time value
@@ -244,7 +268,9 @@ Option notes format: `TICKER DDMMMYY STRIKE C/P` (e.g., "IONQ 23JAN26 49 P")
 ## Key Features
 
 ### Hunt Feature (Watchlist)
+
 Scans all watchlist tickers for options opportunities:
+
 - IV vs HV spread (volatility premium)
 - Put/Call ratio and flow analysis
 - Premium distribution (% in puts)
@@ -252,6 +278,7 @@ Scans all watchlist tickers for options opportunities:
 - Composite opportunity score
 
 ### AI Portfolio Analysis (Positions)
+
 - Portfolio risk score
 - Thesis alignment check
 - Expiry alerts for near-term options
@@ -259,12 +286,14 @@ Scans all watchlist tickers for options opportunities:
 - Actionable recommendations
 
 ### Feed & Thesis
+
 - Capture market signals from various sources
 - AI extracts insights from raw signals
 - Update thesis synthesizes accumulated insights
 - Tracks raw vs processed signal counts
 
 ### Options Terminal Features
+
 - **IV Term Structure**: Contango/backwardation analysis
 - **Volatility Skew**: 25-delta put/call skew
 - **Volatility Cone**: RV percentile by lookback window
@@ -275,6 +304,7 @@ Scans all watchlist tickers for options opportunities:
 ## Development
 
 ### Local Development
+
 ```bash
 cd /Users/serhat/Code/confxsd.github.io/vhunter
 python3 -m http.server 8080
@@ -282,16 +312,58 @@ python3 -m http.server 8080
 ```
 
 ### Deploy Worker Changes
+
 ```bash
 cd /Users/serhat/Code/vhunter-proxy
 npx wrangler deploy
 ```
 
 ### Query D1 Database
+
 ```bash
 cd /Users/serhat/Code/vhunter-proxy
 npx wrangler d1 execute vhunter-db --remote --command "SELECT * FROM positions WHERE user_id = 'vhunter-serhat';"
 ```
+
+## Telegram Bot (@romefinbot)
+
+### Location
+
+`/Users/serhat/Code/vhunter-proxy/src/handlers/telegram.js`
+
+### Overview
+
+Telegram bot integrated into the Cloudflare Worker. Captures trading ideas, answers questions via Claude, and provides access to notes/thesis/opportunities.
+
+### Commands
+
+- `/note <text>` - Save a note (auto-detects ticker)
+- `/idea <text>` - Save an idea with #idea tag
+- `/signal <text>` - Capture market signal to feed
+- `/notes` - List recent notes
+- `/thesis` - Show current macro thesis
+- `/opps` - Show active opportunities
+- `/help` - Show help
+
+### Claude Q&A
+
+- Mention `@romefinbot` in group or send DM to ask questions
+- `--smart` flag uses Sonnet model (default is Haiku)
+- Auto-detects tickers and fetches live market data for context
+- Context includes: recent notes, macro thesis, active opportunities, live price/technicals/options data
+
+### Message Formatting
+
+- Bot sends messages with `parse_mode: 'HTML'`
+- Claude is instructed to use HTML tags (`<b>`, `<i>`, `<code>`)
+- `markdownToTelegramHtml()` converts any remaining Markdown to HTML as fallback
+- Special chars (`&`, `<`, `>`) are escaped before Markdown conversion
+
+### Webhook
+
+- Endpoint: `POST /telegram`
+- Setup: `GET /telegram/setup` (one-time webhook configuration)
+- Webhook URL: `https://api.rome.markets/telegram`
 
 ## Important Notes
 
