@@ -466,14 +466,127 @@
   margin-top: 4px;
 }
 
+/* Chart Period Switcher */
+.chart-period-switch {
+  display: flex;
+  gap: 2px;
+  background: #e2e8f0;
+  border-radius: 6px;
+  padding: 2px;
+  margin-right: 12px;
+}
+
+.period-btn {
+  padding: 4px 10px;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-width: 32px;
+}
+
+.period-btn:hover {
+  color: #1e293b;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.period-btn.active {
+  color: #fff;
+  background: #6366f1;
+  box-shadow: 0 1px 3px rgba(99, 102, 241, 0.3);
+}
+
+.period-btn.loading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Responsive period switch */
+@media (max-width: 640px) {
+  .chart-period-switch {
+    margin-right: 8px;
+  }
+
+  .period-btn {
+    padding: 3px 8px;
+    font-size: 10px;
+    min-width: 28px;
+  }
+}
+
 /* Charts */
-.ch { height: 150px; }
+.ch { height: 180px; }
 .ch canvas { width: 100% !important; height: 100% !important; }
 
-.chart-cell { position: relative; }
-.chart-guide { font-size: var(--t-2xs); color: #64748b; margin-top: 4px; padding-top: 4px; border-top: 1px solid #f1f5f9; }
-.chart-metric { display: flex; gap: 8px; margin-top: 4px; font-size: var(--t-2xs); flex-wrap: wrap; }
+.chart-cell {
+  position: relative;
+  padding: 14px !important;
+}
+
+.chart-cell .t {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-cell .t::before {
+  content: '';
+  width: 3px;
+  height: 12px;
+  background: #818cf8;
+  border-radius: 1px;
+}
+
+.chart-guide {
+  font-size: var(--t-2xs);
+  color: #64748b;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #f1f5f9;
+  line-height: 1.4;
+}
+
+.chart-guide .g { color: #10b981; font-weight: 600; }
+.chart-guide .y { color: #f59e0b; font-weight: 600; }
+.chart-guide .r { color: #ef4444; font-weight: 600; }
+
+.chart-metric {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: var(--t-xs);
+  flex-wrap: wrap;
+}
 .chart-metric:empty { display: none; }
+
+.metric-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.m-label {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.m-val {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.m-val.bull { color: #10b981; }
+.m-val.bear { color: #ef4444; }
+.m-val.warn { color: #f59e0b; }
+.m-val.info { color: #6366f1; }
 
 /* ============================================
    AI SUMMARY SECTION

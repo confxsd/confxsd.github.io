@@ -32,14 +32,27 @@ export async function fetchClaude(prompt, skipCache = false) {
   return j.content[0].text;
 }
 
-export async function fetchTickerData(ticker) {
+// Period configuration for chart time ranges
+const PERIOD_CONFIG = {
+  '1d': { days: 1, multiplier: 5, timespan: 'minute', labelFormat: 'time' },
+  '1w': { days: 7, multiplier: 30, timespan: 'minute', labelFormat: 'day-time' },
+  '1m': { days: 30, multiplier: 1, timespan: 'day', labelFormat: 'date' },
+  '1y': { days: 365, multiplier: 1, timespan: 'day', labelFormat: 'month' }
+};
+
+export function getPeriodConfig(period) {
+  return PERIOD_CONFIG[period] || PERIOD_CONFIG['1m'];
+}
+
+export async function fetchTickerData(ticker, period = '1m') {
+  const config = PERIOD_CONFIG[period] || PERIOD_CONFIG['1m'];
   const to = new Date();
-  const fr = new Date(to - CONFIG.HISTORY_DAYS * 24 * 60 * 60 * 1000);
+  const fr = new Date(to - config.days * 24 * 60 * 60 * 1000);
 
   // Get price data - use snapshot for real-time, prev as fallback
   const [snapshot, aggs] = await Promise.all([
     fetchPolygon(`/v2/snapshot/locale/us/markets/stocks/tickers/${ticker}`).catch(() => null),
-    fetchPolygon(`/v2/aggs/ticker/${ticker}/range/1/day/${fr.toISOString().split('T')[0]}/${to.toISOString().split('T')[0]}?adjusted=true&sort=asc`)
+    fetchPolygon(`/v2/aggs/ticker/${ticker}/range/${config.multiplier}/${config.timespan}/${fr.toISOString().split('T')[0]}/${to.toISOString().split('T')[0]}?adjusted=true&sort=asc&limit=5000`)
   ]);
 
   // Build prev-compatible response from snapshot or fallback to prev endpoint

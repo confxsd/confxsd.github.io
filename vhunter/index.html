@@ -258,6 +258,12 @@
           <div class="section" id="sec-charts">
             <div class="section-header" onclick="toggleSection('sec-charts')">
               <span class="section-title">Charts & Indicators</span>
+              <div class="chart-period-switch" onclick="event.stopPropagation()">
+                <button class="period-btn" data-period="1d">1D</button>
+                <button class="period-btn" data-period="1w">1W</button>
+                <button class="period-btn active" data-period="1m">1M</button>
+                <button class="period-btn" data-period="1y">1Y</button>
+              </div>
               <span class="section-toggle">▼</span>
             </div>
             <div class="section-content">

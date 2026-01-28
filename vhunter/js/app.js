@@ -10,7 +10,7 @@ import { loadNotes, setRunCallback as setNotesRunCallback } from './notes.js';
 import { loadFeed, setRunCallback as setFeedRunCallback } from './feed.js';
 import { loadOpportunities, setRunCallback as setOpportunitiesRunCallback } from './opportunities.js';
 import { loadStrategy, setRunCallback as setStrategyRunCallback } from './strategy.js';
-import { run } from './analysis.js';
+import { run, initPeriodSwitch } from './analysis.js';
 import { loadOptionsData, initOptionsPage } from './options-page.js';
 import { initTerminal, startPolling, stopPolling } from './terminal.js';
 import { loadMacro } from './macro.js';
@@ -69,6 +69,7 @@ initRouter(({ page, ticker }) => {
 document.addEventListener('DOMContentLoaded', () => {
   ui.$('tm').textContent = new Date().toLocaleString();
   initCharts();
+  initPeriodSwitch();
   renderHistory();
   initOptionsPage();
   initTerminal();

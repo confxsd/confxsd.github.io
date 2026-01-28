@@ -1,6 +1,6 @@
 // VHunter Analysis Module
-import { fetchTickerData, fetchClaude, fetchNews, fetchTickerDetails } from './api.js';
-import { updateCharts } from './charts.js';
+import { fetchTickerData, fetchClaude, fetchNews, fetchTickerDetails, getPeriodConfig } from './api.js';
+import { updateCharts, setChartPeriod } from './charts.js';
 import * as indicators from './indicators.js';
 import * as gammaTools from './gamma.js';
 import * as ui from './ui.js';
@@ -18,13 +18,27 @@ import { getFinancials, renderFinancialsHTML, getCurrentTimeframe, getCurrentTic
 
 export let mktData = {};
 let skipCache = false;
+let currentPeriod = '1m';
 
 export function setSkipCache(value) {
   skipCache = value;
 }
 
-export async function run(forceRefresh = false) {
+export function setChartPeriodValue(period) {
+  currentPeriod = period;
+  setChartPeriod(period);
+}
+
+export function getCurrentPeriod() {
+  return currentPeriod;
+}
+
+export async function run(forceRefresh = false, period = null) {
   skipCache = forceRefresh;
+  if (period) {
+    currentPeriod = period;
+    setChartPeriod(period);
+  }
   const ticker = ui.$('tk').value.toUpperCase().trim();
   if (!ticker) return;
 
@@ -32,7 +46,7 @@ export async function run(forceRefresh = false) {
   ui.hideError();
 
   try {
-    const { prev, aggs, options } = await fetchTickerData(ticker);
+    const { prev, aggs, options } = await fetchTickerData(ticker, currentPeriod);
 
     if (!prev || !aggs) {
       ui.setStatus('');
@@ -214,8 +228,22 @@ function processHistoricalData(ticker, data) {
     hv30: vol // Alias for clarity
   };
 
-  // Update charts
-  const labels = data.map(d => new Date(d.t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+  // Update charts with period-appropriate labels
+  const periodConfig = getPeriodConfig(currentPeriod);
+  const labels = data.map(d => {
+    const date = new Date(d.t);
+    switch (periodConfig.labelFormat) {
+      case 'time':
+        return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      case 'day-time':
+        return date.toLocaleDateString('en-US', { weekday: 'short' }) + ' ' +
+               date.toLocaleTimeString('en-US', { hour: 'numeric' });
+      case 'month':
+        return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+      default:
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+  });
   updateCharts({
     labels,
     prices,
@@ -741,9 +769,36 @@ function formatSummary(text) {
     .replace(/$/, '</p>');
 }
 
+// Initialize period switch buttons
+export function initPeriodSwitch() {
+  const buttons = document.querySelectorAll('.period-btn');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const period = btn.dataset.period;
+      if (period === currentPeriod) return;
+
+      // Update active state
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Add loading state
+      btn.classList.add('loading');
+
+      // Re-run analysis with new period
+      await run(false, period);
+
+      btn.classList.remove('loading');
+    });
+  });
+}
+
 // Expose to window for onclick handlers
 window.run = run;
 window.exportData = exportData;
 window.shareAnalysis = shareAnalysis;
 window.generateSummary = generateSummary;
 window.toggleSummary = toggleSummary;
+window.initPeriodSwitch = initPeriodSwitch;
