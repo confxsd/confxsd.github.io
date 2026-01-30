@@ -704,28 +704,6 @@
           <div class="page-header">
             <h1>Feed</h1>
             <div class="header-actions">
-              <span class="api-warning" title="Uses Claude API credits">$</span>
-              <button
-                class="btn-secondary"
-                id="extractBtn"
-                onclick="extractInsights()"
-              >
-                Extract
-              </button>
-              <button
-                class="btn-secondary"
-                id="reprocessBtn"
-                onclick="reprocessAllInsights()"
-              >
-                Reprocess All
-              </button>
-              <button
-                class="btn-secondary"
-                id="updateThesisBtn"
-                onclick="updateThesis()"
-              >
-                Update Thesis
-              </button>
               <button class="btn-primary" onclick="openFeedModal()">
                 + Add
               </button>
@@ -745,7 +723,7 @@
                 <div class="thesis-empty">
                   <div class="thesis-empty-text">No thesis yet</div>
                   <div class="thesis-empty-hint">
-                    Extract insights then update thesis
+                    Add signals to generate thesis
                   </div>
                 </div>
               </div>
@@ -802,26 +780,13 @@
             <h1>Opportunities</h1>
             <div class="header-actions">
               <button
-                class="btn-secondary"
-                id="extractOppsBtn"
-                onclick="extractOpportunities()"
+                class="btn-primary"
+                id="runAgentsBtn"
+                onclick="runAgentPipeline()"
               >
-                Extract
+                🤖 Run Agents
               </button>
-              <button
-                class="btn-secondary"
-                id="enhanceOppsBtn"
-                onclick="enhanceOpportunities()"
-              >
-                Enhance
-              </button>
-              <button
-                class="btn-secondary"
-                id="rescoreBtn"
-                onclick="rescoreOpportunities()"
-              >
-                Rescore
-              </button>
+              <span id="pipelineStatus" class="pipeline-status"></span>
               <select id="oppStatusFilter" onchange="loadOpportunities()">
                 <option value="active">Active</option>
                 <option value="triggered">Triggered</option>
@@ -3078,6 +3043,6 @@
       </svg>
     </button>
 
-    <script type="module" src="js/app.js?v=9"></script>
+    <script type="module" src="js/app.js?v=11"></script>
   </body>
 </html>

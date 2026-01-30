@@ -60,90 +60,6 @@ export async function uploadImage(file) {
   return response.json();
 }
 
-// Extract insights from unprocessed feeds
-export async function extractInsights() {
-  if (!confirm('This will use API credits. Continue?')) return;
-
-  const btn = document.getElementById('extractBtn');
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = 'Extracting...';
-  }
-
-  try {
-    const result = await feedFetch('/api/feed/extract', { method: 'POST' });
-    if (result.processed > 0) {
-      showToast(`Extracted ${result.processed} insights`);
-      loadFeed();
-    } else {
-      showToast(result.message || 'No items to process');
-    }
-  } catch (e) {
-    showToast('Extract failed: ' + e.message);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = 'Extract';
-    }
-  }
-}
-
-// Reprocess ALL feed items (including already processed)
-export async function reprocessAllInsights() {
-  if (!confirm('This will reprocess ALL feed items, overriding existing insights. Uses significant API credits. Continue?')) return;
-
-  const btn = document.getElementById('reprocessBtn');
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = 'Reprocessing...';
-  }
-
-  try {
-    const result = await feedFetch('/api/feed/extract?reprocess=all', { method: 'POST' });
-    if (result.processed > 0) {
-      showToast(`Reprocessed ${result.processed} items`);
-      loadFeed();
-    } else {
-      showToast(result.message || 'No items to reprocess');
-    }
-  } catch (e) {
-    showToast('Reprocess failed: ' + e.message);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = 'Reprocess All';
-    }
-  }
-}
-
-// Update thesis with processed insights
-export async function updateThesis() {
-  if (!confirm('This will use API credits. Continue?')) return;
-
-  const btn = document.getElementById('updateThesisBtn');
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = 'Updating...';
-  }
-
-  try {
-    const result = await feedFetch('/api/thesis/update', { method: 'POST' });
-    if (result.success) {
-      showToast(`Thesis v${result.version} updated`);
-      loadThesis();
-    } else {
-      showToast(result.message || 'Update failed');
-    }
-  } catch (e) {
-    showToast('Update failed: ' + e.message);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = 'Update Thesis';
-    }
-  }
-}
-
 // Get current thesis
 export async function getThesis() {
   return feedFetch('/api/thesis');
@@ -168,7 +84,7 @@ function renderThesis(card, thesis) {
     card.innerHTML = `
       <div class="thesis-empty">
         <div class="thesis-empty-text">No thesis yet</div>
-        <div class="thesis-empty-hint">Extract insights then update thesis</div>
+        <div class="thesis-empty-hint">Add signals to generate thesis</div>
       </div>`;
     return;
   }
@@ -791,9 +707,6 @@ window.openFeedModal = openFeedModal;
 window.closeFeedModal = closeFeedModal;
 window.saveFeedItem = saveFeedItem;
 window.handleImageUpload = handleImageUpload;
-window.extractInsights = extractInsights;
-window.reprocessAllInsights = reprocessAllInsights;
-window.updateThesis = updateThesis;
 
 window.removePreviewImage = function(index) {
   window.pendingImages.splice(index, 1);

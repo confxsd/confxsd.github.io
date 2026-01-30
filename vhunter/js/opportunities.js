@@ -1,14 +1,18 @@
 /**
  * Opportunities Page Module
  * Displays and manages trading opportunities extracted from feed signals
+ * Now includes multi-agent analysis visualization
  */
 
 import { CONFIG } from './config.js';
-import { scoreOpportunity, formatScore, getScoreBreakdown, shouldValidateWithAI } from './signal-scorer.js';
+import { formatScore } from './signal-scorer.js';
 
 let currentOpportunities = [];
-let currentThesis = null;
+let pipelineStatus = null;
 let runCallback = null;
+
+// User ID helper
+const getUserId = () => localStorage.getItem('vhunter_user_id') || 'vhunter-serhat';
 
 export function setRunCallback(cb) {
   runCallback = cb;
@@ -21,20 +25,21 @@ export async function loadOpportunities() {
   const status = document.getElementById('oppStatusFilter')?.value || 'active';
 
   try {
-    // Fetch opportunities and dashboard in parallel
-    const [opportunities, dashboard, thesis] = await Promise.all([
+    // Fetch opportunities, dashboard, and pipeline status in parallel
+    const [opportunities, dashboard] = await Promise.all([
       fetchOpportunities(status),
-      fetchDashboard(),
-      fetchThesis()
+      fetchDashboard()
     ]);
 
     currentOpportunities = opportunities;
-    currentThesis = thesis;
 
     renderDashboard(dashboard);
     renderTopTickers(dashboard.topTickers || []);
     renderOpportunities(opportunities);
     updateAlertBadge();
+
+    // Fetch pipeline status (non-blocking)
+    getPipelineStatus();
 
   } catch (e) {
     console.error('Failed to load opportunities:', e);
@@ -43,119 +48,117 @@ export async function loadOpportunities() {
 }
 
 /**
- * Extract opportunities from processed feed signals
+ * Run multi-agent pipeline analysis using Durable Object (long-running)
  */
-window.extractOpportunities = async function() {
-  const btn = document.getElementById('extractOppsBtn');
+window.runAgentPipeline = async function() {
+  const btn = document.getElementById('runAgentsBtn');
+  const statusEl = document.getElementById('pipelineStatus');
+
   if (btn) {
     btn.disabled = true;
-    btn.textContent = 'Extracting...';
+    btn.innerHTML = '🤖 Starting...';
   }
 
   try {
-    const response = await fetch(`${CONFIG.PROXY_URL}/api/opportunities/extract`, {
+    // Start the pipeline (returns immediately)
+    const startResponse = await fetch(`${CONFIG.PROXY_URL}/api/pipeline/do/run`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-User-Id': localStorage.getItem('vhunter_user_id') || 'vhunter-serhat'
+        'X-User-Id': getUserId()
       }
     });
 
-    const result = await response.json();
+    const startResult = await startResponse.json();
 
-    if (result.success) {
-      alert(`Extracted ${result.extracted} opportunities from ${result.processed} signals`);
-      loadOpportunities();
-    } else {
-      alert('Extraction failed: ' + (result.error || 'Unknown error'));
+    if (!startResult.success) {
+      throw new Error(startResult.error || 'Failed to start pipeline');
+    }
+
+    // Poll for completion
+    let completed = false;
+    let pollCount = 0;
+    const maxPolls = 60; // 5 minutes max
+
+    while (!completed && pollCount < maxPolls) {
+      await new Promise(r => setTimeout(r, 5000)); // Wait 5 seconds
+
+      const statusResponse = await fetch(`${CONFIG.PROXY_URL}/api/pipeline/do/status`, {
+        headers: { 'X-User-Id': getUserId() }
+      });
+
+      const status = await statusResponse.json();
+      pollCount++;
+
+      // Update button with progress
+      if (btn) {
+        const phases = {
+          'analyst:macro': '🌍 Macro',
+          'analyst:sector': '📊 Sector',
+          'analyst:technical': '📈 Technical',
+          'analyst:quant': '🔢 Quant',
+          'pm': '👔 PM Synthesis',
+          'opportunities': '💡 Creating',
+          'complete': '✅ Complete'
+        };
+        const phaseLabel = phases[status.phase] || status.phase;
+        btn.innerHTML = `🤖 ${phaseLabel} (${status.analystsCompleted}/4)`;
+      }
+
+      // Update status element
+      if (statusEl) {
+        statusEl.innerHTML = `<span class="status-dot ${status.status}"></span> ${status.phase}`;
+      }
+
+      if (status.status === 'completed' || status.status === 'failed') {
+        completed = true;
+
+        if (status.status === 'completed') {
+          alert(`✅ Multi-Agent Pipeline Complete!\n\n` +
+            `4 Analysts + Portfolio Manager ran\n` +
+            `Opportunities created: ${status.opportunitiesCreated}\n` +
+            `Total cost: $${(status.totalCost || 0).toFixed(4)}`);
+          loadOpportunities();
+        } else {
+          alert('Pipeline failed: ' + (status.error || 'Unknown error'));
+        }
+      }
+    }
+
+    if (!completed) {
+      alert('Pipeline is still running. Check back in a few minutes.');
     }
 
   } catch (e) {
-    console.error('Extract failed:', e);
-    alert('Failed to extract: ' + e.message);
+    console.error('Pipeline failed:', e);
+    alert('Failed to run pipeline: ' + e.message);
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = 'Extract';
+      btn.innerHTML = '🤖 Run Agents';
+    }
+    if (statusEl) {
+      statusEl.innerHTML = '';
     }
   }
 };
 
 /**
- * Enhance opportunities with live market data (uses Sonnet)
+ * Get pipeline status from Durable Object
  */
-window.enhanceOpportunities = async function() {
-  const btn = document.getElementById('enhanceOppsBtn');
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = 'Enhancing...';
-  }
-
+async function getPipelineStatus() {
   try {
-    const response = await fetch(`${CONFIG.PROXY_URL}/api/opportunities/enhance`, {
-      method: 'POST',
+    const response = await fetch(`${CONFIG.PROXY_URL}/api/pipeline/do/status`, {
       headers: {
-        'Content-Type': 'application/json',
-        'X-User-Id': localStorage.getItem('vhunter_user_id') || 'vhunter-serhat'
+        'X-User-Id': getUserId()
       }
     });
-
-    const result = await response.json();
-
-    if (result.success) {
-      alert(`Enhanced ${result.enhanced}/${result.total} opportunities with live market data`);
-      loadOpportunities();
-    } else {
-      alert('Enhancement failed: ' + (result.error || result.message || 'Unknown error'));
-    }
-
+    pipelineStatus = await response.json();
+    renderPipelineStatus();
   } catch (e) {
-    console.error('Enhance failed:', e);
-    alert('Failed to enhance: ' + e.message);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = 'Enhance';
-    }
+    console.error('Failed to get pipeline status:', e);
   }
-};
-
-/**
- * Rescore all active opportunities
- */
-window.rescoreOpportunities = async function() {
-  const btn = document.getElementById('rescoreBtn');
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = 'Rescoring...';
-  }
-
-  try {
-    const response = await fetch(`${CONFIG.PROXY_URL}/api/opportunities/rescore`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-User-Id': localStorage.getItem('vhunter_user_id') || 'vhunter-serhat'
-      }
-    });
-
-    const result = await response.json();
-
-    if (result.success) {
-      alert(`Rescored ${result.rescored} opportunities`);
-      loadOpportunities();
-    }
-
-  } catch (e) {
-    console.error('Rescore failed:', e);
-    alert('Failed to rescore: ' + e.message);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = 'Rescore';
-    }
-  }
-};
+}
 
 /**
  * Validate a single opportunity with AI
@@ -171,7 +174,7 @@ window.validateOpportunity = async function(id) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-User-Id': localStorage.getItem('vhunter_user_id') || 'vhunter-serhat'
+        'X-User-Id': getUserId()
       }
     });
 
@@ -202,7 +205,7 @@ async function fetchOpportunities(status = 'active') {
     `${CONFIG.PROXY_URL}/api/opportunities?status=${status}&limit=50`,
     {
       headers: {
-        'X-User-Id': localStorage.getItem('vhunter_user_id') || 'vhunter-serhat'
+        'X-User-Id': getUserId()
       }
     }
   );
@@ -214,28 +217,11 @@ async function fetchDashboard() {
     `${CONFIG.PROXY_URL}/api/opportunities/dashboard`,
     {
       headers: {
-        'X-User-Id': localStorage.getItem('vhunter_user_id') || 'vhunter-serhat'
+        'X-User-Id': getUserId()
       }
     }
   );
   return response.json();
-}
-
-async function fetchThesis() {
-  try {
-    const response = await fetch(
-      `${CONFIG.PROXY_URL}/api/thesis`,
-      {
-        headers: {
-          'X-User-Id': localStorage.getItem('vhunter_user_id') || 'vhunter-serhat'
-        }
-      }
-    );
-    const data = await response.json();
-    return data?.thesis_data ? JSON.parse(data.thesis_data) : null;
-  } catch {
-    return null;
-  }
 }
 
 async function fetchAlerts() {
@@ -243,7 +229,7 @@ async function fetchAlerts() {
     `${CONFIG.PROXY_URL}/api/opportunities/alerts?unread=true`,
     {
       headers: {
-        'X-User-Id': localStorage.getItem('vhunter_user_id') || 'vhunter-serhat'
+        'X-User-Id': getUserId()
       }
     }
   );
@@ -296,10 +282,14 @@ function renderOpportunityCard(opp) {
   const tradeIdea = opp.trade_idea || {};
   const sourceContext = opp.source_context || {};
   const validation = opp.ai_validation;
+  const consensus = opp.analyst_consensus || {};
   const age = getAge(opp.created_at);
 
   const directionClass = opp.direction === 'long' ? 'direction-long' : 'direction-short';
   const directionIcon = opp.direction === 'long' ? '↑' : '↓';
+
+  // Build analyst consensus badges
+  const consensusHtml = renderAnalystConsensus(consensus);
 
   // Build source context HTML
   const hasSourceContext = sourceContext.summary || sourceContext.keyDataPoints?.length || sourceContext.sourceExcerpt;
@@ -351,8 +341,9 @@ function renderOpportunityCard(opp) {
         </div>
         ${tradeIdea.rationale ? `<div class="opp-rationale">${tradeIdea.rationale}</div>` : ''}
         ${sourceContextHtml}
+        ${consensusHtml}
         <div class="opp-meta">
-          <span class="opp-type">${opp.signal_type || 'signal'}</span>
+          <span class="opp-type">${formatSignalType(opp.signal_type)}</span>
           <span class="opp-timeframe">${tradeIdea.timeframe || '--'}</span>
           <span class="opp-age">${age}</span>
           ${opp.status !== 'active' ? `<span class="opp-status opp-status-${opp.status}">${opp.status}</span>` : ''}
@@ -364,10 +355,13 @@ function renderOpportunityCard(opp) {
         <div class="opp-score-container">
           <span class="opp-score ${score.class}">${score.value}</span>
           <span class="opp-score-label">${score.label}</span>
+          ${opp.pm_conviction ? `<span class="opp-conviction opp-conviction-${opp.pm_conviction}">${opp.pm_conviction}</span>` : ''}
         </div>
         <div class="opp-actions">
-          <button class="btn-small" onclick="validateOpportunity('${opp.id}')">Validate</button>
-          <button class="btn-small btn-icon" onclick="showScoreBreakdown('${opp.id}')">📊</button>
+          <button class="btn-small" onclick="validateOpportunity('${opp.id}')" title="AI Validate">✓</button>
+          <button class="btn-small" onclick="showAgentAnalysis('${opp.id}')" title="View Agent Analysis">🤖</button>
+          <button class="btn-small" onclick="rerunAgentAnalysis('${opp.id}')" title="Re-run Agent Analysis">🔄</button>
+          <button class="btn-small btn-icon" onclick="showScoreBreakdown('${opp.id}')" title="Score Breakdown">📊</button>
         </div>
       </div>
     </div>
@@ -422,6 +416,30 @@ function renderValidation(validation) {
   `;
 }
 
+/**
+ * Render analyst consensus badges
+ */
+function renderAnalystConsensus(consensus) {
+  if (!consensus || Object.keys(consensus).length === 0) return '';
+
+  const analysts = [
+    { key: 'macro', label: 'Macro' },
+    { key: 'sector', label: 'Sector' },
+    { key: 'technical', label: 'Technical' },
+    { key: 'quant', label: 'Quant' }
+  ];
+
+  const badges = analysts.map(a => {
+    const status = consensus[a.key];
+    const isAnalyzed = status === 'analyzed';
+    const isSupporting = (consensus.supporting || []).includes(a.key);
+    const badgeClass = isSupporting ? 'analyst-supporting' : isAnalyzed ? 'analyst-analyzed' : 'analyst-skipped';
+    return `<span class="analyst-badge ${badgeClass}">${a.label}</span>`;
+  }).join('');
+
+  return `<div class="opp-analyst-consensus">${badges}</div>`;
+}
+
 function showEmptyState(message) {
   const container = document.getElementById('oppList');
   if (!container) return;
@@ -437,16 +455,21 @@ function showEmptyState(message) {
 
 // ============== HELPERS ==============
 
+function formatSignalType(type) {
+  if (!type) return 'Signal';
+  return type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
+}
+
 function getAge(createdAt) {
   if (!createdAt) return '';
   const created = new Date(createdAt);
   const now = new Date();
   const hours = Math.round((now - created) / (1000 * 60 * 60));
 
-  if (hours < 1) return 'just now';
+  if (hours < 1) return 'Just now';
   if (hours < 24) return `${hours}h ago`;
   const days = Math.round(hours / 24);
-  if (days === 1) return 'yesterday';
+  if (days === 1) return 'Yesterday';
   return `${days}d ago`;
 }
 
@@ -469,19 +492,183 @@ window.showScoreBreakdown = function(id) {
     { name: 'Credibility', value: opp.credibility_score || 50 }
   ];
 
-  const html = breakdown.map(s =>
-    `<div class="score-row">
-      <span class="score-name">${s.name}</span>
-      <div class="score-bar">
-        <div class="score-fill" style="width: ${s.value}%"></div>
-      </div>
-      <span class="score-value">${Math.round(s.value)}</span>
-    </div>`
-  ).join('');
-
   alert(`Score Breakdown for ${opp.ticker}:\n` +
     breakdown.map(s => `${s.name}: ${Math.round(s.value)}`).join('\n'));
 };
+
+/**
+ * Show full agent analysis for an opportunity
+ */
+window.showAgentAnalysis = async function(id) {
+  const opp = currentOpportunities.find(o => o.id === id);
+  if (!opp) return;
+
+  try {
+    const response = await fetch(`${CONFIG.PROXY_URL}/api/opportunities/${id}/analysis`, {
+      headers: {
+        'X-User-Id': getUserId()
+      }
+    });
+    const analysis = await response.json();
+
+    // Build analysis modal content
+    const content = buildAnalysisModalContent(analysis);
+    showModal('Agent Analysis: ' + opp.ticker, content);
+
+  } catch (e) {
+    console.error('Failed to get analysis:', e);
+    alert('Failed to load agent analysis');
+  }
+};
+
+/**
+ * Re-run agent analysis for an opportunity
+ */
+window.rerunAgentAnalysis = async function(id) {
+  const opp = currentOpportunities.find(o => o.id === id);
+  if (!opp) return;
+
+  const card = document.querySelector(`[data-opp-id="${id}"]`);
+  if (card) card.classList.add('validating');
+
+  try {
+    const response = await fetch(`${CONFIG.PROXY_URL}/api/opportunities/${id}/rerun`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': getUserId()
+      }
+    });
+    const result = await response.json();
+
+    if (result.success) {
+      alert(`Re-analysis complete!\nCost: $${(result.cost || 0).toFixed(4)}`);
+      loadOpportunities();
+    } else {
+      alert('Re-analysis failed: ' + result.error);
+    }
+
+  } catch (e) {
+    console.error('Re-analysis failed:', e);
+    alert('Failed to re-run analysis: ' + e.message);
+  } finally {
+    if (card) card.classList.remove('validating');
+  }
+};
+
+/**
+ * Build modal content for agent analysis
+ */
+function buildAnalysisModalContent(analysis) {
+  if (!analysis) return '<p>No analysis available</p>';
+
+  let html = '<div class="agent-analysis-modal">';
+
+  // Scores section
+  html += '<div class="analysis-section"><h4>Scores</h4><div class="score-grid">';
+  const scores = analysis.scores || {};
+  for (const [name, value] of Object.entries(scores)) {
+    if (value !== null && value !== undefined) {
+      html += `<div class="score-item"><span class="score-name">${name}</span><span class="score-value">${Math.round(value)}</span></div>`;
+    }
+  }
+  html += '</div></div>';
+
+  // Analyst consensus
+  if (analysis.analystConsensus) {
+    html += '<div class="analysis-section"><h4>Analyst Consensus</h4><div class="consensus-grid">';
+    const consensus = analysis.analystConsensus;
+    const analysts = ['macro', 'sector', 'technical', 'quant'];
+    for (const a of analysts) {
+      const status = consensus[a] || 'skipped';
+      const statusClass = status === 'analyzed' ? 'consensus-yes' : 'consensus-no';
+      html += `<span class="consensus-chip ${statusClass}">${a}: ${status}</span>`;
+    }
+    if (consensus.supporting?.length) {
+      html += `<div class="supporting-analysts">Supporting: ${consensus.supporting.join(', ')}</div>`;
+    }
+    html += '</div></div>';
+  }
+
+  // PM Conviction
+  if (analysis.pmConviction) {
+    html += `<div class="analysis-section"><h4>PM Conviction</h4><span class="conviction-badge conviction-${analysis.pmConviction}">${analysis.pmConviction.toUpperCase()}</span></div>`;
+  }
+
+  // Risk verdict (for future Risk Manager)
+  if (analysis.riskVerdict) {
+    html += `<div class="analysis-section"><h4>Risk Verdict</h4><span class="risk-verdict risk-${analysis.riskVerdict.toLowerCase()}">${analysis.riskVerdict}</span>`;
+    if (analysis.riskNotes) {
+      html += `<p class="risk-notes">${analysis.riskNotes}</p>`;
+    }
+    html += '</div>';
+  }
+
+  // Agent analysis details
+  if (analysis.agentAnalysis) {
+    html += '<div class="analysis-section"><h4>Agent Details</h4>';
+    for (const [agent, messages] of Object.entries(analysis.agentAnalysis)) {
+      const msg = messages[0]; // Get latest
+      if (msg?.payload) {
+        html += `<details class="agent-detail"><summary>${agent} (${msg.confidence || '--'}% confidence)</summary>`;
+        html += `<pre>${JSON.stringify(msg.payload, null, 2).slice(0, 2000)}</pre>`;
+        html += `<div class="agent-meta">Model: ${msg.model} | Time: ${msg.processingTime}ms | Cost: $${(msg.cost || 0).toFixed(4)}</div>`;
+        html += '</details>';
+      }
+    }
+    html += '</div>';
+  }
+
+  html += '</div>';
+  return html;
+}
+
+/**
+ * Simple modal helper
+ */
+function showModal(title, content) {
+  // Remove existing modal
+  const existing = document.querySelector('.opp-modal-overlay');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.className = 'opp-modal-overlay';
+  modal.innerHTML = `
+    <div class="opp-modal">
+      <div class="opp-modal-header">
+        <h3>${title}</h3>
+        <button class="opp-modal-close" onclick="this.closest('.opp-modal-overlay').remove()">&times;</button>
+      </div>
+      <div class="opp-modal-body">${content}</div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+}
+
+/**
+ * Render pipeline status indicator
+ */
+function renderPipelineStatus() {
+  const container = document.getElementById('pipelineStatus');
+  if (!container || !pipelineStatus) return;
+
+  const statusClass = {
+    'running': 'status-running',
+    'completed': 'status-completed',
+    'failed': 'status-failed',
+    'no_runs': 'status-none'
+  }[pipelineStatus.status] || '';
+
+  container.innerHTML = `
+    <div class="pipeline-status ${statusClass}">
+      <span class="pipeline-status-dot"></span>
+      <span class="pipeline-status-text">${pipelineStatus.status}</span>
+      ${pipelineStatus.phase ? `<span class="pipeline-phase">${pipelineStatus.phase}</span>` : ''}
+      ${pipelineStatus.totalCost ? `<span class="pipeline-cost">$${pipelineStatus.totalCost.toFixed(4)}</span>` : ''}
+    </div>
+  `;
+}
 
 async function updateAlertBadge() {
   try {
