@@ -551,6 +551,7 @@
 .insight-direction.risk-on,
 .insight-direction.bullish { background: #dcfce7; color: #166534; }
 .insight-direction.neutral { background: #f1f5f9; color: #64748b; }
+.insight-direction.informational { background: #dbeafe; color: #1e40af; }
 
 .insight-theme {
   font-size: var(--t-2xs);
@@ -837,6 +838,7 @@
 .ticker-bias.bullish { background: #dcfce7; color: #166534; }
 .ticker-bias.bearish { background: #fee2e2; color: #991b1b; }
 .ticker-bias.neutral { background: #f1f5f9; color: #64748b; }
+.ticker-bias.informational { background: #dbeafe; color: #1e40af; }
 
 .ticker-signals {
   font-size: var(--t-2xs);
