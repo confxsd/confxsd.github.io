@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hunter - Run Pipeline</title>
+  <title>Hunter - Trade Pipeline</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -13,13 +13,17 @@
       padding: 20px;
       min-height: 100vh;
     }
-    .container { max-width: 1200px; margin: 0 auto; }
+    .container { max-width: 1400px; margin: 0 auto; }
     h1 { color: #00ff88; margin-bottom: 20px; font-size: 1.5rem; }
+    h2 { color: #00aaff; font-size: 1.1rem; margin-bottom: 15px; }
+    h3 { color: #888; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+
     .controls {
       display: flex;
       gap: 10px;
       margin-bottom: 20px;
       flex-wrap: wrap;
+      align-items: center;
     }
     button {
       background: #1a1a1a;
@@ -29,100 +33,418 @@
       cursor: pointer;
       font-family: inherit;
       font-size: 0.9rem;
+      transition: all 0.2s;
     }
-    button:hover { background: #252525; }
+    button:hover { background: #252525; border-color: #00ff88; }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
-    button.primary { background: #00ff88; color: #0a0a0a; }
-    .status {
-      background: #111;
-      border: 1px solid #222;
-      padding: 15px;
+    button.primary { background: #00ff88; color: #0a0a0a; font-weight: bold; }
+    button.primary:hover { background: #00cc6a; }
+
+    .status-bar {
+      display: flex;
+      gap: 5px;
       margin-bottom: 20px;
+      background: #111;
+      padding: 10px;
       border-radius: 4px;
     }
-    .status-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 5px 0;
-      border-bottom: 1px solid #1a1a1a;
+    .status-step {
+      flex: 1;
+      text-align: center;
+      padding: 8px;
+      background: #1a1a1a;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      color: #666;
+      transition: all 0.3s;
     }
-    .status-item:last-child { border-bottom: none; }
-    .status-label { color: #888; }
-    .status-value { color: #00ff88; }
-    .status-value.pending { color: #666; }
-    .status-value.running { color: #ffaa00; }
-    .status-value.done { color: #00ff88; }
-    .status-value.error { color: #ff4444; }
+    .status-step.running { background: #332200; color: #ffaa00; }
+    .status-step.done { background: #002211; color: #00ff88; }
+    .status-step.error { background: #220000; color: #ff4444; }
+
     .log {
       background: #111;
       border: 1px solid #222;
       padding: 15px;
-      height: 400px;
+      height: 200px;
       overflow-y: auto;
-      font-size: 0.85rem;
-      line-height: 1.6;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      margin-bottom: 20px;
+      border-radius: 4px;
     }
     .log-entry { padding: 2px 0; }
-    .log-entry.info { color: #888; }
+    .log-entry.info { color: #666; }
     .log-entry.success { color: #00ff88; }
     .log-entry.warn { color: #ffaa00; }
     .log-entry.error { color: #ff4444; }
-    .log-entry.stage { color: #00aaff; font-weight: bold; margin-top: 10px; }
-    .results {
-      margin-top: 20px;
-      display: grid;
-      gap: 15px;
-    }
-    .result-card {
+    .log-entry.stage { color: #00aaff; font-weight: bold; margin-top: 8px; }
+
+    /* Results Grid */
+    .results { display: grid; gap: 20px; }
+    .results-section { margin-bottom: 30px; }
+
+    /* Cards */
+    .card {
       background: #111;
       border: 1px solid #222;
-      padding: 15px;
-      border-radius: 4px;
+      border-radius: 6px;
+      overflow: hidden;
     }
-    .result-card h3 {
-      color: #00aaff;
+    .card-header {
+      background: #1a1a1a;
+      padding: 12px 15px;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card-title {
       font-size: 0.9rem;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-body { padding: 15px; }
+
+    /* Tags & Badges */
+    .tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .tag.regime-risk-on { background: #002211; color: #00ff88; }
+    .tag.regime-risk-off { background: #220000; color: #ff4444; }
+    .tag.regime-transition { background: #332200; color: #ffaa00; }
+    .tag.priority-high { background: #220000; color: #ff6666; }
+    .tag.priority-medium { background: #332200; color: #ffaa00; }
+    .tag.priority-low { background: #1a1a1a; color: #888; }
+    .tag.conviction { background: #001133; color: #00aaff; }
+    .tag.bullish { background: #002211; color: #00ff88; }
+    .tag.bearish { background: #220000; color: #ff4444; }
+
+    .score {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.85rem;
+    }
+    .score-value {
+      font-weight: bold;
+      color: #00ff88;
+    }
+    .score-label { color: #666; font-size: 0.75rem; }
+
+    /* Theme Cards */
+    .themes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 15px;
+    }
+    .theme-card {
+      background: #0a0a0a;
+      border: 1px solid #222;
+      border-radius: 4px;
+      padding: 12px;
+    }
+    .theme-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 8px;
+    }
+    .theme-name { color: #ffaa00; font-weight: bold; font-size: 0.9rem; }
+    .theme-desc { color: #888; font-size: 0.8rem; margin-bottom: 10px; line-height: 1.4; }
+    .theme-meta {
+      display: flex;
+      gap: 15px;
+      font-size: 0.75rem;
+      color: #666;
+    }
+    .theme-meta span { display: flex; align-items: center; gap: 4px; }
+    .theme-catalysts {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #1a1a1a;
+    }
+    .catalyst {
+      display: inline-block;
+      background: #1a1a1a;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.7rem;
+      color: #888;
+      margin: 2px 2px 2px 0;
+    }
+
+    /* Opportunity Cards */
+    .opp-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 15px;
+    }
+    .opp-card {
+      background: #0a0a0a;
+      border: 1px solid #222;
+      border-radius: 4px;
+      padding: 15px;
+    }
+    .opp-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 10px;
     }
-    pre {
+    .opp-ticker {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #00aaff;
+    }
+    .opp-name { color: #666; font-size: 0.8rem; margin-left: 8px; }
+    .opp-thesis {
+      background: #111;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: #ccc;
+    }
+    .opp-scores {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 12px;
+    }
+    .opp-score {
+      text-align: center;
+    }
+    .opp-score-value {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #00ff88;
+    }
+    .opp-score-label {
+      font-size: 0.65rem;
+      color: #666;
+      text-transform: uppercase;
+    }
+    .opp-section {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #1a1a1a;
+    }
+    .opp-section-title {
+      font-size: 0.7rem;
+      color: #666;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .opp-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .opp-item {
+      background: #1a1a1a;
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-size: 0.75rem;
+    }
+    .opp-item.catalyst { color: #00ff88; }
+    .opp-item.risk { color: #ff6666; }
+
+    /* Trade Cards */
+    .trade-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+      gap: 20px;
+    }
+    .trade-card {
+      background: linear-gradient(135deg, #0a0a0a 0%, #111 100%);
+      border: 1px solid #00ff88;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .trade-header {
+      background: linear-gradient(90deg, #001a0d 0%, #0a0a0a 100%);
+      padding: 15px;
+      border-bottom: 1px solid #222;
+    }
+    .trade-ticker {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #00ff88;
+    }
+    .trade-instrument {
+      color: #ffaa00;
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+    .trade-body { padding: 15px; }
+    .trade-thesis {
+      background: #0a0a0a;
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      border-left: 3px solid #00aaff;
+    }
+    .trade-thesis-text {
+      font-size: 0.85rem;
+      color: #ccc;
+      line-height: 1.5;
+    }
+
+    .trade-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .trade-metric {
       background: #0a0a0a;
       padding: 10px;
-      overflow-x: auto;
-      font-size: 0.8rem;
-      max-height: 300px;
-      overflow-y: auto;
+      border-radius: 4px;
+      text-align: center;
     }
-    .ticker { color: #ffaa00; font-weight: bold; }
-    .score { color: #00ff88; }
+    .trade-metric-value {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #00ff88;
+    }
+    .trade-metric-value.negative { color: #ff4444; }
+    .trade-metric-label {
+      font-size: 0.65rem;
+      color: #666;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .trade-section {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #1a1a1a;
+    }
+    .trade-section-title {
+      font-size: 0.75rem;
+      color: #00aaff;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+    .trade-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 0.85rem;
+    }
+    .trade-row-label { color: #666; }
+    .trade-row-value { color: #fff; }
+
+    .trade-reasoning {
+      margin-top: 15px;
+    }
+    .trade-reason {
+      display: flex;
+      align-items: start;
+      gap: 8px;
+      padding: 6px 0;
+      font-size: 0.8rem;
+      color: #888;
+    }
+    .trade-reason::before {
+      content: "→";
+      color: #00ff88;
+    }
+
+    /* Risk Signals */
+    .risk-signals {
+      display: grid;
+      gap: 8px;
+    }
+    .risk-signal {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #0a0a0a;
+      padding: 10px;
+      border-radius: 4px;
+      border-left: 3px solid;
+    }
+    .risk-signal.low { border-color: #00ff88; }
+    .risk-signal.medium { border-color: #ffaa00; }
+    .risk-signal.high { border-color: #ff6666; }
+    .risk-signal.critical { border-color: #ff0000; }
+    .risk-type {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      color: #666;
+      min-width: 80px;
+    }
+    .risk-desc { font-size: 0.85rem; color: #ccc; }
+
+    /* Tickers List */
+    .tickers-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .ticker-tag {
+      background: #1a1a1a;
+      padding: 4px 10px;
+      border-radius: 3px;
+      font-size: 0.8rem;
+      color: #00aaff;
+      font-weight: bold;
+    }
+
+    /* Contrarian View */
+    .contrarian {
+      background: linear-gradient(90deg, #1a1a00 0%, #0a0a0a 100%);
+      border-left: 3px solid #ffaa00;
+      padding: 12px;
+      margin-top: 15px;
+      border-radius: 0 4px 4px 0;
+    }
+    .contrarian-label {
+      font-size: 0.7rem;
+      color: #ffaa00;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .contrarian-text {
+      font-size: 0.9rem;
+      color: #ccc;
+      font-style: italic;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #444;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>HUNTER Pipeline</h1>
+    <h1>🤖 HUNTER Pipeline</h1>
 
     <div class="controls">
       <button id="runBtn" class="primary">Run Full Pipeline</button>
       <button id="macroBtn">Macro Only</button>
-      <button id="clearBtn">Clear Log</button>
+      <button id="clearBtn">Clear</button>
     </div>
 
-    <div class="status">
-      <div class="status-item">
-        <span class="status-label">Stage 1: Macro Thesis</span>
-        <span class="status-value pending" id="status-macro">pending</span>
-      </div>
-      <div class="status-item">
-        <span class="status-label">Stage 2: Opportunity Hunt</span>
-        <span class="status-value pending" id="status-opportunity">pending</span>
-      </div>
-      <div class="status-item">
-        <span class="status-label">Stage 3: Deep Analysis</span>
-        <span class="status-value pending" id="status-analyst">pending</span>
-      </div>
-      <div class="status-item">
-        <span class="status-label">Stage 4: Trade Construction</span>
-        <span class="status-value pending" id="status-trader">pending</span>
-      </div>
+    <div class="status-bar">
+      <div class="status-step" id="status-macro">1. Macro</div>
+      <div class="status-step" id="status-opportunity">2. Hunt</div>
+      <div class="status-step" id="status-analyst">3. Analyze</div>
+      <div class="status-step" id="status-trader">4. Trade</div>
     </div>
 
     <div class="log" id="log"></div>
@@ -147,50 +469,282 @@
     function setStatus(stage, status) {
       const el = document.getElementById(`status-${stage}`);
       if (el) {
-        el.textContent = status;
-        el.className = `status-value ${status}`;
+        el.className = `status-step ${status}`;
       }
     }
 
     function resetStatus() {
-      ['macro', 'opportunity', 'analyst', 'trader'].forEach(s => setStatus(s, 'pending'));
+      ['macro', 'opportunity', 'analyst', 'trader'].forEach(s => setStatus(s, ''));
+    }
+
+    // Render macro thesis
+    function renderMacro(macro) {
+      if (!macro) return '';
+
+      const regimeClass = `regime-${macro.regime?.replace('_', '-') || 'unknown'}`;
+
+      return `
+        <div class="results-section">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <span>🌍</span>
+                <span>Macro Thesis</span>
+              </div>
+              <span class="tag ${regimeClass}">${macro.regime || 'unknown'}</span>
+            </div>
+            <div class="card-body">
+              ${macro.themes?.length ? `
+                <h3>Active Themes</h3>
+                <div class="themes-grid">
+                  ${macro.themes.map(t => `
+                    <div class="theme-card">
+                      <div class="theme-header">
+                        <span class="theme-name">${t.name}</span>
+                        <span class="tag conviction">${t.conviction}/10</span>
+                      </div>
+                      <div class="theme-desc">${t.description || ''}</div>
+                      <div class="theme-meta">
+                        <span>⏱ ${t.timeframe || 'unknown'}</span>
+                        <span>📊 ${t.affected_sectors?.join(', ') || 'all'}</span>
+                      </div>
+                      ${t.catalysts?.length ? `
+                        <div class="theme-catalysts">
+                          ${t.catalysts.map(c => `<span class="catalyst">${c}</span>`).join('')}
+                        </div>
+                      ` : ''}
+                    </div>
+                  `).join('')}
+                </div>
+              ` : ''}
+
+              ${macro.risk_signals?.length ? `
+                <div style="margin-top: 20px;">
+                  <h3>Risk Signals</h3>
+                  <div class="risk-signals">
+                    ${macro.risk_signals.map(r => `
+                      <div class="risk-signal ${r.severity}">
+                        <span class="risk-type">${r.type}</span>
+                        <span class="risk-desc">${r.description}</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              ` : ''}
+
+              ${macro.contrarian_view ? `
+                <div class="contrarian">
+                  <div class="contrarian-label">🔄 Contrarian View</div>
+                  <div class="contrarian-text">${macro.contrarian_view}</div>
+                </div>
+              ` : ''}
+
+              ${macro.targetTickers?.length ? `
+                <div style="margin-top: 15px;">
+                  <h3>Target Universe (${macro.targetTickers.length} tickers)</h3>
+                  <div class="tickers-list">
+                    ${macro.targetTickers.map(t => `<span class="ticker-tag">${t}</span>`).join('')}
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Render opportunities
+    function renderOpportunities(opps) {
+      if (!opps?.opportunities?.length) return '';
+
+      return `
+        <div class="results-section">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <span>🎯</span>
+                <span>Opportunities</span>
+              </div>
+              <span class="score">
+                <span class="score-value">${opps.opportunities.length}</span>
+                <span class="score-label">found from ${opps.screened_count} screened</span>
+              </span>
+            </div>
+            <div class="card-body">
+              <div class="opp-grid">
+                ${opps.opportunities.map(o => `
+                  <div class="opp-card">
+                    <div class="opp-header">
+                      <div>
+                        <span class="opp-ticker">${o.ticker}</span>
+                        <span class="opp-name">${o.name || ''}</span>
+                      </div>
+                      <span class="tag priority-${o.priority}">${o.priority}</span>
+                    </div>
+
+                    <div class="opp-thesis">${o.thesis_summary || 'No thesis'}</div>
+
+                    <div class="opp-scores">
+                      <div class="opp-score">
+                        <div class="opp-score-value">${o.edge_score?.toFixed(1) || '-'}</div>
+                        <div class="opp-score-label">Edge</div>
+                      </div>
+                      <div class="opp-score">
+                        <div class="opp-score-value">${o.timing_score?.toFixed(1) || '-'}</div>
+                        <div class="opp-score-label">Timing</div>
+                      </div>
+                      <div class="opp-score">
+                        <div class="opp-score-value">${o.asymmetry_score?.toFixed(1) || '-'}</div>
+                        <div class="opp-score-label">Asymmetry</div>
+                      </div>
+                      <div class="opp-score">
+                        <div class="opp-score-value">${o.composite?.toFixed(1) || '-'}</div>
+                        <div class="opp-score-label">Composite</div>
+                      </div>
+                    </div>
+
+                    ${o.catalysts?.length ? `
+                      <div class="opp-section">
+                        <div class="opp-section-title">Catalysts</div>
+                        <div class="opp-list">
+                          ${o.catalysts.map(c => `<span class="opp-item catalyst">${c}</span>`).join('')}
+                        </div>
+                      </div>
+                    ` : ''}
+
+                    ${o.risks?.length ? `
+                      <div class="opp-section">
+                        <div class="opp-section-title">Risks</div>
+                        <div class="opp-list">
+                          ${o.risks.map(r => `<span class="opp-item risk">${r}</span>`).join('')}
+                        </div>
+                      </div>
+                    ` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Render trades
+    function renderTrades(manifest) {
+      if (!manifest?.trades?.length) return '';
+
+      return `
+        <div class="results-section">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <span>💰</span>
+                <span>Trade Recommendations</span>
+              </div>
+              <span class="score">
+                <span class="score-value">${manifest.trades.length}</span>
+                <span class="score-label">trades</span>
+              </span>
+            </div>
+            <div class="card-body">
+              <div class="trade-grid">
+                ${manifest.trades.map(t => `
+                  <div class="trade-card">
+                    <div class="trade-header">
+                      <div class="trade-ticker">${t.ticker}</div>
+                      <div class="trade-instrument">${t.instrument?.description || t.instrument?.type || 'Stock'}</div>
+                    </div>
+                    <div class="trade-body">
+                      ${t.thesis ? `
+                        <div class="trade-thesis">
+                          <div class="trade-thesis-text">${t.thesis}</div>
+                        </div>
+                      ` : ''}
+
+                      <div class="trade-metrics">
+                        <div class="trade-metric">
+                          <div class="trade-metric-value negative">$${t.asymmetry?.max_loss?.toLocaleString() || '-'}</div>
+                          <div class="trade-metric-label">Max Loss</div>
+                        </div>
+                        <div class="trade-metric">
+                          <div class="trade-metric-value">$${t.asymmetry?.expected_gain?.toLocaleString() || '-'}</div>
+                          <div class="trade-metric-label">Expected</div>
+                        </div>
+                        <div class="trade-metric">
+                          <div class="trade-metric-value">${t.asymmetry?.risk_reward_ratio?.toFixed(1) || '-'}x</div>
+                          <div class="trade-metric-label">R:R Ratio</div>
+                        </div>
+                        <div class="trade-metric">
+                          <div class="trade-metric-value">${((t.asymmetry?.probability_of_profit || 0) * 100).toFixed(0)}%</div>
+                          <div class="trade-metric-label">Win Prob</div>
+                        </div>
+                      </div>
+
+                      <div class="trade-section">
+                        <div class="trade-section-title">Entry & Exit</div>
+                        <div class="trade-row">
+                          <span class="trade-row-label">Entry</span>
+                          <span class="trade-row-value">$${t.entry?.price || '-'} ${t.entry?.condition ? `(${t.entry.condition})` : ''}</span>
+                        </div>
+                        <div class="trade-row">
+                          <span class="trade-row-label">Stop Loss</span>
+                          <span class="trade-row-value">$${t.stop_loss?.price || '-'}</span>
+                        </div>
+                        ${t.take_profit?.targets ? `
+                          <div class="trade-row">
+                            <span class="trade-row-label">Targets</span>
+                            <span class="trade-row-value">${t.take_profit.targets.map(tp => `$${tp.price} (${tp.size_pct}%)`).join(' → ')}</span>
+                          </div>
+                        ` : ''}
+                      </div>
+
+                      <div class="trade-section">
+                        <div class="trade-section-title">Position Sizing</div>
+                        <div class="trade-row">
+                          <span class="trade-row-label">Recommended Size</span>
+                          <span class="trade-row-value">${t.sizing?.recommended_pct || '-'}% of portfolio</span>
+                        </div>
+                        <div class="trade-row">
+                          <span class="trade-row-label">Max Loss Impact</span>
+                          <span class="trade-row-value">${t.sizing?.max_loss_pct || '-'}% of portfolio</span>
+                        </div>
+                      </div>
+
+                      ${t.reasoning?.length ? `
+                        <div class="trade-section">
+                          <div class="trade-section-title">Reasoning</div>
+                          <div class="trade-reasoning">
+                            ${t.reasoning.map(r => `<div class="trade-reason">${r}</div>`).join('')}
+                          </div>
+                        </div>
+                      ` : ''}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
     }
 
     function showResults(data) {
       results.innerHTML = '';
 
       if (data.state?.macroReport) {
-        const card = document.createElement('div');
-        card.className = 'result-card';
-        card.innerHTML = `
-          <h3>Macro Thesis</h3>
-          <p>Regime: <span class="ticker">${data.state.macroReport.regime}</span></p>
-          <p>Themes: ${data.state.macroReport.themes?.map(t =>
-            `<span class="ticker">${t.name}</span> (${t.conviction}/10)`
-          ).join(', ') || 'none'}</p>
-          <p>Target Tickers: <span class="score">${data.state.macroReport.targetTickers?.length || 0}</span></p>
-        `;
-        results.appendChild(card);
+        results.innerHTML += renderMacro(data.state.macroReport);
       }
 
-      if (data.state?.opportunities?.opportunities?.length) {
-        const card = document.createElement('div');
-        card.className = 'result-card';
-        card.innerHTML = `
-          <h3>Opportunities Found (${data.state.opportunities.opportunities.length})</h3>
-          <pre>${JSON.stringify(data.state.opportunities.opportunities.slice(0, 5), null, 2)}</pre>
-        `;
-        results.appendChild(card);
+      if (data.state?.opportunities) {
+        results.innerHTML += renderOpportunities(data.state.opportunities);
       }
 
-      if (data.manifest?.trades?.length) {
-        const card = document.createElement('div');
-        card.className = 'result-card';
-        card.innerHTML = `
-          <h3>Trade Recommendations (${data.manifest.trades.length})</h3>
-          <pre>${JSON.stringify(data.manifest.trades, null, 2)}</pre>
-        `;
-        results.appendChild(card);
+      if (data.manifest) {
+        results.innerHTML += renderTrades(data.manifest);
+      }
+
+      if (!results.innerHTML) {
+        results.innerHTML = '<div class="empty-state">No results yet. Run the pipeline to see opportunities.</div>';
       }
     }
 
@@ -204,7 +758,6 @@
                      msg.includes('Stage') ? 'stage' : 'info';
         addLog(msg, type);
 
-        // Update status
         if (msg.includes('Stage 1')) setStatus('macro', 'running');
         if (msg.includes('Stage 2')) { setStatus('macro', 'done'); setStatus('opportunity', 'running'); }
         if (msg.includes('Stage 3')) { setStatus('opportunity', 'done'); setStatus('analyst', 'running'); }
@@ -216,6 +769,7 @@
       resetStatus();
       results.innerHTML = '';
       addLog('Starting full pipeline...', 'stage');
+      document.getElementById('runBtn').disabled = true;
 
       try {
         const result = await hunter.run({
@@ -229,7 +783,10 @@
 
       } catch (e) {
         addLog(`Error: ${e.message}`, 'error');
+        setStatus('trader', 'error');
       }
+
+      document.getElementById('runBtn').disabled = false;
     });
 
     document.getElementById('macroBtn').addEventListener('click', async () => {
@@ -237,12 +794,13 @@
       results.innerHTML = '';
       addLog('Running macro stage only...', 'stage');
       setStatus('macro', 'running');
+      document.getElementById('macroBtn').disabled = true;
 
       try {
         const macro = await hunter.runStage('macro');
         setStatus('macro', 'done');
         addLog(`Macro complete: ${macro.regime} regime, ${macro.themes?.length || 0} themes`, 'success');
-        addLog(`Target tickers: ${macro.targetTickers?.join(', ') || 'none'}`, 'info');
+        addLog(`Target tickers: ${macro.targetTickers?.length || 0}`, 'info');
 
         showResults({ state: { macroReport: macro } });
 
@@ -250,6 +808,8 @@
         setStatus('macro', 'error');
         addLog(`Error: ${e.message}`, 'error');
       }
+
+      document.getElementById('macroBtn').disabled = false;
     });
 
     document.getElementById('clearBtn').addEventListener('click', () => {
