@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hunter - Run Pipeline</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'SF Mono', Monaco, monospace;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { color: #00ff88; margin-bottom: 20px; font-size: 1.5rem; }
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    button {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      color: #00ff88;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+    button:hover { background: #252525; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.primary { background: #00ff88; color: #0a0a0a; }
+    .status {
+      background: #111;
+      border: 1px solid #222;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+    }
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .status-item:last-child { border-bottom: none; }
+    .status-label { color: #888; }
+    .status-value { color: #00ff88; }
+    .status-value.pending { color: #666; }
+    .status-value.running { color: #ffaa00; }
+    .status-value.done { color: #00ff88; }
+    .status-value.error { color: #ff4444; }
+    .log {
+      background: #111;
+      border: 1px solid #222;
+      padding: 15px;
+      height: 400px;
+      overflow-y: auto;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+    .log-entry { padding: 2px 0; }
+    .log-entry.info { color: #888; }
+    .log-entry.success { color: #00ff88; }
+    .log-entry.warn { color: #ffaa00; }
+    .log-entry.error { color: #ff4444; }
+    .log-entry.stage { color: #00aaff; font-weight: bold; margin-top: 10px; }
+    .results {
+      margin-top: 20px;
+      display: grid;
+      gap: 15px;
+    }
+    .result-card {
+      background: #111;
+      border: 1px solid #222;
+      padding: 15px;
+      border-radius: 4px;
+    }
+    .result-card h3 {
+      color: #00aaff;
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+    }
+    pre {
+      background: #0a0a0a;
+      padding: 10px;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .ticker { color: #ffaa00; font-weight: bold; }
+    .score { color: #00ff88; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>HUNTER Pipeline</h1>
+
+    <div class="controls">
+      <button id="runBtn" class="primary">Run Full Pipeline</button>
+      <button id="macroBtn">Macro Only</button>
+      <button id="clearBtn">Clear Log</button>
+    </div>
+
+    <div class="status">
+      <div class="status-item">
+        <span class="status-label">Stage 1: Macro Thesis</span>
+        <span class="status-value pending" id="status-macro">pending</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Stage 2: Opportunity Hunt</span>
+        <span class="status-value pending" id="status-opportunity">pending</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Stage 3: Deep Analysis</span>
+        <span class="status-value pending" id="status-analyst">pending</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Stage 4: Trade Construction</span>
+        <span class="status-value pending" id="status-trader">pending</span>
+      </div>
+    </div>
+
+    <div class="log" id="log"></div>
+
+    <div class="results" id="results"></div>
+  </div>
+
+  <script type="module">
+    import hunter from './index.js';
+
+    const log = document.getElementById('log');
+    const results = document.getElementById('results');
+
+    function addLog(msg, type = 'info') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      log.appendChild(entry);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function setStatus(stage, status) {
+      const el = document.getElementById(`status-${stage}`);
+      if (el) {
+        el.textContent = status;
+        el.className = `status-value ${status}`;
+      }
+    }
+
+    function resetStatus() {
+      ['macro', 'opportunity', 'analyst', 'trader'].forEach(s => setStatus(s, 'pending'));
+    }
+
+    function showResults(data) {
+      results.innerHTML = '';
+
+      if (data.state?.macroReport) {
+        const card = document.createElement('div');
+        card.className = 'result-card';
+        card.innerHTML = `
+          <h3>Macro Thesis</h3>
+          <p>Regime: <span class="ticker">${data.state.macroReport.regime}</span></p>
+          <p>Themes: ${data.state.macroReport.themes?.map(t =>
+            `<span class="ticker">${t.name}</span> (${t.conviction}/10)`
+          ).join(', ') || 'none'}</p>
+          <p>Target Tickers: <span class="score">${data.state.macroReport.targetTickers?.length || 0}</span></p>
+        `;
+        results.appendChild(card);
+      }
+
+      if (data.state?.opportunities?.opportunities?.length) {
+        const card = document.createElement('div');
+        card.className = 'result-card';
+        card.innerHTML = `
+          <h3>Opportunities Found (${data.state.opportunities.opportunities.length})</h3>
+          <pre>${JSON.stringify(data.state.opportunities.opportunities.slice(0, 5), null, 2)}</pre>
+        `;
+        results.appendChild(card);
+      }
+
+      if (data.manifest?.trades?.length) {
+        const card = document.createElement('div');
+        card.className = 'result-card';
+        card.innerHTML = `
+          <h3>Trade Recommendations (${data.manifest.trades.length})</h3>
+          <pre>${JSON.stringify(data.manifest.trades, null, 2)}</pre>
+        `;
+        results.appendChild(card);
+      }
+    }
+
+    // Intercept console.log for pipeline logs
+    const originalLog = console.log;
+    console.log = (...args) => {
+      originalLog(...args);
+      const msg = args.join(' ');
+      if (msg.includes('[Pipeline]') || msg.includes('[Macro]')) {
+        const type = msg.includes('Error') ? 'error' :
+                     msg.includes('Stage') ? 'stage' : 'info';
+        addLog(msg, type);
+
+        // Update status
+        if (msg.includes('Stage 1')) setStatus('macro', 'running');
+        if (msg.includes('Stage 2')) { setStatus('macro', 'done'); setStatus('opportunity', 'running'); }
+        if (msg.includes('Stage 3')) { setStatus('opportunity', 'done'); setStatus('analyst', 'running'); }
+        if (msg.includes('Stage 4')) { setStatus('analyst', 'done'); setStatus('trader', 'running'); }
+      }
+    };
+
+    document.getElementById('runBtn').addEventListener('click', async () => {
+      resetStatus();
+      results.innerHTML = '';
+      addLog('Starting full pipeline...', 'stage');
+
+      try {
+        const result = await hunter.run({
+          portfolioValue: 100000,
+          riskBudget: 0.02
+        });
+
+        setStatus('trader', result.success ? 'done' : 'error');
+        addLog(`Pipeline completed in ${result.duration}ms`, result.success ? 'success' : 'error');
+        showResults(result);
+
+      } catch (e) {
+        addLog(`Error: ${e.message}`, 'error');
+      }
+    });
+
+    document.getElementById('macroBtn').addEventListener('click', async () => {
+      resetStatus();
+      results.innerHTML = '';
+      addLog('Running macro stage only...', 'stage');
+      setStatus('macro', 'running');
+
+      try {
+        const macro = await hunter.runStage('macro');
+        setStatus('macro', 'done');
+        addLog(`Macro complete: ${macro.regime} regime, ${macro.themes?.length || 0} themes`, 'success');
+        addLog(`Target tickers: ${macro.targetTickers?.join(', ') || 'none'}`, 'info');
+
+        showResults({ state: { macroReport: macro } });
+
+      } catch (e) {
+        setStatus('macro', 'error');
+        addLog(`Error: ${e.message}`, 'error');
+      }
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      log.innerHTML = '';
+      results.innerHTML = '';
+      resetStatus();
+    });
+
+    addLog('Hunter ready. Click "Run Full Pipeline" to start.', 'success');
+  </script>
+</body>
+</html>
