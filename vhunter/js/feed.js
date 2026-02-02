@@ -65,6 +65,11 @@ export async function getThesis() {
   return feedFetch('/api/thesis');
 }
 
+// Regenerate thesis manually
+export async function regenerateThesis() {
+  return feedFetch('/api/thesis/update', { method: 'POST' });
+}
+
 // Load and render thesis
 export async function loadThesis() {
   const card = document.getElementById('thesisCard');
@@ -74,8 +79,20 @@ export async function loadThesis() {
     const thesis = await getThesis();
     currentThesis = thesis;
     renderThesis(card, thesis);
+    updateThesisTimestamp(thesis);
   } catch (e) {
     card.innerHTML = '<div class="thesis-empty">Failed to load thesis</div>';
+  }
+}
+
+function updateThesisTimestamp(thesis) {
+  const timeEl = document.getElementById('thesisUpdatedTime');
+  if (!timeEl) return;
+
+  if (thesis?.updated_at) {
+    timeEl.textContent = formatThesisTime(thesis.updated_at);
+  } else {
+    timeEl.textContent = '';
   }
 }
 
@@ -567,6 +584,45 @@ function showToast(msg) {
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 3000);
 }
+
+function formatThesisTime(dateStr) {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diff = (now - date) / 1000;
+
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  });
+}
+
+window.triggerThesisRegen = async function(event) {
+  if (event) event.stopPropagation();
+  const btn = document.getElementById('regenThesisBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '↻ Regenerating...';
+  }
+
+  try {
+    await regenerateThesis();
+    showToast('Thesis regenerated');
+    await loadThesis();
+  } catch (e) {
+    showToast('Failed to regenerate: ' + e.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '↻ Regen Thesis';
+    }
+  }
+};
 
 // Modal functions
 export function openFeedModal(editId = null) {

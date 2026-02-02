@@ -153,42 +153,41 @@ Rules:
 
 ### Step 2: Update Thesis
 
-Fold new signals into thesis. Thesis evolves, doesn't reset.
+Fold new signals into thesis with **historical context**. Thesis evolves based on both recent signals AND overall signal distribution.
 
 ```javascript
 // POST /api/thesis/update
 
+// Historical context from last 7 days (50 signal sample for efficiency):
+// - Direction distribution: Bull 45% | Bear 35% | Neutral 20%
+// - Theme ranking: macro:12, rotation:8, flow:6, technicals:5
+// - Ticker ranking: NVDA(8+), SPX(6~), VIX(4-), TSLA(3+)
+
 const thesisUpdatePrompt = `
-You are a macro PM updating your working thesis.
+You are a macro strategist synthesizing market signals into a thesis.
 
 CURRENT THESIS:
-${JSON.stringify(currentThesis, null, 2)}
+Regime: ${currentThesis.regime} | Bias: ${currentThesis.bias}
+${currentThesis.narrative}
+
+7-DAY CONTEXT (${totalSignals} signals): Bull 45% | Bear 35%
+Themes: macro:12, rotation:8, flow:6
+Tickers: NVDA(8+), SPX(6~), VIX(4-)
+NOTE: Balance new signals with overall distribution. Don't let recent spikes override patterns.
 
 NEW SIGNALS (${insights.length}):
-${insights.map(i => `- [${i.direction}] ${i.signal} (${i.theme})`).join('\n')}
+Bull: 3 | Bear: 2 | Neutral: 1
+...
 
-Update the thesis:
-1. Adjust regime/bias if signals warrant
-2. Update narrative (1-2 sentences)
-3. Add/remove themes based on signal clustering
-4. Shift sector tilts if rotation evident
-5. Update catalysts (next 2-3 only)
-6. Note new risks or remove stale ones
-
-Output JSON (same structure):
-{
-  "regime": "...",
-  "bias": "...",
-  "narrative": "...",
-  "themes": [...],
-  "sectors": { "ow": [...], "uw": [...] },
-  "catalysts": [...],
-  "risks": [...]
-}
-
-Be decisive. This is your live trading view.
+Balance historical patterns with new signals. Note divergences. Keep thematic coverage broad.
+Output ONLY JSON, no markdown. Be concise.
 `;
 ```
+
+**Key improvement**: Historical context prevents thesis from being dominated by a few recent tweets. The AI sees:
+- 7-day direction distribution (bull/bear %)
+- Theme flow across time (not just new themes)
+- Ticker sentiment with bias indicators (+/- /~)
 
 ### Step 3: Inject into Stock Analysis
 

@@ -330,7 +330,7 @@
 .thesis-section-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px;
   padding: 10px 14px;
   background: #1e293b;
   border-radius: 8px 8px 0 0;
@@ -352,6 +352,16 @@
   color: #f1f5f9;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.thesis-updated-inline {
+  font-size: var(--t-xs);
+  color: #64748b;
+  margin-left: auto;
+}
+
+.thesis-updated-inline:empty {
+  display: none;
 }
 
 .thesis-section-toggle {
@@ -452,6 +462,37 @@
   font-size: var(--t-xs);
   color: #94a3b8;
 }
+
+.thesis-regen-btn {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  border-radius: 4px;
+  color: #94a3b8;
+  font-size: var(--t-base);
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.thesis-regen-btn:hover {
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+}
+
+.thesis-regen-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.thesis-regen-btn.spinning {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 
 .thesis-narrative {
   font-size: var(--t-md);

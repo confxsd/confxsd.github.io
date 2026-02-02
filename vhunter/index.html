@@ -712,6 +712,9 @@
           <div class="page-header">
             <h1>Feed</h1>
             <div class="header-actions">
+              <button class="btn-secondary" onclick="triggerThesisRegen(event)" id="regenThesisBtn">
+                ↻ Regen Thesis
+              </button>
               <button class="btn-primary" onclick="openFeedModal()">
                 + Add
               </button>
@@ -723,9 +726,8 @@
             <div class="thesis-section-wrapper" id="thesisSectionWrapper">
               <div class="thesis-section-header" id="thesisSectionHeader">
                 <span class="thesis-section-label">Overall Thesis</span>
-                <span class="thesis-section-toggle" id="thesisToggleIcon"
-                  >▼</span
-                >
+                <span class="thesis-updated-inline" id="thesisUpdatedTime"></span>
+                <span class="thesis-section-toggle" id="thesisToggleIcon">▼</span>
               </div>
               <div class="thesis-card" id="thesisCard">
                 <div class="thesis-empty">
