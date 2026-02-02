@@ -7,6 +7,7 @@ import Agent from './base.js';
 import polygon from '../providers/polygon.js';
 import claude from '../providers/claude.js';
 import config from '../config.js';
+import { expandTheme, themeMapping, universe } from '../universe.js';
 
 /**
  * MacroAgent - Synthesizes market data into macro thesis
@@ -49,10 +50,11 @@ export class MacroAgent extends Agent {
   /**
    * Expand identified themes into specific tickers to scan
    * Uses tiered matching: exact → keyword → AI batch
+   * Now uses comprehensive universe module for 200+ tickers
    */
   async expandThemesToTickers(themes) {
     const tickers = new Set();
-    const themeKeys = Object.keys(config.universe.themes);
+    const themeKeys = Object.keys(themeMapping);
 
     // Phase 1: Fast local matching (free)
     const matched = new Map();
@@ -81,24 +83,36 @@ export class MacroAgent extends Agent {
 
     console.log(`[Macro] Theme matching: ${matched.size}/${themes.length} matched`);
 
-    // Expand matched themes to tickers
+    // Expand matched themes to tickers using comprehensive universe
     for (const theme of themes) {
       const key = matched.get(theme.name);
-      if (key && config.universe.theme_tickers[key]) {
-        // Add tickers for high conviction themes
-        if (theme.conviction >= 6) {
+      if (key) {
+        // Use expandTheme from universe.js for comprehensive expansion
+        const expanded = expandTheme(key);
+        const limit = theme.conviction >= 7 ? 50 : theme.conviction >= 5 ? 30 : 15;
+
+        expanded.slice(0, limit).forEach(t => tickers.add(t));
+
+        // Also add legacy config tickers for backwards compatibility
+        if (config.universe.theme_tickers[key]) {
           config.universe.theme_tickers[key].forEach(t => tickers.add(t));
         }
-        // Add sector ETFs for any identified theme
         if (config.universe.themes[key]) {
           config.universe.themes[key].forEach(t => tickers.add(t));
         }
       }
     }
 
-    // Always include macro instruments for context
+    // Always add macro instruments for regime context
     config.universe.macro.forEach(t => tickers.add(t));
 
+    // Add core sector ETFs for breadth
+    config.universe.sectors.forEach(t => tickers.add(t));
+
+    // Add top 50 S&P for baseline coverage
+    universe.indices.sp500_top50.slice(0, 30).forEach(t => tickers.add(t));
+
+    console.log(`[Macro] Expanded to ${tickers.size} tickers`);
     return Array.from(tickers);
   }
 
@@ -123,6 +137,8 @@ export class MacroAgent extends Agent {
       ['bitcoin', 'crypto'],
       ['geopolitical', 'defense'],
       ['manufacturing', 'industrials'],
+      ['cybersecurity', 'defense'],
+      ['obesity', 'healthcare'],
 
       // Medium specific
       ['defense', 'defense'],
@@ -141,13 +157,29 @@ export class MacroAgent extends Agent {
       ['consumer', 'consumer'],
       ['retail', 'consumer'],
 
+      // Market condition keywords
+      ['beaten', 'beaten_down'],
+      ['oversold', 'beaten_down'],
+      ['undervalued', 'beaten_down'],
+      ['value', 'beaten_down'],
+      ['weak', 'beaten_down'],
+      ['momentum', 'momentum'],
+      ['trending', 'momentum'],
+      ['breakout', 'momentum'],
+      ['overbought', 'momentum'],
+      ['dividend', 'dividend'],
+      ['yield', 'dividend'],
+      ['income', 'dividend'],
+      ['speculative', 'speculative'],
+      ['meme', 'speculative'],
+      ['squeeze', 'speculative'],
+
       // Short keywords last (more prone to false positives)
       ['chip', 'ai_infrastructure'],
       ['gpu', 'ai_infrastructure'],
       ['rate', 'rates_sensitive'],
       ['fed', 'rates_sensitive'],
       ['bank', 'rates_sensitive'],
-      ['yield', 'rates_sensitive'],
       ['gold', 'commodities'],
       ['oil', 'commodities'],
       ['copper', 'commodities'],

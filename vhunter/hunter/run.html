@@ -428,6 +428,63 @@
       padding: 40px;
       color: #444;
     }
+
+    /* Theme Select & Active Themes */
+    select {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      color: #00ff88;
+      padding: 10px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    select:hover { border-color: #00ff88; }
+
+    .active-themes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 15px;
+      min-height: 32px;
+    }
+    .active-theme {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #001a0d;
+      border: 1px solid #00ff88;
+      color: #00ff88;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+    .active-theme .remove {
+      cursor: pointer;
+      opacity: 0.6;
+    }
+    .active-theme .remove:hover { opacity: 1; }
+
+    /* Universe Stats */
+    .universe-stats {
+      display: flex;
+      gap: 20px;
+      padding: 10px 15px;
+      background: #111;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      font-size: 0.8rem;
+    }
+    .universe-stat {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .universe-stat-value {
+      color: #00ff88;
+      font-weight: bold;
+    }
+    .universe-stat-label { color: #666; }
   </style>
 </head>
 <body>
@@ -437,8 +494,23 @@
     <div class="controls">
       <button id="runBtn" class="primary">Run Full Pipeline</button>
       <button id="macroBtn">Macro Only</button>
+      <button id="scanBtn">Quick Scan</button>
       <button id="clearBtn">Clear</button>
+      <select id="themeSelect">
+        <option value="">+ Add Theme Focus</option>
+        <option value="ai_infrastructure">AI Infrastructure</option>
+        <option value="beaten_down">Beaten Down / Value</option>
+        <option value="momentum">Momentum / Trending</option>
+        <option value="rates_sensitive">Rate Sensitive</option>
+        <option value="healthcare">Healthcare</option>
+        <option value="energy_transition">Energy Transition</option>
+        <option value="defense">Defense / Cyber</option>
+        <option value="crypto">Crypto</option>
+        <option value="dividend">Dividend / Income</option>
+        <option value="speculative">Speculative / Meme</option>
+      </select>
     </div>
+    <div class="active-themes" id="activeThemes"></div>
 
     <div class="status-bar">
       <div class="status-step" id="status-macro">1. Macro</div>
@@ -454,9 +526,18 @@
 
   <script type="module">
     import hunter from './index.js';
+    import { getAllTickers, expandTheme, universe } from './universe.js';
 
     const log = document.getElementById('log');
     const results = document.getElementById('results');
+    const activeThemesEl = document.getElementById('activeThemes');
+    const themeSelect = document.getElementById('themeSelect');
+
+    let selectedThemes = [];
+
+    // Show universe stats on load
+    const allTickers = getAllTickers();
+    addLog(`Universe loaded: ${allTickers.length} unique tickers across ${Object.keys(universe.sectors).length} sectors`, 'success');
 
     function addLog(msg, type = 'info') {
       const entry = document.createElement('div');
@@ -728,8 +809,39 @@
       `;
     }
 
+    // Render universe stats
+    function renderUniverseStats() {
+      const sectorCount = Object.keys(universe.sectors).length;
+      const themeCount = Object.keys(universe.themes).length;
+      const totalTickers = getAllTickers().length;
+
+      return `
+        <div class="universe-stats">
+          <div class="universe-stat">
+            <span class="universe-stat-value">${totalTickers}</span>
+            <span class="universe-stat-label">Total Tickers</span>
+          </div>
+          <div class="universe-stat">
+            <span class="universe-stat-value">${sectorCount}</span>
+            <span class="universe-stat-label">Sectors</span>
+          </div>
+          <div class="universe-stat">
+            <span class="universe-stat-value">${themeCount}</span>
+            <span class="universe-stat-label">Themes</span>
+          </div>
+          <div class="universe-stat">
+            <span class="universe-stat-value">${selectedThemes.length}</span>
+            <span class="universe-stat-label">Selected</span>
+          </div>
+        </div>
+      `;
+    }
+
     function showResults(data) {
       results.innerHTML = '';
+
+      // Always show universe stats
+      results.innerHTML += renderUniverseStats();
 
       if (data.state?.macroReport) {
         results.innerHTML += renderMacro(data.state.macroReport);
@@ -743,8 +855,8 @@
         results.innerHTML += renderTrades(data.manifest);
       }
 
-      if (!results.innerHTML) {
-        results.innerHTML = '<div class="empty-state">No results yet. Run the pipeline to see opportunities.</div>';
+      if (results.innerHTML === renderUniverseStats()) {
+        results.innerHTML += '<div class="empty-state">No results yet. Run the pipeline to see opportunities.</div>';
       }
     }
 
@@ -818,7 +930,72 @@
       resetStatus();
     });
 
+    // Theme selection handling
+    themeSelect.addEventListener('change', (e) => {
+      const theme = e.target.value;
+      if (theme && !selectedThemes.includes(theme)) {
+        selectedThemes.push(theme);
+        renderActiveThemes();
+        const tickers = expandTheme(theme);
+        addLog(`Added ${theme}: ${tickers.length} tickers`, 'info');
+      }
+      e.target.value = '';
+    });
+
+    function renderActiveThemes() {
+      activeThemesEl.innerHTML = selectedThemes.map(theme => `
+        <span class="active-theme">
+          ${theme.replace('_', ' ')}
+          <span class="remove" onclick="removeTheme('${theme}')">×</span>
+        </span>
+      `).join('');
+    }
+
+    window.removeTheme = (theme) => {
+      selectedThemes = selectedThemes.filter(t => t !== theme);
+      renderActiveThemes();
+      addLog(`Removed ${theme}`, 'info');
+    };
+
+    // Quick scan with selected themes
+    document.getElementById('scanBtn').addEventListener('click', async () => {
+      resetStatus();
+      results.innerHTML = '';
+
+      // Build ticker list from selected themes
+      const tickers = new Set();
+      for (const theme of selectedThemes) {
+        expandTheme(theme).forEach(t => tickers.add(t));
+      }
+
+      // If no themes selected, use defaults
+      if (tickers.size === 0) {
+        universe.indices.sp500_top50.slice(0, 30).forEach(t => tickers.add(t));
+        addLog('No themes selected, scanning top 30 S&P 500...', 'warn');
+      }
+
+      const tickerList = Array.from(tickers);
+      addLog(`Quick scanning ${tickerList.length} tickers...`, 'stage');
+      setStatus('opportunity', 'running');
+      document.getElementById('scanBtn').disabled = true;
+
+      try {
+        const opps = await hunter.scan(tickerList);
+        setStatus('opportunity', 'done');
+        addLog(`Scan complete: ${opps.passed_count} opportunities from ${opps.screened_count} tickers`, 'success');
+
+        showResults({ state: { opportunities: opps } });
+
+      } catch (e) {
+        setStatus('opportunity', 'error');
+        addLog(`Error: ${e.message}`, 'error');
+      }
+
+      document.getElementById('scanBtn').disabled = false;
+    });
+
     addLog('Hunter ready. Click "Run Full Pipeline" to start.', 'success');
+    addLog(`Available: ${Object.keys(universe.sectors).length} sectors, ${Object.keys(universe.themes).length} themes`, 'info');
   </script>
 </body>
 </html>
