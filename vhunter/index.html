@@ -1035,14 +1035,20 @@
         <!-- Page: Filings -->
         <div class="page" id="page-filings">
           <div class="filings-container">
-            <!-- Header with Scan Controls -->
+            <!-- Header with Tabs and Scan Controls -->
             <div class="fil-header">
-              <div class="fil-header-left">
-                <span class="fil-last-scan" id="filLastScan">Last scan: --</span>
+              <div class="fil-tabs">
+                <button class="fil-tab active" data-tab="filings" onclick="switchFilingsTab('filings')">
+                  <i class="fa-solid fa-file-lines"></i> Filings
+                </button>
+                <button class="fil-tab" data-tab="holdings" onclick="switchFilingsTab('holdings')">
+                  <i class="fa-solid fa-chart-pie"></i> Holdings
+                </button>
               </div>
-              <div class="fil-header-actions">
+              <div class="fil-header-right">
+                <span class="fil-last-scan" id="filLastScan">Last scan: --</span>
                 <button class="fil-btn" onclick="showScanOptions()" title="Configure scan options">
-                  <i class="fa-solid fa-sliders"></i> Options
+                  <i class="fa-solid fa-sliders"></i>
                 </button>
                 <button class="fil-btn fil-btn-primary" id="scanFilingsBtn" onclick="quickScan()">
                   <i class="fa-solid fa-radar"></i> Scan
@@ -1050,8 +1056,10 @@
               </div>
             </div>
 
-            <!-- Dashboard Stats by Filing Type -->
-            <div class="fil-dashboard">
+            <!-- FILINGS TAB -->
+            <div class="fil-tab-content active" id="filTabFilings">
+              <!-- Dashboard Stats by Filing Type -->
+              <div class="fil-dashboard">
               <div class="fil-stat" onclick="filterFilings('13F-HR')">
                 <div class="fil-stat-icon">📊</div>
                 <div class="fil-stat-content">
@@ -1177,6 +1185,69 @@
                 </div>
               </div>
             </div>
+            </div><!-- End Filings Tab -->
+
+            <!-- HOLDINGS TAB -->
+            <div class="fil-tab-content" id="filTabHoldings">
+              <!-- Holdings Summary Stats -->
+              <div class="fil-holdings-summary">
+                <div class="fil-summary-stat">
+                  <div class="fil-summary-value" id="holdPeriod">--</div>
+                  <div class="fil-summary-label">Quarter</div>
+                </div>
+                <div class="fil-summary-stat">
+                  <div class="fil-summary-value" id="holdTickers">0</div>
+                  <div class="fil-summary-label">Tickers</div>
+                </div>
+                <div class="fil-summary-stat">
+                  <div class="fil-summary-value" id="holdFunds">0</div>
+                  <div class="fil-summary-label">Funds</div>
+                </div>
+                <div class="fil-summary-stat">
+                  <div class="fil-summary-value" id="holdValue">$0</div>
+                  <div class="fil-summary-label">Total Value</div>
+                </div>
+              </div>
+
+              <!-- Holdings Filter -->
+              <div class="fil-toolbar">
+                <div class="fil-search">
+                  <i class="fa-solid fa-search"></i>
+                  <input type="text" id="holdSearchInput" placeholder="Search by ticker..." onkeyup="searchHoldings(this.value)">
+                </div>
+                <div class="fil-filter-group">
+                  <select class="fil-select" id="holdSortBy" onchange="sortHoldings()">
+                    <option value="value">Sort by Value</option>
+                    <option value="shares">Sort by Shares</option>
+                    <option value="funds">Sort by # Funds</option>
+                  </select>
+                  <select class="fil-select" id="holdMinFunds" onchange="filterHoldings()">
+                    <option value="1">Min 1 Fund</option>
+                    <option value="2">Min 2 Funds</option>
+                    <option value="3">Min 3 Funds</option>
+                    <option value="5">Min 5 Funds</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Holdings Table -->
+              <div class="fil-section">
+                <div class="fil-section-header">
+                  <div class="fil-section-title">
+                    Institutional Holdings
+                    <span class="fil-count" id="holdDisplayCount">0</span>
+                  </div>
+                </div>
+                <div class="fil-table-wrapper" id="filHoldingsTable">
+                  <div class="fil-empty fil-empty-holdings">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <p>No holdings data yet</p>
+                    <p class="fil-empty-sub">Holdings are populated when 13F filings are parsed.<br>Run a scan and parse 13F filings to see aggregated holdings.</p>
+                  </div>
+                </div>
+              </div>
+            </div><!-- End Holdings Tab -->
+
           </div>
         </div>
 

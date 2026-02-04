@@ -9,11 +9,19 @@ import { CONFIG } from './config.js';
 let filings = [];
 let pipeDeals = [];
 let funds = [];
+let holdings = [];
+let holdingsSummary = null;
+let currentTab = 'filings';
 let currentFilters = {
   type: 'all',
   fund: 'all',
   days: 30,
   search: ''
+};
+let holdingsFilters = {
+  search: '',
+  sortBy: 'value',
+  minFunds: 1
 };
 let currentView = 'table';
 
@@ -26,21 +34,26 @@ export async function loadFilings() {
   try {
     showLoading();
 
-    const [filingsData, pipesData, fundsData] = await Promise.all([
+    const [filingsData, pipesData, fundsData, holdingsData] = await Promise.all([
       fetchFilings({ days: currentFilters.days }),
       fetchPipeDeals(),
-      fetchFunds()
+      fetchFunds(),
+      fetchHoldingsAggregated()
     ]);
 
     filings = filingsData;
     pipeDeals = pipesData;
     funds = fundsData;
+    holdings = holdingsData.holdings || [];
+    holdingsSummary = holdingsData;
 
     populateFundFilter();
     renderDashboardStats();
     renderFilingsTable();
     renderPipeTable();
     renderFundsGrid();
+    renderHoldingsStats();
+    renderHoldingsTable();
     updateLastScan();
 
   } catch (e) {
@@ -74,6 +87,25 @@ async function fetchPipeDeals() {
 
 async function fetchFunds() {
   const response = await fetch(`${CONFIG.PROXY_URL}/api/funds`, {
+    headers: { 'X-User-Id': getUserId() }
+  });
+  return response.json();
+}
+
+async function fetchHoldingsAggregated(options = {}) {
+  const params = new URLSearchParams({
+    limit: options.limit || 200,
+    min_funds: options.minFunds || 1,
+    sort: options.sortBy || 'value'
+  });
+  const response = await fetch(`${CONFIG.PROXY_URL}/api/holdings/aggregated?${params}`, {
+    headers: { 'X-User-Id': getUserId() }
+  });
+  return response.json();
+}
+
+async function fetchHoldingsByTicker(ticker) {
+  const response = await fetch(`${CONFIG.PROXY_URL}/api/holdings/ticker/${ticker}`, {
     headers: { 'X-User-Id': getUserId() }
   });
   return response.json();
@@ -360,6 +392,262 @@ function renderFundsGrid() {
   }
 
   container.innerHTML = html;
+}
+
+// ============== HOLDINGS ==============
+
+function renderHoldingsStats() {
+  if (!holdingsSummary) return;
+
+  const periodEl = document.getElementById('holdPeriod');
+  const tickersEl = document.getElementById('holdTickers');
+  const fundsEl = document.getElementById('holdFunds');
+  const valueEl = document.getElementById('holdValue');
+
+  if (periodEl) periodEl.textContent = holdingsSummary.period ? formatQuarter(holdingsSummary.period) : '--';
+  if (tickersEl) tickersEl.textContent = holdingsSummary.summary?.totalTickers || 0;
+  if (fundsEl) fundsEl.textContent = holdingsSummary.summary?.totalFunds || 0;
+  if (valueEl) {
+    const val = holdingsSummary.summary?.totalValue || 0;
+    valueEl.textContent = val > 1e9 ? `$${(val / 1e9).toFixed(1)}B` : val > 1e6 ? `$${(val / 1e6).toFixed(0)}M` : '$0';
+  }
+}
+
+function renderHoldingsTable() {
+  const container = document.getElementById('filHoldingsTable');
+  if (!container) return;
+
+  const filtered = getFilteredHoldings();
+  const countEl = document.getElementById('holdDisplayCount');
+  if (countEl) countEl.textContent = filtered.length;
+
+  if (!holdings || holdings.length === 0) {
+    container.innerHTML = `
+      <div class="fil-empty fil-empty-holdings">
+        <i class="fa-solid fa-chart-pie"></i>
+        <p>No holdings data yet</p>
+        <p class="fil-empty-sub">Holdings are populated when 13F filings are parsed.<br>Run a scan and parse 13F filings to see aggregated holdings.</p>
+      </div>
+    `;
+    return;
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="fil-empty">No holdings match your filters</div>';
+    return;
+  }
+
+  container.innerHTML = `
+    <table class="fil-table fil-holdings-table">
+      <thead>
+        <tr>
+          <th class="fil-th-ticker">Ticker</th>
+          <th class="fil-th-name">Company</th>
+          <th class="fil-th-funds"># Funds</th>
+          <th class="fil-th-shares">Total Shares</th>
+          <th class="fil-th-value">Total Value</th>
+          <th class="fil-th-trend">Trend</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map(h => renderHoldingRow(h)).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderHoldingRow(holding) {
+  const fundsUp = holding.funds_increasing || 0;
+  const fundsDown = holding.funds_decreasing || 0;
+  const isNew = holding.has_new_positions;
+
+  let trendClass = '';
+  let trendIcon = '';
+  if (fundsUp > fundsDown) {
+    trendClass = 'fil-trend-up';
+    trendIcon = `<i class="fa-solid fa-arrow-trend-up"></i> ${fundsUp}`;
+  } else if (fundsDown > fundsUp) {
+    trendClass = 'fil-trend-down';
+    trendIcon = `<i class="fa-solid fa-arrow-trend-down"></i> ${fundsDown}`;
+  } else {
+    trendIcon = '--';
+  }
+
+  return `
+    <tr class="fil-holding-row" onclick="showTickerHoldings('${holding.ticker}')">
+      <td class="fil-td-ticker">
+        <strong>${holding.ticker}</strong>
+        ${isNew ? '<span class="fil-new-badge">NEW</span>' : ''}
+      </td>
+      <td class="fil-td-name">${truncate(holding.issuer_name || '', 30)}</td>
+      <td class="fil-td-funds">${holding.fund_count}</td>
+      <td class="fil-td-shares">${formatNumber(holding.total_shares)}</td>
+      <td class="fil-td-value">${formatValue(holding.total_value)}</td>
+      <td class="fil-td-trend ${trendClass}">${trendIcon}</td>
+    </tr>
+  `;
+}
+
+function getFilteredHoldings() {
+  let filtered = [...holdings];
+
+  // Search filter
+  if (holdingsFilters.search) {
+    const search = holdingsFilters.search.toLowerCase();
+    filtered = filtered.filter(h =>
+      (h.ticker || '').toLowerCase().includes(search) ||
+      (h.issuer_name || '').toLowerCase().includes(search)
+    );
+  }
+
+  // Min funds filter
+  if (holdingsFilters.minFunds > 1) {
+    filtered = filtered.filter(h => h.fund_count >= holdingsFilters.minFunds);
+  }
+
+  // Sort
+  const sortKey = holdingsFilters.sortBy;
+  if (sortKey === 'value') {
+    filtered.sort((a, b) => (b.total_value || 0) - (a.total_value || 0));
+  } else if (sortKey === 'shares') {
+    filtered.sort((a, b) => (b.total_shares || 0) - (a.total_shares || 0));
+  } else if (sortKey === 'funds') {
+    filtered.sort((a, b) => (b.fund_count || 0) - (a.fund_count || 0));
+  }
+
+  return filtered;
+}
+
+function formatQuarter(period) {
+  if (!period) return '--';
+  const [year, month] = period.split('-');
+  const q = Math.ceil(parseInt(month) / 3);
+  return `Q${q} ${year}`;
+}
+
+function formatNumber(n) {
+  if (!n) return '0';
+  if (n >= 1e9) return `${(n / 1e9).toFixed(2)}B`;
+  if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
+  return n.toLocaleString();
+}
+
+function formatValue(v) {
+  if (!v) return '$0';
+  if (v >= 1e9) return `$${(v / 1e9).toFixed(2)}B`;
+  if (v >= 1e6) return `$${(v / 1e6).toFixed(1)}M`;
+  if (v >= 1e3) return `$${(v / 1e3).toFixed(0)}K`;
+  return `$${v.toFixed(0)}`;
+}
+
+function truncate(str, len) {
+  return str.length > len ? str.slice(0, len - 3) + '...' : str;
+}
+
+// ============== TAB SWITCHING ==============
+
+window.switchFilingsTab = function(tab) {
+  currentTab = tab;
+
+  // Update tab buttons
+  document.querySelectorAll('.fil-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+
+  // Show/hide tab content
+  document.getElementById('filTabFilings').classList.toggle('active', tab === 'filings');
+  document.getElementById('filTabHoldings').classList.toggle('active', tab === 'holdings');
+};
+
+// ============== HOLDINGS ACTIONS ==============
+
+window.searchHoldings = function(query) {
+  holdingsFilters.search = query;
+  renderHoldingsTable();
+};
+
+window.sortHoldings = function() {
+  holdingsFilters.sortBy = document.getElementById('holdSortBy')?.value || 'value';
+  renderHoldingsTable();
+};
+
+window.filterHoldings = function() {
+  holdingsFilters.minFunds = parseInt(document.getElementById('holdMinFunds')?.value) || 1;
+  renderHoldingsTable();
+};
+
+window.showTickerHoldings = async function(ticker) {
+  try {
+    const data = await fetchHoldingsByTicker(ticker);
+    showModal(`${ticker} - Institutional Ownership`, buildTickerHoldingsModal(ticker, data));
+  } catch (e) {
+    console.error('Failed to load ticker holdings:', e);
+    showToast('Failed to load ticker holdings', 'error');
+  }
+};
+
+function buildTickerHoldingsModal(ticker, data) {
+  const latest = data.latestOwnership || [];
+  const changes = data.periodComparison?.changes || [];
+
+  let html = `
+    <div class="fil-modal-ticker-header">
+      <div class="fil-modal-ticker">${ticker}</div>
+      <div class="fil-modal-period">Period: ${data.latestPeriod || '--'}</div>
+    </div>
+    <div class="fil-modal-stats">
+      <div class="fil-modal-stat">
+        <span class="fil-modal-stat-value">${data.totalFunds || 0}</span>
+        <span class="fil-modal-stat-label">Funds</span>
+      </div>
+      <div class="fil-modal-stat">
+        <span class="fil-modal-stat-value">${formatNumber(data.totalShares || 0)}</span>
+        <span class="fil-modal-stat-label">Total Shares</span>
+      </div>
+      <div class="fil-modal-stat">
+        <span class="fil-modal-stat-value">${formatValue(data.totalValue || 0)}</span>
+        <span class="fil-modal-stat-label">Total Value</span>
+      </div>
+    </div>
+  `;
+
+  if (latest.length > 0) {
+    html += `
+      <div class="fil-modal-section">
+        <h4>Holders</h4>
+        <div class="fil-holders-list">
+          ${latest.slice(0, 15).map(h => `
+            <div class="fil-holder-row">
+              <span class="fil-holder-name">${h.fund_name}</span>
+              <span class="fil-holder-shares">${formatNumber(h.shares)}</span>
+              <span class="fil-holder-value">${formatValue(h.value_usd)}</span>
+            </div>
+          `).join('')}
+          ${latest.length > 15 ? `<div class="fil-more">+${latest.length - 15} more funds</div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  if (changes.length > 0) {
+    html += `
+      <div class="fil-modal-section">
+        <h4>Recent Changes</h4>
+        <div class="fil-changes-list">
+          ${changes.slice(0, 10).map(c => `
+            <div class="fil-change-row ${c.type === 'NEW_POSITION' ? 'fil-change-new' : c.type === 'COMPLETE_EXIT' ? 'fil-change-exit' : c.type === 'INCREASED' ? 'fil-change-up' : 'fil-change-down'}">
+              <span class="fil-change-fund">${c.fund}</span>
+              <span class="fil-change-type">${c.type.replace(/_/g, ' ')}</span>
+              ${c.pctChange ? `<span class="fil-change-pct">${c.pctChange > 0 ? '+' : ''}${c.pctChange}%</span>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  return html;
 }
 
 // ============== FILTER ACTIONS ==============
