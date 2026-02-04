@@ -471,7 +471,7 @@ async function saveMemory(event) {
 // ============================================================================
 
 async function extractMemoriesFromThesis() {
-  const btn = document.querySelector('[onclick="window.extractMemoriesFromThesis()"]');
+  const btn = document.getElementById('extractMemoriesBtn') || document.querySelector('[onclick="window.extractMemoriesFromThesis()"]');
   if (btn) {
     btn.disabled = true;
     btn.textContent = 'Extracting...';
@@ -479,7 +479,7 @@ async function extractMemoriesFromThesis() {
 
   try {
     const result = await extractMemories();
-    showToast(`Extracted ${result.extracted} memories`);
+    showToast(`Extracted ${result.extracted || 0} new memories`);
     loadMemoryMap();
   } catch (e) {
     showToast('Extraction failed: ' + e.message);
