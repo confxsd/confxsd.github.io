@@ -349,6 +349,16 @@ function renderDetailPanel(memory) {
         </div>
       ` : ''}
 
+      <!-- Sentiment Chart -->
+      ${updates.length > 1 ? `
+        <div class="memory-section">
+          <div class="memory-section-title">Sentiment History</div>
+          <div class="memory-sentiment-chart">
+            ${renderSentimentSparkline(updates)}
+          </div>
+        </div>
+      ` : ''}
+
       <!-- Timeline -->
       <div class="memory-section">
         <div class="memory-section-title">Timeline (${updates.length} updates)</div>
@@ -367,9 +377,55 @@ function renderDetailPanel(memory) {
   `;
 }
 
+function renderSentimentSparkline(updates) {
+  if (!updates || updates.length < 2) return '';
+
+  // Reverse to chronological order (oldest first) and take last 15
+  const chronological = [...updates].reverse().slice(-15);
+  const sentiments = chronological.map(u => u.new_sentiment ?? 0);
+
+  const width = 280;
+  const height = 50;
+  const padding = 5;
+
+  // Scale sentiment (-10 to +10) to chart height
+  const minY = -10, maxY = 10;
+  const scaleY = (val) => padding + ((maxY - val) / (maxY - minY)) * (height - 2 * padding);
+  const scaleX = (i) => padding + (i / (sentiments.length - 1)) * (width - 2 * padding);
+
+  // Build path
+  const points = sentiments.map((s, i) => `${scaleX(i)},${scaleY(s)}`);
+  const pathD = `M ${points.join(' L ')}`;
+
+  // Zero line
+  const zeroY = scaleY(0);
+
+  // Gradient color based on final sentiment
+  const finalSentiment = sentiments[sentiments.length - 1];
+  const strokeColor = finalSentiment >= 0 ? '#10b981' : '#ef4444';
+
+  return `
+    <svg width="${width}" height="${height}" class="sentiment-sparkline">
+      <defs>
+        <linearGradient id="sparkGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="${strokeColor}" stop-opacity="0.3"/>
+          <stop offset="100%" stop-color="${strokeColor}" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <line x1="${padding}" y1="${zeroY}" x2="${width - padding}" y2="${zeroY}" stroke="#374151" stroke-width="1" stroke-dasharray="3,3"/>
+      <path d="${pathD}" fill="none" stroke="${strokeColor}" stroke-width="2"/>
+      ${sentiments.map((s, i) => `<circle cx="${scaleX(i)}" cy="${scaleY(s)}" r="3" fill="${s >= 0 ? '#10b981' : '#ef4444'}"/>`).join('')}
+      <text x="${padding}" y="${height - 2}" fill="#6b7280" font-size="9">-10</text>
+      <text x="${padding}" y="10" fill="#6b7280" font-size="9">+10</text>
+      <text x="${width - 20}" y="${height - 2}" fill="${strokeColor}" font-size="10" font-weight="bold">${finalSentiment >= 0 ? '+' : ''}${finalSentiment.toFixed(1)}</text>
+    </svg>
+  `;
+}
+
 function renderTimelineItem(update) {
+  const sentiment = update.new_sentiment ?? 0;
   const delta = update.sentiment_delta || 0;
-  const deltaClass = delta > 0 ? 'positive' : delta < 0 ? 'negative' : '';
+  const sentimentClass = sentiment > 0 ? 'positive' : sentiment < 0 ? 'negative' : '';
   const itemClass = delta > 0 ? 'positive' : delta < 0 ? 'negative' : '';
   const timeAgo = getTimeAgo(update.created_at);
 
@@ -377,7 +433,8 @@ function renderTimelineItem(update) {
     <div class="memory-timeline-item ${itemClass}">
       <div class="memory-timeline-header">
         <span class="memory-timeline-date">${timeAgo}</span>
-        ${delta !== 0 ? `<span class="memory-timeline-delta ${deltaClass}">${delta > 0 ? '+' : ''}${delta.toFixed(1)}</span>` : ''}
+        <span class="memory-timeline-sentiment ${sentimentClass}">${sentiment >= 0 ? '+' : ''}${sentiment.toFixed(1)}</span>
+        ${delta !== 0 ? `<span class="memory-timeline-delta">(${delta > 0 ? '+' : ''}${delta.toFixed(1)})</span>` : ''}
         ${update.source ? `<span class="memory-timeline-source">${escapeHtml(update.source)}</span>` : ''}
       </div>
       <div class="memory-timeline-summary">${escapeHtml(update.summary)}</div>
