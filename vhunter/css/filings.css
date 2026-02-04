@@ -1,0 +1,869 @@
+/* Filings Page Styles - Institutional Filing Scanner */
+
+.filings-container {
+  padding: 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* Header with actions */
+.fil-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.fil-header h2 {
+  margin: 0;
+  font-size: var(--t-2xl);
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.fil-header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.fil-btn {
+  font-size: var(--t-sm);
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fil-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.fil-btn-primary {
+  background: #6366f1;
+  border-color: #6366f1;
+  color: #fff;
+}
+
+.fil-btn-primary:hover {
+  background: #4f46e5;
+}
+
+.fil-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Dashboard Stats Row */
+.fil-dashboard {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.fil-stat {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px 20px;
+  min-width: 130px;
+  flex: 1;
+}
+
+.fil-stat-value {
+  font-size: var(--t-4xl);
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.fil-stat-critical .fil-stat-value { color: #ef4444; }
+.fil-stat-high .fil-stat-value { color: #f59e0b; }
+.fil-stat-recent .fil-stat-value { color: #3b82f6; }
+.fil-stat-pipe .fil-stat-value { color: #8b5cf6; }
+
+.fil-stat-label {
+  font-size: var(--t-sm);
+  color: #64748b;
+}
+
+/* Section Headers */
+.fil-section {
+  margin-bottom: 24px;
+}
+
+.fil-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.fil-section-title {
+  font-size: var(--t-lg);
+  font-weight: 600;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fil-section-icon {
+  font-size: var(--t-xl);
+}
+
+/* Signals List */
+.fil-signals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fil-signal-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px 20px;
+  border-left: 4px solid #94a3b8;
+}
+
+.fil-signal-bullish { border-left-color: #10b981; }
+.fil-signal-bearish { border-left-color: #ef4444; }
+.fil-signal-event { border-left-color: #f59e0b; }
+
+.fil-signal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.fil-signal-icon {
+  font-size: var(--t-lg);
+}
+
+.fil-signal-type {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fil-signal-ticker {
+  font-size: var(--t-lg);
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.fil-signal-conviction {
+  font-size: var(--t-sm);
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  margin-left: auto;
+}
+
+.fil-conviction-critical {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.fil-conviction-high {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.fil-conviction-normal {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.fil-signal-direction {
+  font-size: var(--t-xs);
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.fil-signal-bullish .fil-signal-direction {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.fil-signal-bearish .fil-signal-direction {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.fil-signal-event .fil-signal-direction {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.fil-signal-narrative {
+  font-size: var(--t-sm);
+  color: #475569;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.fil-signal-action {
+  font-size: var(--t-sm);
+  color: #6366f1;
+  font-weight: 500;
+  padding: 8px 12px;
+  background: #eef2ff;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.fil-signal-meta {
+  display: flex;
+  gap: 16px;
+  font-size: var(--t-xs);
+  color: #94a3b8;
+}
+
+.fil-signal-horizon {
+  font-weight: 500;
+}
+
+/* PIPE Table */
+.fil-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-sm);
+}
+
+.fil-table th {
+  text-align: left;
+  padding: 12px 16px;
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: var(--t-xs);
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.fil-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+}
+
+.fil-table tbody tr {
+  background: #fff;
+  cursor: pointer;
+}
+
+.fil-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.fil-pipe-ticker {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: var(--t-md);
+}
+
+.fil-positive { color: #059669; font-weight: 600; }
+.fil-negative { color: #dc2626; font-weight: 600; }
+
+.fil-status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.fil-status-critical {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.fil-status-warning {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.fil-pipe-dates {
+  font-size: var(--t-xs);
+  color: #94a3b8;
+}
+
+/* Filings List */
+.fil-filings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fil-type-group {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.fil-type-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.fil-type-label {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: var(--t-sm);
+}
+
+.fil-type-count {
+  background: #e0e7ff;
+  color: #4338ca;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: var(--t-xs);
+  font-weight: 600;
+}
+
+.fil-type-items {
+  padding: 8px;
+}
+
+.fil-filing-card {
+  padding: 12px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 4px;
+}
+
+.fil-filing-card:hover {
+  background: #f8fafc;
+}
+
+.fil-filing-card:last-child {
+  margin-bottom: 0;
+}
+
+.fil-priority-critical {
+  border-left: 3px solid #ef4444;
+  padding-left: 11px;
+}
+
+.fil-priority-high {
+  border-left: 3px solid #f59e0b;
+  padding-left: 11px;
+}
+
+.fil-priority-low {
+  opacity: 0.7;
+}
+
+.fil-filing-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fil-filing-type {
+  font-weight: 600;
+  color: #6366f1;
+  font-size: var(--t-sm);
+}
+
+.fil-filing-filer {
+  font-size: var(--t-sm);
+  color: #475569;
+  font-weight: 500;
+}
+
+.fil-filing-date {
+  font-size: var(--t-xs);
+  color: #94a3b8;
+  margin-left: auto;
+}
+
+.fil-priority-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.fil-priority-badge.fil-priority-critical {
+  background: #fee2e2;
+  color: #dc2626;
+  border-left: none;
+  padding-left: 6px;
+}
+
+.fil-priority-badge.fil-priority-high {
+  background: #fef3c7;
+  color: #d97706;
+  border-left: none;
+  padding-left: 6px;
+}
+
+.fil-filing-subject {
+  font-size: var(--t-xs);
+  color: #64748b;
+  margin-top: 6px;
+}
+
+.fil-filing-tickers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.fil-ticker-chip {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  background: #f1f5f9;
+  color: #475569;
+  border-radius: 3px;
+}
+
+/* Funds Grid */
+.fil-funds-section {
+  margin-top: 24px;
+}
+
+.fil-funds-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #e2e8f0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.fil-funds-header:hover {
+  background: #fafafa;
+}
+
+.fil-funds-toggle {
+  font-size: var(--t-sm);
+  color: #94a3b8;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.fil-funds-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.fil-fund-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px 16px;
+  cursor: pointer;
+}
+
+.fil-fund-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.fil-fund-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: var(--t-md);
+  margin-bottom: 6px;
+}
+
+.fil-fund-meta {
+  display: flex;
+  gap: 12px;
+  font-size: var(--t-xs);
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.fil-fund-type {
+  text-transform: capitalize;
+}
+
+.fil-fund-aum {
+  font-weight: 600;
+  color: #10b981;
+}
+
+.fil-fund-priority {
+  font-size: var(--t-xs);
+  color: #94a3b8;
+}
+
+.fil-fund-person {
+  font-size: var(--t-xs);
+  color: #6366f1;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+/* Empty States */
+.fil-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: var(--t-sm);
+}
+
+.fil-empty-state {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.fil-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.fil-empty-text {
+  font-size: var(--t-md);
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+/* Modal Styles */
+.fil-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.fil-modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 700px;
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.fil-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.fil-modal-header h3 {
+  margin: 0;
+  font-size: var(--t-lg);
+  font-weight: 600;
+}
+
+.fil-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.fil-modal-close:hover {
+  color: #1e293b;
+}
+
+.fil-modal-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.fil-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.fil-modal-section {
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.fil-modal-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.fil-modal-section h4 {
+  margin: 0 0 12px 0;
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fil-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.fil-detail-item {
+  font-size: var(--t-sm);
+  color: #334155;
+}
+
+.fil-detail-label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.fil-link {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: var(--t-sm);
+  color: #6366f1;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.fil-link:hover {
+  text-decoration: underline;
+}
+
+.fil-holdings-table {
+  margin-top: 12px;
+  font-size: var(--t-xs);
+}
+
+.fil-holdings-table th {
+  padding: 8px 10px;
+}
+
+.fil-holdings-table td {
+  padding: 8px 10px;
+}
+
+.fil-sellers-list,
+.fil-patterns-list,
+.fil-recent-filings {
+  margin: 0;
+  padding-left: 20px;
+  font-size: var(--t-sm);
+  color: #475569;
+}
+
+.fil-sellers-list li,
+.fil-patterns-list li {
+  margin-bottom: 4px;
+}
+
+.fil-recent-filing {
+  display: flex;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.fil-rf-type {
+  font-weight: 600;
+  color: #6366f1;
+}
+
+.fil-rf-date {
+  color: #94a3b8;
+}
+
+/* Timeline */
+.fil-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 4px;
+}
+
+.fil-timeline-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--t-sm);
+  color: #64748b;
+  padding: 8px 0;
+  border-left: 2px solid #e2e8f0;
+  margin-left: 6px;
+  padding-left: 20px;
+  position: relative;
+}
+
+.fil-timeline-done {
+  color: #059669;
+  border-left-color: #10b981;
+}
+
+.fil-timeline-dot {
+  position: absolute;
+  left: -7px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  border: 2px solid #fff;
+}
+
+.fil-timeline-done .fil-timeline-dot {
+  background: #10b981;
+}
+
+/* Filter Controls */
+.fil-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.fil-filter-select {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: var(--t-sm);
+  color: #475569;
+  background: #fff;
+  cursor: pointer;
+}
+
+.fil-filter-select:focus {
+  outline: none;
+  border-color: #6366f1;
+}
+
+/* Responsive - Tablet */
+@media (max-width: 1024px) {
+  .fil-dashboard {
+    flex-wrap: wrap;
+  }
+
+  .fil-stat {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 0;
+  }
+
+  .fil-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 768px) {
+  .filings-container {
+    padding: 16px;
+  }
+
+  .fil-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .fil-header-actions {
+    justify-content: center;
+  }
+
+  .fil-dashboard {
+    gap: 10px;
+  }
+
+  .fil-stat {
+    flex: 1 1 calc(50% - 5px);
+    padding: 14px 16px;
+  }
+
+  .fil-stat-value {
+    font-size: var(--t-3xl);
+  }
+
+  .fil-signal-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .fil-signal-conviction {
+    margin-left: 0;
+  }
+
+  .fil-table {
+    font-size: var(--t-xs);
+  }
+
+  .fil-table th,
+  .fil-table td {
+    padding: 10px 8px;
+  }
+
+  .fil-funds-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fil-modal {
+    max-height: 90vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .filings-container {
+    padding: 12px;
+  }
+
+  .fil-stat {
+    padding: 12px 14px;
+  }
+
+  .fil-stat-value {
+    font-size: var(--t-2xl);
+  }
+
+  .fil-stat-label {
+    font-size: var(--t-xs);
+  }
+
+  .fil-btn {
+    padding: 8px 12px;
+    font-size: var(--t-xs);
+  }
+}

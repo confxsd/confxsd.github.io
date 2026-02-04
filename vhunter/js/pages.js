@@ -11,6 +11,8 @@ const pageTitles = {
   options: 'Options Terminal',
   feed: 'Feed',
   memory: 'Memory Map',
+  opportunities: 'Opportunities',
+  filings: 'Institutional Filings',
   terminal: 'Terminal',
   positions: 'Positions',
   watchlist: 'Watchlist',

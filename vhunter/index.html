@@ -61,6 +61,7 @@
     <link rel="stylesheet" href="css/feed.css" />
     <link rel="stylesheet" href="css/memory-map.css" />
     <link rel="stylesheet" href="css/opportunities.css" />
+    <link rel="stylesheet" href="css/filings.css" />
     <link rel="stylesheet" href="css/terminal.css?v=3" />
     <link rel="stylesheet" href="css/teaching.css" />
     <link rel="stylesheet" href="css/tooltip.css" />
@@ -141,6 +142,18 @@
             <span class="nav-badge" id="oppAlertBadge" style="display: none"
               >0</span
             >
+          </a>
+          <a
+            href="#"
+            class="nav-item"
+            data-page="filings"
+            onclick="
+              event.preventDefault();
+              switchPage('filings');
+            "
+          >
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">Filings</span>
           </a>
           <a
             href="#"
@@ -1014,6 +1027,109 @@
                 <div class="empty-hint">
                   Extract opportunities from Feed signals
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Page: Filings -->
+        <div class="page" id="page-filings">
+          <div class="filings-container">
+            <!-- Header -->
+            <div class="fil-header">
+              <h2>Institutional Filings</h2>
+              <div class="fil-header-actions">
+                <button class="fil-btn" id="generateSignalsBtn" onclick="generateFilingSignals()">
+                  Generate Signals
+                </button>
+                <button class="fil-btn fil-btn-primary" id="scanFilingsBtn" onclick="scanFilings()">
+                  Scan Now
+                </button>
+              </div>
+            </div>
+
+            <!-- Dashboard Stats -->
+            <div class="fil-dashboard">
+              <div class="fil-stat fil-stat-critical">
+                <div class="fil-stat-value" id="filCritical">0</div>
+                <div class="fil-stat-label">Critical Signals</div>
+              </div>
+              <div class="fil-stat fil-stat-high">
+                <div class="fil-stat-value" id="filHigh">0</div>
+                <div class="fil-stat-label">High Priority</div>
+              </div>
+              <div class="fil-stat fil-stat-recent">
+                <div class="fil-stat-value" id="filRecent">0</div>
+                <div class="fil-stat-label">Recent Filings</div>
+              </div>
+              <div class="fil-stat fil-stat-pipe">
+                <div class="fil-stat-value" id="filPipeActive">0</div>
+                <div class="fil-stat-label">Active PIPEs</div>
+              </div>
+            </div>
+
+            <!-- Active Signals -->
+            <div class="fil-section">
+              <div class="fil-section-header">
+                <div class="fil-section-title">
+                  <span class="fil-section-icon">🚨</span>
+                  Active Signals
+                </div>
+              </div>
+              <div class="fil-signals-list" id="filSignalsList">
+                <div class="fil-empty">Loading signals...</div>
+              </div>
+            </div>
+
+            <!-- PIPE Tracker -->
+            <div class="fil-section">
+              <div class="fil-section-header">
+                <div class="fil-section-title">
+                  <span class="fil-section-icon">💰</span>
+                  PIPE Tracker
+                </div>
+                <button class="fil-btn" onclick="trackPipeDeal()">+ Track PIPE</button>
+              </div>
+              <div id="filPipeTable">
+                <div class="fil-empty">Loading PIPE deals...</div>
+              </div>
+            </div>
+
+            <!-- Recent Filings -->
+            <div class="fil-section">
+              <div class="fil-section-header">
+                <div class="fil-section-title">
+                  <span class="fil-section-icon">📄</span>
+                  Recent Filings
+                </div>
+                <div class="fil-filters">
+                  <select class="fil-filter-select" onchange="filterFilingsByType(this.value)">
+                    <option value="all">All Types</option>
+                    <option value="13F-HR">13F Holdings</option>
+                    <option value="13D">13D Activist</option>
+                    <option value="13G">13G Passive</option>
+                    <option value="8-K">8-K Events</option>
+                    <option value="S-1">S-1 Registration</option>
+                    <option value="4">Form 4 Insider</option>
+                  </select>
+                </div>
+              </div>
+              <div class="fil-filings-list" id="filFilingsList">
+                <div class="fil-empty">Loading filings...</div>
+              </div>
+            </div>
+
+            <!-- Tracked Funds -->
+            <div class="fil-funds-section">
+              <div class="fil-funds-header" onclick="toggleFundsGrid()">
+                <div class="fil-section-title">
+                  <span class="fil-section-icon">🏦</span>
+                  Tracked Funds
+                </div>
+                <button class="fil-funds-toggle" id="fundsToggle">▶</button>
+              </div>
+              <div class="fil-funds-grid" id="filFundsGrid" style="display: none;">
+                <div class="fil-empty">Loading funds...</div>
               </div>
             </div>
           </div>

@@ -10,6 +10,7 @@ import { loadNotes, setRunCallback as setNotesRunCallback } from './notes.js';
 import { loadFeed, setRunCallback as setFeedRunCallback } from './feed.js';
 import { loadMemoryMap, setRunCallback as setMemoryRunCallback } from './memory-map.js';
 import { loadOpportunities, setRunCallback as setOpportunitiesRunCallback } from './opportunities.js';
+import { loadFilings } from './filings.js';
 import { loadStrategy, setRunCallback as setStrategyRunCallback } from './strategy.js';
 import { run, initPeriodSwitch } from './analysis.js';
 import { loadOptionsData, initOptionsPage } from './options-page.js';
@@ -48,6 +49,7 @@ registerPageLoaders({
   feed: loadFeed,
   memory: loadMemoryMap,
   opportunities: loadOpportunities,
+  filings: loadFilings,
   terminal: loadTerminal,
   strategy: loadStrategy,
   macro: loadMacro
