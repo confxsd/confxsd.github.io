@@ -426,16 +426,15 @@ function renderTimelineItem(update) {
   const sentiment = update.new_sentiment ?? 0;
   const delta = update.sentiment_delta || 0;
   const sentimentClass = sentiment > 0 ? 'positive' : sentiment < 0 ? 'negative' : '';
-  const itemClass = delta > 0 ? 'positive' : delta < 0 ? 'negative' : '';
+  const deltaClass = delta > 0 ? 'positive' : delta < 0 ? 'negative' : '';
   const timeAgo = getTimeAgo(update.created_at);
 
   return `
-    <div class="memory-timeline-item ${itemClass}">
+    <div class="memory-timeline-item ${deltaClass}">
       <div class="memory-timeline-header">
         <span class="memory-timeline-date">${timeAgo}</span>
         <span class="memory-timeline-sentiment ${sentimentClass}">${sentiment >= 0 ? '+' : ''}${sentiment.toFixed(1)}</span>
-        ${delta !== 0 ? `<span class="memory-timeline-delta">(${delta > 0 ? '+' : ''}${delta.toFixed(1)})</span>` : ''}
-        ${update.source ? `<span class="memory-timeline-source">${escapeHtml(update.source)}</span>` : ''}
+        ${delta !== 0 ? `<span class="memory-timeline-delta ${deltaClass}">(${delta > 0 ? '↑' : '↓'}${Math.abs(delta).toFixed(1)})</span>` : ''}
       </div>
       <div class="memory-timeline-summary">${escapeHtml(update.summary)}</div>
       ${update.reasoning ? `<div class="memory-timeline-reasoning">${escapeHtml(update.reasoning)}</div>` : ''}
