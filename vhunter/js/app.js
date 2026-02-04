@@ -8,6 +8,7 @@ import { loadPositions, setRunCallback as setPositionsRunCallback } from './posi
 import { loadWatchlist, setRunCallback as setWatchlistRunCallback } from './watchlist.js';
 import { loadNotes, setRunCallback as setNotesRunCallback } from './notes.js';
 import { loadFeed, setRunCallback as setFeedRunCallback } from './feed.js';
+import { loadMemoryMap, setRunCallback as setMemoryRunCallback } from './memory-map.js';
 import { loadOpportunities, setRunCallback as setOpportunitiesRunCallback } from './opportunities.js';
 import { loadStrategy, setRunCallback as setStrategyRunCallback } from './strategy.js';
 import { run, initPeriodSwitch } from './analysis.js';
@@ -27,6 +28,7 @@ setPositionsRunCallback(() => run());
 setWatchlistRunCallback(() => run());
 setNotesRunCallback(() => run());
 setFeedRunCallback(() => run());
+setMemoryRunCallback(() => run());
 setOpportunitiesRunCallback(() => run());
 setStrategyRunCallback(() => run());
 
@@ -44,6 +46,7 @@ registerPageLoaders({
   notes: loadNotes,
   options: loadOptionsData,
   feed: loadFeed,
+  memory: loadMemoryMap,
   opportunities: loadOpportunities,
   terminal: loadTerminal,
   strategy: loadStrategy,

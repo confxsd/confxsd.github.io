@@ -38,6 +38,7 @@
     <script src="https://cdn.jsdelivr.net/npm/decimal.js@10.4.3/decimal.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -58,6 +59,7 @@
     <link rel="stylesheet" href="css/options.css" />
     <link rel="stylesheet" href="css/watchlist.css" />
     <link rel="stylesheet" href="css/feed.css" />
+    <link rel="stylesheet" href="css/memory-map.css" />
     <link rel="stylesheet" href="css/opportunities.css" />
     <link rel="stylesheet" href="css/terminal.css?v=3" />
     <link rel="stylesheet" href="css/teaching.css" />
@@ -112,6 +114,18 @@
           >
             <span class="nav-icon">📡</span>
             <span class="nav-label">Feed</span>
+          </a>
+          <a
+            href="#"
+            class="nav-item"
+            data-page="memory"
+            onclick="
+              event.preventDefault();
+              switchPage('memory');
+            "
+          >
+            <span class="nav-icon">🧠</span>
+            <span class="nav-label">Memory Map</span>
           </a>
           <a
             href="#"
@@ -779,6 +793,165 @@
                 <div class="empty-hint">
                   Tap + to capture tweets, charts, or insights
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Page: Memory Map -->
+        <div class="page" id="page-memory">
+          <div class="page-header">
+            <h1 class="memory-title">
+              <span class="memory-title-icon">🧠</span>
+              Memory Map
+            </h1>
+            <div class="header-actions">
+              <button class="memory-action-btn secondary" id="matchMemoriesBtn" onclick="matchMemoriesToFeed()">
+                Match Feed
+              </button>
+              <button class="memory-action-btn secondary" id="generateThesisBtn" onclick="generateThesisFromMemories()">
+                Generate Thesis
+              </button>
+              <button class="memory-action-btn primary" onclick="openMemoryModal()">
+                + New Memory
+              </button>
+            </div>
+          </div>
+
+          <div class="memory-container">
+            <!-- Filters -->
+            <div class="memory-header">
+              <div class="memory-filters">
+                <button class="memory-filter-btn active" data-filter="all" onclick="setMemoryFilter('all')">All</button>
+                <button class="memory-filter-btn" data-filter="geopolitical" onclick="setMemoryFilter('geopolitical')">Geopolitical</button>
+                <button class="memory-filter-btn" data-filter="macro" onclick="setMemoryFilter('macro')">Macro</button>
+                <button class="memory-filter-btn" data-filter="sector" onclick="setMemoryFilter('sector')">Sector</button>
+                <button class="memory-filter-btn" data-filter="theme" onclick="setMemoryFilter('theme')">Theme</button>
+                <button class="memory-filter-btn" data-filter="ticker" onclick="setMemoryFilter('ticker')">Ticker</button>
+              </div>
+            </div>
+
+            <!-- Memory Content -->
+            <div id="memoryContainer">
+              <div class="memory-empty">
+                <div class="memory-empty-icon">🧠</div>
+                <div class="memory-empty-title">Loading...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detail Panel Overlay -->
+          <div class="memory-detail-overlay" id="memoryDetailOverlay" onclick="closeMemoryDetail()"></div>
+          <div class="memory-detail-panel" id="memoryDetailPanel"></div>
+
+          <!-- Create/Edit Modal -->
+          <div class="memory-modal-overlay" id="memoryModalOverlay">
+            <div class="memory-modal">
+              <div class="memory-modal-header">
+                <span class="memory-modal-title" id="memoryModalTitle">New Memory</span>
+                <button class="memory-modal-close" onclick="closeMemoryModal()">×</button>
+              </div>
+              <form id="memoryForm" onsubmit="saveMemory(event)">
+                <div class="memory-modal-body">
+                  <input type="hidden" id="memoryFormId" />
+
+                  <div class="memory-form-group">
+                    <label class="memory-form-label">Name *</label>
+                    <input type="text" id="memoryFormName" class="memory-form-input" placeholder="e.g., Trump-Xi Relationship" required />
+                  </div>
+
+                  <div class="memory-form-row">
+                    <div class="memory-form-group">
+                      <label class="memory-form-label">Category</label>
+                      <select id="memoryFormCategory" class="memory-form-select">
+                        <option value="theme">Theme</option>
+                        <option value="geopolitical">Geopolitical</option>
+                        <option value="macro">Macro</option>
+                        <option value="sector">Sector</option>
+                        <option value="ticker">Ticker</option>
+                        <option value="relationship">Relationship</option>
+                        <option value="event">Event</option>
+                      </select>
+                    </div>
+                    <div class="memory-form-group">
+                      <label class="memory-form-label">Timeframe</label>
+                      <select id="memoryFormTimeframe" class="memory-form-select">
+                        <option value="short-term">Short-term</option>
+                        <option value="medium-term" selected>Medium-term</option>
+                        <option value="long-term">Long-term</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="memory-form-group">
+                    <label class="memory-form-label">Description *</label>
+                    <textarea id="memoryFormDescription" class="memory-form-textarea" placeholder="What does this memory track and why is it important?" required></textarea>
+                  </div>
+
+                  <div class="memory-form-group">
+                    <label class="memory-form-label">Market Relevance</label>
+                    <textarea id="memoryFormRelevance" class="memory-form-textarea" placeholder="How does this impact markets and which assets?"></textarea>
+                  </div>
+
+                  <div class="memory-form-group">
+                    <label class="memory-form-label">Affected Assets</label>
+                    <input type="text" id="memoryFormAssets" class="memory-form-input" placeholder="NVDA, AAPL, TSM (comma-separated)" />
+                  </div>
+
+                  <div class="memory-form-row">
+                    <div class="memory-form-group">
+                      <label class="memory-form-label">Importance (1-10)</label>
+                      <input type="number" id="memoryFormImportance" class="memory-form-input" min="1" max="10" step="0.5" value="5" />
+                    </div>
+                    <div class="memory-form-group">
+                      <label class="memory-form-label">Sentiment (-10 to +10)</label>
+                      <input type="number" id="memoryFormSentiment" class="memory-form-input" min="-10" max="10" step="0.5" value="0" />
+                    </div>
+                  </div>
+
+                  <div class="memory-form-row">
+                    <div class="memory-form-group">
+                      <label class="memory-form-label">Volatility Impact</label>
+                      <select id="memoryFormVolatility" class="memory-form-select">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                        <option value="extreme">Extreme</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="memory-form-group">
+                    <label class="memory-form-label">Current Thesis Impact</label>
+                    <textarea id="memoryFormThesisImpact" class="memory-form-textarea" placeholder="How does this currently affect your thesis?"></textarea>
+                  </div>
+
+                  <div class="memory-form-group">
+                    <label class="memory-form-label">Trade Implications</label>
+                    <textarea id="memoryFormTrades" class="memory-form-textarea" placeholder="One trade idea per line"></textarea>
+                    <div class="memory-form-hint">Enter each trade implication on a new line</div>
+                  </div>
+                </div>
+                <div class="memory-modal-footer">
+                  <button type="button" class="btn-cancel" onclick="closeMemoryModal()">Cancel</button>
+                  <button type="submit" class="btn-save">Save Memory</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Generated Thesis Modal -->
+          <div class="memory-modal-overlay" id="memoryThesisModal">
+            <div class="memory-modal" style="max-width: 640px;">
+              <div class="memory-modal-header">
+                <span class="memory-modal-title">Generated Thesis from Memories</span>
+                <button class="memory-modal-close" onclick="closeThesisModal()">×</button>
+              </div>
+              <div class="memory-modal-body" id="memoryThesisContent">
+                Loading...
+              </div>
+              <div class="memory-modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeThesisModal()">Close</button>
               </div>
             </div>
           </div>

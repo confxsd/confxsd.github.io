@@ -100,6 +100,40 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
+/* Drag Handle */
+.panel-drag-handle {
+  cursor: grab;
+  color: #94a3b8;
+  font-size: var(--t-lg);
+  letter-spacing: -2px;
+  user-select: none;
+  padding: 0 4px;
+  transition: color 0.15s;
+}
+
+.panel-drag-handle:hover {
+  color: #64748b;
+}
+
+.panel-drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Sortable States */
+.panel-ghost {
+  opacity: 0.4;
+  background: #e0e7ff;
+  border: 2px dashed #818cf8;
+}
+
+.panel-chosen {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.panel-drag {
+  opacity: 0.9;
+}
+
 .panel-ticker {
   font-size: var(--t-md);
   font-weight: 700;

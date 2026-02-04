@@ -270,6 +270,58 @@ export async function saveTerminalPanels(tickers) {
   });
 }
 
+// ==================== MEMORY MAP ====================
+
+export async function getMemories(status = 'active') {
+  const query = status ? `?status=${status}` : '';
+  return dbFetch(`/api/memory${query}`);
+}
+
+export async function getMemory(id) {
+  return dbFetch(`/api/memory/${id}`);
+}
+
+export async function createMemory(memory) {
+  return dbFetch('/api/memory', {
+    method: 'POST',
+    body: JSON.stringify(memory)
+  });
+}
+
+export async function updateMemory(id, updates) {
+  return dbFetch(`/api/memory/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(updates)
+  });
+}
+
+export async function deleteMemory(id) {
+  return dbFetch(`/api/memory/${id}`, { method: 'DELETE' });
+}
+
+export async function getMemoryUpdates(memoryId) {
+  return dbFetch(`/api/memory/${memoryId}/updates`);
+}
+
+export async function addMemoryUpdate(memoryId, update) {
+  return dbFetch(`/api/memory/${memoryId}/updates`, {
+    method: 'POST',
+    body: JSON.stringify(update)
+  });
+}
+
+export async function extractMemoriesFromThesis() {
+  return dbFetch('/api/memory/extract', { method: 'POST' });
+}
+
+export async function matchMemoriesToFeed() {
+  return dbFetch('/api/memory/match', { method: 'POST' });
+}
+
+export async function generateMemoryThesis() {
+  return dbFetch('/api/memory/thesis', { method: 'POST' });
+}
+
 // ==================== HELPERS ====================
 
 // Calculate total P&L from closed positions

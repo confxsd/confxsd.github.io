@@ -10,6 +10,7 @@ const pageTitles = {
   analyze: '',
   options: 'Options Terminal',
   feed: 'Feed',
+  memory: 'Memory Map',
   terminal: 'Terminal',
   positions: 'Positions',
   watchlist: 'Watchlist',

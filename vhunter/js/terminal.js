@@ -13,6 +13,7 @@ const TIMEFRAMES = {
 
 let panels = [];
 let panelCounter = 0;
+let sortableInstance = null;
 
 // Initialize terminal
 export async function initTerminal() {
@@ -125,6 +126,7 @@ export function addPanel(ticker) {
   panels.push(panel);
   savePanels();
   renderPanel(panel);
+  initSortable();
 }
 
 // Remove panel
@@ -157,6 +159,37 @@ function renderPanels() {
   }
 
   panels.forEach(panel => renderPanel(panel));
+  initSortable();
+}
+
+// Initialize Sortable for drag-and-drop reordering
+function initSortable() {
+  const grid = document.getElementById('terminal-grid');
+  if (!grid || typeof Sortable === 'undefined') return;
+
+  // Destroy existing instance
+  if (sortableInstance) {
+    sortableInstance.destroy();
+  }
+
+  sortableInstance = new Sortable(grid, {
+    animation: 200,
+    handle: '.panel-drag-handle',
+    ghostClass: 'panel-ghost',
+    chosenClass: 'panel-chosen',
+    dragClass: 'panel-drag',
+    onEnd: function(evt) {
+      // Reorder panels array based on new DOM order
+      const newOrder = [];
+      grid.querySelectorAll('.terminal-panel').forEach(el => {
+        const panelId = el.dataset.panelId;
+        const panel = panels.find(p => p.id === panelId);
+        if (panel) newOrder.push(panel);
+      });
+      panels = newOrder;
+      savePanels();
+    }
+  });
 }
 
 // Render empty state
@@ -187,6 +220,7 @@ function renderPanel(panel) {
 
   div.innerHTML = `
     <div class="panel-header">
+      <span class="panel-drag-handle" title="Drag to reorder">⋮⋮</span>
       <span class="panel-ticker">${panel.ticker}</span>
       <div class="panel-timeframes" id="tf-${panel.id}">
         <button class="tf-btn${panel.timeframe === '1D' ? ' active' : ''}" data-tf="1D">1D</button>
