@@ -867,3 +867,94 @@
     font-size: var(--t-xs);
   }
 }
+
+/* ============================================
+   Scan Options Modal
+============================================ */
+
+.fil-btn-warning {
+  background: var(--c-warning);
+  color: var(--c-bg-primary);
+}
+
+.fil-btn-warning:hover {
+  background: color-mix(in srgb, var(--c-warning) 90%, white);
+}
+
+.fil-scan-modal {
+  max-width: 450px;
+}
+
+.fil-scan-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.fil-option-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fil-option-group label {
+  font-size: var(--t-sm);
+  font-weight: 500;
+  color: var(--c-text-secondary);
+}
+
+.fil-option-group select {
+  padding: 10px 12px;
+  background: var(--c-bg-tertiary);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  color: var(--c-text-primary);
+  font-size: var(--t-sm);
+  cursor: pointer;
+}
+
+.fil-option-group select:focus {
+  outline: none;
+  border-color: var(--c-primary);
+}
+
+.fil-option-checkbox {
+  flex-direction: row;
+  align-items: center;
+}
+
+.fil-option-checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--c-text-primary);
+}
+
+.fil-option-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--c-primary);
+  cursor: pointer;
+}
+
+.fil-scan-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--c-border);
+}
+
+.fil-btn-secondary {
+  background: var(--c-bg-tertiary);
+  color: var(--c-text-secondary);
+  border: 1px solid var(--c-border);
+}
+
+.fil-btn-secondary:hover {
+  background: var(--c-bg-elevated);
+  color: var(--c-text-primary);
+}

@@ -314,17 +314,29 @@ function showEmptyState(message) {
 // ============== ACTIONS ==============
 
 /**
- * Scan for new filings
+ * Scan for new filings with options
+ * @param {Object} options - Scan options
+ * @param {number} options.days - Days to look back (default 30, max 365)
+ * @param {boolean} options.deep - Deep scan all history (default false)
+ * @param {number} options.limit - Max filings per fund (default 200, max 500)
  */
-window.scanFilings = async function() {
+window.scanFilings = async function(options = {}) {
   const btn = document.getElementById('scanFilingsBtn');
   if (btn) {
     btn.disabled = true;
     btn.textContent = 'Scanning...';
   }
 
+  // Build query params from options
+  const params = new URLSearchParams();
+  if (options.days) params.set('days', Math.min(options.days, 365));
+  if (options.deep) params.set('deep', 'true');
+  if (options.limit) params.set('limit', Math.min(options.limit, 500));
+  if (options.types) params.set('types', options.types);
+
   try {
-    const response = await fetch(`${CONFIG.PROXY_URL}/api/filings/scan`, {
+    const url = `${CONFIG.PROXY_URL}/api/filings/scan${params.toString() ? '?' + params.toString() : ''}`;
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -335,8 +347,9 @@ window.scanFilings = async function() {
     const result = await response.json();
 
     if (result.success) {
-      const totalNew = result.results?.reduce((sum, r) => sum + (r.newFilings || 0), 0) || 0;
-      alert(`Scan complete!\n${result.scanned} funds scanned\n${totalNew} new filings found`);
+      const totalNew = result.totalNewFilings || result.results?.reduce((sum, r) => sum + (r.newFilings || 0), 0) || 0;
+      const totalScanned = result.results?.reduce((sum, r) => sum + (r.scannedCount || 0), 0) || 0;
+      alert(`Scan complete!\n${result.scanned} funds scanned\n${totalScanned} filings checked\n${totalNew} new filings found\n\nLookback: ${result.daysBack} days\nDeep scan: ${result.deepScan ? 'Yes' : 'No'}`);
       loadFilings();
     } else {
       alert('Scan failed: ' + (result.error || 'Unknown error'));
@@ -350,6 +363,100 @@ window.scanFilings = async function() {
       btn.disabled = false;
       btn.textContent = 'Scan Now';
     }
+  }
+};
+
+/**
+ * Show scan options dialog
+ */
+window.showScanOptions = function() {
+  const modal = document.createElement('div');
+  modal.className = 'fil-modal-overlay';
+  modal.innerHTML = `
+    <div class="fil-modal fil-scan-modal">
+      <div class="fil-modal-header">
+        <h3>Scan Options</h3>
+        <button class="fil-modal-close" onclick="this.closest('.fil-modal-overlay').remove()">&times;</button>
+      </div>
+      <div class="fil-modal-body">
+        <div class="fil-scan-options">
+          <div class="fil-option-group">
+            <label>Days Back</label>
+            <select id="scanDays">
+              <option value="7">7 days</option>
+              <option value="30" selected>30 days</option>
+              <option value="90">90 days</option>
+              <option value="180">6 months</option>
+              <option value="365">1 year</option>
+            </select>
+          </div>
+          <div class="fil-option-group">
+            <label>Limit Per Fund</label>
+            <select id="scanLimit">
+              <option value="50">50 filings</option>
+              <option value="100">100 filings</option>
+              <option value="200" selected>200 filings</option>
+              <option value="500">500 filings (max)</option>
+            </select>
+          </div>
+          <div class="fil-option-group">
+            <label>Filing Types</label>
+            <select id="scanTypes">
+              <option value="">All Types</option>
+              <option value="13F">13F (Holdings)</option>
+              <option value="13D,13G">13D/13G (Ownership)</option>
+              <option value="8-K">8-K (Events)</option>
+              <option value="S-1,EFFECT">S-1/EFFECT (Registration)</option>
+              <option value="4">Form 4 (Insider)</option>
+            </select>
+          </div>
+          <div class="fil-option-group fil-option-checkbox">
+            <label>
+              <input type="checkbox" id="scanDeep">
+              Deep scan (don't stop at old filings)
+            </label>
+          </div>
+        </div>
+        <div class="fil-scan-actions">
+          <button class="fil-btn fil-btn-secondary" onclick="this.closest('.fil-modal-overlay').remove()">Cancel</button>
+          <button class="fil-btn fil-btn-primary" onclick="runScanWithOptions()">Start Scan</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+};
+
+/**
+ * Run scan with selected options
+ */
+window.runScanWithOptions = function() {
+  const days = parseInt(document.getElementById('scanDays')?.value) || 30;
+  const limit = parseInt(document.getElementById('scanLimit')?.value) || 200;
+  const types = document.getElementById('scanTypes')?.value || '';
+  const deep = document.getElementById('scanDeep')?.checked || false;
+
+  // Close the modal
+  document.querySelector('.fil-modal-overlay')?.remove();
+
+  // Run the scan with options
+  window.scanFilings({ days, limit, types: types || undefined, deep });
+};
+
+/**
+ * Quick scan - scan all funds with default options
+ */
+window.quickScan = function() {
+  window.scanFilings({ days: 30, limit: 200 });
+};
+
+/**
+ * Deep historical scan - scan all history
+ */
+window.deepScan = function() {
+  if (confirm('Deep scan will check up to 500 filings per fund for the last year. This may take a while. Continue?')) {
+    window.scanFilings({ days: 365, limit: 500, deep: true });
   }
 };
 

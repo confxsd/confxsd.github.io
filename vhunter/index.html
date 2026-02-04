@@ -1042,8 +1042,14 @@
                 <button class="fil-btn" id="generateSignalsBtn" onclick="generateFilingSignals()">
                   Generate Signals
                 </button>
-                <button class="fil-btn fil-btn-primary" id="scanFilingsBtn" onclick="scanFilings()">
-                  Scan Now
+                <button class="fil-btn" onclick="showScanOptions()" title="Configure scan options">
+                  ⚙️ Options
+                </button>
+                <button class="fil-btn fil-btn-primary" id="scanFilingsBtn" onclick="quickScan()">
+                  Quick Scan
+                </button>
+                <button class="fil-btn fil-btn-warning" onclick="deepScan()" title="Scan 1 year, 500 filings per fund">
+                  Deep Scan
                 </button>
               </div>
             </div>
