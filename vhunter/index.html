@@ -1035,107 +1035,146 @@
         <!-- Page: Filings -->
         <div class="page" id="page-filings">
           <div class="filings-container">
-            <!-- Header -->
+            <!-- Header with Scan Controls -->
             <div class="fil-header">
-              <h2>Institutional Filings</h2>
+              <div class="fil-header-left">
+                <span class="fil-last-scan" id="filLastScan">Last scan: --</span>
+              </div>
               <div class="fil-header-actions">
-                <button class="fil-btn" id="generateSignalsBtn" onclick="generateFilingSignals()">
-                  Generate Signals
-                </button>
                 <button class="fil-btn" onclick="showScanOptions()" title="Configure scan options">
-                  ⚙️ Options
+                  <i class="fa-solid fa-sliders"></i> Options
                 </button>
                 <button class="fil-btn fil-btn-primary" id="scanFilingsBtn" onclick="quickScan()">
-                  Quick Scan
-                </button>
-                <button class="fil-btn fil-btn-warning" onclick="deepScan()" title="Scan 1 year, 500 filings per fund">
-                  Deep Scan
+                  <i class="fa-solid fa-radar"></i> Scan
                 </button>
               </div>
             </div>
 
-            <!-- Dashboard Stats -->
+            <!-- Dashboard Stats by Filing Type -->
             <div class="fil-dashboard">
-              <div class="fil-stat fil-stat-critical">
-                <div class="fil-stat-value" id="filCritical">0</div>
-                <div class="fil-stat-label">Critical Signals</div>
+              <div class="fil-stat" onclick="filterFilings('13F-HR')">
+                <div class="fil-stat-icon">📊</div>
+                <div class="fil-stat-content">
+                  <div class="fil-stat-value" id="fil13F">0</div>
+                  <div class="fil-stat-label">13F Holdings</div>
+                </div>
               </div>
-              <div class="fil-stat fil-stat-high">
-                <div class="fil-stat-value" id="filHigh">0</div>
-                <div class="fil-stat-label">High Priority</div>
+              <div class="fil-stat" onclick="filterFilings('ownership')">
+                <div class="fil-stat-icon">📈</div>
+                <div class="fil-stat-content">
+                  <div class="fil-stat-value" id="fil13DG">0</div>
+                  <div class="fil-stat-label">13D/G Ownership</div>
+                </div>
               </div>
-              <div class="fil-stat fil-stat-recent">
-                <div class="fil-stat-value" id="filRecent">0</div>
-                <div class="fil-stat-label">Recent Filings</div>
+              <div class="fil-stat" onclick="filterFilings('8-K')">
+                <div class="fil-stat-icon">📢</div>
+                <div class="fil-stat-content">
+                  <div class="fil-stat-value" id="fil8K">0</div>
+                  <div class="fil-stat-label">8-K Events</div>
+                </div>
               </div>
-              <div class="fil-stat fil-stat-pipe">
-                <div class="fil-stat-value" id="filPipeActive">0</div>
-                <div class="fil-stat-label">Active PIPEs</div>
+              <div class="fil-stat" onclick="filterFilings('registration')">
+                <div class="fil-stat-icon">📋</div>
+                <div class="fil-stat-content">
+                  <div class="fil-stat-value" id="filS1">0</div>
+                  <div class="fil-stat-label">S-1 / EFFECT</div>
+                </div>
+              </div>
+              <div class="fil-stat" onclick="filterFilings('4')">
+                <div class="fil-stat-icon">👤</div>
+                <div class="fil-stat-content">
+                  <div class="fil-stat-value" id="filForm4">0</div>
+                  <div class="fil-stat-label">Form 4 Insider</div>
+                </div>
+              </div>
+              <div class="fil-stat fil-stat-total" onclick="filterFilings('all')">
+                <div class="fil-stat-icon">📁</div>
+                <div class="fil-stat-content">
+                  <div class="fil-stat-value" id="filTotal">0</div>
+                  <div class="fil-stat-label">Total Filings</div>
+                </div>
               </div>
             </div>
 
-            <!-- Active Signals -->
+            <!-- Filter Toolbar -->
+            <div class="fil-toolbar">
+              <div class="fil-search">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" id="filSearchInput" placeholder="Search by ticker, fund, or CIK..." onkeyup="searchFilings(this.value)">
+              </div>
+              <div class="fil-filter-group">
+                <select class="fil-select" id="filTypeFilter" onchange="applyFilters()">
+                  <option value="all">All Types</option>
+                  <option value="13F-HR">13F Holdings</option>
+                  <option value="ownership">13D/13G Ownership</option>
+                  <option value="8-K">8-K Events</option>
+                  <option value="registration">S-1 / EFFECT</option>
+                  <option value="4">Form 4 Insider</option>
+                </select>
+                <select class="fil-select" id="filFundFilter" onchange="applyFilters()">
+                  <option value="all">All Funds</option>
+                </select>
+                <select class="fil-select" id="filDaysFilter" onchange="applyFilters()">
+                  <option value="7">Last 7 days</option>
+                  <option value="30" selected>Last 30 days</option>
+                  <option value="90">Last 90 days</option>
+                  <option value="180">Last 6 months</option>
+                  <option value="365">Last year</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Filings Table -->
             <div class="fil-section">
               <div class="fil-section-header">
                 <div class="fil-section-title">
-                  <span class="fil-section-icon">🚨</span>
-                  Active Signals
+                  SEC Filings
+                  <span class="fil-count" id="filDisplayCount">0</span>
+                </div>
+                <div class="fil-view-toggle">
+                  <button class="fil-view-btn active" onclick="setFilingsView('table')" title="Table view">
+                    <i class="fa-solid fa-table-list"></i>
+                  </button>
+                  <button class="fil-view-btn" onclick="setFilingsView('cards')" title="Card view">
+                    <i class="fa-solid fa-grip"></i>
+                  </button>
                 </div>
               </div>
-              <div class="fil-signals-list" id="filSignalsList">
-                <div class="fil-empty">Loading signals...</div>
+              <div class="fil-table-wrapper" id="filFilingsTable">
+                <div class="fil-loading">Loading filings...</div>
               </div>
             </div>
 
             <!-- PIPE Tracker -->
-            <div class="fil-section">
-              <div class="fil-section-header">
+            <div class="fil-section fil-section-collapsible">
+              <div class="fil-section-header fil-section-toggle" onclick="toggleSection('filPipeSection')">
                 <div class="fil-section-title">
-                  <span class="fil-section-icon">💰</span>
-                  PIPE Tracker
+                  <i class="fa-solid fa-chevron-down fil-chevron"></i>
+                  PIPE Deals
+                  <span class="fil-count" id="filPipeCount">0</span>
                 </div>
-                <button class="fil-btn" onclick="trackPipeDeal()">+ Track PIPE</button>
+                <button class="fil-btn fil-btn-sm" onclick="event.stopPropagation(); trackPipeDeal()">+ Track</button>
               </div>
-              <div id="filPipeTable">
-                <div class="fil-empty">Loading PIPE deals...</div>
-              </div>
-            </div>
-
-            <!-- Recent Filings -->
-            <div class="fil-section">
-              <div class="fil-section-header">
-                <div class="fil-section-title">
-                  <span class="fil-section-icon">📄</span>
-                  Recent Filings
+              <div class="fil-section-content" id="filPipeSection">
+                <div id="filPipeTable">
+                  <div class="fil-empty">No PIPE deals tracked</div>
                 </div>
-                <div class="fil-filters">
-                  <select class="fil-filter-select" onchange="filterFilingsByType(this.value)">
-                    <option value="all">All Types</option>
-                    <option value="13F-HR">13F Holdings</option>
-                    <option value="13D">13D Activist</option>
-                    <option value="13G">13G Passive</option>
-                    <option value="8-K">8-K Events</option>
-                    <option value="S-1">S-1 Registration</option>
-                    <option value="4">Form 4 Insider</option>
-                  </select>
-                </div>
-              </div>
-              <div class="fil-filings-list" id="filFilingsList">
-                <div class="fil-empty">Loading filings...</div>
               </div>
             </div>
 
             <!-- Tracked Funds -->
-            <div class="fil-funds-section">
-              <div class="fil-funds-header" onclick="toggleFundsGrid()">
+            <div class="fil-section fil-section-collapsible">
+              <div class="fil-section-header fil-section-toggle" onclick="toggleSection('filFundsSection')">
                 <div class="fil-section-title">
-                  <span class="fil-section-icon">🏦</span>
+                  <i class="fa-solid fa-chevron-right fil-chevron"></i>
                   Tracked Funds
+                  <span class="fil-count" id="filFundsCount">0</span>
                 </div>
-                <button class="fil-funds-toggle" id="fundsToggle">▶</button>
               </div>
-              <div class="fil-funds-grid" id="filFundsGrid" style="display: none;">
-                <div class="fil-empty">Loading funds...</div>
+              <div class="fil-section-content fil-collapsed" id="filFundsSection">
+                <div class="fil-funds-grid" id="filFundsGrid">
+                  <div class="fil-loading">Loading funds...</div>
+                </div>
               </div>
             </div>
           </div>

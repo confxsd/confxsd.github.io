@@ -1,18 +1,22 @@
 /**
  * Filings Page Module
- * Displays institutional SEC filings, PIPE deals, and filing signals
+ * Professional dashboard for institutional SEC filings tracking
  */
 
 import { CONFIG } from './config.js';
 
 // State
 let filings = [];
-let signals = [];
 let pipeDeals = [];
 let funds = [];
-let dashboardStats = null;
+let currentFilters = {
+  type: 'all',
+  fund: 'all',
+  days: 30,
+  search: ''
+};
+let currentView = 'table';
 
-// User ID helper
 const getUserId = () => localStorage.getItem('vhunter_user_id') || 'vhunter-serhat';
 
 /**
@@ -20,30 +24,28 @@ const getUserId = () => localStorage.getItem('vhunter_user_id') || 'vhunter-serh
  */
 export async function loadFilings() {
   try {
-    // Fetch all data in parallel
-    const [filingsData, signalsData, pipesData, fundsData, dashboardData] = await Promise.all([
-      fetchFilings(),
-      fetchSignals(),
+    showLoading();
+
+    const [filingsData, pipesData, fundsData] = await Promise.all([
+      fetchFilings({ days: currentFilters.days }),
       fetchPipeDeals(),
-      fetchFunds(),
-      fetchSignalsDashboard()
+      fetchFunds()
     ]);
 
     filings = filingsData;
-    signals = signalsData;
     pipeDeals = pipesData;
     funds = fundsData;
-    dashboardStats = dashboardData;
 
-    renderDashboard();
-    renderSignals();
+    populateFundFilter();
+    renderDashboardStats();
+    renderFilingsTable();
     renderPipeTable();
-    renderFilingsList();
     renderFundsGrid();
+    updateLastScan();
 
   } catch (e) {
     console.error('Failed to load filings:', e);
-    showEmptyState('Failed to load filings data');
+    showError('Failed to load filings data');
   }
 }
 
@@ -52,26 +54,12 @@ export async function loadFilings() {
 async function fetchFilings(filters = {}) {
   const params = new URLSearchParams({
     days: filters.days || 30,
-    limit: 100
+    limit: 500
   });
-  if (filters.type) params.set('type', filters.type);
-  if (filters.ticker) params.set('ticker', filters.ticker);
+  if (filters.type && filters.type !== 'all') params.set('type', filters.type);
+  if (filters.fund_id && filters.fund_id !== 'all') params.set('fund_id', filters.fund_id);
 
   const response = await fetch(`${CONFIG.PROXY_URL}/api/filings?${params}`, {
-    headers: { 'X-User-Id': getUserId() }
-  });
-  return response.json();
-}
-
-async function fetchSignals() {
-  const response = await fetch(`${CONFIG.PROXY_URL}/api/filing-signals?status=active&limit=50`, {
-    headers: { 'X-User-Id': getUserId() }
-  });
-  return response.json();
-}
-
-async function fetchSignalsDashboard() {
-  const response = await fetch(`${CONFIG.PROXY_URL}/api/filing-signals/dashboard`, {
     headers: { 'X-User-Id': getUserId() }
   });
   return response.json();
@@ -91,75 +79,205 @@ async function fetchFunds() {
   return response.json();
 }
 
-// ============== RENDERING ==============
+// ============== DASHBOARD STATS ==============
 
-function renderDashboard() {
-  const stats = dashboardStats || {};
-  const buckets = stats.convictionBuckets || {};
+function renderDashboardStats() {
+  const stats = {
+    '13F': 0,
+    '13DG': 0,
+    '8K': 0,
+    'S1': 0,
+    'Form4': 0,
+    'total': filings.length
+  };
 
-  document.getElementById('filCritical').textContent = buckets.critical || 0;
-  document.getElementById('filHigh').textContent = buckets.high || 0;
-  document.getElementById('filRecent').textContent = filings.length || 0;
-  document.getElementById('filPipeActive').textContent = pipeDeals.length || 0;
+  for (const f of filings) {
+    const type = f.filing_type || '';
+    if (type.includes('13F')) stats['13F']++;
+    else if (type.includes('13D') || type.includes('13G')) stats['13DG']++;
+    else if (type.includes('8-K')) stats['8K']++;
+    else if (type.includes('S-1') || type.includes('EFFECT')) stats['S1']++;
+    else if (type === '4' || type === '4/A') stats['Form4']++;
+  }
+
+  document.getElementById('fil13F').textContent = stats['13F'];
+  document.getElementById('fil13DG').textContent = stats['13DG'];
+  document.getElementById('fil8K').textContent = stats['8K'];
+  document.getElementById('filS1').textContent = stats['S1'];
+  document.getElementById('filForm4').textContent = stats['Form4'];
+  document.getElementById('filTotal').textContent = stats.total;
+  document.getElementById('filPipeCount').textContent = pipeDeals.length;
+  document.getElementById('filFundsCount').textContent = funds.length;
 }
 
-function renderSignals() {
-  const container = document.getElementById('filSignalsList');
+function populateFundFilter() {
+  const select = document.getElementById('filFundFilter');
+  if (!select) return;
+
+  select.innerHTML = '<option value="all">All Funds</option>';
+
+  const sortedFunds = [...funds].sort((a, b) => (b.priority || 0) - (a.priority || 0));
+  for (const fund of sortedFunds) {
+    const opt = document.createElement('option');
+    opt.value = fund.id;
+    opt.textContent = fund.name;
+    select.appendChild(opt);
+  }
+}
+
+// ============== FILINGS TABLE ==============
+
+function renderFilingsTable() {
+  const container = document.getElementById('filFilingsTable');
   if (!container) return;
 
-  if (!signals || signals.length === 0) {
-    container.innerHTML = '<div class="fil-empty">No active signals</div>';
+  const filtered = getFilteredFilings();
+  document.getElementById('filDisplayCount').textContent = filtered.length;
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="fil-empty">No filings match your filters</div>';
     return;
   }
 
-  // Sort by conviction
-  const sorted = [...signals].sort((a, b) => (b.conviction || 0) - (a.conviction || 0));
-
-  container.innerHTML = sorted.slice(0, 10).map(signal => renderSignalCard(signal)).join('');
+  if (currentView === 'table') {
+    container.innerHTML = `
+      <table class="fil-table">
+        <thead>
+          <tr>
+            <th class="fil-th-type">Type</th>
+            <th class="fil-th-fund">Fund</th>
+            <th class="fil-th-ticker">Subject</th>
+            <th class="fil-th-date">Filed</th>
+            <th class="fil-th-priority">Priority</th>
+            <th class="fil-th-actions"></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filtered.map(f => renderFilingRow(f)).join('')}
+        </tbody>
+      </table>
+    `;
+  } else {
+    container.innerHTML = `
+      <div class="fil-cards-grid">
+        ${filtered.map(f => renderFilingCard(f)).join('')}
+      </div>
+    `;
+  }
 }
 
-function renderSignalCard(signal) {
-  const directionIcon = {
-    'bullish': '📈',
-    'bearish': '📉',
-    'event': '🔔',
-    'neutral': '➡️'
-  }[signal.direction] || '🔔';
+function renderFilingRow(filing) {
+  const priorityClass = {
+    'critical': 'fil-priority-critical',
+    'high': 'fil-priority-high'
+  }[filing.alert_priority] || '';
 
-  const directionClass = `fil-signal-${signal.direction}`;
-  const convictionClass = signal.conviction >= 80 ? 'fil-conviction-critical' :
-                          signal.conviction >= 60 ? 'fil-conviction-high' : 'fil-conviction-normal';
+  const typeIcon = getTypeIcon(filing.filing_type);
 
   return `
-    <div class="fil-signal-card ${directionClass}">
-      <div class="fil-signal-header">
-        <span class="fil-signal-icon">${directionIcon}</span>
-        <span class="fil-signal-type">${formatSignalType(signal.signal_type)}</span>
-        <span class="fil-signal-ticker">${signal.ticker}</span>
-        <span class="fil-signal-conviction ${convictionClass}">${signal.conviction}%</span>
-        <span class="fil-signal-direction">${signal.direction}</span>
+    <tr class="fil-row ${priorityClass}" onclick="showFilingDetails('${filing.id}')">
+      <td class="fil-td-type">
+        <span class="fil-type-badge">${typeIcon} ${filing.filing_type}</span>
+      </td>
+      <td class="fil-td-fund">${filing.fund_name || filing.filer_name || 'Unknown'}</td>
+      <td class="fil-td-ticker">${filing.subject_ticker || '-'}</td>
+      <td class="fil-td-date">${formatDate(filing.filed_date)}</td>
+      <td class="fil-td-priority">
+        ${filing.alert_priority !== 'normal' ? `<span class="fil-priority-badge ${priorityClass}">${filing.alert_priority}</span>` : '-'}
+      </td>
+      <td class="fil-td-actions">
+        <a href="${filing.filing_url}" target="_blank" class="fil-link-btn" onclick="event.stopPropagation()" title="View on SEC">
+          <i class="fa-solid fa-external-link"></i>
+        </a>
+      </td>
+    </tr>
+  `;
+}
+
+function renderFilingCard(filing) {
+  const priorityClass = {
+    'critical': 'fil-priority-critical',
+    'high': 'fil-priority-high'
+  }[filing.alert_priority] || '';
+
+  const typeIcon = getTypeIcon(filing.filing_type);
+
+  return `
+    <div class="fil-card ${priorityClass}" onclick="showFilingDetails('${filing.id}')">
+      <div class="fil-card-header">
+        <span class="fil-type-badge">${typeIcon} ${filing.filing_type}</span>
+        ${filing.alert_priority !== 'normal' ? `<span class="fil-priority-badge ${priorityClass}">${filing.alert_priority}</span>` : ''}
       </div>
-      <div class="fil-signal-narrative">${signal.narrative}</div>
-      ${signal.suggested_action ? `<div class="fil-signal-action">${signal.suggested_action}</div>` : ''}
-      <div class="fil-signal-meta">
-        <span class="fil-signal-horizon">${signal.time_horizon}</span>
-        <span class="fil-signal-age">${formatAge(signal.created_at)}</span>
+      <div class="fil-card-fund">${filing.fund_name || filing.filer_name || 'Unknown'}</div>
+      ${filing.subject_ticker ? `<div class="fil-card-ticker">${filing.subject_ticker}</div>` : ''}
+      <div class="fil-card-footer">
+        <span class="fil-card-date">${formatDate(filing.filed_date)}</span>
+        <a href="${filing.filing_url}" target="_blank" class="fil-link-btn" onclick="event.stopPropagation()">
+          <i class="fa-solid fa-external-link"></i>
+        </a>
       </div>
     </div>
   `;
 }
+
+function getTypeIcon(type) {
+  if (!type) return '📄';
+  if (type.includes('13F')) return '📊';
+  if (type.includes('13D')) return '🎯';
+  if (type.includes('13G')) return '📈';
+  if (type.includes('8-K')) return '📢';
+  if (type.includes('S-1') || type.includes('EFFECT')) return '📋';
+  if (type === '4' || type === '4/A') return '👤';
+  return '📄';
+}
+
+function getFilteredFilings() {
+  let filtered = [...filings];
+
+  // Type filter
+  if (currentFilters.type !== 'all') {
+    if (currentFilters.type === 'ownership') {
+      filtered = filtered.filter(f => f.filing_type?.includes('13D') || f.filing_type?.includes('13G'));
+    } else if (currentFilters.type === 'registration') {
+      filtered = filtered.filter(f => f.filing_type?.includes('S-1') || f.filing_type?.includes('EFFECT'));
+    } else {
+      filtered = filtered.filter(f => f.filing_type?.includes(currentFilters.type));
+    }
+  }
+
+  // Fund filter
+  if (currentFilters.fund !== 'all') {
+    filtered = filtered.filter(f => f.fund_id === currentFilters.fund);
+  }
+
+  // Search filter
+  if (currentFilters.search) {
+    const search = currentFilters.search.toLowerCase();
+    filtered = filtered.filter(f =>
+      (f.fund_name || '').toLowerCase().includes(search) ||
+      (f.filer_name || '').toLowerCase().includes(search) ||
+      (f.subject_ticker || '').toLowerCase().includes(search) ||
+      (f.filer_cik || '').includes(search) ||
+      (f.filing_type || '').toLowerCase().includes(search)
+    );
+  }
+
+  return filtered;
+}
+
+// ============== PIPE TABLE ==============
 
 function renderPipeTable() {
   const container = document.getElementById('filPipeTable');
   if (!container) return;
 
   if (!pipeDeals || pipeDeals.length === 0) {
-    container.innerHTML = '<div class="fil-empty">No active PIPE deals being tracked</div>';
+    container.innerHTML = '<div class="fil-empty">No PIPE deals being tracked</div>';
     return;
   }
 
-  const tableHtml = `
-    <table class="fil-table">
+  container.innerHTML = `
+    <table class="fil-table fil-pipe-table">
       <thead>
         <tr>
           <th>Ticker</th>
@@ -167,7 +285,7 @@ function renderPipeTable() {
           <th>Current</th>
           <th>vs PIPE</th>
           <th>Status</th>
-          <th>Dates</th>
+          <th>S-1 Filed</th>
         </tr>
       </thead>
       <tbody>
@@ -175,8 +293,6 @@ function renderPipeTable() {
       </tbody>
     </table>
   `;
-
-  container.innerHTML = tableHtml;
 }
 
 function renderPipeRow(deal) {
@@ -185,95 +301,28 @@ function renderPipeRow(deal) {
   const vsPipe = pipePrice > 0 && currentPrice > 0 ? ((currentPrice - pipePrice) / pipePrice * 100) : 0;
   const vsPipeClass = vsPipe > 0 ? 'fil-positive' : 'fil-negative';
 
-  const statusBadge = {
-    'pre_s1': '⏳ Pre-S1',
-    's1_filed': '📄 S-1 Filed',
-    's1_effective': '🚨 S-1 Effective',
-    'distributing': '📉 Distributing',
-    'completed': '✅ Completed'
-  }[deal.distribution_status] || deal.distribution_status;
-
-  const statusClass = {
-    's1_effective': 'fil-status-critical',
-    'distributing': 'fil-status-critical',
-    's1_filed': 'fil-status-warning'
-  }[deal.distribution_status] || '';
+  const statusMap = {
+    'pre_s1': { label: 'Pre-S1', class: '' },
+    's1_filed': { label: 'S-1 Filed', class: 'fil-status-warning' },
+    's1_effective': { label: 'Effective', class: 'fil-status-critical' },
+    'distributing': { label: 'Distributing', class: 'fil-status-critical' },
+    'completed': { label: 'Completed', class: 'fil-status-done' }
+  };
+  const status = statusMap[deal.distribution_status] || { label: deal.distribution_status, class: '' };
 
   return `
     <tr class="fil-pipe-row" onclick="showPipeDetails('${deal.ticker}')">
-      <td class="fil-pipe-ticker">${deal.ticker}</td>
+      <td class="fil-pipe-ticker"><strong>${deal.ticker}</strong></td>
       <td>$${pipePrice.toFixed(2)}</td>
-      <td>$${currentPrice.toFixed(2)}</td>
-      <td class="${vsPipeClass}">${vsPipe >= 0 ? '+' : ''}${vsPipe.toFixed(1)}%</td>
-      <td><span class="fil-status-badge ${statusClass}">${statusBadge}</span></td>
-      <td class="fil-pipe-dates">
-        ${deal.s1_filed_date ? `S-1: ${formatDate(deal.s1_filed_date)}` : ''}
-        ${deal.s1_effective_date ? ` | Eff: ${formatDate(deal.s1_effective_date)}` : ''}
-      </td>
+      <td>$${currentPrice > 0 ? currentPrice.toFixed(2) : '--'}</td>
+      <td class="${vsPipeClass}">${currentPrice > 0 ? `${vsPipe >= 0 ? '+' : ''}${vsPipe.toFixed(1)}%` : '--'}</td>
+      <td><span class="fil-status-badge ${status.class}">${status.label}</span></td>
+      <td>${deal.s1_filed_date ? formatDate(deal.s1_filed_date) : '--'}</td>
     </tr>
   `;
 }
 
-function renderFilingsList() {
-  const container = document.getElementById('filFilingsList');
-  if (!container) return;
-
-  if (!filings || filings.length === 0) {
-    container.innerHTML = '<div class="fil-empty">No recent filings found</div>';
-    return;
-  }
-
-  // Group by type
-  const byType = {};
-  for (const filing of filings) {
-    const type = filing.filing_type || 'other';
-    if (!byType[type]) byType[type] = [];
-    byType[type].push(filing);
-  }
-
-  let html = '';
-  for (const [type, typeFilings] of Object.entries(byType)) {
-    html += `
-      <div class="fil-type-group">
-        <div class="fil-type-header">
-          <span class="fil-type-label">${type}</span>
-          <span class="fil-type-count">${typeFilings.length}</span>
-        </div>
-        <div class="fil-type-items">
-          ${typeFilings.slice(0, 10).map(f => renderFilingCard(f)).join('')}
-        </div>
-      </div>
-    `;
-  }
-
-  container.innerHTML = html;
-}
-
-function renderFilingCard(filing) {
-  const priorityClass = {
-    'critical': 'fil-priority-critical',
-    'high': 'fil-priority-high',
-    'normal': '',
-    'low': 'fil-priority-low'
-  }[filing.alert_priority] || '';
-
-  const tickers = filing.tickers_mentioned || [];
-  const tickersHtml = tickers.length > 0 ?
-    `<div class="fil-filing-tickers">${tickers.slice(0, 5).map(t => `<span class="fil-ticker-chip">${t}</span>`).join('')}</div>` : '';
-
-  return `
-    <div class="fil-filing-card ${priorityClass}" onclick="showFilingDetails('${filing.id}')">
-      <div class="fil-filing-header">
-        <span class="fil-filing-type">${filing.filing_type}</span>
-        <span class="fil-filing-filer">${filing.fund_name || filing.filer_name || 'Unknown'}</span>
-        <span class="fil-filing-date">${formatDate(filing.filed_date)}</span>
-        ${filing.alert_priority !== 'normal' ? `<span class="fil-priority-badge ${priorityClass}">${filing.alert_priority.toUpperCase()}</span>` : ''}
-      </div>
-      ${filing.subject_ticker ? `<div class="fil-filing-subject">Subject: ${filing.subject_ticker}</div>` : ''}
-      ${tickersHtml}
-    </div>
-  `;
-}
+// ============== FUNDS GRID ==============
 
 function renderFundsGrid() {
   const container = document.getElementById('filFundsGrid');
@@ -284,50 +333,96 @@ function renderFundsGrid() {
     return;
   }
 
-  const html = funds.map(fund => `
-    <div class="fil-fund-card" onclick="showFundDetails('${fund.id}')">
-      <div class="fil-fund-name">${fund.name}</div>
-      <div class="fil-fund-meta">
-        <span class="fil-fund-type">${formatFundType(fund.fund_type)}</span>
-        ${fund.aum_approx ? `<span class="fil-fund-aum">${fund.aum_approx}</span>` : ''}
+  // Group by fund type
+  const byType = {};
+  for (const fund of funds) {
+    const type = fund.fund_type || 'other';
+    if (!byType[type]) byType[type] = [];
+    byType[type].push(fund);
+  }
+
+  let html = '';
+  for (const [type, typeFunds] of Object.entries(byType)) {
+    const sortedFunds = typeFunds.sort((a, b) => (b.priority || 0) - (a.priority || 0));
+    html += `
+      <div class="fil-fund-type-group">
+        <div class="fil-fund-type-header">${formatFundType(type)} (${typeFunds.length})</div>
+        <div class="fil-fund-type-list">
+          ${sortedFunds.map(f => `
+            <div class="fil-fund-chip ${f.priority >= 9 ? 'fil-fund-priority' : ''}" onclick="showFundDetails('${f.id}')" title="${f.name}">
+              ${f.name.length > 25 ? f.name.slice(0, 22) + '...' : f.name}
+              ${f.priority >= 9 ? '<span class="fil-fund-badge">P' + f.priority + '</span>' : ''}
+            </div>
+          `).join('')}
+        </div>
       </div>
-      <div class="fil-fund-priority">Priority: ${fund.priority}/10</div>
-      ${fund.key_person ? `<div class="fil-fund-person">${fund.key_person}</div>` : ''}
-    </div>
-  `).join('');
+    `;
+  }
 
   container.innerHTML = html;
 }
 
-function showEmptyState(message) {
-  const container = document.getElementById('filSignalsList');
-  if (container) {
-    container.innerHTML = `
-      <div class="fil-empty-state">
-        <div class="fil-empty-icon">📋</div>
-        <div class="fil-empty-text">${message || 'No filings data'}</div>
-      </div>
-    `;
+// ============== FILTER ACTIONS ==============
+
+window.filterFilings = function(type) {
+  currentFilters.type = type;
+  document.getElementById('filTypeFilter').value = type;
+  renderFilingsTable();
+};
+
+window.applyFilters = function() {
+  currentFilters.type = document.getElementById('filTypeFilter').value;
+  currentFilters.fund = document.getElementById('filFundFilter').value;
+  const newDays = parseInt(document.getElementById('filDaysFilter').value);
+
+  if (newDays !== currentFilters.days) {
+    currentFilters.days = newDays;
+    // Refetch with new days
+    fetchFilings({ days: newDays }).then(data => {
+      filings = data;
+      renderDashboardStats();
+      renderFilingsTable();
+    });
+  } else {
+    renderFilingsTable();
   }
-}
+};
 
-// ============== ACTIONS ==============
+window.searchFilings = function(query) {
+  currentFilters.search = query;
+  renderFilingsTable();
+};
 
-/**
- * Scan for new filings with options
- * @param {Object} options - Scan options
- * @param {number} options.days - Days to look back (default 30, max 365)
- * @param {boolean} options.deep - Deep scan all history (default false)
- * @param {number} options.limit - Max filings per fund (default 200, max 500)
- */
+window.setFilingsView = function(view) {
+  currentView = view;
+  document.querySelectorAll('.fil-view-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelector(`.fil-view-btn[onclick*="${view}"]`)?.classList.add('active');
+  renderFilingsTable();
+};
+
+window.toggleSection = function(sectionId) {
+  const section = document.getElementById(sectionId);
+  const header = section?.previousElementSibling;
+  const chevron = header?.querySelector('.fil-chevron');
+
+  if (section) {
+    section.classList.toggle('fil-collapsed');
+    if (chevron) {
+      chevron.classList.toggle('fa-chevron-down', !section.classList.contains('fil-collapsed'));
+      chevron.classList.toggle('fa-chevron-right', section.classList.contains('fil-collapsed'));
+    }
+  }
+};
+
+// ============== SCAN ACTIONS ==============
+
 window.scanFilings = async function(options = {}) {
   const btn = document.getElementById('scanFilingsBtn');
   if (btn) {
     btn.disabled = true;
-    btn.textContent = 'Scanning...';
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Scanning...';
   }
 
-  // Build query params from options
   const params = new URLSearchParams();
   if (options.days) params.set('days', Math.min(options.days, 365));
   if (options.deep) params.set('deep', 'true');
@@ -338,37 +433,32 @@ window.scanFilings = async function(options = {}) {
     const url = `${CONFIG.PROXY_URL}/api/filings/scan${params.toString() ? '?' + params.toString() : ''}`;
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-User-Id': getUserId()
-      }
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() }
     });
 
     const result = await response.json();
 
     if (result.success) {
-      const totalNew = result.totalNewFilings || result.results?.reduce((sum, r) => sum + (r.newFilings || 0), 0) || 0;
-      const totalScanned = result.results?.reduce((sum, r) => sum + (r.scannedCount || 0), 0) || 0;
-      alert(`Scan complete!\n${result.scanned} funds scanned\n${totalScanned} filings checked\n${totalNew} new filings found\n\nLookback: ${result.daysBack} days\nDeep scan: ${result.deepScan ? 'Yes' : 'No'}`);
+      const msg = `Scanned ${result.scanned} funds\nFound ${result.totalNewFilings} new filings`;
+      showToast(msg, 'success');
       loadFilings();
     } else {
-      alert('Scan failed: ' + (result.error || 'Unknown error'));
+      showToast('Scan failed: ' + (result.error || 'Unknown error'), 'error');
     }
 
   } catch (e) {
     console.error('Scan failed:', e);
-    alert('Failed to scan filings: ' + e.message);
+    showToast('Failed to scan: ' + e.message, 'error');
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = 'Scan Now';
+      btn.innerHTML = '<i class="fa-solid fa-radar"></i> Scan';
     }
   }
 };
 
-/**
- * Show scan options dialog
- */
+window.quickScan = () => window.scanFilings({ days: 30, limit: 200 });
+
 window.showScanOptions = function() {
   const modal = document.createElement('div');
   modal.className = 'fil-modal-overlay';
@@ -411,10 +501,7 @@ window.showScanOptions = function() {
             </select>
           </div>
           <div class="fil-option-group fil-option-checkbox">
-            <label>
-              <input type="checkbox" id="scanDeep">
-              Deep scan (don't stop at old filings)
-            </label>
+            <label><input type="checkbox" id="scanDeep"> Deep scan (check full history)</label>
           </div>
         </div>
         <div class="fil-scan-actions">
@@ -428,417 +515,218 @@ window.showScanOptions = function() {
   modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
 };
 
-/**
- * Run scan with selected options
- */
 window.runScanWithOptions = function() {
   const days = parseInt(document.getElementById('scanDays')?.value) || 30;
   const limit = parseInt(document.getElementById('scanLimit')?.value) || 200;
   const types = document.getElementById('scanTypes')?.value || '';
   const deep = document.getElementById('scanDeep')?.checked || false;
-
-  // Close the modal
   document.querySelector('.fil-modal-overlay')?.remove();
-
-  // Run the scan with options
   window.scanFilings({ days, limit, types: types || undefined, deep });
 };
 
-/**
- * Quick scan - scan all funds with default options
- */
-window.quickScan = function() {
-  window.scanFilings({ days: 30, limit: 200 });
-};
+// ============== DETAIL MODALS ==============
 
-/**
- * Deep historical scan - scan all history
- */
-window.deepScan = function() {
-  if (confirm('Deep scan will check up to 500 filings per fund for the last year. This may take a while. Continue?')) {
-    window.scanFilings({ days: 365, limit: 500, deep: true });
-  }
-};
-
-/**
- * Generate signals from recent filings
- */
-window.generateFilingSignals = async function() {
-  const btn = document.getElementById('generateSignalsBtn');
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = 'Generating...';
-  }
-
-  try {
-    const response = await fetch(`${CONFIG.PROXY_URL}/api/filing-signals/generate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-User-Id': getUserId()
-      }
-    });
-
-    const result = await response.json();
-
-    if (result.success) {
-      alert(`Signal generation complete!\n${result.generated} new signals created`);
-      loadFilings();
-    } else {
-      alert('Generation failed: ' + (result.error || 'Unknown error'));
-    }
-
-  } catch (e) {
-    console.error('Signal generation failed:', e);
-    alert('Failed to generate signals: ' + e.message);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = 'Generate';
-    }
-  }
-};
-
-/**
- * Filter filings by type
- */
-window.filterFilingsByType = async function(type) {
-  try {
-    filings = await fetchFilings({ type: type === 'all' ? null : type });
-    renderFilingsList();
-  } catch (e) {
-    console.error('Filter failed:', e);
-  }
-};
-
-/**
- * Show filing details modal
- */
 window.showFilingDetails = async function(id) {
   try {
     const response = await fetch(`${CONFIG.PROXY_URL}/api/filings/${id}`, {
       headers: { 'X-User-Id': getUserId() }
     });
     const filing = await response.json();
-
-    const content = buildFilingModalContent(filing);
-    showModal(`Filing: ${filing.filing_type}`, content);
-
+    showModal(`${filing.filing_type} Filing`, buildFilingModal(filing));
   } catch (e) {
     console.error('Failed to load filing:', e);
-    alert('Failed to load filing details');
+    showToast('Failed to load filing details', 'error');
   }
 };
 
-/**
- * Show PIPE deal details modal
- */
 window.showPipeDetails = async function(ticker) {
   try {
     const response = await fetch(`${CONFIG.PROXY_URL}/api/pipe/${ticker}`, {
       headers: { 'X-User-Id': getUserId() }
     });
     const deal = await response.json();
-
-    const content = buildPipeModalContent(deal);
-    showModal(`PIPE Deal: ${ticker}`, content);
-
+    showModal(`PIPE: ${ticker}`, buildPipeModal(deal));
   } catch (e) {
-    console.error('Failed to load PIPE deal:', e);
-    alert('Failed to load PIPE deal details');
+    console.error('Failed to load PIPE:', e);
+    showToast('Failed to load PIPE details', 'error');
   }
 };
 
-/**
- * Show fund details modal
- */
 window.showFundDetails = async function(id) {
   try {
     const response = await fetch(`${CONFIG.PROXY_URL}/api/funds/${id}`, {
       headers: { 'X-User-Id': getUserId() }
     });
     const fund = await response.json();
-
-    const content = buildFundModalContent(fund);
-    showModal(`Fund: ${fund.name}`, content);
-
+    showModal(fund.name, buildFundModal(fund));
   } catch (e) {
     console.error('Failed to load fund:', e);
-    alert('Failed to load fund details');
+    showToast('Failed to load fund details', 'error');
   }
 };
 
-/**
- * Add PIPE deal to tracking
- */
 window.trackPipeDeal = async function() {
-  const ticker = prompt('Enter ticker symbol:');
+  const ticker = prompt('Ticker symbol:');
   if (!ticker) return;
-
-  const announcementDate = prompt('Announcement date (YYYY-MM-DD):');
-  if (!announcementDate) return;
-
-  const pipePrice = prompt('PIPE price per share:');
+  const date = prompt('Announcement date (YYYY-MM-DD):');
+  if (!date) return;
+  const price = prompt('PIPE price per share (optional):');
 
   try {
     const response = await fetch(`${CONFIG.PROXY_URL}/api/pipe/${ticker.toUpperCase()}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-User-Id': getUserId()
-      },
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() },
       body: JSON.stringify({
-        announcement_date: announcementDate,
-        per_share_price: pipePrice ? parseFloat(pipePrice) : null
+        announcement_date: date,
+        per_share_price: price ? parseFloat(price) : null
       })
     });
-
     const result = await response.json();
-
     if (result.success) {
-      alert('PIPE deal added to tracking');
+      showToast('PIPE deal added', 'success');
       loadFilings();
-    } else {
-      alert('Failed to add PIPE deal');
     }
-
   } catch (e) {
-    console.error('Failed to track PIPE:', e);
-    alert('Failed to add PIPE deal: ' + e.message);
+    showToast('Failed to add PIPE deal', 'error');
   }
 };
 
-// ============== MODAL CONTENT BUILDERS ==============
+// ============== MODAL BUILDERS ==============
 
-function buildFilingModalContent(filing) {
-  let html = '<div class="fil-modal-content">';
-
-  html += `
-    <div class="fil-modal-section">
-      <h4>Filing Details</h4>
-      <div class="fil-detail-grid">
-        <div class="fil-detail-item"><span class="fil-detail-label">Type:</span> ${filing.filing_type}</div>
-        <div class="fil-detail-item"><span class="fil-detail-label">Filer:</span> ${filing.filer_name || 'Unknown'}</div>
-        <div class="fil-detail-item"><span class="fil-detail-label">CIK:</span> ${filing.filer_cik}</div>
-        <div class="fil-detail-item"><span class="fil-detail-label">Filed:</span> ${formatDate(filing.filed_date)}</div>
-        <div class="fil-detail-item"><span class="fil-detail-label">Priority:</span> ${filing.alert_priority}</div>
-      </div>
-      <a href="${filing.filing_url}" target="_blank" class="fil-link">View on SEC EDGAR</a>
+function buildFilingModal(filing) {
+  return `
+    <div class="fil-modal-grid">
+      <div class="fil-modal-row"><span class="fil-modal-label">Type</span><span>${filing.filing_type}</span></div>
+      <div class="fil-modal-row"><span class="fil-modal-label">Filer</span><span>${filing.fund_name || filing.filer_name}</span></div>
+      <div class="fil-modal-row"><span class="fil-modal-label">CIK</span><span>${filing.filer_cik}</span></div>
+      <div class="fil-modal-row"><span class="fil-modal-label">Filed</span><span>${formatDate(filing.filed_date)}</span></div>
+      <div class="fil-modal-row"><span class="fil-modal-label">Subject</span><span>${filing.subject_ticker || '-'}</span></div>
+      <div class="fil-modal-row"><span class="fil-modal-label">Priority</span><span>${filing.alert_priority}</span></div>
     </div>
-  `;
-
-  if (filing.fund_name) {
-    html += `
-      <div class="fil-modal-section">
-        <h4>Fund Info</h4>
-        <div class="fil-detail-item"><span class="fil-detail-label">Fund:</span> ${filing.fund_name}</div>
-        <div class="fil-detail-item"><span class="fil-detail-label">Type:</span> ${formatFundType(filing.fund_type)}</div>
-      </div>
-    `;
-  }
-
-  if (filing.holdings?.length > 0) {
-    html += `
+    <a href="${filing.filing_url}" target="_blank" class="fil-btn fil-btn-primary fil-btn-block">View on SEC EDGAR</a>
+    ${filing.holdings?.length ? `
       <div class="fil-modal-section">
         <h4>Holdings (${filing.holdings.length})</h4>
-        <table class="fil-table fil-holdings-table">
-          <thead><tr><th>Ticker</th><th>Issuer</th><th>Shares</th><th>Value</th></tr></thead>
-          <tbody>
-            ${filing.holdings.slice(0, 20).map(h => `
-              <tr>
-                <td>${h.ticker || h.cusip}</td>
-                <td>${h.issuer_name?.slice(0, 30) || ''}</td>
-                <td>${h.shares?.toLocaleString() || 0}</td>
-                <td>$${((h.value_usd || 0) / 1e6).toFixed(1)}M</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
+        <div class="fil-holdings-mini">
+          ${filing.holdings.slice(0, 10).map(h => `
+            <div class="fil-holding-row">
+              <span>${h.ticker || h.cusip}</span>
+              <span>${h.shares?.toLocaleString()} shares</span>
+              <span>$${((h.value_usd || 0) / 1e6).toFixed(1)}M</span>
+            </div>
+          `).join('')}
+          ${filing.holdings.length > 10 ? `<div class="fil-more">+${filing.holdings.length - 10} more</div>` : ''}
+        </div>
       </div>
-    `;
-  }
-
-  html += '</div>';
-  return html;
+    ` : ''}
+  `;
 }
 
-function buildPipeModalContent(deal) {
+function buildPipeModal(deal) {
   const sellers = deal.selling_stockholders || [];
-
-  let html = '<div class="fil-modal-content">';
-
-  html += `
-    <div class="fil-modal-section">
-      <h4>Deal Terms</h4>
-      <div class="fil-detail-grid">
-        <div class="fil-detail-item"><span class="fil-detail-label">Company:</span> ${deal.company_name || deal.ticker}</div>
-        <div class="fil-detail-item"><span class="fil-detail-label">Announcement:</span> ${formatDate(deal.announcement_date)}</div>
-        <div class="fil-detail-item"><span class="fil-detail-label">PIPE Amount:</span> ${deal.pipe_amount_usd ? `$${(deal.pipe_amount_usd / 1e6).toFixed(1)}M` : 'N/A'}</div>
-        <div class="fil-detail-item"><span class="fil-detail-label">Per Share:</span> $${deal.per_share_price?.toFixed(2) || 'N/A'}</div>
-        <div class="fil-detail-item"><span class="fil-detail-label">Shares:</span> ${deal.shares_issued?.toLocaleString() || 'N/A'}</div>
-        <div class="fil-detail-item"><span class="fil-detail-label">Status:</span> ${deal.distribution_status}</div>
-      </div>
+  return `
+    <div class="fil-modal-grid">
+      <div class="fil-modal-row"><span class="fil-modal-label">Company</span><span>${deal.company_name || deal.ticker}</span></div>
+      <div class="fil-modal-row"><span class="fil-modal-label">Announced</span><span>${formatDate(deal.announcement_date)}</span></div>
+      <div class="fil-modal-row"><span class="fil-modal-label">PIPE Amount</span><span>${deal.pipe_amount_usd ? `$${(deal.pipe_amount_usd / 1e6).toFixed(1)}M` : '--'}</span></div>
+      <div class="fil-modal-row"><span class="fil-modal-label">Per Share</span><span>$${deal.per_share_price?.toFixed(2) || '--'}</span></div>
+      <div class="fil-modal-row"><span class="fil-modal-label">Status</span><span>${deal.distribution_status}</span></div>
+      <div class="fil-modal-row"><span class="fil-modal-label">S-1 Filed</span><span>${deal.s1_filed_date ? formatDate(deal.s1_filed_date) : '--'}</span></div>
+      <div class="fil-modal-row"><span class="fil-modal-label">S-1 Effective</span><span>${deal.s1_effective_date ? formatDate(deal.s1_effective_date) : '--'}</span></div>
     </div>
-  `;
-
-  if (deal.warrant_shares) {
-    html += `
+    ${deal.warrant_shares ? `
       <div class="fil-modal-section">
         <h4>Warrants</h4>
-        <div class="fil-detail-grid">
-          <div class="fil-detail-item"><span class="fil-detail-label">Warrant Shares:</span> ${deal.warrant_shares.toLocaleString()}</div>
-          <div class="fil-detail-item"><span class="fil-detail-label">Strike:</span> $${deal.warrant_strike?.toFixed(2) || 'N/A'}</div>
-          <div class="fil-detail-item"><span class="fil-detail-label">Expiry:</span> ${deal.warrant_expiry || 'N/A'}</div>
+        <div class="fil-modal-grid">
+          <div class="fil-modal-row"><span class="fil-modal-label">Shares</span><span>${deal.warrant_shares.toLocaleString()}</span></div>
+          <div class="fil-modal-row"><span class="fil-modal-label">Strike</span><span>$${deal.warrant_strike?.toFixed(2) || '--'}</span></div>
         </div>
       </div>
-    `;
-  }
-
-  if (sellers.length > 0) {
-    html += `
+    ` : ''}
+    ${sellers.length ? `
       <div class="fil-modal-section">
         <h4>Selling Stockholders</h4>
-        <ul class="fil-sellers-list">
-          ${sellers.map(s => `<li>${s}</li>`).join('')}
-        </ul>
+        <ul class="fil-sellers-list">${sellers.map(s => `<li>${s}</li>`).join('')}</ul>
       </div>
-    `;
-  }
-
-  html += `
-    <div class="fil-modal-section">
-      <h4>Timeline</h4>
-      <div class="fil-timeline">
-        <div class="fil-timeline-item ${deal.announcement_date ? 'fil-timeline-done' : ''}">
-          <span class="fil-timeline-dot"></span>
-          <span>Announcement: ${formatDate(deal.announcement_date)}</span>
-        </div>
-        <div class="fil-timeline-item ${deal.s1_filed_date ? 'fil-timeline-done' : ''}">
-          <span class="fil-timeline-dot"></span>
-          <span>S-1 Filed: ${deal.s1_filed_date ? formatDate(deal.s1_filed_date) : 'Pending'}</span>
-        </div>
-        <div class="fil-timeline-item ${deal.s1_effective_date ? 'fil-timeline-done' : ''}">
-          <span class="fil-timeline-dot"></span>
-          <span>S-1 Effective: ${deal.s1_effective_date ? formatDate(deal.s1_effective_date) : 'Pending'}</span>
-        </div>
-        <div class="fil-timeline-item ${deal.distribution_status === 'completed' ? 'fil-timeline-done' : ''}">
-          <span class="fil-timeline-dot"></span>
-          <span>Distribution: ${deal.distribution_status}</span>
-        </div>
-      </div>
-    </div>
+    ` : ''}
+    ${deal.notes ? `<div class="fil-modal-section"><h4>Notes</h4><p>${deal.notes}</p></div>` : ''}
   `;
-
-  if (deal.notes) {
-    html += `<div class="fil-modal-section"><h4>Notes</h4><p>${deal.notes}</p></div>`;
-  }
-
-  html += '</div>';
-  return html;
 }
 
-function buildFundModalContent(fund) {
+function buildFundModal(fund) {
   const patterns = fund.known_patterns || [];
   const recentFilings = fund.recentFilings || [];
-
-  let html = '<div class="fil-modal-content">';
-
-  html += `
-    <div class="fil-modal-section">
-      <h4>Fund Overview</h4>
-      <div class="fil-detail-grid">
-        <div class="fil-detail-item"><span class="fil-detail-label">CIK:</span> ${fund.cik}</div>
-        <div class="fil-detail-item"><span class="fil-detail-label">Type:</span> ${formatFundType(fund.fund_type)}</div>
-        <div class="fil-detail-item"><span class="fil-detail-label">AUM:</span> ${fund.aum_approx || 'N/A'}</div>
-        <div class="fil-detail-item"><span class="fil-detail-label">Key Person:</span> ${fund.key_person || 'N/A'}</div>
-        <div class="fil-detail-item"><span class="fil-detail-label">Priority:</span> ${fund.priority}/10</div>
-        <div class="fil-detail-item"><span class="fil-detail-label">Enabled:</span> ${fund.enabled ? 'Yes' : 'No'}</div>
-      </div>
+  return `
+    <div class="fil-modal-grid">
+      <div class="fil-modal-row"><span class="fil-modal-label">CIK</span><span>${fund.cik}</span></div>
+      <div class="fil-modal-row"><span class="fil-modal-label">Type</span><span>${formatFundType(fund.fund_type)}</span></div>
+      <div class="fil-modal-row"><span class="fil-modal-label">AUM</span><span>${fund.aum_approx || '--'}</span></div>
+      <div class="fil-modal-row"><span class="fil-modal-label">Key Person</span><span>${fund.key_person || '--'}</span></div>
+      <div class="fil-modal-row"><span class="fil-modal-label">Priority</span><span>${fund.priority}/10</span></div>
     </div>
-  `;
-
-  if (fund.lineage) {
-    html += `<div class="fil-modal-section"><h4>Lineage</h4><p>${fund.lineage}</p></div>`;
-  }
-
-  if (patterns.length > 0) {
-    html += `
+    ${fund.lineage ? `<div class="fil-modal-section"><h4>Lineage</h4><p>${fund.lineage}</p></div>` : ''}
+    ${patterns.length ? `
       <div class="fil-modal-section">
         <h4>Known Patterns</h4>
-        <ul class="fil-patterns-list">
-          ${patterns.map(p => `<li>${p}</li>`).join('')}
-        </ul>
+        <div class="fil-patterns">${patterns.map(p => `<span class="fil-pattern-chip">${p}</span>`).join('')}</div>
       </div>
-    `;
-  }
-
-  if (fund.holdingsSummary) {
-    const hs = fund.holdingsSummary;
-    html += `
+    ` : ''}
+    ${fund.holdingsSummary ? `
       <div class="fil-modal-section">
-        <h4>Latest Holdings (${hs.period})</h4>
-        <div class="fil-detail-grid">
-          <div class="fil-detail-item"><span class="fil-detail-label">Positions:</span> ${hs.positions}</div>
-          <div class="fil-detail-item"><span class="fil-detail-label">Total Value:</span> $${((hs.total_value || 0) / 1e9).toFixed(2)}B</div>
+        <h4>Latest Holdings (${fund.holdingsSummary.period})</h4>
+        <div class="fil-modal-grid">
+          <div class="fil-modal-row"><span class="fil-modal-label">Positions</span><span>${fund.holdingsSummary.positions}</span></div>
+          <div class="fil-modal-row"><span class="fil-modal-label">Total Value</span><span>$${((fund.holdingsSummary.total_value || 0) / 1e9).toFixed(2)}B</span></div>
         </div>
       </div>
-    `;
-  }
-
-  if (recentFilings.length > 0) {
-    html += `
+    ` : ''}
+    ${recentFilings.length ? `
       <div class="fil-modal-section">
         <h4>Recent Filings</h4>
-        <ul class="fil-recent-filings">
+        <div class="fil-recent-list">
           ${recentFilings.map(f => `
-            <li class="fil-recent-filing ${f.alert_priority === 'critical' ? 'fil-priority-critical' : ''}">
-              <span class="fil-rf-type">${f.filing_type}</span>
-              <span class="fil-rf-date">${formatDate(f.filed_date)}</span>
-            </li>
+            <div class="fil-recent-item ${f.alert_priority === 'critical' ? 'fil-priority-critical' : ''}">
+              <span>${f.filing_type}</span>
+              <span>${formatDate(f.filed_date)}</span>
+            </div>
           `).join('')}
-        </ul>
+        </div>
       </div>
-    `;
-  }
-
-  html += '</div>';
-  return html;
+    ` : ''}
+  `;
 }
 
 // ============== HELPERS ==============
 
-function formatSignalType(type) {
-  if (!type) return 'Signal';
-  return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-}
-
-function formatFundType(type) {
-  if (!type) return 'Unknown';
-  return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-}
-
 function formatDate(dateStr) {
-  if (!dateStr) return 'N/A';
+  if (!dateStr) return '--';
   const d = new Date(dateStr);
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function formatAge(createdAt) {
-  if (!createdAt) return '';
-  const created = new Date(createdAt);
-  const now = new Date();
-  const hours = Math.round((now - created) / (1000 * 60 * 60));
-
-  if (hours < 1) return 'Just now';
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.round(hours / 24);
-  if (days === 1) return 'Yesterday';
-  return `${days}d ago`;
+function formatFundType(type) {
+  if (!type) return 'Other';
+  return type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
-/**
- * Simple modal helper
- */
+function updateLastScan() {
+  const el = document.getElementById('filLastScan');
+  if (el) {
+    const now = new Date();
+    el.textContent = `Last loaded: ${now.toLocaleTimeString()}`;
+  }
+}
+
+function showLoading() {
+  const table = document.getElementById('filFilingsTable');
+  if (table) table.innerHTML = '<div class="fil-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>';
+}
+
+function showError(msg) {
+  const table = document.getElementById('filFilingsTable');
+  if (table) table.innerHTML = `<div class="fil-error">${msg}</div>`;
+}
+
 function showModal(title, content) {
   const existing = document.querySelector('.fil-modal-overlay');
   if (existing) existing.remove();
@@ -858,15 +746,14 @@ function showModal(title, content) {
   modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
 }
 
-/**
- * Toggle funds grid visibility
- */
-window.toggleFundsGrid = function() {
-  const grid = document.getElementById('filFundsGrid');
-  const toggle = document.getElementById('fundsToggle');
-  if (grid && toggle) {
-    const isHidden = grid.style.display === 'none';
-    grid.style.display = isHidden ? 'grid' : 'none';
-    toggle.textContent = isHidden ? '▼' : '▶';
-  }
-};
+function showToast(message, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = `fil-toast fil-toast-${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.classList.add('fil-toast-show'), 10);
+  setTimeout(() => {
+    toast.classList.remove('fil-toast-show');
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
