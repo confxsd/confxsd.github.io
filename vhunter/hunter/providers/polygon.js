@@ -113,9 +113,16 @@ export async function getTickerDetails(ticker) {
 
 /**
  * Get ticker news
+ * @param {string} ticker - Optional ticker filter
+ * @param {number} limit - Max results
+ * @param {string} publishedAfter - ISO date string for published_utc.gte filter
  */
-export async function getNews(ticker, limit = 10) {
-  const data = await polygonFetch(`/v2/reference/news?ticker=${ticker}&limit=${limit}`);
+export async function getNews(ticker, limit = 10, publishedAfter = null) {
+  let path = `/v2/reference/news?limit=${limit}`;
+  if (ticker) path += `&ticker=${ticker}`;
+  if (publishedAfter) path += `&published_utc.gte=${publishedAfter}`;
+
+  const data = await polygonFetch(path);
   return (data.results || []).map(n => ({
     id: n.id,
     title: n.title,
@@ -124,7 +131,9 @@ export async function getNews(ticker, limit = 10) {
     url: n.article_url,
     tickers: n.tickers,
     keywords: n.keywords,
-    description: n.description
+    description: n.description,
+    publisher: n.publisher,
+    insights: n.insights
   }));
 }
 

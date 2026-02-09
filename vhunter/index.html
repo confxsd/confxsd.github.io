@@ -782,6 +782,28 @@
               </div>
             </div>
 
+            <!-- News Report Section -->
+            <div class="news-report-wrapper" id="newsReportWrapper">
+              <div class="news-report-header" id="newsReportHeader">
+                <span class="news-report-label">News Report</span>
+                <div class="news-report-controls">
+                  <select id="newsReportPeriod" class="news-period-select">
+                    <option value="6">6h</option>
+                    <option value="24" selected>Today</option>
+                    <option value="168">This Week</option>
+                    <option value="720">This Month</option>
+                  </select>
+                  <button class="news-refresh-btn" id="newsRefreshBtn" onclick="generateNewsReport()">
+                    Refresh
+                  </button>
+                </div>
+                <span class="news-report-toggle" id="newsReportToggleIcon">▶</span>
+              </div>
+              <div class="news-report-card hidden" id="newsReportCard">
+                <div class="news-report-empty">No report yet - click Refresh to generate</div>
+              </div>
+            </div>
+
             <!-- Feed Filters -->
             <div class="feed-filters">
               <button class="filter-btn active" onclick="filterFeed('all')">
@@ -789,6 +811,9 @@
               </button>
               <button class="filter-btn" onclick="filterFeed('tweet')">
                 Tweets
+              </button>
+              <button class="filter-btn" onclick="filterFeed('news')">
+                News
               </button>
               <button class="filter-btn" onclick="filterFeed('blog')">
                 Blogs

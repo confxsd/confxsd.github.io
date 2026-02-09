@@ -514,8 +514,10 @@ function renderFeedItem(item) {
       ${insight.chartAnalysis ? `<div class="insight-chart">${insight.chartAnalysis.pattern ? `<span class="chart-pattern">${insight.chartAnalysis.pattern}</span>` : ''}${insight.chartAnalysis.trend ? ` <span class="chart-trend">${insight.chartAnalysis.trend}</span>` : ''}${insight.chartAnalysis.technicalNote ? ` - ${insight.chartAnalysis.technicalNote}` : ''}</div>` : ''}
     </div>` : '';
 
+  const newsClass = item.source_type === 'news' ? ' news-source' : '';
+
   return `
-    <div class="feed-item ${item.status}" data-id="${item.id}">
+    <div class="feed-item ${item.status}${newsClass}" data-id="${item.id}">
       <div class="feed-header">
         <span class="feed-source">${sourceIcon} ${author}</span>
         <span class="feed-time">${timeAgo}</span>
@@ -535,7 +537,7 @@ function renderFeedItem(item) {
 }
 
 function getSourceIcon(type) {
-  const icons = { tweet: '🐦', blog: '📝', chart: '📊', link: '🔗' };
+  const icons = { tweet: '🐦', blog: '📝', chart: '📊', link: '🔗', news: '📰' };
   return icons[type] || '📌';
 }
 
@@ -823,6 +825,152 @@ window.filterFeed = function(type) {
     }
   }
 };
+
+// News Report functions
+async function generateNewsReportAPI(hours) {
+  return feedFetch('/api/news/report', {
+    method: 'POST',
+    body: JSON.stringify({ hours })
+  });
+}
+
+window.generateNewsReport = async function() {
+  const btn = document.getElementById('newsRefreshBtn');
+  const card = document.getElementById('newsReportCard');
+  const period = document.getElementById('newsReportPeriod');
+  const hours = parseInt(period?.value || '24');
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+  }
+
+  // Ensure card is visible
+  card?.classList.remove('hidden');
+  const wrapper = document.getElementById('newsReportWrapper');
+  wrapper?.classList.remove('collapsed');
+  const icon = document.getElementById('newsReportToggleIcon');
+  if (icon) icon.textContent = '▼';
+
+  if (card) card.innerHTML = '<div class="news-report-loading">Analyzing news...</div>';
+
+  try {
+    const result = await generateNewsReportAPI(hours);
+    if (result.success && result.report) {
+      renderNewsReport(card, result.report, result.meta);
+    } else {
+      card.innerHTML = `<div class="news-report-empty">Failed to generate report: ${result.error || 'Unknown error'}</div>`;
+    }
+  } catch (e) {
+    if (card) card.innerHTML = `<div class="news-report-empty">Error: ${e.message}</div>`;
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Refresh';
+    }
+  }
+};
+
+function renderNewsReport(container, report, meta) {
+  if (!container || !report) return;
+
+  const moodClass = report.marketMood?.sentiment || 'neutral';
+
+  const topStoriesHtml = (report.topStories || []).map(s => `
+    <div class="news-story">
+      <div class="news-story-header">
+        <span class="news-story-sentiment ${s.sentiment}">${s.sentiment}</span>
+        <span class="news-story-title">${escapeHtml(s.title)}</span>
+      </div>
+      ${s.tickers?.length ? `<div class="news-story-tickers">${s.tickers.map(t => `<span class="insight-ticker" onclick="analyzeTicker('${t}')">${t}</span>`).join('')}</div>` : ''}
+      <div class="news-story-impl">${escapeHtml(s.implication)}</div>
+      ${s.source ? `<div class="news-story-source">${escapeHtml(s.source)}</div>` : ''}
+    </div>
+  `).join('');
+
+  const sectorHtml = (report.sectorImpact || []).map(s => `
+    <div class="news-sector">
+      <span class="news-sector-name">${escapeHtml(s.sector)}</span>
+      <span class="news-sector-sentiment ${s.sentiment}">${s.sentiment}</span>
+      <span class="news-sector-reason">${escapeHtml(s.reason)}</span>
+    </div>
+  `).join('');
+
+  const tradingHtml = (report.tradingImplications || []).map(t =>
+    `<div class="news-trading-item">${escapeHtml(t)}</div>`
+  ).join('');
+
+  const watchHtml = (report.watchToday || []).map(t =>
+    `<span class="insight-ticker" onclick="analyzeTicker('${t}')">${t}</span>`
+  ).join('');
+
+  const riskHtml = (report.riskAlerts || []).map(r =>
+    `<div class="news-risk-item">${escapeHtml(r)}</div>`
+  ).join('');
+
+  container.innerHTML = `
+    <div class="news-report-content">
+      <div class="news-headline">${escapeHtml(report.headline)}</div>
+      <div class="news-summary">${escapeHtml(report.summary)}</div>
+      <div class="news-mood ${moodClass}">
+        <span class="news-mood-label">Market Mood:</span>
+        <span class="news-mood-value">${report.marketMood?.sentiment?.toUpperCase()}</span>
+        <span class="news-mood-desc">${escapeHtml(report.marketMood?.description || '')}</span>
+      </div>
+
+      ${topStoriesHtml ? `
+        <div class="news-section">
+          <div class="news-section-title">Top Stories</div>
+          ${topStoriesHtml}
+        </div>` : ''}
+
+      ${sectorHtml ? `
+        <div class="news-section">
+          <div class="news-section-title">Sector Impact</div>
+          ${sectorHtml}
+        </div>` : ''}
+
+      ${tradingHtml ? `
+        <div class="news-section">
+          <div class="news-section-title">Trading Implications</div>
+          ${tradingHtml}
+        </div>` : ''}
+
+      ${watchHtml ? `
+        <div class="news-section">
+          <div class="news-section-title">Watch Today</div>
+          <div class="news-watch-tickers">${watchHtml}</div>
+        </div>` : ''}
+
+      ${riskHtml ? `
+        <div class="news-section">
+          <div class="news-section-title">Risk Alerts</div>
+          ${riskHtml}
+        </div>` : ''}
+
+      ${meta ? `<div class="news-report-meta">${meta.storedArticles} stored + ${meta.freshArticles} fresh articles analyzed</div>` : ''}
+    </div>
+  `;
+}
+
+// Toggle news report section
+document.addEventListener('DOMContentLoaded', () => {
+  const header = document.getElementById('newsReportHeader');
+  if (header) {
+    header.addEventListener('click', (e) => {
+      // Don't toggle when clicking controls
+      if (e.target.closest('.news-report-controls')) return;
+      const card = document.getElementById('newsReportCard');
+      const icon = document.getElementById('newsReportToggleIcon');
+      const wrapper = document.getElementById('newsReportWrapper');
+      if (card && icon) {
+        const isHidden = card.classList.toggle('hidden');
+        wrapper?.classList.toggle('collapsed', isHidden);
+        icon.textContent = isHidden ? '▶' : '▼';
+      }
+    });
+  }
+});
 
 // Update stats when feed loads
 function updateFeedStats() {
