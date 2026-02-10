@@ -613,8 +613,12 @@ window.triggerThesisRegen = async function(event) {
   }
 
   try {
-    await regenerateThesis();
-    showToast('Thesis regenerated');
+    const result = await regenerateThesis();
+    if (result.success) {
+      showToast(`Thesis updated to v${result.version}`);
+    } else {
+      showToast(result.message || result.error || 'Thesis update failed');
+    }
     await loadThesis();
   } catch (e) {
     showToast('Failed to regenerate: ' + e.message);
