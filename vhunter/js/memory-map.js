@@ -24,7 +24,12 @@ async function memoryFetch(path, options = {}) {
       ...options.headers
     }
   });
-  return response.json();
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { error: `Invalid response: ${text.substring(0, 120)}` };
+  }
 }
 
 export async function getMemories(status = 'active') {
@@ -70,7 +75,7 @@ export async function extractMemories() {
 }
 
 export async function matchMemories() {
-  return memoryFetch('/api/memory/match', { method: 'POST' });
+  return memoryFetch('/api/memory/match', { method: 'POST', body: JSON.stringify({}) });
 }
 
 export async function generateMemoryThesis() {
@@ -559,7 +564,11 @@ async function matchMemoriesToFeed() {
 
   try {
     const result = await matchMemories();
-    showToast(`Matched ${result.matched || 0} signals to ${result.processed || 0} feed items`);
+    if (result.error) {
+      showToast(`Match error: ${result.error}`);
+    } else {
+      showToast(`Matched ${result.matched || 0} signals from ${result.processed || 0} items`);
+    }
     if (result.debug?.length) console.log('[MEMORY MATCH]', result.debug);
     loadMemoryMap();
   } catch (e) {
