@@ -1039,6 +1039,221 @@
   margin-top: 4px;
 }
 
+/* Overall Thesis - prominent display */
+.thesis-overall {
+  font-size: var(--t-lg);
+  font-weight: 600;
+  color: #f8fafc;
+  margin: 8px 0 12px;
+  padding: 10px 14px;
+  background: rgba(99, 102, 241, 0.15);
+  border-left: 3px solid #6366f1;
+  border-radius: 4px;
+  line-height: 1.5;
+}
+
+/* Market State grid */
+.thesis-market-state-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.market-state-item {
+  background: rgba(255,255,255,0.05);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.market-state-label {
+  display: block;
+  font-size: var(--t-2xs);
+  font-weight: 600;
+  color: #818cf8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.market-state-value {
+  font-size: var(--t-sm);
+  color: #e2e8f0;
+  line-height: 1.4;
+}
+
+/* Near-Term outlook */
+.thesis-near-term-outlook {
+  font-size: var(--t-base);
+  color: #e2e8f0;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.near-term-dev {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.near-term-dev:last-child {
+  border-bottom: none;
+}
+
+.near-term-dev-impact {
+  font-size: var(--t-2xs);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.near-term-dev-impact.high { background: #ef4444; color: #fff; }
+.near-term-dev-impact.medium { background: #f59e0b; color: #1e293b; }
+.near-term-dev-impact.low { background: #64748b; color: #fff; }
+
+.near-term-dev-text {
+  font-size: var(--t-sm);
+  color: #e2e8f0;
+  flex: 1;
+}
+
+.near-term-dev-time {
+  font-size: var(--t-2xs);
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+/* Evolving Factors */
+.thesis-evolving-factor {
+  background: rgba(255,255,255,0.05);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+
+.evolving-factor-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.evolving-factor-name {
+  font-weight: 600;
+  color: #f1f5f9;
+  font-size: var(--t-base);
+}
+
+.evolving-factor-trend {
+  font-size: var(--t-2xs);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.evolving-factor-trend.improving { background: #dcfce7; color: #166534; }
+.evolving-factor-trend.stable { background: #f1f5f9; color: #64748b; }
+.evolving-factor-trend.deteriorating { background: #fee2e2; color: #991b1b; }
+.evolving-factor-trend.volatile { background: #fef3c7; color: #92400e; }
+
+.evolving-factor-state {
+  font-size: var(--t-sm);
+  color: #e2e8f0;
+  line-height: 1.4;
+}
+
+.evolving-factor-sig {
+  font-size: var(--t-xs);
+  color: #94a3b8;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* Expectations */
+.thesis-expectation {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.thesis-expectation:last-child {
+  border-bottom: none;
+}
+
+.expectation-confidence {
+  font-size: var(--t-2xs);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.expectation-confidence.high { background: #22c55e; color: #fff; }
+.expectation-confidence.medium { background: #f59e0b; color: #1e293b; }
+.expectation-confidence.low { background: #64748b; color: #fff; }
+
+.expectation-text {
+  font-size: var(--t-sm);
+  color: #e2e8f0;
+  flex: 1;
+}
+
+.expectation-timeframe {
+  font-size: var(--t-2xs);
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+/* Opportunities */
+.thesis-opportunity {
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-left: 3px solid #6366f1;
+}
+
+.opportunity-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.opportunity-conviction {
+  font-size: var(--t-2xs);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.opportunity-conviction.high { background: #22c55e; color: #fff; }
+.opportunity-conviction.medium { background: #f59e0b; color: #1e293b; }
+.opportunity-conviction.low { background: #64748b; color: #fff; }
+
+.opportunity-text {
+  font-size: var(--t-base);
+  font-weight: 600;
+  color: #f1f5f9;
+  flex: 1;
+}
+
+.opportunity-timeframe {
+  font-size: var(--t-2xs);
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.opportunity-rationale {
+  font-size: var(--t-sm);
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
 /* Raw signal summary */
 .thesis-raw-summary {
   font-size: var(--t-sm);

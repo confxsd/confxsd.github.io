@@ -535,7 +535,10 @@ async function extractMemoriesFromThesis() {
 
   try {
     const result = await extractMemories();
-    showToast(`Extracted ${result.extracted || 0} new memories`);
+    const parts = [];
+    if (result.extracted) parts.push(`${result.extracted} new`);
+    if (result.updated) parts.push(`${result.updated} updated`);
+    showToast(parts.length ? `Memories: ${parts.join(', ')}` : 'No changes needed');
     loadMemoryMap();
   } catch (e) {
     showToast('Extraction failed: ' + e.message);
@@ -556,7 +559,8 @@ async function matchMemoriesToFeed() {
 
   try {
     const result = await matchMemories();
-    showToast(`Matched ${result.matched} signals to memories`);
+    showToast(`Matched ${result.matched || 0} signals to ${result.processed || 0} feed items`);
+    if (result.debug?.length) console.log('[MEMORY MATCH]', result.debug);
     loadMemoryMap();
   } catch (e) {
     showToast('Matching failed: ' + e.message);

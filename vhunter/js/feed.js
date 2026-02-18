@@ -1,5 +1,6 @@
 // Feed Module - Signal intelligence from tweets, blogs, charts
 import { CONFIG } from './config.js';
+import { getMacroSnapshot } from './macro.js';
 
 let feedItems = [];
 let currentThesis = null;
@@ -66,8 +67,11 @@ export async function getThesis() {
 }
 
 // Regenerate thesis manually
-export async function regenerateThesis() {
-  return feedFetch('/api/thesis/update', { method: 'POST' });
+export async function regenerateThesis(macroSnapshot = null) {
+  return feedFetch('/api/thesis/update', {
+    method: 'POST',
+    body: JSON.stringify({ macroSnapshot })
+  });
 }
 
 // Load and render thesis
@@ -110,30 +114,104 @@ function renderThesis(card, thesis) {
   const conviction = t.conviction || 5;
   const convictionClass = conviction >= 7 ? 'high' : conviction >= 4 ? 'medium' : 'low';
 
-  // Executive summary section
-  const execSummaryHtml = t.executiveSummary ? `
-    <div class="thesis-section">
-      <div class="thesis-section-title">Executive Summary</div>
-      <div class="thesis-section-content">${t.executiveSummary}</div>
-    </div>` : '';
+  // Overall Thesis (new) - falls back to old primaryThesis/executiveSummary
+  const overallText = t.overallThesis || t.primaryThesis || t.executiveSummary || '';
+  const overallHtml = overallText ? `
+    <div class="thesis-overall">${overallText}</div>` : '';
 
-  // Market analysis section
-  const marketAnalysis = t.marketAnalysis;
-  const marketHtml = marketAnalysis ? `
-    <div class="thesis-section collapsible" data-section="market">
-      <div class="thesis-section-title" onclick="toggleThesisSection('market', event)">
-        Market Analysis <span class="collapse-icon">▼</span>
+  // Narrative
+  const narrativeHtml = t.narrative ? `
+    <div class="thesis-narrative">${t.narrative}</div>` : '';
+
+  // Market State (new)
+  const ms = t.marketState;
+  const marketStateHtml = ms ? `
+    <div class="thesis-section collapsible" data-section="market-state">
+      <div class="thesis-section-title" onclick="toggleThesisSection('market-state', event)">
+        Market State <span class="collapse-icon">▼</span>
       </div>
       <div class="thesis-section-body">
-        ${marketAnalysis.currentState ? `<div class="thesis-row"><span class="thesis-label">Current State:</span><span class="thesis-value">${marketAnalysis.currentState}</span></div>` : ''}
-        ${marketAnalysis.keyDrivers?.length ? `<div class="thesis-row"><span class="thesis-label">Key Drivers:</span><span class="thesis-value">${marketAnalysis.keyDrivers.join('; ')}</span></div>` : ''}
-        ${marketAnalysis.technicalPicture ? `<div class="thesis-row"><span class="thesis-label">Technicals:</span><span class="thesis-value">${marketAnalysis.technicalPicture}</span></div>` : ''}
-        ${marketAnalysis.sentimentReading ? `<div class="thesis-row"><span class="thesis-label">Sentiment:</span><span class="thesis-value">${marketAnalysis.sentimentReading}</span></div>` : ''}
-        ${marketAnalysis.intermarketSignals ? `<div class="thesis-row"><span class="thesis-label">Intermarket:</span><span class="thesis-value">${marketAnalysis.intermarketSignals}</span></div>` : ''}
+        <div class="thesis-market-state-grid">
+          ${ms.equities ? `<div class="market-state-item"><span class="market-state-label">Equities</span><span class="market-state-value">${ms.equities}</span></div>` : ''}
+          ${ms.rates ? `<div class="market-state-item"><span class="market-state-label">Rates</span><span class="market-state-value">${ms.rates}</span></div>` : ''}
+          ${ms.volatility ? `<div class="market-state-item"><span class="market-state-label">Volatility</span><span class="market-state-value">${ms.volatility}</span></div>` : ''}
+          ${ms.intermarket ? `<div class="market-state-item"><span class="market-state-label">Intermarket</span><span class="market-state-value">${ms.intermarket}</span></div>` : ''}
+        </div>
       </div>
     </div>` : '';
 
-  // Themes section (new format with objects)
+  // Near-Term Outlook (new)
+  const nt = t.nearTerm;
+  const nearTermHtml = nt ? `
+    <div class="thesis-section collapsible" data-section="near-term">
+      <div class="thesis-section-title" onclick="toggleThesisSection('near-term', event)">
+        Near-Term Outlook <span class="collapse-icon">▼</span>
+      </div>
+      <div class="thesis-section-body">
+        ${nt.outlook ? `<div class="thesis-near-term-outlook">${nt.outlook}</div>` : ''}
+        ${nt.criticalDevelopments?.length ? `
+          <div class="thesis-near-term-devs">
+            ${nt.criticalDevelopments.map(d => `
+              <div class="near-term-dev">
+                <span class="near-term-dev-impact ${d.impact}">${d.impact}</span>
+                <span class="near-term-dev-text">${d.development}</span>
+                ${d.timeframe ? `<span class="near-term-dev-time">${d.timeframe}</span>` : ''}
+              </div>
+            `).join('')}
+          </div>` : ''}
+        ${nt.catalysts?.length ? `
+          <div class="thesis-near-term-catalysts">
+            ${nt.catalysts.map(c => `
+              <div class="catalyst-item">
+                <span class="catalyst-date">${c.date}</span>
+                <span class="catalyst-event">${c.event}</span>
+                <span class="catalyst-impact ${c.impact}">${c.impact}</span>
+              </div>
+            `).join('')}
+          </div>` : ''}
+      </div>
+    </div>` : '';
+
+  // Evolving Factors (new - from memories)
+  const ef = t.evolvingFactors || [];
+  const evolvingHtml = ef.length ? `
+    <div class="thesis-section collapsible" data-section="evolving">
+      <div class="thesis-section-title" onclick="toggleThesisSection('evolving', event)">
+        Evolving Factors (${ef.length}) <span class="collapse-icon">▼</span>
+      </div>
+      <div class="thesis-section-body">
+        ${ef.map(f => `
+          <div class="thesis-evolving-factor">
+            <div class="evolving-factor-header">
+              <span class="evolving-factor-name">${f.name}</span>
+              <span class="evolving-factor-trend ${f.trend}">${f.trend}</span>
+            </div>
+            ${f.currentState ? `<div class="evolving-factor-state">${f.currentState}</div>` : ''}
+            ${f.significance ? `<div class="evolving-factor-sig">${f.significance}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>` : '';
+
+  // Expectations (new)
+  const expectations = t.expectations || [];
+  const expectationsHtml = expectations.length ? `
+    <div class="thesis-section collapsible" data-section="expectations">
+      <div class="thesis-section-title" onclick="toggleThesisSection('expectations', event)">
+        Expectations (${expectations.length}) <span class="collapse-icon">▼</span>
+      </div>
+      <div class="thesis-section-body">
+        ${expectations.map(e => `
+          <div class="thesis-expectation">
+            <span class="expectation-confidence ${e.confidence}">${e.confidence}</span>
+            <span class="expectation-text">${e.expectation}</span>
+            ${e.timeframe ? `<span class="expectation-timeframe">${e.timeframe}</span>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>` : '';
+
+  // Themes
   const themes = t.themes || [];
   const themesHtml = themes.length ? `
     <div class="thesis-section collapsible" data-section="themes">
@@ -151,7 +229,7 @@ function renderThesis(card, thesis) {
       </div>
     </div>` : '';
 
-  // Sector analysis (new format)
+  // Sector analysis
   const sectorAnalysis = t.sectorAnalysis;
   const sectorsHtml = sectorAnalysis ? `
     <div class="thesis-section collapsible" data-section="sectors">
@@ -190,7 +268,7 @@ function renderThesis(card, thesis) {
     <div class="thesis-row"><span class="thesis-label">UW:</span><span class="thesis-value uw">${(t.sectors?.uw || []).join(', ')}</span></div>
     ${t.sectors?.avoid?.length ? `<div class="thesis-row"><span class="thesis-label">Avoid:</span><span class="thesis-value avoid">${t.sectors.avoid.join(', ')}</span></div>` : ''}` : '');
 
-  // Ticker intelligence section
+  // Ticker intelligence
   const tickerIntel = t.tickerIntelligence || [];
   const tickerHtml = tickerIntel.length ? `
     <div class="thesis-section collapsible" data-section="tickers">
@@ -203,32 +281,13 @@ function renderThesis(card, thesis) {
             <div class="ticker-header">
               <span class="ticker-symbol" onclick="analyzeTicker('${ti.ticker}')">${ti.ticker}</span>
               <span class="ticker-bias ${ti.netBias}">${ti.netBias}</span>
-              <span class="ticker-signals">${ti.signalCount} signals</span>
+              ${ti.signalCount ? `<span class="ticker-signals">${ti.signalCount} signals</span>` : ''}
             </div>
-            ${ti.tradingView ? `<div class="ticker-view">${ti.tradingView}</div>` : ''}
+            ${ti.tradingView || ti.view ? `<div class="ticker-view">${ti.tradingView || ti.view}</div>` : ''}
             ${ti.technicals ? `<div class="ticker-technicals">${ti.technicals}</div>` : ''}
             ${ti.catalyst ? `<div class="ticker-catalyst">Catalyst: ${ti.catalyst}</div>` : ''}
           </div>
         `).join('')}
-      </div>
-    </div>` : '';
-
-  // Volatility analysis
-  const volAnalysis = t.volatilityAnalysis || t.volatilityView;
-  const volHtml = volAnalysis ? `
-    <div class="thesis-section collapsible" data-section="vol">
-      <div class="thesis-section-title" onclick="toggleThesisSection('vol', event)">
-        Volatility Analysis <span class="collapse-icon">▼</span>
-      </div>
-      <div class="thesis-section-body">
-        <div class="thesis-row">
-          <span class="thesis-label">Level:</span>
-          <span class="thesis-value">${volAnalysis.currentLevel || volAnalysis.level} / ${volAnalysis.direction}</span>
-        </div>
-        ${volAnalysis.termStructure ? `<div class="thesis-row"><span class="thesis-label">Term Structure:</span><span class="thesis-value">${volAnalysis.termStructure}</span></div>` : ''}
-        ${volAnalysis.skew ? `<div class="thesis-row"><span class="thesis-label">Skew:</span><span class="thesis-value">${volAnalysis.skew}</span></div>` : ''}
-        <div class="thesis-row"><span class="thesis-label">Strategy:</span><span class="thesis-value">${volAnalysis.strategy}</span></div>
-        ${volAnalysis.trades?.length ? `<div class="thesis-row"><span class="thesis-label">Vol Trades:</span><span class="thesis-value">${volAnalysis.trades.join('; ')}</span></div>` : ''}
       </div>
     </div>` : '';
 
@@ -247,24 +306,45 @@ function renderThesis(card, thesis) {
       </div>
     </div>` : '';
 
-  // Catalyst calendar
-  const catalysts = t.catalystCalendar || t.catalysts || [];
-  const catalystsHtml = catalysts.length ? `
-    <div class="thesis-section collapsible" data-section="catalysts">
-      <div class="thesis-section-title" onclick="toggleThesisSection('catalysts', event)">
-        Catalysts (${catalysts.length}) <span class="collapse-icon">▼</span>
+  // Opportunities (new - replaces trade recommendations)
+  const opportunities = t.opportunities || [];
+  // Backward compat: also render old tradeRecommendations if no opportunities
+  const trades = !opportunities.length ? (t.tradeRecommendations || t.tradeIdeas || []) : [];
+  const oppsHtml = opportunities.length ? `
+    <div class="thesis-section collapsible" data-section="opps">
+      <div class="thesis-section-title" onclick="toggleThesisSection('opps', event)">
+        Opportunities (${opportunities.length}) <span class="collapse-icon">▼</span>
       </div>
       <div class="thesis-section-body">
-        ${catalysts.map(c => typeof c === 'string' ? `<div class="catalyst-item">${c}</div>` : `
-          <div class="catalyst-item">
-            <span class="catalyst-date">${c.date}</span>
-            <span class="catalyst-event">${c.event}</span>
-            <span class="catalyst-impact ${c.impact}">${c.impact}</span>
-            ${c.tradingImplication ? `<div class="catalyst-impl">${c.tradingImplication}</div>` : ''}
+        ${opportunities.map(o => `
+          <div class="thesis-opportunity">
+            <div class="opportunity-header">
+              <span class="opportunity-conviction ${o.conviction}">${o.conviction}</span>
+              <span class="opportunity-text">${o.opportunity}</span>
+              ${o.timeframe ? `<span class="opportunity-timeframe">${o.timeframe}</span>` : ''}
+            </div>
+            ${o.rationale ? `<div class="opportunity-rationale">${o.rationale}</div>` : ''}
           </div>
         `).join('')}
       </div>
-    </div>` : '';
+    </div>` : (trades.length ? `
+    <div class="thesis-section collapsible" data-section="trades">
+      <div class="thesis-section-title" onclick="toggleThesisSection('trades', event)">
+        Trade Recommendations (${trades.length}) <span class="collapse-icon">▼</span>
+      </div>
+      <div class="thesis-section-body">
+        ${trades.map(tr => typeof tr === 'string' ? `<div class="trade-item">${tr}</div>` : `
+          <div class="trade-item">
+            <div class="trade-idea">${tr.idea} <span class="trade-conviction ${tr.conviction}">${tr.conviction}</span></div>
+            ${tr.rationale ? `<div class="trade-rationale">${tr.rationale}</div>` : ''}
+            <div class="trade-levels">
+              ${tr.entry ? `Entry: ${tr.entry}` : ''} ${tr.target ? `| Target: ${tr.target}` : ''} ${tr.stop ? `| Stop: ${tr.stop}` : ''}
+            </div>
+            ${tr.timeframe ? `<div class="trade-timeframe">Timeframe: ${tr.timeframe}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>` : '');
 
   // Risk matrix
   const risks = t.riskMatrix || t.risks || [];
@@ -288,28 +368,14 @@ function renderThesis(card, thesis) {
       </div>
     </div>` : '';
 
-  // Trade recommendations
-  const trades = t.tradeRecommendations || t.tradeIdeas || [];
-  const tradesHtml = trades.length ? `
-    <div class="thesis-section collapsible" data-section="trades">
-      <div class="thesis-section-title" onclick="toggleThesisSection('trades', event)">
-        Trade Recommendations (${trades.length}) <span class="collapse-icon">▼</span>
-      </div>
-      <div class="thesis-section-body">
-        ${trades.map(tr => typeof tr === 'string' ? `<div class="trade-item">${tr}</div>` : `
-          <div class="trade-item">
-            <div class="trade-idea">${tr.idea} <span class="trade-conviction ${tr.conviction}">${tr.conviction}</span></div>
-            ${tr.rationale ? `<div class="trade-rationale">${tr.rationale}</div>` : ''}
-            <div class="trade-levels">
-              ${tr.entry ? `Entry: ${tr.entry}` : ''} ${tr.target ? `| Target: ${tr.target}` : ''} ${tr.stop ? `| Stop: ${tr.stop}` : ''}
-            </div>
-            ${tr.timeframe ? `<div class="trade-timeframe">Timeframe: ${tr.timeframe}</div>` : ''}
-          </div>
-        `).join('')}
-      </div>
+  // Contraindicators
+  const contraHtml = t.contraindicators?.length ? `
+    <div class="thesis-section">
+      <div class="thesis-section-title">Thesis Invalidators</div>
+      <div class="thesis-section-content contra">${t.contraindicators.join('; ')}</div>
     </div>` : '';
 
-  // Raw signal summary
+  // Raw signal summary (collapsed by default)
   const rawSummaryHtml = t.rawSignalSummary ? `
     <div class="thesis-section collapsible collapsed" data-section="raw">
       <div class="thesis-section-title" onclick="toggleThesisSection('raw', event)">
@@ -320,14 +386,61 @@ function renderThesis(card, thesis) {
       </div>
     </div>` : '';
 
-  // Contraindicators
-  const contraHtml = t.contraindicators?.length ? `
-    <div class="thesis-section">
-      <div class="thesis-section-title">Thesis Invalidators</div>
-      <div class="thesis-section-content contra">${t.contraindicators.join('; ')}</div>
+  // Backward compat: old market analysis section
+  const marketAnalysis = t.marketAnalysis;
+  const oldMarketHtml = !ms && marketAnalysis ? `
+    <div class="thesis-section collapsible" data-section="market">
+      <div class="thesis-section-title" onclick="toggleThesisSection('market', event)">
+        Market Analysis <span class="collapse-icon">▼</span>
+      </div>
+      <div class="thesis-section-body">
+        ${marketAnalysis.currentState ? `<div class="thesis-row"><span class="thesis-label">Current State:</span><span class="thesis-value">${marketAnalysis.currentState}</span></div>` : ''}
+        ${marketAnalysis.keyDrivers?.length ? `<div class="thesis-row"><span class="thesis-label">Key Drivers:</span><span class="thesis-value">${marketAnalysis.keyDrivers.join('; ')}</span></div>` : ''}
+        ${marketAnalysis.technicalPicture ? `<div class="thesis-row"><span class="thesis-label">Technicals:</span><span class="thesis-value">${marketAnalysis.technicalPicture}</span></div>` : ''}
+        ${marketAnalysis.sentimentReading ? `<div class="thesis-row"><span class="thesis-label">Sentiment:</span><span class="thesis-value">${marketAnalysis.sentimentReading}</span></div>` : ''}
+        ${marketAnalysis.intermarketSignals ? `<div class="thesis-row"><span class="thesis-label">Intermarket:</span><span class="thesis-value">${marketAnalysis.intermarketSignals}</span></div>` : ''}
+      </div>
     </div>` : '';
 
-  // Factor tilts (compact)
+  // Backward compat: old volatility analysis
+  const volAnalysis = t.volatilityAnalysis || t.volatilityView;
+  const volHtml = volAnalysis ? `
+    <div class="thesis-section collapsible" data-section="vol">
+      <div class="thesis-section-title" onclick="toggleThesisSection('vol', event)">
+        Volatility Analysis <span class="collapse-icon">▼</span>
+      </div>
+      <div class="thesis-section-body">
+        <div class="thesis-row">
+          <span class="thesis-label">Level:</span>
+          <span class="thesis-value">${volAnalysis.currentLevel || volAnalysis.level} / ${volAnalysis.direction}</span>
+        </div>
+        ${volAnalysis.termStructure ? `<div class="thesis-row"><span class="thesis-label">Term Structure:</span><span class="thesis-value">${volAnalysis.termStructure}</span></div>` : ''}
+        ${volAnalysis.skew ? `<div class="thesis-row"><span class="thesis-label">Skew:</span><span class="thesis-value">${volAnalysis.skew}</span></div>` : ''}
+        <div class="thesis-row"><span class="thesis-label">Strategy:</span><span class="thesis-value">${volAnalysis.strategy}</span></div>
+        ${volAnalysis.trades?.length ? `<div class="thesis-row"><span class="thesis-label">Vol Trades:</span><span class="thesis-value">${volAnalysis.trades.join('; ')}</span></div>` : ''}
+      </div>
+    </div>` : '';
+
+  // Backward compat: old catalyst calendar (if not in nearTerm)
+  const catalysts = !nt ? (t.catalystCalendar || t.catalysts || []) : [];
+  const oldCatalystsHtml = catalysts.length ? `
+    <div class="thesis-section collapsible" data-section="catalysts">
+      <div class="thesis-section-title" onclick="toggleThesisSection('catalysts', event)">
+        Catalysts (${catalysts.length}) <span class="collapse-icon">▼</span>
+      </div>
+      <div class="thesis-section-body">
+        ${catalysts.map(c => typeof c === 'string' ? `<div class="catalyst-item">${c}</div>` : `
+          <div class="catalyst-item">
+            <span class="catalyst-date">${c.date}</span>
+            <span class="catalyst-event">${c.event}</span>
+            <span class="catalyst-impact ${c.impact}">${c.impact}</span>
+            ${c.tradingImplication ? `<div class="catalyst-impl">${c.tradingImplication}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>` : '';
+
+  // Backward compat: factor tilts
   const factors = t.factorTilts;
   const factorHtml = factors ? `
     <div class="thesis-row">
@@ -344,19 +457,22 @@ function renderThesis(card, thesis) {
       <span class="thesis-collapse-icon">▼</span>
     </div>
     <div class="thesis-body">
-      ${t.primaryThesis ? `<div class="thesis-primary">${t.primaryThesis}</div>` : ''}
-      <div class="thesis-narrative">${t.narrative}</div>
-      ${execSummaryHtml}
-      ${marketHtml}
+      ${overallHtml}
+      ${narrativeHtml}
+      ${marketStateHtml}
+      ${oldMarketHtml}
+      ${nearTermHtml}
+      ${evolvingHtml}
+      ${expectationsHtml}
       ${themesHtml}
       ${sectorsHtml}
       ${tickerHtml}
       ${factorHtml}
       ${volHtml}
       ${levelsHtml}
-      ${catalystsHtml}
+      ${oldCatalystsHtml}
+      ${oppsHtml}
       ${risksHtml}
-      ${tradesHtml}
       ${contraHtml}
       ${rawSummaryHtml}
     </div>`;
@@ -609,11 +725,12 @@ window.triggerThesisRegen = async function(event) {
   const btn = document.getElementById('regenThesisBtn');
   if (btn) {
     btn.disabled = true;
-    btn.textContent = '↻ Regenerating...';
+    btn.textContent = '↻ Fetching data & regenerating...';
   }
 
   try {
-    const result = await regenerateThesis();
+    const macroSnapshot = getMacroSnapshot();
+    const result = await regenerateThesis(macroSnapshot);
     if (result.success) {
       showToast(`Thesis updated to v${result.version}`);
     } else {

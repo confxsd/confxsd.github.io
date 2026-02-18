@@ -2135,6 +2135,62 @@ function loadCachedAiAnalysis() {
   }
 }
 
+/**
+ * Get a compact macro snapshot string for thesis generation.
+ * Reuses already-fetched macro data from the dashboard.
+ */
+export function getMacroSnapshot() {
+  const tickers = ['SPY', 'QQQ', 'IWM', 'DIA', 'TLT', 'SHY', 'UVXY', 'GLD', 'USO', 'HYG', 'UUP', 'XLK', 'XLF', 'XLE', 'XLY'];
+  const hasData = tickers.some(t => macroData[t]);
+  if (!hasData) return null;
+
+  const fmt = (ticker) => {
+    const d = macroData[ticker];
+    if (!d?.price) return `${ticker} N/A`;
+    const sign = d.changePercent >= 0 ? '+' : '';
+    return `${ticker} $${d.price.toFixed(2)} (${sign}${d.changePercent.toFixed(2)}%)`;
+  };
+
+  const pctOnly = (ticker) => {
+    const d = macroData[ticker];
+    if (!d) return `${ticker} N/A`;
+    const sign = d.changePercent >= 0 ? '+' : '';
+    return `${ticker} ${sign}${d.changePercent.toFixed(2)}%`;
+  };
+
+  // Derive signals
+  const signals = [];
+  const spyChg = macroData['SPY']?.changePercent || 0;
+  const tltChg = macroData['TLT']?.changePercent || 0;
+  const uvxyChg = macroData['UVXY']?.changePercent || 0;
+  const uupChg = macroData['UUP']?.changePercent || 0;
+  const gldChg = macroData['GLD']?.changePercent || 0;
+  const shyChg = macroData['SHY']?.changePercent || 0;
+
+  if (spyChg > tltChg) signals.push('Risk appetite positive (SPY>TLT)');
+  else signals.push('Risk appetite negative (TLT>SPY)');
+
+  if (uvxyChg < -1) signals.push('Vol compressed');
+  else if (uvxyChg > 3) signals.push('Vol expanding');
+
+  if (uupChg > 0.3) signals.push('Dollar firm');
+  else if (uupChg < -0.3) signals.push('Dollar weak');
+
+  if (gldChg > 0.5) signals.push('Gold bid');
+
+  const curveSignal = tltChg > shyChg ? 'Curve flattening (long end rallying)' : 'Curve steepening';
+
+  return `REAL-TIME MARKET DATA:
+Indices: ${fmt('SPY')}, ${fmt('QQQ')}, ${fmt('IWM')}, ${fmt('DIA')}
+Rates: ${fmt('TLT')}, ${fmt('SHY')} → ${curveSignal}
+Vol: ${fmt('UVXY')} → ${uvxyChg < -1 ? 'Low vol regime' : uvxyChg > 3 ? 'Elevated vol' : 'Normal vol'}
+Commodities: ${fmt('GLD')}, ${fmt('USO')}
+Credit: ${fmt('HYG')} → ${(macroData['HYG']?.changePercent || 0) > 0 ? 'Spreads tightening' : 'Spreads widening'}
+Dollar: ${fmt('UUP')}
+Sectors: ${pctOnly('XLK')}, ${pctOnly('XLF')}, ${pctOnly('XLE')}, ${pctOnly('XLY')}
+Signals: ${signals.join(', ')}`;
+}
+
 // Expose functions to window
 window.refreshMacro = refreshMacro;
 window.openMacroSettings = openMacroSettings;
