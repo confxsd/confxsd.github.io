@@ -18,7 +18,8 @@ const pageTitles = {
   watchlist: 'Watchlist',
   notes: 'Notes',
   strategy: 'Strategy',
-  macro: 'Macro Dashboard'
+  macro: 'Macro Dashboard',
+  daily: 'Daily Checker'
 };
 
 export function getCurrentPage() {

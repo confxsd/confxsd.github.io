@@ -322,6 +322,40 @@ export async function generateMemoryThesis() {
   return dbFetch('/api/memory/thesis', { method: 'POST' });
 }
 
+// ==================== DAILY CHECKER ====================
+
+export async function getDailyChecks() {
+  return dbFetch('/api/daily-checks');
+}
+
+export async function addDailyCheck(body) {
+  return dbFetch('/api/daily-checks', { method: 'POST', body: JSON.stringify(body) });
+}
+
+export async function updateDailyCheck(id, body) {
+  return dbFetch(`/api/daily-checks/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+}
+
+export async function deleteDailyCheck(id) {
+  return dbFetch(`/api/daily-checks/${id}`, { method: 'DELETE' });
+}
+
+export async function runDailyChecks(force = false) {
+  return dbFetch(`/api/daily-checks/run${force ? '?force=true' : ''}`, { method: 'POST' });
+}
+
+export async function runDailyCheck(id) {
+  return dbFetch(`/api/daily-checks/${id}/run`, { method: 'POST' });
+}
+
+export async function getDailyResults() {
+  return dbFetch('/api/daily-checks/results');
+}
+
+export async function getDailyCheckHistory(id) {
+  return dbFetch(`/api/daily-checks/${id}/results`);
+}
+
 // ==================== HELPERS ====================
 
 // Calculate total P&L from closed positions
