@@ -304,12 +304,12 @@ window.dcOpenModal = function(checkId = null) {
   document.getElementById('dcPriorityInput').value = check?.priority || 3;
   document.getElementById('dcTagsInput').value = check?.tags || '';
   document.getElementById('dcTickerInput').disabled = !!check;
-  document.getElementById('dcModal').style.display = 'flex';
+  document.getElementById('dcModal').classList.add('dc-open');
   setTimeout(() => (check ? document.getElementById('dcThesisInput') : document.getElementById('dcTickerInput')).focus(), 50);
 };
 
 window.dcCloseModal = function() {
-  document.getElementById('dcModal').style.display = 'none';
+  document.getElementById('dcModal').classList.remove('dc-open');
 };
 
 window.dcSave = async function() {

@@ -3036,46 +3036,44 @@
     </div>
 
     <!-- Daily Checker Modal -->
-    <div id="dcModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)window.dcCloseModal()">
-      <div class="modal" style="max-width:480px;width:90%">
-        <div class="modal-header">
-          <h3 class="modal-title" id="dcModalTitle">Add Check</h3>
-          <button class="modal-close" onclick="window.dcCloseModal()">×</button>
+    <div id="dcModal" class="dc-overlay" onclick="if(event.target===this)window.dcCloseModal()">
+      <div class="dc-dialog">
+        <div class="dc-dialog-header">
+          <span id="dcModalTitle">Add Check</span>
+          <button class="dc-dialog-close" onclick="window.dcCloseModal()">×</button>
         </div>
-        <div class="modal-body">
-          <form id="dcForm" data-edit-id="" onsubmit="event.preventDefault(); window.dcSave()">
+        <form id="dcForm" data-edit-id="" onsubmit="event.preventDefault(); window.dcSave()">
+          <div class="dc-modal-field">
+            <label>Ticker</label>
+            <input type="text" id="dcTickerInput" placeholder="e.g. IONQ" maxlength="10" style="text-transform:uppercase" />
+          </div>
+          <div class="dc-modal-field">
+            <label>Conviction Thesis</label>
+            <textarea id="dcThesisInput" placeholder="e.g. 'Pipe scam, short on ATH retest with elevated put flow'" rows="4"></textarea>
+          </div>
+          <div class="dc-modal-row">
             <div class="dc-modal-field">
-              <label>Ticker</label>
-              <input type="text" id="dcTickerInput" placeholder="e.g. IONQ" maxlength="10" style="text-transform:uppercase" />
+              <label>Direction</label>
+              <select id="dcDirectionInput">
+                <option value="monitor">Monitor</option>
+                <option value="long">Long</option>
+                <option value="short">Short</option>
+              </select>
             </div>
             <div class="dc-modal-field">
-              <label>Conviction Thesis</label>
-              <textarea id="dcThesisInput" placeholder="Describe your thesis... e.g. 'Pipe scam, short on ATH retest with elevated put flow'" rows="4"></textarea>
+              <label>Priority (1-5)</label>
+              <input type="number" id="dcPriorityInput" min="1" max="5" value="3" />
             </div>
-            <div class="dc-modal-row">
-              <div class="dc-modal-field">
-                <label>Direction</label>
-                <select id="dcDirectionInput">
-                  <option value="monitor">Monitor</option>
-                  <option value="long">Long</option>
-                  <option value="short">Short</option>
-                </select>
-              </div>
-              <div class="dc-modal-field">
-                <label>Priority (1-5)</label>
-                <input type="number" id="dcPriorityInput" min="1" max="5" value="3" />
-              </div>
-              <div class="dc-modal-field">
-                <label>Tags</label>
-                <input type="text" id="dcTagsInput" placeholder="e.g. biotech,pipe" />
-              </div>
+            <div class="dc-modal-field">
+              <label>Tags</label>
+              <input type="text" id="dcTagsInput" placeholder="e.g. biotech,pipe" />
             </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button class="btn" onclick="window.dcCloseModal()">Cancel</button>
-          <button class="btn btn-primary" onclick="window.dcSave()">Save</button>
-        </div>
+          </div>
+          <div class="dc-dialog-footer">
+            <button type="button" class="dc-btn-cancel" onclick="window.dcCloseModal()">Cancel</button>
+            <button type="submit" class="dc-btn-save">Save</button>
+          </div>
+        </form>
       </div>
     </div>
 

@@ -337,7 +337,88 @@
 .dc-empty-text { font-size: 0.9rem; font-weight: 500; margin-bottom: 6px; }
 .dc-empty-hint { font-size: 0.78rem; }
 
-/* ── Add Check Modal ── */
+/* ── Modal Overlay ── */
+.dc-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.dc-overlay.dc-open {
+  display: flex;
+}
+
+.dc-dialog {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.dc-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.dc-dialog-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.dc-dialog-close:hover { color: var(--text-primary); }
+
+.dc-dialog-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+.dc-btn-cancel {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.dc-btn-cancel:hover { background: var(--bg-card); color: var(--text-primary); }
+
+.dc-btn-save {
+  padding: 8px 20px;
+  border-radius: 6px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dc-btn-save:hover { opacity: 0.9; }
+
+/* ── Add Check Form Fields ── */
 .dc-modal-field {
   margin-bottom: 14px;
 }
