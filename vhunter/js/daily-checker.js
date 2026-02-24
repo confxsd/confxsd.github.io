@@ -22,7 +22,11 @@ function signalClass(signal) {
   }
 }
 
-function fmtPrice(p) { return p != null ? '$' + parseFloat(p).toFixed(2) : '--'; }
+function fmtPrice(p) {
+  if (p == null) return '--';
+  const n = parseFloat(String(p).replace(/[$,]/g, ''));
+  return isNaN(n) ? '--' : '$' + n.toFixed(2);
+}
 function fmtPct(p)   { return p != null ? (p >= 0 ? '+' : '') + parseFloat(p).toFixed(1) + '%' : '--'; }
 function fmtPctCls(p) { return p == null ? '' : p >= 0 ? 'positive' : 'negative'; }
 
@@ -51,7 +55,11 @@ function timeAgo(isoStr) {
 function renderCard(check) {
   const r = check.latest_result;
   let market = null, opts = null, analysis = null;
-  try { market = r?.market_snapshot ? JSON.parse(r.market_snapshot) : null; } catch (_) {}
+  try {
+    const raw = r?.market_snapshot ? JSON.parse(r.market_snapshot) : null;
+    // Handle both flat {price,rsi,...} and nested {daily:{price,rsi,...},...}
+    market = raw?.price != null ? raw : (raw?.daily ?? null);
+  } catch (_) {}
   try { opts   = r?.options_snapshot ? JSON.parse(r.options_snapshot) : null; } catch (_) {}
   try { analysis = r?.ai_analysis ? JSON.parse(r.ai_analysis) : null; } catch (_) {}
 
@@ -99,11 +107,13 @@ function renderCard(check) {
     : '';
 
   const levels = analysis?.key_levels;
+  const lvlTarget = levels ? (levels.target ?? levels.target_1 ?? null) : null;
   const levelsHtml = levels ? `
     <div class="dc-levels">
-      ${levels.entry  != null ? `<div class="dc-level"><span class="dc-level-label">Entry</span><span class="dc-level-value">${fmtPrice(levels.entry)}</span></div>` : ''}
-      ${levels.target != null ? `<div class="dc-level"><span class="dc-level-label">Target</span><span class="dc-level-value">${fmtPrice(levels.target)}</span></div>` : ''}
-      ${levels.stop   != null ? `<div class="dc-level"><span class="dc-level-label">Stop</span><span class="dc-level-value">${fmtPrice(levels.stop)}</span></div>` : ''}
+      ${levels.entry != null ? `<div class="dc-level"><span class="dc-level-label">Entry</span><span class="dc-level-value">${fmtPrice(levels.entry)}</span></div>` : ''}
+      ${lvlTarget    != null ? `<div class="dc-level"><span class="dc-level-label">Target</span><span class="dc-level-value">${fmtPrice(lvlTarget)}</span></div>` : ''}
+      ${levels.stop  != null ? `<div class="dc-level"><span class="dc-level-label">Stop</span><span class="dc-level-value">${fmtPrice(levels.stop)}</span></div>` : ''}
+      ${levels.risk_reward != null ? `<div class="dc-level"><span class="dc-level-label">R:R</span><span class="dc-level-value">${parseFloat(levels.risk_reward).toFixed(1)}x</span></div>` : ''}
     </div>` : '';
 
   const riskBadges = (analysis?.risk_events || []).map(e => `<span class="dc-badge risk">${e}</span>`).join('');
@@ -116,6 +126,29 @@ function renderCard(check) {
         ${ts.entry_condition ? ' — ' + ts.entry_condition : ''}
         ${ts.size_note ? '<br><small style="color:var(--text-muted)">' + ts.size_note + '</small>' : ''}
       </div>
+    </div>` : '';
+
+  // Render sub-checks compactly
+  const subChecks = check.sub_checks || [];
+  const subHtml = subChecks.length ? `
+    <div class="dc-sub-checks">
+      ${subChecks.map(sub => {
+        let subAnalysis = null;
+        try { subAnalysis = sub.latest_result?.ai_analysis ? JSON.parse(sub.latest_result.ai_analysis) : null; } catch (_) {}
+        const subSig = sub.latest_result?.signal;
+        const subScore = sub.latest_result?.opportunity_score;
+        return `<div class="dc-sub-check">
+          <span class="dc-sub-label">Sub-check</span>
+          <span class="dc-signal ${signalClass(subSig)} sm">${subSig || 'NO DATA'}</span>
+          <span class="dc-sub-score">${subScore ?? '--'}</span>
+          <span class="dc-sub-thesis">${sub.thesis.slice(0, 120)}…</span>
+          <div class="dc-sub-actions">
+            <button class="btn btn-sm" onclick="event.stopPropagation();window.dcRunOne('${sub.id}')">↻</button>
+            <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();window.dcDelete('${sub.id}','${sub.ticker}')">✕</button>
+          </div>
+          ${subAnalysis?.signal_reason ? `<div class="dc-sub-detail">${subAnalysis.signal_reason}</div>` : ''}
+        </div>`;
+      }).join('')}
     </div>` : '';
 
   return `
@@ -172,15 +205,18 @@ function renderCard(check) {
         </div>
         <div style="font-size:0.68rem;color:var(--text-muted);margin-top:8px">Last run: ${timeAgo(r?.created_at)}</div>
       </div>
+      ${subHtml}
     </div>
   `;
 }
 
 function filterChecks(checks) {
-  if (activeFilter === 'entry') return checks.filter(c => ['ENTRY NOW', 'ENTRY SOON'].includes(c.latest_result?.signal));
-  if (activeFilter === 'watch') return checks.filter(c => c.latest_result?.signal === 'WATCH');
-  if (activeFilter === 'wait')  return checks.filter(c => !c.latest_result || c.latest_result?.signal === 'WAIT');
-  return checks;
+  // Sub-checks always stay attached to their parent; filter top-level only
+  const top = checks.filter(c => !c.parent_id);
+  if (activeFilter === 'entry') return top.filter(c => ['ENTRY NOW', 'ENTRY SOON'].includes(c.latest_result?.signal));
+  if (activeFilter === 'watch') return top.filter(c => c.latest_result?.signal === 'WATCH');
+  if (activeFilter === 'wait')  return top.filter(c => !c.latest_result || c.latest_result?.signal === 'WAIT');
+  return top;
 }
 
 // ── Main render ───────────────────────────────────────────────
@@ -194,14 +230,16 @@ export function renderDailyChecker() {
     ? '<span class="dc-run-spinner"></span>Running...'
     : '↻ Run All';
 
-  const entry = checksCache.filter(c => ['ENTRY NOW', 'ENTRY SOON'].includes(c.latest_result?.signal)).length;
+  // Only count top-level checks (sub-checks have parent_id)
+  const topLevel = checksCache.filter(c => !c.parent_id);
+  const entry = topLevel.filter(c => ['ENTRY NOW', 'ENTRY SOON'].includes(c.latest_result?.signal)).length;
   document.getElementById('dcMeta').textContent =
-    `${checksCache.length} active${entry ? ' · ' + entry + ' entry signal' + (entry !== 1 ? 's' : '') : ''}`;
+    `${topLevel.length} active${entry ? ' · ' + entry + ' entry signal' + (entry !== 1 ? 's' : '') : ''}`;
 
-  document.getElementById('dcTabAll').textContent   = `All (${checksCache.length})`;
-  document.getElementById('dcTabEntry').textContent = `Entry (${checksCache.filter(c => ['ENTRY NOW','ENTRY SOON'].includes(c.latest_result?.signal)).length})`;
-  document.getElementById('dcTabWatch').textContent = `Watch (${checksCache.filter(c => c.latest_result?.signal === 'WATCH').length})`;
-  document.getElementById('dcTabWait').textContent  = `Wait (${checksCache.filter(c => !c.latest_result || c.latest_result?.signal === 'WAIT').length})`;
+  document.getElementById('dcTabAll').textContent   = `All (${topLevel.length})`;
+  document.getElementById('dcTabEntry').textContent = `Entry (${topLevel.filter(c => ['ENTRY NOW','ENTRY SOON'].includes(c.latest_result?.signal)).length})`;
+  document.getElementById('dcTabWatch').textContent = `Watch (${topLevel.filter(c => c.latest_result?.signal === 'WATCH').length})`;
+  document.getElementById('dcTabWait').textContent  = `Wait (${topLevel.filter(c => !c.latest_result || c.latest_result?.signal === 'WAIT').length})`;
 
   const container = document.getElementById('dcCards');
   if (!filtered.length) {
