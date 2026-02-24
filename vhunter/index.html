@@ -96,6 +96,18 @@
           <a
             href="#"
             class="nav-item"
+            data-page="daily"
+            onclick="
+              event.preventDefault();
+              switchPage('daily');
+            "
+          >
+            <span class="nav-icon">🎯</span>
+            <span class="nav-label">Daily Checker</span>
+          </a>
+          <a
+            href="#"
+            class="nav-item"
             data-page="options"
             onclick="
               event.preventDefault();
@@ -228,23 +240,7 @@
             <span class="nav-icon">🌍</span>
             <span class="nav-label">Macro</span>
           </a>
-          <a
-            href="#"
-            class="nav-item"
-            data-page="daily"
-            onclick="
-              event.preventDefault();
-              switchPage('daily');
-            "
-          >
-            <span class="nav-icon">🎯</span>
-            <span class="nav-label">Daily Checker</span>
-          </a>
-          <a
-            href="hunter/run.html"
-            class="nav-item"
-            target="_blank"
-          >
+          <a href="hunter/run.html" class="nav-item" target="_blank">
             <span class="nav-icon">🤖</span>
             <span class="nav-label">Hunter</span>
           </a>
@@ -306,7 +302,10 @@
           <div class="section" id="sec-charts">
             <div class="section-header" onclick="toggleSection('sec-charts')">
               <span class="section-title">Charts & Indicators</span>
-              <div class="chart-period-switch" onclick="event.stopPropagation()">
+              <div
+                class="chart-period-switch"
+                onclick="event.stopPropagation()"
+              >
                 <button class="period-btn" data-period="1d">1D</button>
                 <button class="period-btn" data-period="1w">1W</button>
                 <button class="period-btn active" data-period="1m">1M</button>
@@ -735,7 +734,10 @@
 
           <!-- Financials Section -->
           <div class="section collapsed" id="sec-financials">
-            <div class="section-header" onclick="toggleSection('sec-financials')">
+            <div
+              class="section-header"
+              onclick="toggleSection('sec-financials')"
+            >
               <span class="section-title">Financials (SEC)</span>
               <span class="section-toggle">▼</span>
             </div>
@@ -752,7 +754,11 @@
           <div class="page-header">
             <h1>Feed</h1>
             <div class="header-actions">
-              <button class="btn-secondary" onclick="triggerThesisRegen(event)" id="regenThesisBtn">
+              <button
+                class="btn-secondary"
+                onclick="triggerThesisRegen(event)"
+                id="regenThesisBtn"
+              >
                 ↻ Regen Thesis
               </button>
               <button class="btn-primary" onclick="openFeedModal()">
@@ -766,8 +772,13 @@
             <div class="thesis-section-wrapper" id="thesisSectionWrapper">
               <div class="thesis-section-header" id="thesisSectionHeader">
                 <span class="thesis-section-label">Overall Thesis</span>
-                <span class="thesis-updated-inline" id="thesisUpdatedTime"></span>
-                <span class="thesis-section-toggle" id="thesisToggleIcon">▼</span>
+                <span
+                  class="thesis-updated-inline"
+                  id="thesisUpdatedTime"
+                ></span>
+                <span class="thesis-section-toggle" id="thesisToggleIcon"
+                  >▼</span
+                >
               </div>
               <div class="thesis-card" id="thesisCard">
                 <div class="thesis-empty">
@@ -806,14 +817,22 @@
                     <option value="168">This Week</option>
                     <option value="720">This Month</option>
                   </select>
-                  <button class="news-refresh-btn" id="newsRefreshBtn" onclick="generateNewsReport()">
+                  <button
+                    class="news-refresh-btn"
+                    id="newsRefreshBtn"
+                    onclick="generateNewsReport()"
+                  >
                     Refresh
                   </button>
                 </div>
-                <span class="news-report-toggle" id="newsReportToggleIcon">▶</span>
+                <span class="news-report-toggle" id="newsReportToggleIcon"
+                  >▶</span
+                >
               </div>
               <div class="news-report-card hidden" id="newsReportCard">
-                <div class="news-report-empty">No report yet - click Refresh to generate</div>
+                <div class="news-report-empty">
+                  No report yet - click Refresh to generate
+                </div>
               </div>
             </div>
 
@@ -857,16 +876,31 @@
               Memory Map
             </h1>
             <div class="header-actions">
-              <button class="memory-action-btn secondary" id="extractMemoriesBtn" onclick="extractMemoriesFromThesis()">
+              <button
+                class="memory-action-btn secondary"
+                id="extractMemoriesBtn"
+                onclick="extractMemoriesFromThesis()"
+              >
                 Extract from Thesis
               </button>
-              <button class="memory-action-btn secondary" id="matchMemoriesBtn" onclick="matchMemoriesToFeed()">
+              <button
+                class="memory-action-btn secondary"
+                id="matchMemoriesBtn"
+                onclick="matchMemoriesToFeed()"
+              >
                 Match Feed
               </button>
-              <button class="memory-action-btn secondary" id="generateThesisBtn" onclick="generateThesisFromMemories()">
+              <button
+                class="memory-action-btn secondary"
+                id="generateThesisBtn"
+                onclick="generateThesisFromMemories()"
+              >
                 Generate Thesis
               </button>
-              <button class="memory-action-btn primary" onclick="openMemoryModal()">
+              <button
+                class="memory-action-btn primary"
+                onclick="openMemoryModal()"
+              >
                 + New Memory
               </button>
             </div>
@@ -876,12 +910,48 @@
             <!-- Filters -->
             <div class="memory-header">
               <div class="memory-filters">
-                <button class="memory-filter-btn active" data-filter="all" onclick="setMemoryFilter('all')">All</button>
-                <button class="memory-filter-btn" data-filter="geopolitical" onclick="setMemoryFilter('geopolitical')">Geopolitical</button>
-                <button class="memory-filter-btn" data-filter="macro" onclick="setMemoryFilter('macro')">Macro</button>
-                <button class="memory-filter-btn" data-filter="sector" onclick="setMemoryFilter('sector')">Sector</button>
-                <button class="memory-filter-btn" data-filter="theme" onclick="setMemoryFilter('theme')">Theme</button>
-                <button class="memory-filter-btn" data-filter="ticker" onclick="setMemoryFilter('ticker')">Ticker</button>
+                <button
+                  class="memory-filter-btn active"
+                  data-filter="all"
+                  onclick="setMemoryFilter('all')"
+                >
+                  All
+                </button>
+                <button
+                  class="memory-filter-btn"
+                  data-filter="geopolitical"
+                  onclick="setMemoryFilter('geopolitical')"
+                >
+                  Geopolitical
+                </button>
+                <button
+                  class="memory-filter-btn"
+                  data-filter="macro"
+                  onclick="setMemoryFilter('macro')"
+                >
+                  Macro
+                </button>
+                <button
+                  class="memory-filter-btn"
+                  data-filter="sector"
+                  onclick="setMemoryFilter('sector')"
+                >
+                  Sector
+                </button>
+                <button
+                  class="memory-filter-btn"
+                  data-filter="theme"
+                  onclick="setMemoryFilter('theme')"
+                >
+                  Theme
+                </button>
+                <button
+                  class="memory-filter-btn"
+                  data-filter="ticker"
+                  onclick="setMemoryFilter('ticker')"
+                >
+                  Ticker
+                </button>
               </div>
             </div>
 
@@ -895,15 +965,23 @@
           </div>
 
           <!-- Detail Panel Overlay -->
-          <div class="memory-detail-overlay" id="memoryDetailOverlay" onclick="closeMemoryDetail()"></div>
+          <div
+            class="memory-detail-overlay"
+            id="memoryDetailOverlay"
+            onclick="closeMemoryDetail()"
+          ></div>
           <div class="memory-detail-panel" id="memoryDetailPanel"></div>
 
           <!-- Create/Edit Modal -->
           <div class="memory-modal-overlay" id="memoryModalOverlay">
             <div class="memory-modal">
               <div class="memory-modal-header">
-                <span class="memory-modal-title" id="memoryModalTitle">New Memory</span>
-                <button class="memory-modal-close" onclick="closeMemoryModal()">×</button>
+                <span class="memory-modal-title" id="memoryModalTitle"
+                  >New Memory</span
+                >
+                <button class="memory-modal-close" onclick="closeMemoryModal()">
+                  ×
+                </button>
               </div>
               <form id="memoryForm" onsubmit="saveMemory(event)">
                 <div class="memory-modal-body">
@@ -911,13 +989,22 @@
 
                   <div class="memory-form-group">
                     <label class="memory-form-label">Name *</label>
-                    <input type="text" id="memoryFormName" class="memory-form-input" placeholder="e.g., Trump-Xi Relationship" required />
+                    <input
+                      type="text"
+                      id="memoryFormName"
+                      class="memory-form-input"
+                      placeholder="e.g., Trump-Xi Relationship"
+                      required
+                    />
                   </div>
 
                   <div class="memory-form-row">
                     <div class="memory-form-group">
                       <label class="memory-form-label">Category</label>
-                      <select id="memoryFormCategory" class="memory-form-select">
+                      <select
+                        id="memoryFormCategory"
+                        class="memory-form-select"
+                      >
                         <option value="theme">Theme</option>
                         <option value="geopolitical">Geopolitical</option>
                         <option value="macro">Macro</option>
@@ -929,9 +1016,14 @@
                     </div>
                     <div class="memory-form-group">
                       <label class="memory-form-label">Timeframe</label>
-                      <select id="memoryFormTimeframe" class="memory-form-select">
+                      <select
+                        id="memoryFormTimeframe"
+                        class="memory-form-select"
+                      >
                         <option value="short-term">Short-term</option>
-                        <option value="medium-term" selected>Medium-term</option>
+                        <option value="medium-term" selected>
+                          Medium-term
+                        </option>
                         <option value="long-term">Long-term</option>
                       </select>
                     </div>
@@ -939,34 +1031,69 @@
 
                   <div class="memory-form-group">
                     <label class="memory-form-label">Description *</label>
-                    <textarea id="memoryFormDescription" class="memory-form-textarea" placeholder="What does this memory track and why is it important?" required></textarea>
+                    <textarea
+                      id="memoryFormDescription"
+                      class="memory-form-textarea"
+                      placeholder="What does this memory track and why is it important?"
+                      required
+                    ></textarea>
                   </div>
 
                   <div class="memory-form-group">
                     <label class="memory-form-label">Market Relevance</label>
-                    <textarea id="memoryFormRelevance" class="memory-form-textarea" placeholder="How does this impact markets and which assets?"></textarea>
+                    <textarea
+                      id="memoryFormRelevance"
+                      class="memory-form-textarea"
+                      placeholder="How does this impact markets and which assets?"
+                    ></textarea>
                   </div>
 
                   <div class="memory-form-group">
                     <label class="memory-form-label">Affected Assets</label>
-                    <input type="text" id="memoryFormAssets" class="memory-form-input" placeholder="NVDA, AAPL, TSM (comma-separated)" />
+                    <input
+                      type="text"
+                      id="memoryFormAssets"
+                      class="memory-form-input"
+                      placeholder="NVDA, AAPL, TSM (comma-separated)"
+                    />
                   </div>
 
                   <div class="memory-form-row">
                     <div class="memory-form-group">
                       <label class="memory-form-label">Importance (1-10)</label>
-                      <input type="number" id="memoryFormImportance" class="memory-form-input" min="1" max="10" step="0.5" value="5" />
+                      <input
+                        type="number"
+                        id="memoryFormImportance"
+                        class="memory-form-input"
+                        min="1"
+                        max="10"
+                        step="0.5"
+                        value="5"
+                      />
                     </div>
                     <div class="memory-form-group">
-                      <label class="memory-form-label">Sentiment (-10 to +10)</label>
-                      <input type="number" id="memoryFormSentiment" class="memory-form-input" min="-10" max="10" step="0.5" value="0" />
+                      <label class="memory-form-label"
+                        >Sentiment (-10 to +10)</label
+                      >
+                      <input
+                        type="number"
+                        id="memoryFormSentiment"
+                        class="memory-form-input"
+                        min="-10"
+                        max="10"
+                        step="0.5"
+                        value="0"
+                      />
                     </div>
                   </div>
 
                   <div class="memory-form-row">
                     <div class="memory-form-group">
                       <label class="memory-form-label">Volatility Impact</label>
-                      <select id="memoryFormVolatility" class="memory-form-select">
+                      <select
+                        id="memoryFormVolatility"
+                        class="memory-form-select"
+                      >
                         <option value="low">Low</option>
                         <option value="medium" selected>Medium</option>
                         <option value="high">High</option>
@@ -976,18 +1103,36 @@
                   </div>
 
                   <div class="memory-form-group">
-                    <label class="memory-form-label">Current Thesis Impact</label>
-                    <textarea id="memoryFormThesisImpact" class="memory-form-textarea" placeholder="How does this currently affect your thesis?"></textarea>
+                    <label class="memory-form-label"
+                      >Current Thesis Impact</label
+                    >
+                    <textarea
+                      id="memoryFormThesisImpact"
+                      class="memory-form-textarea"
+                      placeholder="How does this currently affect your thesis?"
+                    ></textarea>
                   </div>
 
                   <div class="memory-form-group">
                     <label class="memory-form-label">Trade Implications</label>
-                    <textarea id="memoryFormTrades" class="memory-form-textarea" placeholder="One trade idea per line"></textarea>
-                    <div class="memory-form-hint">Enter each trade implication on a new line</div>
+                    <textarea
+                      id="memoryFormTrades"
+                      class="memory-form-textarea"
+                      placeholder="One trade idea per line"
+                    ></textarea>
+                    <div class="memory-form-hint">
+                      Enter each trade implication on a new line
+                    </div>
                   </div>
                 </div>
                 <div class="memory-modal-footer">
-                  <button type="button" class="btn-cancel" onclick="closeMemoryModal()">Cancel</button>
+                  <button
+                    type="button"
+                    class="btn-cancel"
+                    onclick="closeMemoryModal()"
+                  >
+                    Cancel
+                  </button>
                   <button type="submit" class="btn-save">Save Memory</button>
                 </div>
               </form>
@@ -996,16 +1141,26 @@
 
           <!-- Generated Thesis Modal -->
           <div class="memory-modal-overlay" id="memoryThesisModal">
-            <div class="memory-modal" style="max-width: 640px;">
+            <div class="memory-modal" style="max-width: 640px">
               <div class="memory-modal-header">
-                <span class="memory-modal-title">Generated Thesis from Memories</span>
-                <button class="memory-modal-close" onclick="closeThesisModal()">×</button>
+                <span class="memory-modal-title"
+                  >Generated Thesis from Memories</span
+                >
+                <button class="memory-modal-close" onclick="closeThesisModal()">
+                  ×
+                </button>
               </div>
               <div class="memory-modal-body" id="memoryThesisContent">
                 Loading...
               </div>
               <div class="memory-modal-footer">
-                <button type="button" class="btn-cancel" onclick="closeThesisModal()">Close</button>
+                <button
+                  type="button"
+                  class="btn-cancel"
+                  onclick="closeThesisModal()"
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>
@@ -1076,19 +1231,37 @@
             <!-- Header with Tabs and Scan Controls -->
             <div class="fil-header">
               <div class="fil-tabs">
-                <button class="fil-tab active" data-tab="filings" onclick="switchFilingsTab('filings')">
+                <button
+                  class="fil-tab active"
+                  data-tab="filings"
+                  onclick="switchFilingsTab('filings')"
+                >
                   <i class="fa-solid fa-file-lines"></i> Filings
                 </button>
-                <button class="fil-tab" data-tab="holdings" onclick="switchFilingsTab('holdings')">
+                <button
+                  class="fil-tab"
+                  data-tab="holdings"
+                  onclick="switchFilingsTab('holdings')"
+                >
                   <i class="fa-solid fa-chart-pie"></i> Holdings
                 </button>
               </div>
               <div class="fil-header-right">
-                <span class="fil-last-scan" id="filLastScan">Last scan: --</span>
-                <button class="fil-btn" onclick="showScanOptions()" title="Configure scan options">
+                <span class="fil-last-scan" id="filLastScan"
+                  >Last scan: --</span
+                >
+                <button
+                  class="fil-btn"
+                  onclick="showScanOptions()"
+                  title="Configure scan options"
+                >
                   <i class="fa-solid fa-sliders"></i>
                 </button>
-                <button class="fil-btn fil-btn-primary" id="scanFilingsBtn" onclick="quickScan()">
+                <button
+                  class="fil-btn fil-btn-primary"
+                  id="scanFilingsBtn"
+                  onclick="quickScan()"
+                >
                   <i class="fa-solid fa-radar"></i> Scan
                 </button>
               </div>
@@ -1098,132 +1271,178 @@
             <div class="fil-tab-content active" id="filTabFilings">
               <!-- Dashboard Stats by Filing Type -->
               <div class="fil-dashboard">
-              <div class="fil-stat" onclick="filterFilings('13F-HR')">
-                <div class="fil-stat-icon">📊</div>
-                <div class="fil-stat-content">
-                  <div class="fil-stat-value" id="fil13F">0</div>
-                  <div class="fil-stat-label">13F Holdings</div>
+                <div class="fil-stat" onclick="filterFilings('13F-HR')">
+                  <div class="fil-stat-icon">📊</div>
+                  <div class="fil-stat-content">
+                    <div class="fil-stat-value" id="fil13F">0</div>
+                    <div class="fil-stat-label">13F Holdings</div>
+                  </div>
+                </div>
+                <div class="fil-stat" onclick="filterFilings('ownership')">
+                  <div class="fil-stat-icon">📈</div>
+                  <div class="fil-stat-content">
+                    <div class="fil-stat-value" id="fil13DG">0</div>
+                    <div class="fil-stat-label">13D/G Ownership</div>
+                  </div>
+                </div>
+                <div class="fil-stat" onclick="filterFilings('8-K')">
+                  <div class="fil-stat-icon">📢</div>
+                  <div class="fil-stat-content">
+                    <div class="fil-stat-value" id="fil8K">0</div>
+                    <div class="fil-stat-label">8-K Events</div>
+                  </div>
+                </div>
+                <div class="fil-stat" onclick="filterFilings('registration')">
+                  <div class="fil-stat-icon">📋</div>
+                  <div class="fil-stat-content">
+                    <div class="fil-stat-value" id="filS1">0</div>
+                    <div class="fil-stat-label">S-1 / EFFECT</div>
+                  </div>
+                </div>
+                <div class="fil-stat" onclick="filterFilings('4')">
+                  <div class="fil-stat-icon">👤</div>
+                  <div class="fil-stat-content">
+                    <div class="fil-stat-value" id="filForm4">0</div>
+                    <div class="fil-stat-label">Form 4 Insider</div>
+                  </div>
+                </div>
+                <div
+                  class="fil-stat fil-stat-total"
+                  onclick="filterFilings('all')"
+                >
+                  <div class="fil-stat-icon">📁</div>
+                  <div class="fil-stat-content">
+                    <div class="fil-stat-value" id="filTotal">0</div>
+                    <div class="fil-stat-label">Total Filings</div>
+                  </div>
                 </div>
               </div>
-              <div class="fil-stat" onclick="filterFilings('ownership')">
-                <div class="fil-stat-icon">📈</div>
-                <div class="fil-stat-content">
-                  <div class="fil-stat-value" id="fil13DG">0</div>
-                  <div class="fil-stat-label">13D/G Ownership</div>
-                </div>
-              </div>
-              <div class="fil-stat" onclick="filterFilings('8-K')">
-                <div class="fil-stat-icon">📢</div>
-                <div class="fil-stat-content">
-                  <div class="fil-stat-value" id="fil8K">0</div>
-                  <div class="fil-stat-label">8-K Events</div>
-                </div>
-              </div>
-              <div class="fil-stat" onclick="filterFilings('registration')">
-                <div class="fil-stat-icon">📋</div>
-                <div class="fil-stat-content">
-                  <div class="fil-stat-value" id="filS1">0</div>
-                  <div class="fil-stat-label">S-1 / EFFECT</div>
-                </div>
-              </div>
-              <div class="fil-stat" onclick="filterFilings('4')">
-                <div class="fil-stat-icon">👤</div>
-                <div class="fil-stat-content">
-                  <div class="fil-stat-value" id="filForm4">0</div>
-                  <div class="fil-stat-label">Form 4 Insider</div>
-                </div>
-              </div>
-              <div class="fil-stat fil-stat-total" onclick="filterFilings('all')">
-                <div class="fil-stat-icon">📁</div>
-                <div class="fil-stat-content">
-                  <div class="fil-stat-value" id="filTotal">0</div>
-                  <div class="fil-stat-label">Total Filings</div>
-                </div>
-              </div>
-            </div>
 
-            <!-- Filter Toolbar -->
-            <div class="fil-toolbar">
-              <div class="fil-search">
-                <i class="fa-solid fa-search"></i>
-                <input type="text" id="filSearchInput" placeholder="Search by ticker, fund, or CIK..." onkeyup="searchFilings(this.value)">
-              </div>
-              <div class="fil-filter-group">
-                <select class="fil-select" id="filTypeFilter" onchange="applyFilters()">
-                  <option value="all">All Types</option>
-                  <option value="13F-HR">13F Holdings</option>
-                  <option value="ownership">13D/13G Ownership</option>
-                  <option value="8-K">8-K Events</option>
-                  <option value="registration">S-1 / EFFECT</option>
-                  <option value="4">Form 4 Insider</option>
-                </select>
-                <select class="fil-select" id="filFundFilter" onchange="applyFilters()">
-                  <option value="all">All Funds</option>
-                </select>
-                <select class="fil-select" id="filDaysFilter" onchange="applyFilters()">
-                  <option value="7">Last 7 days</option>
-                  <option value="30" selected>Last 30 days</option>
-                  <option value="90">Last 90 days</option>
-                  <option value="180">Last 6 months</option>
-                  <option value="365">Last year</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Filings Table -->
-            <div class="fil-section">
-              <div class="fil-section-header">
-                <div class="fil-section-title">
-                  SEC Filings
-                  <span class="fil-count" id="filDisplayCount">0</span>
+              <!-- Filter Toolbar -->
+              <div class="fil-toolbar">
+                <div class="fil-search">
+                  <i class="fa-solid fa-search"></i>
+                  <input
+                    type="text"
+                    id="filSearchInput"
+                    placeholder="Search by ticker, fund, or CIK..."
+                    onkeyup="searchFilings(this.value)"
+                  />
                 </div>
-                <div class="fil-view-toggle">
-                  <button class="fil-view-btn active" onclick="setFilingsView('table')" title="Table view">
-                    <i class="fa-solid fa-table-list"></i>
+                <div class="fil-filter-group">
+                  <select
+                    class="fil-select"
+                    id="filTypeFilter"
+                    onchange="applyFilters()"
+                  >
+                    <option value="all">All Types</option>
+                    <option value="13F-HR">13F Holdings</option>
+                    <option value="ownership">13D/13G Ownership</option>
+                    <option value="8-K">8-K Events</option>
+                    <option value="registration">S-1 / EFFECT</option>
+                    <option value="4">Form 4 Insider</option>
+                  </select>
+                  <select
+                    class="fil-select"
+                    id="filFundFilter"
+                    onchange="applyFilters()"
+                  >
+                    <option value="all">All Funds</option>
+                  </select>
+                  <select
+                    class="fil-select"
+                    id="filDaysFilter"
+                    onchange="applyFilters()"
+                  >
+                    <option value="7">Last 7 days</option>
+                    <option value="30" selected>Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                    <option value="180">Last 6 months</option>
+                    <option value="365">Last year</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Filings Table -->
+              <div class="fil-section">
+                <div class="fil-section-header">
+                  <div class="fil-section-title">
+                    SEC Filings
+                    <span class="fil-count" id="filDisplayCount">0</span>
+                  </div>
+                  <div class="fil-view-toggle">
+                    <button
+                      class="fil-view-btn active"
+                      onclick="setFilingsView('table')"
+                      title="Table view"
+                    >
+                      <i class="fa-solid fa-table-list"></i>
+                    </button>
+                    <button
+                      class="fil-view-btn"
+                      onclick="setFilingsView('cards')"
+                      title="Card view"
+                    >
+                      <i class="fa-solid fa-grip"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="fil-table-wrapper" id="filFilingsTable">
+                  <div class="fil-loading">Loading filings...</div>
+                </div>
+              </div>
+
+              <!-- PIPE Tracker -->
+              <div class="fil-section fil-section-collapsible">
+                <div
+                  class="fil-section-header fil-section-toggle"
+                  onclick="toggleSection('filPipeSection')"
+                >
+                  <div class="fil-section-title">
+                    <i class="fa-solid fa-chevron-down fil-chevron"></i>
+                    PIPE Deals
+                    <span class="fil-count" id="filPipeCount">0</span>
+                  </div>
+                  <button
+                    class="fil-btn fil-btn-sm"
+                    onclick="
+                      event.stopPropagation();
+                      trackPipeDeal();
+                    "
+                  >
+                    + Track
                   </button>
-                  <button class="fil-view-btn" onclick="setFilingsView('cards')" title="Card view">
-                    <i class="fa-solid fa-grip"></i>
-                  </button>
+                </div>
+                <div class="fil-section-content" id="filPipeSection">
+                  <div id="filPipeTable">
+                    <div class="fil-empty">No PIPE deals tracked</div>
+                  </div>
                 </div>
               </div>
-              <div class="fil-table-wrapper" id="filFilingsTable">
-                <div class="fil-loading">Loading filings...</div>
-              </div>
-            </div>
 
-            <!-- PIPE Tracker -->
-            <div class="fil-section fil-section-collapsible">
-              <div class="fil-section-header fil-section-toggle" onclick="toggleSection('filPipeSection')">
-                <div class="fil-section-title">
-                  <i class="fa-solid fa-chevron-down fil-chevron"></i>
-                  PIPE Deals
-                  <span class="fil-count" id="filPipeCount">0</span>
+              <!-- Tracked Funds -->
+              <div class="fil-section fil-section-collapsible">
+                <div
+                  class="fil-section-header fil-section-toggle"
+                  onclick="toggleSection('filFundsSection')"
+                >
+                  <div class="fil-section-title">
+                    <i class="fa-solid fa-chevron-right fil-chevron"></i>
+                    Tracked Funds
+                    <span class="fil-count" id="filFundsCount">0</span>
+                  </div>
                 </div>
-                <button class="fil-btn fil-btn-sm" onclick="event.stopPropagation(); trackPipeDeal()">+ Track</button>
-              </div>
-              <div class="fil-section-content" id="filPipeSection">
-                <div id="filPipeTable">
-                  <div class="fil-empty">No PIPE deals tracked</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Tracked Funds -->
-            <div class="fil-section fil-section-collapsible">
-              <div class="fil-section-header fil-section-toggle" onclick="toggleSection('filFundsSection')">
-                <div class="fil-section-title">
-                  <i class="fa-solid fa-chevron-right fil-chevron"></i>
-                  Tracked Funds
-                  <span class="fil-count" id="filFundsCount">0</span>
-                </div>
-              </div>
-              <div class="fil-section-content fil-collapsed" id="filFundsSection">
-                <div class="fil-funds-grid" id="filFundsGrid">
-                  <div class="fil-loading">Loading funds...</div>
+                <div
+                  class="fil-section-content fil-collapsed"
+                  id="filFundsSection"
+                >
+                  <div class="fil-funds-grid" id="filFundsGrid">
+                    <div class="fil-loading">Loading funds...</div>
+                  </div>
                 </div>
               </div>
             </div>
-            </div><!-- End Filings Tab -->
+            <!-- End Filings Tab -->
 
             <!-- HOLDINGS TAB -->
             <div class="fil-tab-content" id="filTabHoldings">
@@ -1251,15 +1470,28 @@
               <div class="fil-toolbar">
                 <div class="fil-search">
                   <i class="fa-solid fa-search"></i>
-                  <input type="text" id="holdSearchInput" placeholder="Search by ticker..." onkeyup="searchHoldings(this.value)">
+                  <input
+                    type="text"
+                    id="holdSearchInput"
+                    placeholder="Search by ticker..."
+                    onkeyup="searchHoldings(this.value)"
+                  />
                 </div>
                 <div class="fil-filter-group">
-                  <select class="fil-select" id="holdSortBy" onchange="sortHoldings()">
+                  <select
+                    class="fil-select"
+                    id="holdSortBy"
+                    onchange="sortHoldings()"
+                  >
                     <option value="value">Sort by Value</option>
                     <option value="shares">Sort by Shares</option>
                     <option value="funds">Sort by # Funds</option>
                   </select>
-                  <select class="fil-select" id="holdMinFunds" onchange="filterHoldings()">
+                  <select
+                    class="fil-select"
+                    id="holdMinFunds"
+                    onchange="filterHoldings()"
+                  >
                     <option value="1">Min 1 Fund</option>
                     <option value="2">Min 2 Funds</option>
                     <option value="3">Min 3 Funds</option>
@@ -1280,12 +1512,15 @@
                   <div class="fil-empty fil-empty-holdings">
                     <i class="fa-solid fa-chart-pie"></i>
                     <p>No holdings data yet</p>
-                    <p class="fil-empty-sub">Holdings are populated when 13F filings are parsed.<br>Run a scan and parse 13F filings to see aggregated holdings.</p>
+                    <p class="fil-empty-sub">
+                      Holdings are populated when 13F filings are parsed.<br />Run
+                      a scan and parse 13F filings to see aggregated holdings.
+                    </p>
                   </div>
                 </div>
               </div>
-            </div><!-- End Holdings Tab -->
-
+            </div>
+            <!-- End Holdings Tab -->
           </div>
         </div>
 
@@ -3001,7 +3236,6 @@
         </div>
         <!-- Page: Daily Checker -->
         <div class="page" id="page-daily">
-
           <!-- Header -->
           <div class="dc-header">
             <div class="dc-header-left">
@@ -3009,18 +3243,63 @@
               <div class="dc-meta" id="dcMeta">Loading...</div>
             </div>
             <div class="dc-header-actions">
-              <button class="btn btn-sm" onclick="window.dcRunAll(true)" title="Force re-run all checks">↻ Force Run</button>
-              <button class="btn btn-sm" id="dcRunBtn" onclick="window.dcRunAll()">↻ Run All</button>
-              <button class="btn btn-primary btn-sm" onclick="window.dcOpenModal()">+ Add Check</button>
+              <button
+                class="btn btn-sm"
+                onclick="window.dcRunAll(true)"
+                title="Force re-run all checks"
+              >
+                ↻ Force Run
+              </button>
+              <button
+                class="btn btn-sm"
+                id="dcRunBtn"
+                onclick="window.dcRunAll()"
+              >
+                ↻ Run All
+              </button>
+              <button
+                class="btn btn-primary btn-sm"
+                onclick="window.dcOpenModal()"
+              >
+                + Add Check
+              </button>
             </div>
           </div>
 
           <!-- Filter Tabs -->
           <div class="dc-filter-tabs">
-            <button class="dc-filter-tab active" data-filter="all"   onclick="window.dcSetFilter('all')"   id="dcTabAll">All</button>
-            <button class="dc-filter-tab"        data-filter="entry" onclick="window.dcSetFilter('entry')" id="dcTabEntry">Entry</button>
-            <button class="dc-filter-tab"        data-filter="watch" onclick="window.dcSetFilter('watch')" id="dcTabWatch">Watch</button>
-            <button class="dc-filter-tab"        data-filter="wait"  onclick="window.dcSetFilter('wait')"  id="dcTabWait">Wait</button>
+            <button
+              class="dc-filter-tab active"
+              data-filter="all"
+              onclick="window.dcSetFilter('all')"
+              id="dcTabAll"
+            >
+              All
+            </button>
+            <button
+              class="dc-filter-tab"
+              data-filter="entry"
+              onclick="window.dcSetFilter('entry')"
+              id="dcTabEntry"
+            >
+              Entry
+            </button>
+            <button
+              class="dc-filter-tab"
+              data-filter="watch"
+              onclick="window.dcSetFilter('watch')"
+              id="dcTabWatch"
+            >
+              Watch
+            </button>
+            <button
+              class="dc-filter-tab"
+              data-filter="wait"
+              onclick="window.dcSetFilter('wait')"
+              id="dcTabWait"
+            >
+              Wait
+            </button>
           </div>
 
           <!-- Cards -->
@@ -3031,25 +3310,47 @@
             </div>
           </div>
         </div>
-
       </main>
     </div>
 
     <!-- Daily Checker Modal -->
-    <div id="dcModal" class="dc-overlay" onclick="if(event.target===this)window.dcCloseModal()">
+    <div
+      id="dcModal"
+      class="dc-overlay"
+      onclick="if (event.target === this) window.dcCloseModal();"
+    >
       <div class="dc-dialog">
         <div class="dc-dialog-header">
           <span id="dcModalTitle">Add Check</span>
-          <button class="dc-dialog-close" onclick="window.dcCloseModal()">×</button>
+          <button class="dc-dialog-close" onclick="window.dcCloseModal()">
+            ×
+          </button>
         </div>
-        <form id="dcForm" data-edit-id="" onsubmit="event.preventDefault(); window.dcSave()">
+        <form
+          id="dcForm"
+          data-edit-id=""
+          onsubmit="
+            event.preventDefault();
+            window.dcSave();
+          "
+        >
           <div class="dc-modal-field">
             <label>Ticker</label>
-            <input type="text" id="dcTickerInput" placeholder="e.g. IONQ" maxlength="10" style="text-transform:uppercase" />
+            <input
+              type="text"
+              id="dcTickerInput"
+              placeholder="e.g. IONQ"
+              maxlength="10"
+              style="text-transform: uppercase"
+            />
           </div>
           <div class="dc-modal-field">
             <label>Conviction Thesis</label>
-            <textarea id="dcThesisInput" placeholder="e.g. 'Pipe scam, short on ATH retest with elevated put flow'" rows="4"></textarea>
+            <textarea
+              id="dcThesisInput"
+              placeholder="e.g. 'Pipe scam, short on ATH retest with elevated put flow'"
+              rows="4"
+            ></textarea>
           </div>
           <div class="dc-modal-row">
             <div class="dc-modal-field">
@@ -3062,15 +3363,31 @@
             </div>
             <div class="dc-modal-field">
               <label>Priority (1-5)</label>
-              <input type="number" id="dcPriorityInput" min="1" max="5" value="3" />
+              <input
+                type="number"
+                id="dcPriorityInput"
+                min="1"
+                max="5"
+                value="3"
+              />
             </div>
             <div class="dc-modal-field">
               <label>Tags</label>
-              <input type="text" id="dcTagsInput" placeholder="e.g. biotech,pipe" />
+              <input
+                type="text"
+                id="dcTagsInput"
+                placeholder="e.g. biotech,pipe"
+              />
             </div>
           </div>
           <div class="dc-dialog-footer">
-            <button type="button" class="dc-btn-cancel" onclick="window.dcCloseModal()">Cancel</button>
+            <button
+              type="button"
+              class="dc-btn-cancel"
+              onclick="window.dcCloseModal()"
+            >
+              Cancel
+            </button>
             <button type="submit" class="dc-btn-save">Save</button>
           </div>
         </form>
