@@ -69,6 +69,7 @@
     <link rel="stylesheet" href="css/macro.css?v=5" />
     <link rel="stylesheet" href="css/financials.css" />
     <link rel="stylesheet" href="css/daily-checker.css" />
+    <link rel="stylesheet" href="css/signal-log.css" />
     <link rel="stylesheet" href="css/responsive.css?v=2" />
   </head>
   <body>
@@ -104,6 +105,18 @@
           >
             <span class="nav-icon">🎯</span>
             <span class="nav-label">Daily Checker</span>
+          </a>
+          <a
+            href="#"
+            class="nav-item"
+            data-page="signal-log"
+            onclick="
+              event.preventDefault();
+              switchPage('signal-log');
+            "
+          >
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">Signal Log</span>
           </a>
           <a
             href="#"
@@ -3308,6 +3321,13 @@
               <div class="dc-empty-icon">🎯</div>
               <div class="dc-empty-text">Loading checks...</div>
             </div>
+          </div>
+        </div>
+
+        <!-- Page: Signal Log -->
+        <div class="page" id="page-signal-log">
+          <div id="slPage">
+            <div style="padding:40px;text-align:center;color:#64748b">Loading...</div>
           </div>
         </div>
       </main>

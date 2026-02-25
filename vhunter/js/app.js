@@ -17,6 +17,7 @@ import { loadOptionsData, initOptionsPage } from './options-page.js';
 import { initTerminal, startPolling, stopPolling } from './terminal.js';
 import { loadMacro } from './macro.js';
 import { loadDailyChecker } from './daily-checker.js';
+import { loadSignalLog } from './signal-log.js';
 import { initTooltips } from './tooltip.js';
 import { initTooltipPositioning } from './tooltip-position.js';
 
@@ -54,7 +55,8 @@ registerPageLoaders({
   terminal: loadTerminal,
   strategy: loadStrategy,
   macro: loadMacro,
-  daily: loadDailyChecker
+  daily: loadDailyChecker,
+  'signal-log': loadSignalLog
 });
 console.log('[APP] Page loaders registered');
 
