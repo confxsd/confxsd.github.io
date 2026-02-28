@@ -237,6 +237,13 @@ function renderCard(check) {
       <div class="dc-exp-text">${analysis.memory_relevance}</div>
     </div>` : '';
 
+  // ── Expanded: Validation demote notice ──
+  const validationHtml = analysis?._validation ? `
+    <div class="dc-exp-block">
+      <div class="dc-exp-title">Validation Override</div>
+      <div class="dc-exp-text" style="color:#dc2626">Signal demoted from <strong>${analysis._validation.original_signal}</strong> → <strong>${analysis._validation.demoted_to}</strong></div>
+    </div>` : '';
+
   // ── Expanded: Macro notes ──
   const macroHtml = analysis?.macro_notes ? `
     <div class="dc-exp-block">
@@ -245,27 +252,22 @@ function renderCard(check) {
       <div class="dc-exp-text">${analysis.macro_notes}</div>
     </div>` : '';
 
-  // ── Sub-checks ──
-  const subChecks = check.sub_checks || [];
-  const subHtml = subChecks.length ? `
-    <div class="dc-sub-checks">
-      ${subChecks.map(sub => {
-        let subAnalysis = null;
-        try { subAnalysis = sub.latest_result?.ai_analysis ? JSON.parse(sub.latest_result.ai_analysis) : null; } catch (_) {}
-        const subSig = sub.latest_result?.signal;
-        const subScore = sub.latest_result?.opportunity_score;
-        return `<div class="dc-sub-check">
-          <span class="dc-sub-label">Sub-check</span>
-          <span class="dc-signal ${signalClass(subSig)} sm">${subSig || 'NO DATA'}</span>
-          <span class="dc-sub-score">${subScore ?? '--'}</span>
-          <span class="dc-sub-thesis">${sub.thesis.slice(0, 120)}</span>
-          <div class="dc-sub-actions">
-            <button class="btn btn-sm" onclick="event.stopPropagation();window.dcRunOne('${sub.id}')">↻</button>
-            <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();window.dcDelete('${sub.id}','${sub.ticker}')">✕</button>
-          </div>
-          ${subAnalysis?.signal_reason ? `<div class="dc-sub-detail">${subAnalysis.signal_reason}</div>` : ''}
-        </div>`;
-      }).join('')}
+  // ── Confirmation Conditions ──
+  const confirmConds = analysis?.confirmation_conditions || [];
+  const confirmEval = analysis?.confirmation_evaluation || {};
+  const confirmHtml = confirmConds.length ? `
+    <div class="dc-confirm-block">
+      <div class="dc-confirm-title">Confirmation Conditions</div>
+      <div class="dc-confirm-list">
+        ${confirmConds.map(cond => {
+          const status = confirmEval[cond] || 'pending';
+          const icon = status === 'met' ? '✓' : status === 'invalidated' ? '✗' : '○';
+          return `<div class="dc-confirm-item dc-confirm-${status}">
+            <span class="dc-confirm-icon">${icon}</span>
+            <span class="dc-confirm-text">${cond}</span>
+          </div>`;
+        }).join('')}
+      </div>
     </div>` : '';
 
   return `
@@ -317,6 +319,7 @@ function renderCard(check) {
           ${catHtml}
           ${macroHtml}
           ${memHtml}
+          ${validationHtml}
         </div>
         <div class="dc-exp-actions">
           <button class="btn btn-sm" onclick="window.dcRunOne('${check.id}')">↻ Run Now</button>
@@ -327,20 +330,101 @@ function renderCard(check) {
         </div>
         <div style="font-size:0.68rem;color:#94a3b8;margin-top:8px">Last run: ${timeAgo(r?.created_at)}</div>
       </div>
-      ${subHtml}
+      ${confirmHtml}
     </div>
   `;
 }
 
 function filterChecks(checks) {
-  const top = checks.filter(c => !c.parent_id);
   let filtered;
-  if (activeFilter === 'entry') filtered = top.filter(c => ['ENTRY NOW', 'ENTRY SOON'].includes(c.latest_result?.signal));
-  else if (activeFilter === 'watch') filtered = top.filter(c => c.latest_result?.signal === 'WATCH');
-  else if (activeFilter === 'wait')  filtered = top.filter(c => !c.latest_result || c.latest_result?.signal === 'WAIT');
-  else if (activeFilter === 'exit')  filtered = top.filter(c => ['EXIT', 'AVOID'].includes(c.latest_result?.signal));
-  else filtered = top;
+  if (activeFilter === 'entry') filtered = checks.filter(c => ['ENTRY NOW', 'ENTRY SOON'].includes(c.latest_result?.signal));
+  else if (activeFilter === 'watch') filtered = checks.filter(c => c.latest_result?.signal === 'WATCH');
+  else if (activeFilter === 'wait')  filtered = checks.filter(c => !c.latest_result || c.latest_result?.signal === 'WAIT');
+  else if (activeFilter === 'exit')  filtered = checks.filter(c => ['EXIT', 'AVOID'].includes(c.latest_result?.signal));
+  else filtered = checks;
   return sortChecks(filtered);
+}
+
+// ── Dashboard ─────────────────────────────────────────────────
+
+function renderDashboard(topLevel) {
+  const dashEl = document.getElementById('dcDashboard');
+  if (!dashEl) return;
+
+  if (!topLevel.length) { dashEl.innerHTML = ''; return; }
+
+  const withResult = topLevel.filter(c => c.latest_result);
+
+  // Signal distribution
+  const signals = { 'ENTRY NOW': 0, 'ENTRY SOON': 0, 'WATCH': 0, 'WAIT': 0, 'EXIT': 0, 'AVOID': 0 };
+  const noData = topLevel.length - withResult.length;
+  withResult.forEach(c => {
+    const s = c.latest_result.signal;
+    if (s in signals) signals[s]++;
+    else signals['WAIT']++;
+  });
+  signals['WAIT'] += noData;
+
+  // Avg score
+  const scores = withResult.map(c => c.latest_result.opportunity_score).filter(s => s != null);
+  const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+  const avgScoreCls = avgScore >= 65 ? 'high' : avgScore >= 35 ? 'medium' : 'low';
+
+  // Conviction breakdown
+  const conv = { high: 0, medium: 0, low: 0 };
+  withResult.forEach(c => {
+    try {
+      const a = c.latest_result.ai_analysis ? JSON.parse(c.latest_result.ai_analysis) : null;
+      if (a?.conviction && a.conviction in conv) conv[a.conviction]++;
+    } catch (_) {}
+  });
+
+  // Stale
+  const staleCnt = withResult.filter(c => isStale(c.latest_result.created_at)).length;
+
+  // Direction
+  const dirs = { long: 0, short: 0, monitor: 0 };
+  topLevel.forEach(c => { if (c.direction in dirs) dirs[c.direction]++; });
+
+  // Signal bar
+  const total = topLevel.length || 1;
+  const barSegments = [
+    { key: 'ENTRY NOW',  cls: 'bar-entry-now',  count: signals['ENTRY NOW'] },
+    { key: 'ENTRY SOON', cls: 'bar-entry-soon', count: signals['ENTRY SOON'] },
+    { key: 'WATCH',      cls: 'bar-watch',      count: signals['WATCH'] },
+    { key: 'WAIT',       cls: 'bar-wait',       count: signals['WAIT'] },
+    { key: 'EXIT',       cls: 'bar-exit',        count: signals['EXIT'] + signals['AVOID'] },
+  ].filter(s => s.count > 0);
+
+  dashEl.innerHTML = `
+    <div class="dc-dash">
+      <div class="dc-dash-bar">
+        ${barSegments.map(s =>
+          `<div class="dc-dash-seg ${s.cls}" style="width:${(s.count / total * 100).toFixed(1)}%" title="${s.key}: ${s.count}"></div>`
+        ).join('')}
+      </div>
+      <div class="dc-dash-legend">
+        ${barSegments.map(s => `<span class="dc-dash-leg-item"><span class="dc-dash-dot ${s.cls}"></span>${s.count} ${s.key.toLowerCase()}</span>`).join('')}
+      </div>
+      <div class="dc-dash-stats">
+        <div class="dc-dash-stat">
+          <span class="dc-dash-stat-val ${avgScoreCls}">${avgScore ?? '--'}</span>
+          <span class="dc-dash-stat-label">Avg Score</span>
+        </div>
+        <div class="dc-dash-stat">
+          <span class="dc-dash-stat-val">${dirs.long}<span class="dc-dash-sub">L</span> ${dirs.short}<span class="dc-dash-sub">S</span> ${dirs.monitor}<span class="dc-dash-sub">M</span></span>
+          <span class="dc-dash-stat-label">Direction</span>
+        </div>
+        <div class="dc-dash-stat">
+          <span class="dc-dash-stat-val">${conv.high}<span class="dc-dash-sub conv-high">H</span> ${conv.medium}<span class="dc-dash-sub conv-med">M</span> ${conv.low}<span class="dc-dash-sub conv-low">L</span></span>
+          <span class="dc-dash-stat-label">Conviction</span>
+        </div>
+        ${staleCnt ? `<div class="dc-dash-stat">
+          <span class="dc-dash-stat-val dc-dash-stale">${staleCnt}</span>
+          <span class="dc-dash-stat-label">Stale (&gt;24h)</span>
+        </div>` : ''}
+      </div>
+    </div>`;
 }
 
 // ── Main render ───────────────────────────────────────────────
@@ -354,24 +438,25 @@ export function renderDailyChecker() {
     ? '<span class="dc-run-spinner"></span>Running...'
     : '↻ Run All';
 
-  const topLevel = checksCache.filter(c => !c.parent_id);
-  const entryCnt = topLevel.filter(c => ['ENTRY NOW', 'ENTRY SOON'].includes(c.latest_result?.signal)).length;
-  const exitCnt  = topLevel.filter(c => ['EXIT', 'AVOID'].includes(c.latest_result?.signal)).length;
-  const staleCnt = topLevel.filter(c => c.latest_result && isStale(c.latest_result.created_at)).length;
+  const allChecks = checksCache;
+  const entryCnt = allChecks.filter(c => ['ENTRY NOW', 'ENTRY SOON'].includes(c.latest_result?.signal)).length;
+  const exitCnt  = allChecks.filter(c => ['EXIT', 'AVOID'].includes(c.latest_result?.signal)).length;
+  const staleCnt = allChecks.filter(c => c.latest_result && isStale(c.latest_result.created_at)).length;
 
   document.getElementById('dcMeta').textContent =
-    `${topLevel.length} active` +
+    `${allChecks.length} active` +
     (entryCnt ? ` · ${entryCnt} entry` : '') +
     (exitCnt  ? ` · ${exitCnt} exit`   : '') +
     (staleCnt ? ` · ${staleCnt} stale`  : '');
 
-  document.getElementById('dcTabAll').textContent   = `All (${topLevel.length})`;
+  document.getElementById('dcTabAll').textContent   = `All (${allChecks.length})`;
   document.getElementById('dcTabEntry').textContent = `Entry (${entryCnt})`;
-  document.getElementById('dcTabWatch').textContent = `Watch (${topLevel.filter(c => c.latest_result?.signal === 'WATCH').length})`;
-  document.getElementById('dcTabWait').textContent  = `Wait (${topLevel.filter(c => !c.latest_result || c.latest_result?.signal === 'WAIT').length})`;
+  document.getElementById('dcTabWatch').textContent = `Watch (${allChecks.filter(c => c.latest_result?.signal === 'WATCH').length})`;
+  document.getElementById('dcTabWait').textContent  = `Wait (${allChecks.filter(c => !c.latest_result || c.latest_result?.signal === 'WAIT').length})`;
   document.getElementById('dcTabExit').textContent  = `Exit (${exitCnt})`;
 
-  // Sort selector
+  // Dashboard + Sort
+  renderDashboard(allChecks);
   const sortEl = document.getElementById('dcSortSelect');
   if (sortEl) sortEl.value = activeSort;
 
