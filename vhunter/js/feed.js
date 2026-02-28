@@ -548,6 +548,7 @@ export async function loadFeed() {
     renderFeed(container);
     updateFeedStats();
     loadThesis();
+    loadLatestNewsReport();
   } catch (e) {
     container.innerHTML = `<div class="error">Failed to load feed: ${e.message}</div>`;
   }
@@ -955,6 +956,30 @@ async function generateNewsReportAPI(hours) {
   });
 }
 
+async function fetchLatestReport() {
+  return feedFetch('/api/news/report/latest');
+}
+
+// Auto-load the latest saved report on page init
+export async function loadLatestNewsReport() {
+  const card = document.getElementById('newsReportCard');
+  if (!card) return;
+
+  try {
+    const result = await fetchLatestReport();
+    if (result.success && result.report) {
+      card.classList.remove('hidden');
+      const wrapper = document.getElementById('newsReportWrapper');
+      wrapper?.classList.remove('collapsed');
+      const icon = document.getElementById('newsReportToggleIcon');
+      if (icon) icon.textContent = '▼';
+      renderNewsReport(card, result.report, result.meta);
+    }
+  } catch (e) {
+    // Silently fail - user can still click Refresh
+  }
+}
+
 window.generateNewsReport = async function() {
   const btn = document.getElementById('newsRefreshBtn');
   const card = document.getElementById('newsReportCard');
@@ -991,6 +1016,18 @@ window.generateNewsReport = async function() {
     }
   }
 };
+
+function formatReportTime(isoString) {
+  const d = new Date(isoString);
+  const now = new Date();
+  const diffMs = now - d;
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return 'just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
 
 function renderNewsReport(container, report, meta) {
   if (!container || !report) return;
@@ -1069,7 +1106,7 @@ function renderNewsReport(container, report, meta) {
           ${riskHtml}
         </div>` : ''}
 
-      ${meta ? `<div class="news-report-meta">${meta.storedArticles} stored + ${meta.freshArticles} fresh articles analyzed</div>` : ''}
+      ${meta ? `<div class="news-report-meta">${meta.storedArticles} stored + ${meta.freshArticles} fresh articles analyzed${meta.generatedAt ? ` · ${formatReportTime(meta.generatedAt)}` : ''}</div>` : ''}
     </div>
   `;
 }
