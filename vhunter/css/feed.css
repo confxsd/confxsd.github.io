@@ -1384,7 +1384,7 @@
 
 .news-urgency-breaking { border-left-color: #ef4444; }
 .news-urgency-today { border-left-color: #f59e0b; }
-.news-urgency-upcoming { border-left-color: #64748b; }
+.news-urgency-watch { border-left-color: #64748b; }
 
 .news-item-tags {
   display: flex;
@@ -1403,7 +1403,7 @@
 
 .news-urgency-badge.breaking { background: #fee2e2; color: #991b1b; }
 .news-urgency-badge.today { background: #fef3c7; color: #92400e; }
-.news-urgency-badge.upcoming { background: #f1f5f9; color: #64748b; }
+.news-urgency-badge.watch { background: #f1f5f9; color: #64748b; }
 
 .news-category-badge {
   font-size: var(--t-2xs);
@@ -1422,6 +1422,8 @@
 .news-category-badge.risk { color: #fca5a5; background: rgba(252, 165, 165, 0.15); }
 .news-category-badge.earnings { color: #fde68a; background: rgba(253, 230, 138, 0.15); }
 .news-category-badge.event { color: #93c5fd; background: rgba(147, 197, 253, 0.15); }
+.news-category-badge.geopolitical { color: #fb923c; background: rgba(251, 146, 60, 0.15); }
+.news-category-badge.trade { color: #67e8f9; background: rgba(103, 232, 249, 0.15); }
 
 .news-item-title {
   font-size: var(--t-sm);

@@ -949,11 +949,8 @@ window.filterFeed = function(type) {
 };
 
 // News Report functions
-async function generateNewsReportAPI(hours) {
-  return feedFetch('/api/news/report', {
-    method: 'POST',
-    body: JSON.stringify({ hours })
-  });
+async function generateNewsReportAPI() {
+  return feedFetch('/api/news/report', { method: 'POST' });
 }
 
 async function fetchLatestReport() {
@@ -983,25 +980,22 @@ export async function loadLatestNewsReport() {
 window.generateNewsReport = async function() {
   const btn = document.getElementById('newsRefreshBtn');
   const card = document.getElementById('newsReportCard');
-  const period = document.getElementById('newsReportPeriod');
-  const hours = parseInt(period?.value || '24');
 
   if (btn) {
     btn.disabled = true;
-    btn.textContent = 'Generating...';
+    btn.textContent = 'Searching...';
   }
 
-  // Ensure card is visible
   card?.classList.remove('hidden');
   const wrapper = document.getElementById('newsReportWrapper');
   wrapper?.classList.remove('collapsed');
   const icon = document.getElementById('newsReportToggleIcon');
   if (icon) icon.textContent = '▼';
 
-  if (card) card.innerHTML = '<div class="news-report-loading">Analyzing news...</div>';
+  if (card) card.innerHTML = '<div class="news-report-loading">Searching global news...</div>';
 
   try {
-    const result = await generateNewsReportAPI(hours);
+    const result = await generateNewsReportAPI();
     if (result.success && result.report) {
       renderNewsReport(card, result.report, result.meta);
     } else {
@@ -1031,11 +1025,12 @@ function formatReportTime(isoString) {
 
 const CATEGORY_LABELS = {
   fed: 'FED', politics: 'POLITICS', deal: 'DEAL',
-  earnings: 'EARNINGS', event: 'EVENT', risk: 'RISK'
+  earnings: 'EARNINGS', event: 'EVENT', risk: 'RISK',
+  geopolitical: 'GEO', trade: 'TRADE'
 };
 
 const URGENCY_LABELS = {
-  breaking: 'BREAKING', today: 'TODAY', upcoming: 'UPCOMING'
+  breaking: 'BREAKING', today: 'TODAY', watch: 'WATCH'
 };
 
 function renderNewsReport(container, report, meta) {
@@ -1075,7 +1070,7 @@ function renderNewsReport(container, report, meta) {
           ${upcomingHtml}
         </div>` : ''}
 
-      ${meta ? `<div class="news-report-meta">${meta.storedArticles + meta.freshArticles} articles scanned${meta.generatedAt ? ` · ${formatReportTime(meta.generatedAt)}` : ''}</div>` : ''}
+      ${meta?.generatedAt ? `<div class="news-report-meta">${formatReportTime(meta.generatedAt)}</div>` : ''}
     </div>
   `;
 }
