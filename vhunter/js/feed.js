@@ -1029,84 +1029,53 @@ function formatReportTime(isoString) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+const CATEGORY_LABELS = {
+  fed: 'FED', politics: 'POLITICS', deal: 'DEAL',
+  earnings: 'EARNINGS', event: 'EVENT', risk: 'RISK'
+};
+
+const URGENCY_LABELS = {
+  breaking: 'BREAKING', today: 'TODAY', upcoming: 'UPCOMING'
+};
+
 function renderNewsReport(container, report, meta) {
   if (!container || !report) return;
 
-  const moodClass = report.marketMood?.sentiment || 'neutral';
+  const items = report.items || [];
+  const upcoming = report.upcoming || [];
 
-  const topStoriesHtml = (report.topStories || []).map(s => `
-    <div class="news-story">
-      <div class="news-story-header">
-        <span class="news-story-sentiment ${s.sentiment}">${s.sentiment}</span>
-        <span class="news-story-title">${escapeHtml(s.title)}</span>
+  const itemsHtml = items.map(item => `
+    <div class="news-item news-urgency-${item.urgency}">
+      <div class="news-item-tags">
+        <span class="news-urgency-badge ${item.urgency}">${URGENCY_LABELS[item.urgency] || item.urgency}</span>
+        <span class="news-category-badge ${item.category}">${CATEGORY_LABELS[item.category] || item.category}</span>
       </div>
-      ${s.tickers?.length ? `<div class="news-story-tickers">${s.tickers.map(t => `<span class="insight-ticker" onclick="analyzeTicker('${t}')">${t}</span>`).join('')}</div>` : ''}
-      <div class="news-story-impl">${escapeHtml(s.implication)}</div>
-      ${s.source ? `<div class="news-story-source">${escapeHtml(s.source)}</div>` : ''}
+      <div class="news-item-title">${escapeHtml(item.title)}</div>
+      <div class="news-item-detail">${escapeHtml(item.detail)}</div>
+      ${item.tickers?.length ? `<div class="news-item-tickers">${item.tickers.map(t => `<span class="insight-ticker" onclick="analyzeTicker('${t}')">${t}</span>`).join('')}</div>` : ''}
+      ${item.source ? `<div class="news-item-source">${escapeHtml(item.source)}</div>` : ''}
     </div>
   `).join('');
 
-  const sectorHtml = (report.sectorImpact || []).map(s => `
-    <div class="news-sector">
-      <span class="news-sector-name">${escapeHtml(s.sector)}</span>
-      <span class="news-sector-sentiment ${s.sentiment}">${s.sentiment}</span>
-      <span class="news-sector-reason">${escapeHtml(s.reason)}</span>
+  const upcomingHtml = upcoming.map(ev => `
+    <div class="news-upcoming-event">
+      <span class="news-upcoming-date">${escapeHtml(ev.date)}</span>
+      <span class="news-upcoming-name">${escapeHtml(ev.event)}</span>
+      <span class="news-upcoming-impact">${escapeHtml(ev.impact)}</span>
     </div>
   `).join('');
-
-  const tradingHtml = (report.tradingImplications || []).map(t =>
-    `<div class="news-trading-item">${escapeHtml(t)}</div>`
-  ).join('');
-
-  const watchHtml = (report.watchToday || []).map(t =>
-    `<span class="insight-ticker" onclick="analyzeTicker('${t}')">${t}</span>`
-  ).join('');
-
-  const riskHtml = (report.riskAlerts || []).map(r =>
-    `<div class="news-risk-item">${escapeHtml(r)}</div>`
-  ).join('');
 
   container.innerHTML = `
     <div class="news-report-content">
-      <div class="news-headline">${escapeHtml(report.headline)}</div>
-      <div class="news-summary">${escapeHtml(report.summary)}</div>
-      <div class="news-mood ${moodClass}">
-        <span class="news-mood-label">Market Mood:</span>
-        <span class="news-mood-value">${report.marketMood?.sentiment?.toUpperCase()}</span>
-        <span class="news-mood-desc">${escapeHtml(report.marketMood?.description || '')}</span>
-      </div>
+      ${items.length === 0 ? '<div class="news-report-empty">No critical developments in this period</div>' : itemsHtml}
 
-      ${topStoriesHtml ? `
+      ${upcomingHtml ? `
         <div class="news-section">
-          <div class="news-section-title">Top Stories</div>
-          ${topStoriesHtml}
+          <div class="news-section-title">Upcoming Events</div>
+          ${upcomingHtml}
         </div>` : ''}
 
-      ${sectorHtml ? `
-        <div class="news-section">
-          <div class="news-section-title">Sector Impact</div>
-          ${sectorHtml}
-        </div>` : ''}
-
-      ${tradingHtml ? `
-        <div class="news-section">
-          <div class="news-section-title">Trading Implications</div>
-          ${tradingHtml}
-        </div>` : ''}
-
-      ${watchHtml ? `
-        <div class="news-section">
-          <div class="news-section-title">Watch Today</div>
-          <div class="news-watch-tickers">${watchHtml}</div>
-        </div>` : ''}
-
-      ${riskHtml ? `
-        <div class="news-section">
-          <div class="news-section-title">Risk Alerts</div>
-          ${riskHtml}
-        </div>` : ''}
-
-      ${meta ? `<div class="news-report-meta">${meta.storedArticles} stored + ${meta.freshArticles} fresh articles analyzed${meta.generatedAt ? ` · ${formatReportTime(meta.generatedAt)}` : ''}</div>` : ''}
+      ${meta ? `<div class="news-report-meta">${meta.storedArticles + meta.freshArticles} articles scanned${meta.generatedAt ? ` · ${formatReportTime(meta.generatedAt)}` : ''}</div>` : ''}
     </div>
   `;
 }
