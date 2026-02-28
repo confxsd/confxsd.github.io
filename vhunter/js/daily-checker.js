@@ -8,6 +8,7 @@ import { formatNum } from './utils.js';
 let checksCache = [];
 let isRunning = false;
 let activeFilter = 'all';
+let activeSort = 'priority'; // priority | score | freshness
 
 // ── Render helpers ────────────────────────────────────────────
 
@@ -18,6 +19,7 @@ function signalClass(signal) {
     case 'WATCH':      return 'watch';
     case 'WAIT':       return 'wait';
     case 'EXIT':       return 'exit';
+    case 'AVOID':      return 'avoid';
     default:           return 'no-data';
   }
 }
@@ -50,6 +52,44 @@ function timeAgo(isoStr) {
   return `${Math.floor(h / 24)}d ago`;
 }
 
+function isStale(isoStr) {
+  if (!isoStr) return true;
+  return (Date.now() - new Date(isoStr).getTime()) > 24 * 3600000;
+}
+
+function tfArrow(bias) {
+  if (bias === 'bullish') return '↑';
+  if (bias === 'bearish') return '↓';
+  return '–';
+}
+
+function tfClass(bias) {
+  if (bias === 'bullish') return 'tf-bull';
+  if (bias === 'bearish') return 'tf-bear';
+  return 'tf-neutral';
+}
+
+function convictionClass(c) {
+  if (c === 'high') return 'conv-high';
+  if (c === 'medium') return 'conv-med';
+  return 'conv-low';
+}
+
+function sortChecks(checks) {
+  return [...checks].sort((a, b) => {
+    if (activeSort === 'score') {
+      return (b.latest_result?.opportunity_score ?? -1) - (a.latest_result?.opportunity_score ?? -1);
+    }
+    if (activeSort === 'freshness') {
+      const ta = a.latest_result?.created_at ? new Date(a.latest_result.created_at).getTime() : 0;
+      const tb = b.latest_result?.created_at ? new Date(b.latest_result.created_at).getTime() : 0;
+      return tb - ta;
+    }
+    // priority (default) — highest first
+    return (b.priority || 0) - (a.priority || 0);
+  });
+}
+
 // ── Card rendering ────────────────────────────────────────────
 
 function renderCard(check) {
@@ -57,7 +97,6 @@ function renderCard(check) {
   let market = null, opts = null, analysis = null;
   try {
     const raw = r?.market_snapshot ? JSON.parse(r.market_snapshot) : null;
-    // Handle both flat {price,rsi,...} and nested {daily:{price,rsi,...},...}
     market = raw?.price != null ? raw : (raw?.daily ?? null);
   } catch (_) {}
   try { opts   = r?.options_snapshot ? JSON.parse(r.options_snapshot) : null; } catch (_) {}
@@ -67,7 +106,12 @@ function renderCard(check) {
   const score  = r?.opportunity_score ?? null;
   const sigCls = signalClass(signal);
   const scoreCls = score != null ? scoreColorClass(score) : 'low';
+  const conviction = analysis?.conviction || null;
+  const tfa = analysis?.timeframe_alignment;
+  const stale = isStale(r?.created_at);
+  const tags = check.tags ? check.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
 
+  // ── Collapsed metrics ──
   const metricsHtml = market ? `
     <div class="dc-metric">
       <span class="dc-metric-label">Price</span>
@@ -97,15 +141,28 @@ function renderCard(check) {
       <span class="dc-metric-label">VRP</span>
       <span class="dc-metric-value ${opts.vrp > 0 ? 'warn' : ''}">${opts.vrp > 0 ? '+' : ''}${opts.vrp}%</span>
     </div>` : ''}
-  ` : '<span style="color:var(--text-muted);font-size:0.74rem">Run analysis to see data</span>';
+  ` : '<span style="color:#94a3b8;font-size:0.74rem">Run analysis to see data</span>';
 
+  // ── Timeframe alignment compact indicator ──
+  const tfHtml = tfa ? `
+    <div class="dc-tf-compact" title="M: ${tfa.monthly || '?'} · W: ${tfa.weekly || '?'} · D: ${tfa.daily || '?'}">
+      <span class="dc-tf-dot ${tfClass(tfa.monthly)}">M${tfArrow(tfa.monthly)}</span>
+      <span class="dc-tf-dot ${tfClass(tfa.weekly)}">W${tfArrow(tfa.weekly)}</span>
+      <span class="dc-tf-dot ${tfClass(tfa.daily)}">D${tfArrow(tfa.daily)}</span>
+    </div>` : '';
+
+  // ── Expanded: Thesis + validation ──
   const thesisValidBadge = r
-    ? `<span class="dc-badge ${r.thesis_valid ? 'valid' : 'invalid'}">${r.thesis_valid ? '✓ Thesis Valid' : '✗ Thesis Broken'}</span>`
+    ? `<span class="dc-badge ${r.thesis_valid ? 'valid' : 'invalid'}">${r.thesis_valid ? '✓ Valid' : '✗ Broken'}</span>`
     : '';
   const macroAlignBadge = r?.macro_alignment
     ? `<span class="dc-badge ${r.macro_alignment}">${r.macro_alignment}</span>`
     : '';
+  const alignQualBadge = tfa?.alignment_quality
+    ? `<span class="dc-badge align-${tfa.alignment_quality}">${tfa.alignment_quality} alignment</span>`
+    : '';
 
+  // ── Expanded: Key levels ──
   const levels = analysis?.key_levels;
   const lvlTarget = levels ? (levels.target ?? levels.target_1 ?? null) : null;
   const levelsHtml = levels ? `
@@ -113,22 +170,82 @@ function renderCard(check) {
       ${levels.entry != null ? `<div class="dc-level"><span class="dc-level-label">Entry</span><span class="dc-level-value">${fmtPrice(levels.entry)}</span></div>` : ''}
       ${lvlTarget    != null ? `<div class="dc-level"><span class="dc-level-label">Target</span><span class="dc-level-value">${fmtPrice(lvlTarget)}</span></div>` : ''}
       ${levels.stop  != null ? `<div class="dc-level"><span class="dc-level-label">Stop</span><span class="dc-level-value">${fmtPrice(levels.stop)}</span></div>` : ''}
-      ${levels.risk_reward != null ? `<div class="dc-level"><span class="dc-level-label">R:R</span><span class="dc-level-value">${parseFloat(levels.risk_reward).toFixed(1)}x</span></div>` : ''}
+      ${levels.risk_reward != null ? `<div class="dc-level dc-level-rr"><span class="dc-level-label">R:R</span><span class="dc-level-value">${parseFloat(levels.risk_reward).toFixed(1)}x</span></div>` : ''}
+      ${levels.expected_hold_days != null ? `<div class="dc-level"><span class="dc-level-label">Hold</span><span class="dc-level-value">${levels.expected_hold_days}d</span></div>` : ''}
+    </div>
+    ${levels.entry_zone ? `<div class="dc-entry-zone">${levels.entry_zone}</div>` : ''}
+    ${levels.stop_basis ? `<div class="dc-stop-basis">Stop basis: ${levels.stop_basis}</div>` : ''}` : '';
+
+  // ── Expanded: Timeframe alignment visual ──
+  const tfDetailHtml = tfa ? `
+    <div class="dc-exp-block">
+      <div class="dc-exp-title">Timeframe Alignment</div>
+      <div class="dc-tf-grid">
+        <div class="dc-tf-item ${tfClass(tfa.monthly)}"><span class="dc-tf-label">Monthly</span><span class="dc-tf-arrow">${tfArrow(tfa.monthly)}</span><span class="dc-tf-bias">${tfa.monthly || '--'}</span></div>
+        <div class="dc-tf-item ${tfClass(tfa.weekly)}"><span class="dc-tf-label">Weekly</span><span class="dc-tf-arrow">${tfArrow(tfa.weekly)}</span><span class="dc-tf-bias">${tfa.weekly || '--'}</span></div>
+        <div class="dc-tf-item ${tfClass(tfa.daily)}"><span class="dc-tf-label">Daily</span><span class="dc-tf-arrow">${tfArrow(tfa.daily)}</span><span class="dc-tf-bias">${tfa.daily || '--'}</span></div>
+      </div>
+      ${tfa.notes ? `<div class="dc-exp-text" style="margin-top:6px">${tfa.notes}</div>` : ''}
     </div>` : '';
 
-  const riskBadges = (analysis?.risk_events || []).map(e => `<span class="dc-badge risk">${e}</span>`).join('');
+  // ── Expanded: Position sizing ──
+  const ps = analysis?.position_sizing;
+  const psHtml = ps ? `
+    <div class="dc-exp-block">
+      <div class="dc-exp-title">Position Sizing</div>
+      <div class="dc-sizing-row">
+        ${ps.suggested_size ? `<span class="dc-size-badge size-${ps.suggested_size}">${ps.suggested_size}</span>` : ''}
+        ${ps.max_risk_pct ? `<span class="dc-size-risk">Risk ${ps.max_risk_pct}</span>` : ''}
+      </div>
+      ${ps.size_rationale ? `<div class="dc-exp-text">${ps.size_rationale}</div>` : ''}
+      ${ps.scale_in_plan ? `<div class="dc-scale-plan"><span class="dc-scale-label">Scale-in:</span> ${ps.scale_in_plan}</div>` : ''}
+    </div>` : '';
+
+  // ── Expanded: Trade structure (enhanced) ──
   const ts = analysis?.trade_structure;
   const tradeHtml = ts ? `
     <div class="dc-exp-block">
       <div class="dc-exp-title">Trade Structure</div>
       <div class="dc-exp-text">
         <strong>${ts.instrument || ''}</strong>
-        ${ts.entry_condition ? ' — ' + ts.entry_condition : ''}
-        ${ts.size_note ? '<br><small style="color:var(--text-muted)">' + ts.size_note + '</small>' : ''}
+        ${ts.specific_structure ? ` — ${ts.specific_structure}` : ''}
       </div>
+      ${ts.entry_condition ? `<div class="dc-trade-cond"><span class="dc-trade-cond-label">Entry trigger:</span> ${ts.entry_condition}</div>` : ''}
+      ${ts.exit_rules ? `<div class="dc-trade-cond"><span class="dc-trade-cond-label">Exit rules:</span> ${ts.exit_rules}</div>` : ''}
+      ${ts.avoid_if ? `<div class="dc-trade-avoid"><span class="dc-trade-cond-label">Avoid if:</span> ${ts.avoid_if}</div>` : ''}
     </div>` : '';
 
-  // Render sub-checks compactly
+  // ── Expanded: Catalysts ──
+  const cat = analysis?.catalysts;
+  const riskEvents = cat?.upcoming_risk_events || analysis?.risk_events || [];
+  const riskBadges = riskEvents.map(e => `<span class="dc-badge risk">${e}</span>`).join('');
+  const catHtml = cat ? `
+    <div class="dc-exp-block">
+      <div class="dc-exp-title">Catalysts & Timing</div>
+      ${cat.timing_edge ? `<div class="dc-exp-text"><strong>Edge:</strong> ${cat.timing_edge}</div>` : ''}
+      ${cat.news_assessment ? `<div class="dc-exp-text" style="margin-top:4px">${cat.news_assessment}</div>` : ''}
+      ${riskBadges ? `<div class="dc-exp-badges" style="margin-top:6px">${riskBadges}</div>` : ''}
+    </div>` : (riskBadges ? `<div class="dc-exp-block">
+      <div class="dc-exp-title">Risk Events</div>
+      <div class="dc-exp-badges">${riskBadges}</div>
+    </div>` : '');
+
+  // ── Expanded: Memory relevance ──
+  const memHtml = analysis?.memory_relevance ? `
+    <div class="dc-exp-block">
+      <div class="dc-exp-title">Memory Context</div>
+      <div class="dc-exp-text">${analysis.memory_relevance}</div>
+    </div>` : '';
+
+  // ── Expanded: Macro notes ──
+  const macroHtml = analysis?.macro_notes ? `
+    <div class="dc-exp-block">
+      <div class="dc-exp-title">Macro</div>
+      <div class="dc-exp-badges" style="margin-bottom:6px">${macroAlignBadge}</div>
+      <div class="dc-exp-text">${analysis.macro_notes}</div>
+    </div>` : '';
+
+  // ── Sub-checks ──
   const subChecks = check.sub_checks || [];
   const subHtml = subChecks.length ? `
     <div class="dc-sub-checks">
@@ -141,7 +258,7 @@ function renderCard(check) {
           <span class="dc-sub-label">Sub-check</span>
           <span class="dc-signal ${signalClass(subSig)} sm">${subSig || 'NO DATA'}</span>
           <span class="dc-sub-score">${subScore ?? '--'}</span>
-          <span class="dc-sub-thesis">${sub.thesis.slice(0, 120)}…</span>
+          <span class="dc-sub-thesis">${sub.thesis.slice(0, 120)}</span>
           <div class="dc-sub-actions">
             <button class="btn btn-sm" onclick="event.stopPropagation();window.dcRunOne('${sub.id}')">↻</button>
             <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();window.dcDelete('${sub.id}','${sub.ticker}')">✕</button>
@@ -152,14 +269,17 @@ function renderCard(check) {
     </div>` : '';
 
   return `
-    <div class="dc-card" id="dc-card-${check.id}">
+    <div class="dc-card ${stale && r ? 'dc-stale' : ''}" id="dc-card-${check.id}">
       <div class="dc-card-header" onclick="window.dcToggleExpand('${check.id}')">
         <div class="dc-ticker-info">
           <span class="dc-ticker" onclick="event.stopPropagation(); window.dcGoAnalyze('${check.ticker}')">${check.ticker}</span>
           <span class="dc-dir-badge ${check.direction}">${check.direction}</span>
           ${priorityDots(check.priority)}
+          ${conviction ? `<span class="dc-conv-badge ${convictionClass(conviction)}">${conviction}</span>` : ''}
+          ${stale && r ? '<span class="dc-stale-dot" title="Data >24h old"></span>' : ''}
         </div>
         <span class="dc-signal ${sigCls}">${signal || 'NO DATA'}</span>
+        ${tfHtml}
         <div class="dc-score-wrap">
           <div class="dc-score-bar">
             <div class="dc-score-fill ${scoreCls}" style="width:${score ?? 0}%"></div>
@@ -169,12 +289,13 @@ function renderCard(check) {
         <div class="dc-metrics-row">${metricsHtml}</div>
         <button class="dc-expand-btn" id="dc-expand-${check.id}">▼</button>
       </div>
+      ${tags.length ? `<div class="dc-tags-row">${tags.map(t => `<span class="dc-tag">${t}</span>`).join('')}</div>` : ''}
       ${r?.ai_summary ? `<div class="dc-summary">"${r.ai_summary}"</div>` : ''}
       <div class="dc-expanded" id="dc-exp-${check.id}">
         <div class="dc-expanded-grid">
           <div class="dc-exp-block">
             <div class="dc-exp-title">Thesis</div>
-            <div class="dc-exp-badges" style="margin-bottom:8px">${thesisValidBadge}${macroAlignBadge}</div>
+            <div class="dc-exp-badges" style="margin-bottom:8px">${thesisValidBadge}${alignQualBadge}</div>
             <div class="dc-exp-text">${analysis?.thesis_notes || check.thesis}</div>
           </div>
           <div class="dc-exp-block">
@@ -182,6 +303,8 @@ function renderCard(check) {
             <div class="dc-exp-text">${analysis?.signal_reason || '--'}</div>
             ${levelsHtml}
           </div>
+          ${tfDetailHtml}
+          ${psHtml}
           <div class="dc-exp-block">
             <div class="dc-exp-title">Technical</div>
             <div class="dc-exp-text">${analysis?.technical_summary || '--'}</div>
@@ -191,10 +314,9 @@ function renderCard(check) {
             <div class="dc-exp-text">${analysis?.options_summary || '--'}</div>
           </div>
           ${tradeHtml}
-          ${riskBadges ? `<div class="dc-exp-block">
-            <div class="dc-exp-title">Risk Events</div>
-            <div class="dc-exp-badges">${riskBadges}</div>
-          </div>` : ''}
+          ${catHtml}
+          ${macroHtml}
+          ${memHtml}
         </div>
         <div class="dc-exp-actions">
           <button class="btn btn-sm" onclick="window.dcRunOne('${check.id}')">↻ Run Now</button>
@@ -203,7 +325,7 @@ function renderCard(check) {
           <button class="btn btn-sm" onclick="window.dcOpenModal('${check.id}')">✎ Edit</button>
           <button class="btn btn-sm btn-danger" onclick="window.dcDelete('${check.id}', '${check.ticker}')">✕ Delete</button>
         </div>
-        <div style="font-size:0.68rem;color:var(--text-muted);margin-top:8px">Last run: ${timeAgo(r?.created_at)}</div>
+        <div style="font-size:0.68rem;color:#94a3b8;margin-top:8px">Last run: ${timeAgo(r?.created_at)}</div>
       </div>
       ${subHtml}
     </div>
@@ -211,12 +333,14 @@ function renderCard(check) {
 }
 
 function filterChecks(checks) {
-  // Sub-checks always stay attached to their parent; filter top-level only
   const top = checks.filter(c => !c.parent_id);
-  if (activeFilter === 'entry') return top.filter(c => ['ENTRY NOW', 'ENTRY SOON'].includes(c.latest_result?.signal));
-  if (activeFilter === 'watch') return top.filter(c => c.latest_result?.signal === 'WATCH');
-  if (activeFilter === 'wait')  return top.filter(c => !c.latest_result || c.latest_result?.signal === 'WAIT');
-  return top;
+  let filtered;
+  if (activeFilter === 'entry') filtered = top.filter(c => ['ENTRY NOW', 'ENTRY SOON'].includes(c.latest_result?.signal));
+  else if (activeFilter === 'watch') filtered = top.filter(c => c.latest_result?.signal === 'WATCH');
+  else if (activeFilter === 'wait')  filtered = top.filter(c => !c.latest_result || c.latest_result?.signal === 'WAIT');
+  else if (activeFilter === 'exit')  filtered = top.filter(c => ['EXIT', 'AVOID'].includes(c.latest_result?.signal));
+  else filtered = top;
+  return sortChecks(filtered);
 }
 
 // ── Main render ───────────────────────────────────────────────
@@ -230,16 +354,26 @@ export function renderDailyChecker() {
     ? '<span class="dc-run-spinner"></span>Running...'
     : '↻ Run All';
 
-  // Only count top-level checks (sub-checks have parent_id)
   const topLevel = checksCache.filter(c => !c.parent_id);
-  const entry = topLevel.filter(c => ['ENTRY NOW', 'ENTRY SOON'].includes(c.latest_result?.signal)).length;
+  const entryCnt = topLevel.filter(c => ['ENTRY NOW', 'ENTRY SOON'].includes(c.latest_result?.signal)).length;
+  const exitCnt  = topLevel.filter(c => ['EXIT', 'AVOID'].includes(c.latest_result?.signal)).length;
+  const staleCnt = topLevel.filter(c => c.latest_result && isStale(c.latest_result.created_at)).length;
+
   document.getElementById('dcMeta').textContent =
-    `${topLevel.length} active${entry ? ' · ' + entry + ' entry signal' + (entry !== 1 ? 's' : '') : ''}`;
+    `${topLevel.length} active` +
+    (entryCnt ? ` · ${entryCnt} entry` : '') +
+    (exitCnt  ? ` · ${exitCnt} exit`   : '') +
+    (staleCnt ? ` · ${staleCnt} stale`  : '');
 
   document.getElementById('dcTabAll').textContent   = `All (${topLevel.length})`;
-  document.getElementById('dcTabEntry').textContent = `Entry (${topLevel.filter(c => ['ENTRY NOW','ENTRY SOON'].includes(c.latest_result?.signal)).length})`;
+  document.getElementById('dcTabEntry').textContent = `Entry (${entryCnt})`;
   document.getElementById('dcTabWatch').textContent = `Watch (${topLevel.filter(c => c.latest_result?.signal === 'WATCH').length})`;
   document.getElementById('dcTabWait').textContent  = `Wait (${topLevel.filter(c => !c.latest_result || c.latest_result?.signal === 'WAIT').length})`;
+  document.getElementById('dcTabExit').textContent  = `Exit (${exitCnt})`;
+
+  // Sort selector
+  const sortEl = document.getElementById('dcSortSelect');
+  if (sortEl) sortEl.value = activeSort;
 
   const container = document.getElementById('dcCards');
   if (!filtered.length) {
@@ -281,6 +415,11 @@ window.dcSetFilter = function(filter) {
   document.querySelectorAll('.dc-filter-tab').forEach(t =>
     t.classList.toggle('active', t.dataset.filter === filter)
   );
+  renderDailyChecker();
+};
+
+window.dcSetSort = function(sort) {
+  activeSort = sort;
   renderDailyChecker();
 };
 

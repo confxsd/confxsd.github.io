@@ -3279,40 +3279,20 @@
             </div>
           </div>
 
-          <!-- Filter Tabs -->
-          <div class="dc-filter-tabs">
-            <button
-              class="dc-filter-tab active"
-              data-filter="all"
-              onclick="window.dcSetFilter('all')"
-              id="dcTabAll"
-            >
-              All
-            </button>
-            <button
-              class="dc-filter-tab"
-              data-filter="entry"
-              onclick="window.dcSetFilter('entry')"
-              id="dcTabEntry"
-            >
-              Entry
-            </button>
-            <button
-              class="dc-filter-tab"
-              data-filter="watch"
-              onclick="window.dcSetFilter('watch')"
-              id="dcTabWatch"
-            >
-              Watch
-            </button>
-            <button
-              class="dc-filter-tab"
-              data-filter="wait"
-              onclick="window.dcSetFilter('wait')"
-              id="dcTabWait"
-            >
-              Wait
-            </button>
+          <!-- Filter Tabs + Sort -->
+          <div class="dc-controls-row">
+            <div class="dc-filter-tabs">
+              <button class="dc-filter-tab active" data-filter="all" onclick="window.dcSetFilter('all')" id="dcTabAll">All</button>
+              <button class="dc-filter-tab" data-filter="entry" onclick="window.dcSetFilter('entry')" id="dcTabEntry">Entry</button>
+              <button class="dc-filter-tab" data-filter="watch" onclick="window.dcSetFilter('watch')" id="dcTabWatch">Watch</button>
+              <button class="dc-filter-tab" data-filter="wait" onclick="window.dcSetFilter('wait')" id="dcTabWait">Wait</button>
+              <button class="dc-filter-tab" data-filter="exit" onclick="window.dcSetFilter('exit')" id="dcTabExit">Exit</button>
+            </div>
+            <select class="dc-sort-select" id="dcSortSelect" onchange="window.dcSetSort(this.value)">
+              <option value="priority">Priority</option>
+              <option value="score">Score</option>
+              <option value="freshness">Freshness</option>
+            </select>
           </div>
 
           <!-- Cards -->
