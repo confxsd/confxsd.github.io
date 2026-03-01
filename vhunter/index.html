@@ -1378,17 +1378,19 @@
                   <div class="fil-view-toggle">
                     <button
                       class="fil-view-btn active"
+                      data-view="feed"
+                      onclick="setFilingsView('feed')"
+                      title="Feed view"
+                    >
+                      <i class="fa-solid fa-stream"></i>
+                    </button>
+                    <button
+                      class="fil-view-btn"
+                      data-view="table"
                       onclick="setFilingsView('table')"
                       title="Table view"
                     >
                       <i class="fa-solid fa-table-list"></i>
-                    </button>
-                    <button
-                      class="fil-view-btn"
-                      onclick="setFilingsView('cards')"
-                      title="Card view"
-                    >
-                      <i class="fa-solid fa-grip"></i>
                     </button>
                   </div>
                 </div>

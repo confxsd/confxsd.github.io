@@ -269,6 +269,7 @@
   border-radius: 8px;
   margin-bottom: 16px;
   overflow: hidden;
+  overflow-x: auto;
 }
 
 .fil-section-header {
@@ -465,6 +466,7 @@
 
 .fil-holdings-table {
   width: 100%;
+  table-layout: fixed;
 }
 
 .fil-holding-row {
@@ -476,15 +478,19 @@
   background: #f8fafc;
 }
 
-.fil-th-name { min-width: 180px; }
-.fil-th-funds { width: 90px; text-align: center; }
-.fil-th-shares { width: 120px; text-align: right; }
-.fil-th-value { width: 120px; text-align: right; }
-.fil-th-trend { width: 80px; text-align: center; }
+.fil-th-name { width: 22%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fil-th-funds { width: 10%; text-align: center; white-space: nowrap; }
+.fil-th-shares { width: 16%; text-align: right; white-space: nowrap; }
+.fil-th-value { width: 18%; text-align: right; white-space: nowrap; }
+.fil-th-trend { width: 10%; text-align: center; white-space: nowrap; }
 
 .fil-td-name {
   color: #475569;
   font-size: var(--t-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
 }
 
 .fil-td-funds {
@@ -496,6 +502,7 @@
 .fil-td-value {
   text-align: right;
   font-family: 'SF Mono', Monaco, Consolas, monospace;
+  white-space: nowrap;
 }
 
 .fil-td-trend {
@@ -920,7 +927,7 @@
   gap: 8px;
 }
 
-.fil-holding-row {
+.fil-holdings-mini .fil-holding-row {
   display: flex;
   justify-content: space-between;
   padding: 6px 10px;
@@ -929,7 +936,7 @@
   font-size: var(--t-xs);
 }
 
-.fil-holding-row span:first-child {
+.fil-holdings-mini .fil-holding-row span:first-child {
   font-family: 'SF Mono', Monaco, Consolas, monospace;
   font-weight: 600;
 }
@@ -1203,6 +1210,211 @@
 }
 
 /* ============================================
+   Feed Timeline View
+============================================ */
+
+.fil-feed {
+  padding: 8px 16px;
+}
+
+.fil-feed-day {
+  margin-bottom: 20px;
+}
+
+.fil-feed-date {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 6px 12px;
+  margin-bottom: 8px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.fil-feed-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-left: 3px solid transparent;
+}
+
+.fil-feed-item:hover {
+  background: #f8fafc;
+}
+
+.fil-feed-item.fil-feed-critical {
+  border-left-color: #ef4444;
+}
+
+.fil-feed-item.fil-feed-high {
+  border-left-color: #f59e0b;
+}
+
+.fil-feed-type {
+  display: inline-block;
+  padding: 3px 8px;
+  border: 1.5px solid;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+  height: fit-content;
+  line-height: 1.3;
+}
+
+.fil-feed-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.fil-feed-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fil-feed-fund {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: var(--t-sm);
+}
+
+.fil-feed-ticker {
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.08);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.fil-feed-preview {
+  margin-top: 4px;
+  font-size: var(--t-xs);
+  color: #64748b;
+}
+
+.fil-feed-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.fil-feed-time {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+/* ============================================
+   Parsed Summary in Modal
+============================================ */
+
+.fil-parsed-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fil-parsed-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  font-size: var(--t-xs);
+}
+
+.fil-parsed-row span:first-child {
+  color: #64748b;
+}
+
+.fil-parsed-row span:last-child {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Ticker Chips */
+
+.fil-ticker-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.fil-ticker-chip {
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  background: rgba(99, 102, 241, 0.08);
+  color: #6366f1;
+  border-radius: 4px;
+  cursor: default;
+}
+
+/* ============================================
+   PIPE Form Modal
+============================================ */
+
+.fil-pipe-modal {
+  max-width: 420px;
+}
+
+.fil-pipe-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.fil-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fil-form-field label {
+  font-size: var(--t-xs);
+  font-weight: 500;
+  color: #475569;
+}
+
+.fil-form-field input,
+.fil-form-field textarea {
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #1e293b;
+  font-size: var(--t-sm);
+  font-family: inherit;
+}
+
+.fil-form-field input:focus,
+.fil-form-field textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  background: #fff;
+}
+
+.fil-form-field textarea {
+  resize: vertical;
+  min-height: 50px;
+}
+
+/* ============================================
    Responsive
 ============================================ */
 
@@ -1234,9 +1446,9 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 900px) {
   .filings-container {
-    padding: 12px;
+    padding: 10px;
   }
 
   .fil-header {
@@ -1289,31 +1501,62 @@
     font-size: var(--t-xl);
   }
 
+  .fil-toolbar {
+    gap: 8px;
+  }
+
+  .fil-search {
+    max-width: 100%;
+  }
+
   .fil-filter-group {
-    flex-direction: column;
+    flex-direction: row;
     width: 100%;
   }
 
   .fil-select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Holdings table — compact 3-col layout */
+  .fil-section {
+    border-radius: 6px;
+  }
+
+  .fil-holdings-table {
+    min-width: 0;
     width: 100%;
+    table-layout: fixed;
   }
 
   .fil-table th,
   .fil-table td {
-    padding: 10px 12px;
+    padding: 10px 8px;
+    font-size: 12px;
   }
 
+  /* Hide non-essential columns */
   .fil-th-fund,
   .fil-th-priority,
-  .fil-th-name {
+  .fil-th-name,
+  .fil-th-trend,
+  .fil-th-funds {
     display: none;
   }
 
   .fil-td-fund,
   .fil-td-priority,
-  .fil-td-name {
+  .fil-td-name,
+  .fil-td-trend,
+  .fil-td-funds {
     display: none;
   }
+
+  /* 3 visible columns: Ticker | Shares | Value */
+  .fil-th-ticker { width: 35%; }
+  .fil-th-shares { width: 30%; }
+  .fil-th-value  { width: 35%; }
 
   .fil-modal {
     max-height: 90vh;
@@ -1331,5 +1574,13 @@
 
   .fil-holder-shares {
     display: none;
+  }
+
+  .fil-feed {
+    padding: 8px;
+  }
+
+  .fil-feed-item {
+    padding: 10px 8px;
   }
 }

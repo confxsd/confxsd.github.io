@@ -23,7 +23,7 @@ let holdingsFilters = {
   sortBy: 'value',
   minFunds: 1
 };
-let currentView = 'table';
+let currentView = 'feed';
 
 const getUserId = () => localStorage.getItem('vhunter_user_id') || 'vhunter-serhat';
 
@@ -60,6 +60,49 @@ export async function loadFilings() {
     console.error('Failed to load filings:', e);
     showError('Failed to load filings data');
   }
+}
+
+// ============== DATA LAYER (exported for other modules) ==============
+
+export async function getFilingsForTicker(ticker) {
+  const response = await fetch(`${CONFIG.PROXY_URL}/api/filings?ticker=${encodeURIComponent(ticker)}&limit=100`, {
+    headers: { 'X-User-Id': getUserId() }
+  });
+  return response.json();
+}
+
+export async function getHoldingsForTicker(ticker) {
+  return fetchHoldingsByTicker(ticker);
+}
+
+export async function getFunds() {
+  if (funds.length > 0) return funds;
+  funds = await fetchFunds();
+  return funds;
+}
+
+export async function getPipeDeals() {
+  if (pipeDeals.length > 0) return pipeDeals;
+  pipeDeals = await fetchPipeDeals();
+  return pipeDeals;
+}
+
+export async function getFilingById(id) {
+  const response = await fetch(`${CONFIG.PROXY_URL}/api/filings/${id}`, {
+    headers: { 'X-User-Id': getUserId() }
+  });
+  return response.json();
+}
+
+export async function getHoldingsCompare(options = {}) {
+  const params = new URLSearchParams();
+  if (options.ticker) params.set('ticker', options.ticker);
+  if (options.fund_id) params.set('fund_id', options.fund_id);
+  if (options.periods) params.set('periods', options.periods);
+  const response = await fetch(`${CONFIG.PROXY_URL}/api/holdings/compare?${params}`, {
+    headers: { 'X-User-Id': getUserId() }
+  });
+  return response.json();
 }
 
 // ============== API CALLS ==============
@@ -171,7 +214,9 @@ function renderFilingsTable() {
     return;
   }
 
-  if (currentView === 'table') {
+  if (currentView === 'feed') {
+    container.innerHTML = renderFilingsFeed(filtered);
+  } else {
     container.innerHTML = `
       <table class="fil-table">
         <thead>
@@ -188,12 +233,6 @@ function renderFilingsTable() {
           ${filtered.map(f => renderFilingRow(f)).join('')}
         </tbody>
       </table>
-    `;
-  } else {
-    container.innerHTML = `
-      <div class="fil-cards-grid">
-        ${filtered.map(f => renderFilingCard(f)).join('')}
-      </div>
     `;
   }
 }
@@ -226,30 +265,102 @@ function renderFilingRow(filing) {
   `;
 }
 
-function renderFilingCard(filing) {
-  const priorityClass = {
-    'critical': 'fil-priority-critical',
-    'high': 'fil-priority-high'
-  }[filing.alert_priority] || '';
+// ============== FEED VIEW ==============
 
-  const typeIcon = getTypeIcon(filing.filing_type);
+function renderFilingsFeed(filteredFilings) {
+  // Group by day
+  const groups = {};
+  for (const f of filteredFilings) {
+    const dayKey = f.filed_date ? f.filed_date.slice(0, 10) : 'unknown';
+    if (!groups[dayKey]) groups[dayKey] = [];
+    groups[dayKey].push(f);
+  }
+
+  const sortedDays = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+  if (sortedDays.length === 0) return '<div class="fil-empty">No filings match your filters</div>';
+
+  return `<div class="fil-feed">${sortedDays.map(day => `
+    <div class="fil-feed-day">
+      <div class="fil-feed-date">${formatFeedDate(day)}</div>
+      ${groups[day].map(f => renderFeedItem(f)).join('')}
+    </div>
+  `).join('')}</div>`;
+}
+
+function renderFeedItem(filing) {
+  const typeColor = getTypeColor(filing.filing_type);
+  const priorityClass = filing.alert_priority === 'critical' ? 'fil-feed-critical' :
+                         filing.alert_priority === 'high' ? 'fil-feed-high' : '';
+  const preview = buildParsedPreview(filing);
 
   return `
-    <div class="fil-card ${priorityClass}" onclick="showFilingDetails('${filing.id}')">
-      <div class="fil-card-header">
-        <span class="fil-type-badge">${typeIcon} ${filing.filing_type}</span>
-        ${filing.alert_priority !== 'normal' ? `<span class="fil-priority-badge ${priorityClass}">${filing.alert_priority}</span>` : ''}
-      </div>
-      <div class="fil-card-fund">${filing.fund_name || filing.filer_name || 'Unknown'}</div>
-      ${filing.subject_ticker ? `<div class="fil-card-ticker">${filing.subject_ticker}</div>` : ''}
-      <div class="fil-card-footer">
-        <span class="fil-card-date">${formatDate(filing.filed_date)}</span>
-        <a href="${filing.filing_url}" target="_blank" class="fil-link-btn" onclick="event.stopPropagation()">
-          <i class="fa-solid fa-external-link"></i>
-        </a>
+    <div class="fil-feed-item ${priorityClass}" onclick="showFilingDetails('${filing.id}')">
+      <span class="fil-feed-type" style="border-color:${typeColor};color:${typeColor}">${filing.filing_type}</span>
+      <div class="fil-feed-body">
+        <div class="fil-feed-top">
+          <span class="fil-feed-fund">${filing.fund_name || filing.filer_name || 'Unknown'}</span>
+          ${filing.subject_ticker ? `<code class="fil-feed-ticker" onclick="event.stopPropagation()">${filing.subject_ticker}</code>` : ''}
+        </div>
+        ${preview ? `<div class="fil-feed-preview">${preview}</div>` : ''}
+        <div class="fil-feed-meta">
+          <span class="fil-feed-time">${formatRelativeDate(filing.filed_date)}</span>
+          <a href="${filing.filing_url}" target="_blank" class="fil-link-btn" onclick="event.stopPropagation()" title="SEC EDGAR">
+            <i class="fa-solid fa-external-link"></i>
+          </a>
+        </div>
       </div>
     </div>
   `;
+}
+
+function getTypeColor(type) {
+  if (!type) return '#64748b';
+  if (type.includes('13D') || type.includes('13G')) return '#ef4444';
+  if (type.includes('13F')) return '#6366f1';
+  if (type.includes('8-K')) return '#f59e0b';
+  if (type.includes('S-1') || type.includes('EFFECT')) return '#f97316';
+  if (type === '4' || type === '4/A') return '#64748b';
+  return '#64748b';
+}
+
+function buildParsedPreview(filing) {
+  const pd = filing.parsed_data;
+  if (!pd) return '';
+  if (pd.positions_count) {
+    const val = pd.total_value ? `, ${formatValue(pd.total_value)}` : '';
+    return `${pd.positions_count} positions${val}`;
+  }
+  if (pd.shares_owned) return `${formatNumber(pd.shares_owned)} shares owned`;
+  if (pd.event_type) return pd.event_type;
+  return '';
+}
+
+function formatFeedDate(dayStr) {
+  if (dayStr === 'unknown') return 'Unknown Date';
+  const d = new Date(dayStr + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diff = Math.floor((today - d) / 86400000);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Yesterday';
+  if (diff < 7) return d.toLocaleDateString('en-US', { weekday: 'long' });
+  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+function formatRelativeDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now - d;
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return 'just now';
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `${diffH}h ago`;
+  const diffD = Math.floor(diffH / 24);
+  if (diffD === 1) return 'yesterday';
+  if (diffD < 7) return `${diffD}d ago`;
+  return formatDate(dateStr);
 }
 
 function getTypeIcon(type) {
@@ -520,8 +631,12 @@ function getFilteredHoldings() {
 
 function formatQuarter(period) {
   if (!period) return '--';
-  const [year, month] = period.split('-');
-  const q = Math.ceil(parseInt(month) / 3);
+  const parts = period.split('-');
+  const year = parts[0];
+  // Handle both YYYY-MM-DD and YYYY-DD-MM (legacy)
+  let month = parseInt(parts[1]);
+  if (month > 12) month = parseInt(parts[2]); // swap if day was in month position
+  const q = Math.ceil(month / 3);
   return `Q${q} ${year}`;
 }
 
@@ -535,6 +650,7 @@ function formatNumber(n) {
 
 function formatValue(v) {
   if (!v) return '$0';
+  if (v >= 1e12) return `$${(v / 1e12).toFixed(2)}T`;
   if (v >= 1e9) return `$${(v / 1e9).toFixed(2)}B`;
   if (v >= 1e6) return `$${(v / 1e6).toFixed(1)}M`;
   if (v >= 1e3) return `$${(v / 1e3).toFixed(0)}K`;
@@ -683,8 +799,9 @@ window.searchFilings = function(query) {
 
 window.setFilingsView = function(view) {
   currentView = view;
-  document.querySelectorAll('.fil-view-btn').forEach(btn => btn.classList.remove('active'));
-  document.querySelector(`.fil-view-btn[onclick*="${view}"]`)?.classList.add('active');
+  document.querySelectorAll('.fil-view-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === view);
+  });
   renderFilingsTable();
 };
 
@@ -853,26 +970,78 @@ window.showFundDetails = async function(id) {
   }
 };
 
-window.trackPipeDeal = async function() {
-  const ticker = prompt('Ticker symbol:');
-  if (!ticker) return;
-  const date = prompt('Announcement date (YYYY-MM-DD):');
-  if (!date) return;
-  const price = prompt('PIPE price per share (optional):');
+window.trackPipeDeal = function() {
+  const modal = document.createElement('div');
+  modal.className = 'fil-modal-overlay';
+  modal.innerHTML = `
+    <div class="fil-modal fil-pipe-modal">
+      <div class="fil-modal-header">
+        <h3>Track PIPE Deal</h3>
+        <button class="fil-modal-close" onclick="this.closest('.fil-modal-overlay').remove()">&times;</button>
+      </div>
+      <div class="fil-modal-body">
+        <div class="fil-pipe-form">
+          <div class="fil-form-field">
+            <label>Ticker *</label>
+            <input type="text" id="pipeTicker" placeholder="e.g. IONQ" autocomplete="off" style="text-transform:uppercase" />
+          </div>
+          <div class="fil-form-field">
+            <label>Announcement Date *</label>
+            <input type="date" id="pipeDate" value="${new Date().toISOString().slice(0, 10)}" />
+          </div>
+          <div class="fil-form-field">
+            <label>PIPE Price per Share</label>
+            <input type="number" id="pipePrice" placeholder="0.00" step="0.01" min="0" />
+          </div>
+          <div class="fil-form-field">
+            <label>Company Name</label>
+            <input type="text" id="pipeCompany" placeholder="Optional" />
+          </div>
+          <div class="fil-form-field">
+            <label>Notes</label>
+            <textarea id="pipeNotes" rows="2" placeholder="Optional notes..."></textarea>
+          </div>
+        </div>
+        <div class="fil-scan-actions">
+          <button class="fil-btn fil-btn-secondary" onclick="this.closest('.fil-modal-overlay').remove()">Cancel</button>
+          <button class="fil-btn fil-btn-primary" onclick="submitPipeDeal()">Track Deal</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  modal.querySelector('#pipeTicker').focus();
+};
+
+window.submitPipeDeal = async function() {
+  const ticker = document.getElementById('pipeTicker')?.value?.trim().toUpperCase();
+  const date = document.getElementById('pipeDate')?.value;
+  const price = document.getElementById('pipePrice')?.value;
+  const company = document.getElementById('pipeCompany')?.value?.trim();
+  const notes = document.getElementById('pipeNotes')?.value?.trim();
+
+  if (!ticker) { showToast('Ticker is required', 'error'); return; }
+  if (!date) { showToast('Date is required', 'error'); return; }
 
   try {
-    const response = await fetch(`${CONFIG.PROXY_URL}/api/pipe/${ticker.toUpperCase()}`, {
+    const body = { announcement_date: date };
+    if (price) body.per_share_price = parseFloat(price);
+    if (company) body.company_name = company;
+    if (notes) body.notes = notes;
+
+    const response = await fetch(`${CONFIG.PROXY_URL}/api/pipe/${ticker}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() },
-      body: JSON.stringify({
-        announcement_date: date,
-        per_share_price: price ? parseFloat(price) : null
-      })
+      body: JSON.stringify(body)
     });
     const result = await response.json();
     if (result.success) {
+      document.querySelector('.fil-modal-overlay')?.remove();
       showToast('PIPE deal added', 'success');
       loadFilings();
+    } else {
+      showToast('Failed: ' + (result.error || 'Unknown error'), 'error');
     }
   } catch (e) {
     showToast('Failed to add PIPE deal', 'error');
@@ -882,19 +1051,46 @@ window.trackPipeDeal = async function() {
 // ============== MODAL BUILDERS ==============
 
 function buildFilingModal(filing) {
-  return `
+  const pd = filing.parsed_data;
+  const tickers = extractTickersFromFiling(filing);
+
+  let html = `
     <div class="fil-modal-grid">
-      <div class="fil-modal-row"><span class="fil-modal-label">Type</span><span>${filing.filing_type}</span></div>
+      <div class="fil-modal-row"><span class="fil-modal-label">Type</span><span class="fil-feed-type" style="border-color:${getTypeColor(filing.filing_type)};color:${getTypeColor(filing.filing_type)}">${filing.filing_type}</span></div>
       <div class="fil-modal-row"><span class="fil-modal-label">Filer</span><span>${filing.fund_name || filing.filer_name}</span></div>
       <div class="fil-modal-row"><span class="fil-modal-label">CIK</span><span>${filing.filer_cik}</span></div>
       <div class="fil-modal-row"><span class="fil-modal-label">Filed</span><span>${formatDate(filing.filed_date)}</span></div>
       <div class="fil-modal-row"><span class="fil-modal-label">Subject</span><span>${filing.subject_ticker || '-'}</span></div>
       <div class="fil-modal-row"><span class="fil-modal-label">Priority</span><span>${filing.alert_priority}</span></div>
     </div>
-    <a href="${filing.filing_url}" target="_blank" class="fil-btn fil-btn-primary fil-btn-block">View on SEC EDGAR</a>
-    ${filing.holdings?.length ? `
+  `;
+
+  // Parsed data summary
+  if (pd) {
+    html += `<div class="fil-modal-section"><h4>Parsed Summary</h4><div class="fil-parsed-summary">`;
+    if (pd.positions_count) html += `<div class="fil-parsed-row"><span>Positions</span><span>${pd.positions_count}</span></div>`;
+    if (pd.total_value) html += `<div class="fil-parsed-row"><span>Total Value</span><span>${formatValue(pd.total_value)}</span></div>`;
+    if (pd.shares_owned) html += `<div class="fil-parsed-row"><span>Shares Owned</span><span>${formatNumber(pd.shares_owned)}</span></div>`;
+    if (pd.percent_owned) html += `<div class="fil-parsed-row"><span>% Owned</span><span>${pd.percent_owned}%</span></div>`;
+    if (pd.event_type) html += `<div class="fil-parsed-row"><span>Event</span><span>${pd.event_type}</span></div>`;
+    if (pd.transaction_type) html += `<div class="fil-parsed-row"><span>Transaction</span><span>${pd.transaction_type}</span></div>`;
+    if (pd.shares_transacted) html += `<div class="fil-parsed-row"><span>Shares Transacted</span><span>${formatNumber(pd.shares_transacted)}</span></div>`;
+    if (pd.price_per_share) html += `<div class="fil-parsed-row"><span>Price/Share</span><span>$${pd.price_per_share.toFixed(2)}</span></div>`;
+    html += `</div></div>`;
+  }
+
+  // Ticker chips
+  if (tickers.length > 0) {
+    html += `<div class="fil-modal-section"><h4>Tickers</h4><div class="fil-ticker-chips">`;
+    html += tickers.map(t => `<span class="fil-ticker-chip" onclick="event.stopPropagation()">${t}</span>`).join('');
+    html += `</div></div>`;
+  }
+
+  // Holdings (13F)
+  if (filing.holdings?.length) {
+    html += `
       <div class="fil-modal-section">
-        <h4>Holdings (${filing.holdings.length})</h4>
+        <h4>Top Holdings (${filing.holdings.length} total)</h4>
         <div class="fil-holdings-mini">
           ${filing.holdings.slice(0, 10).map(h => `
             <div class="fil-holding-row">
@@ -906,8 +1102,25 @@ function buildFilingModal(filing) {
           ${filing.holdings.length > 10 ? `<div class="fil-more">+${filing.holdings.length - 10} more</div>` : ''}
         </div>
       </div>
-    ` : ''}
-  `;
+    `;
+  }
+
+  html += `<a href="${filing.filing_url}" target="_blank" class="fil-btn fil-btn-primary fil-btn-block">View on SEC EDGAR</a>`;
+  return html;
+}
+
+function extractTickersFromFiling(filing) {
+  const tickers = new Set();
+  if (filing.subject_ticker) tickers.add(filing.subject_ticker);
+  if (filing.holdings) {
+    for (const h of filing.holdings) {
+      if (h.ticker) tickers.add(h.ticker);
+    }
+  }
+  if (filing.parsed_data?.tickers) {
+    for (const t of filing.parsed_data.tickers) tickers.add(t);
+  }
+  return [...tickers].slice(0, 20);
 }
 
 function buildPipeModal(deal) {

@@ -752,3 +752,111 @@
   color: #818cf8;
   font-weight: 800;
 }
+
+/* ── Counter-Check Review Badge (header) ── */
+.dc-review-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  cursor: default;
+}
+.dc-review-badge.dc-review-pass   { color: #059669; background: #d1fae5; border: 1px solid #a7f3d0; }
+.dc-review-badge.dc-review-flag   { color: #a16207; background: #fef9c3; border: 1px solid #fde047; }
+.dc-review-badge.dc-review-reject { color: #dc2626; background: #fee2e2; border: 1px solid #fca5a5; }
+
+/* ── Counter-Check Review Block (expanded) ── */
+.dc-review-block {
+  grid-column: 1 / -1;
+}
+.dc-review-block.dc-review-pass   { border-left: 3px solid #10b981; }
+.dc-review-block.dc-review-flag   { border-left: 3px solid #f59e0b; }
+.dc-review-block.dc-review-reject { border-left: 3px solid #ef4444; }
+
+.dc-review-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.dc-review-grade {
+  font-size: 1.1rem;
+  font-weight: 800;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+.dc-review-grade.dc-review-pass   { color: #059669; background: #d1fae5; }
+.dc-review-grade.dc-review-flag   { color: #a16207; background: #fef9c3; }
+.dc-review-grade.dc-review-reject { color: #dc2626; background: #fee2e2; }
+
+.dc-review-action {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+.dc-review-action.dc-review-pass   { color: #059669; background: #d1fae5; }
+.dc-review-action.dc-review-flag   { color: #a16207; background: #fef9c3; }
+.dc-review-action.dc-review-reject { color: #dc2626; background: #fee2e2; }
+
+.dc-review-conf {
+  font-size: 0.7rem;
+  color: #64748b;
+  margin-left: auto;
+}
+
+.dc-review-concern {
+  font-size: 0.78rem;
+  color: #1e293b;
+  font-weight: 600;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.dc-review-counter {
+  font-size: 0.76rem;
+  color: #475569;
+  line-height: 1.5;
+  margin-bottom: 8px;
+  padding: 6px 8px;
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.dc-review-flags {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.dc-review-flag-item {
+  display: flex;
+  gap: 8px;
+  font-size: 0.72rem;
+  padding: 4px 8px;
+  background: #fef2f2;
+  border-radius: 4px;
+  border-left: 2px solid #fca5a5;
+}
+
+.dc-review-flag-name {
+  font-weight: 600;
+  color: #dc2626;
+  text-transform: capitalize;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.dc-review-flag-detail {
+  color: #475569;
+  line-height: 1.4;
+}

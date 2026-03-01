@@ -107,6 +107,7 @@ function renderCard(check) {
   const sigCls = signalClass(signal);
   const scoreCls = score != null ? scoreColorClass(score) : 'low';
   const conviction = analysis?.conviction || null;
+  const review = analysis?._review || null;
   const tfa = analysis?.timeframe_alignment;
   const stale = isStale(r?.created_at);
   const tags = check.tags ? check.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
@@ -237,6 +238,27 @@ function renderCard(check) {
       <div class="dc-exp-text">${analysis.memory_relevance}</div>
     </div>` : '';
 
+  // ── Expanded: Counter-check review ──
+  const reviewHtml = review ? (() => {
+    const actionCls = review.action === 'PASS' ? 'pass' : review.action === 'REJECT' ? 'reject' : 'flag';
+    const flagItems = review.flags ? Object.entries(review.flags)
+      .filter(([, v]) => v?.found)
+      .map(([k, v]) => `<div class="dc-review-flag-item"><span class="dc-review-flag-name">${k.replace(/_/g, ' ')}</span><span class="dc-review-flag-detail">${v.detail}</span></div>`)
+      .join('') : '';
+    return `
+    <div class="dc-exp-block dc-review-block dc-review-${actionCls}">
+      <div class="dc-exp-title">Counter-Check Review</div>
+      <div class="dc-review-header">
+        <span class="dc-review-grade dc-review-${actionCls}">${review.grade}</span>
+        <span class="dc-review-action dc-review-${actionCls}">${review.action}</span>
+        ${review.adjusted_confidence != null ? `<span class="dc-review-conf">Adj. confidence: ${(review.adjusted_confidence * 100).toFixed(0)}%</span>` : ''}
+      </div>
+      ${review.key_concern ? `<div class="dc-review-concern">${review.key_concern}</div>` : ''}
+      ${review.counter_thesis ? `<div class="dc-review-counter"><strong>Counter-thesis:</strong> ${review.counter_thesis}</div>` : ''}
+      ${flagItems ? `<div class="dc-review-flags">${flagItems}</div>` : ''}
+    </div>`;
+  })() : '';
+
   // ── Expanded: Validation demote notice ──
   const validationHtml = analysis?._validation ? `
     <div class="dc-exp-block">
@@ -278,6 +300,7 @@ function renderCard(check) {
           <span class="dc-dir-badge ${check.direction}">${check.direction}</span>
           ${priorityDots(check.priority)}
           ${conviction ? `<span class="dc-conv-badge ${convictionClass(conviction)}">${conviction}</span>` : ''}
+          ${review ? `<span class="dc-review-badge dc-review-${review.action?.toLowerCase() || 'flag'}" title="${review.key_concern || ''}">${review.grade}</span>` : ''}
           ${stale && r ? '<span class="dc-stale-dot" title="Data >24h old"></span>' : ''}
         </div>
         <span class="dc-signal ${sigCls}">${signal || 'NO DATA'}</span>
@@ -319,6 +342,7 @@ function renderCard(check) {
           ${catHtml}
           ${macroHtml}
           ${memHtml}
+          ${reviewHtml}
           ${validationHtml}
         </div>
         <div class="dc-exp-actions">
