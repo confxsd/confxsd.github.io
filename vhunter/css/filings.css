@@ -1029,23 +1029,6 @@
 .fil-more-toggle:hover {
   color: #6366f1;
 }
-.fil-holdings-wrap.fil-holdings-expanded {
-  max-height: 400px;
-  overflow-y: auto;
-}
-.fil-holdings-wrap.fil-holdings-expanded thead th {
-  position: sticky;
-  top: 0;
-  background: #fff;
-  z-index: 1;
-}
-.fil-holdings-wrap.fil-holdings-expanded::-webkit-scrollbar {
-  width: 4px;
-}
-.fil-holdings-wrap.fil-holdings-expanded::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 2px;
-}
 
 .fil-patterns {
   display: flex;

@@ -926,14 +926,13 @@ window.toggleSection = function(sectionId) {
 };
 
 window._toggleHoldings = function(btn, moreCount) {
-  const wrap = btn.previousElementSibling;
-  const expanded = wrap.classList.toggle('fil-holdings-expanded');
-  // Hide/show rows beyond first 20
+  const wrap = btn.closest('.fil-modal-section').querySelector('.fil-holdings-wrap');
   const rows = wrap.querySelectorAll('tbody tr');
+  const isHidden = rows[20]?.style.display === 'none';
   for (let i = 20; i < rows.length; i++) {
-    rows[i].style.display = expanded ? '' : 'none';
+    rows[i].style.display = isHidden ? '' : 'none';
   }
-  btn.textContent = expanded ? 'Show less' : `+${moreCount} more positions`;
+  btn.textContent = isHidden ? 'Show less' : `+${moreCount} more positions`;
 };
 
 // ============== SCAN ACTIONS ==============
