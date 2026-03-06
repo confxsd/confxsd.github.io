@@ -925,6 +925,17 @@ window.toggleSection = function(sectionId) {
   }
 };
 
+window._toggleHoldings = function(btn, moreCount) {
+  const wrap = btn.previousElementSibling;
+  const expanded = wrap.classList.toggle('fil-holdings-expanded');
+  // Hide/show rows beyond first 20
+  const rows = wrap.querySelectorAll('tbody tr');
+  for (let i = 20; i < rows.length; i++) {
+    rows[i].style.display = expanded ? '' : 'none';
+  }
+  btn.textContent = expanded ? 'Show less' : `+${moreCount} more positions`;
+};
+
 // ============== SCAN ACTIONS ==============
 
 window.scanFilings = async function(options = {}) {
@@ -1215,47 +1226,32 @@ function build13FModal(filing) {
 
   // Holdings table
   if (filing.holdings?.length) {
+    const hasMore = filing.holdings.length > 20;
+    const moreCount = filing.holdings.length - 20;
+    const holdingRows = (list, hidden) => list.map(h => {
+      const pct = totalVal > 0 ? ((h.value_usd || 0) / totalVal * 100).toFixed(1) : '0.0';
+      return `<tr${hidden ? ' style="display:none"' : ''}>
+        <td class="fil-td-ticker">${h.ticker || h.cusip || '-'}</td>
+        <td class="fil-td-name">${truncate(h.issuer_name || '', 25)}</td>
+        <td class="fil-td-shares">${formatNumber(h.shares)}</td>
+        <td class="fil-td-value">${formatValue(h.value_usd)}</td>
+        <td>${pct}%</td>
+      </tr>`;
+    }).join('');
+
     html += `
       <div class="fil-modal-section">
         <h4>Top Holdings</h4>
-        <table class="fil-detail-holdings-table">
-          <thead><tr><th>Ticker</th><th>Company</th><th>Shares</th><th>Value</th><th>%</th></tr></thead>
-          <tbody>
-            ${filing.holdings.slice(0, 20).map(h => {
-              const pct = totalVal > 0 ? ((h.value_usd || 0) / totalVal * 100).toFixed(1) : '0.0';
-              return `<tr>
-                <td class="fil-td-ticker">${h.ticker || h.cusip || '-'}</td>
-                <td class="fil-td-name">${truncate(h.issuer_name || '', 25)}</td>
-                <td class="fil-td-shares">${formatNumber(h.shares)}</td>
-                <td class="fil-td-value">${formatValue(h.value_usd)}</td>
-                <td>${pct}%</td>
-              </tr>`;
-            }).join('')}
-            ${filing.holdings.length > 20 ? `
-              <tr class="fil-more-rows" style="display:none">
-                <td colspan="5" style="padding:0">
-                  <div class="fil-more-scroll">
-                    <table class="fil-detail-holdings-table fil-detail-holdings-inner">
-                      <tbody>
-                        ${filing.holdings.slice(20).map(h => {
-                          const pct = totalVal > 0 ? ((h.value_usd || 0) / totalVal * 100).toFixed(1) : '0.0';
-                          return `<tr>
-                            <td class="fil-td-ticker">${h.ticker || h.cusip || '-'}</td>
-                            <td class="fil-td-name">${truncate(h.issuer_name || '', 25)}</td>
-                            <td class="fil-td-shares">${formatNumber(h.shares)}</td>
-                            <td class="fil-td-value">${formatValue(h.value_usd)}</td>
-                            <td>${pct}%</td>
-                          </tr>`;
-                        }).join('')}
-                      </tbody>
-                    </table>
-                  </div>
-                </td>
-              </tr>
-            ` : ''}
-          </tbody>
-        </table>
-        ${filing.holdings.length > 20 ? `<div class="fil-more fil-more-toggle" onclick="this.previousElementSibling.querySelector('.fil-more-rows').style.display=this.previousElementSibling.querySelector('.fil-more-rows').style.display==='none'?'table-row':'none';this.textContent=this.textContent.startsWith('+')?'Show less':'+ ${filing.holdings.length - 20} more positions'">+${filing.holdings.length - 20} more positions</div>` : ''}
+        <div class="fil-holdings-wrap">
+          <table class="fil-detail-holdings-table">
+            <thead><tr><th>Ticker</th><th>Company</th><th>Shares</th><th>Value</th><th>%</th></tr></thead>
+            <tbody>
+              ${holdingRows(filing.holdings.slice(0, 20), false)}
+              ${hasMore ? holdingRows(filing.holdings.slice(20), true) : ''}
+            </tbody>
+          </table>
+        </div>
+        ${hasMore ? `<div class="fil-more fil-more-toggle" onclick="window._toggleHoldings(this, ${moreCount})">+${moreCount} more positions</div>` : ''}
       </div>
     `;
   }
