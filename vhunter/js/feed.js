@@ -98,6 +98,31 @@ function updateThesisTimestamp(thesis) {
   } else {
     timeEl.textContent = '';
   }
+
+  // Update pipeline status bar
+  updatePipelineStatus(thesis);
+}
+
+function updatePipelineStatus(thesis) {
+  const statusEl = document.getElementById('feedPipelineStatus');
+  if (!statusEl) return;
+
+  if (!thesis?.updated_at) {
+    statusEl.innerHTML = '<span class="pipeline-stale">No pipeline data yet. Click Sync All to start.</span>';
+    return;
+  }
+
+  const lastUpdate = new Date(thesis.updated_at);
+  const hoursAgo = (Date.now() - lastUpdate.getTime()) / (1000 * 60 * 60);
+  const timeStr = formatThesisTime(thesis.updated_at);
+  const freshClass = hoursAgo < 2 ? 'pipeline-fresh' : hoursAgo < 6 ? 'pipeline-warm' : 'pipeline-stale';
+
+  statusEl.innerHTML = `
+    <span class="${freshClass}">
+      Pipeline: v${thesis.version || 0} · ${thesis.signals_count || 0} signals · updated ${timeStr}
+      ${hoursAgo > 4 ? ' · auto-syncing...' : ''}
+    </span>
+  `;
 }
 
 function renderThesis(card, thesis) {
@@ -530,6 +555,78 @@ export function getCurrentThesis() {
   return currentThesis;
 }
 
+// Auto-sync: check staleness and trigger full sync if needed
+let autoSyncInProgress = false;
+
+async function checkAndAutoSync() {
+  if (autoSyncInProgress) return;
+
+  try {
+    const thesis = await getThesis();
+    if (!thesis?.updated_at) {
+      // No thesis at all — trigger sync
+      triggerAutoSync('No thesis yet');
+      return;
+    }
+
+    const lastUpdate = new Date(thesis.updated_at);
+    const hoursAgo = (Date.now() - lastUpdate.getTime()) / (1000 * 60 * 60);
+
+    // Auto-sync if thesis is older than 4 hours
+    if (hoursAgo > 4) {
+      triggerAutoSync(`Thesis ${Math.floor(hoursAgo)}h stale`);
+    }
+  } catch (e) {
+    console.error('[AUTO-SYNC] Check failed:', e.message);
+  }
+}
+
+async function triggerAutoSync(reason) {
+  autoSyncInProgress = true;
+  const btn = document.getElementById('fullSyncBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⚡ Auto-syncing...';
+  }
+
+  console.log(`[AUTO-SYNC] Triggered: ${reason}`);
+  showToast(`Auto-syncing: ${reason}...`);
+
+  try {
+    const result = await feedFetch('/api/feed/sync', { method: 'POST' });
+    if (result.success) {
+      const steps = result.steps || [];
+      const thesis = steps.find(s => s.step === 'thesis');
+      showToast(`Auto-sync done: ${result.summary} (${result.duration})`);
+    }
+    // Reload data after sync
+    await reloadFeedData();
+  } catch (e) {
+    console.error('[AUTO-SYNC] Failed:', e.message);
+  } finally {
+    autoSyncInProgress = false;
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '⚡ Sync All';
+    }
+  }
+}
+
+async function reloadFeedData() {
+  const container = document.getElementById('feedList');
+  try {
+    const response = await getFeedItems();
+    feedItems = Array.isArray(response) ? response : (response.results || response.data || []);
+    if (!Array.isArray(feedItems)) feedItems = [];
+    if (container) renderFeed(container);
+    updateFeedStats();
+    loadThesis();
+    loadLatestNewsReport();
+  } catch (e) {
+    console.error('[RELOAD] Failed:', e.message);
+  }
+}
+
 // Load and render feed
 export async function loadFeed() {
   const container = document.getElementById('feedList');
@@ -549,6 +646,9 @@ export async function loadFeed() {
     updateFeedStats();
     loadThesis();
     loadLatestNewsReport();
+
+    // Check if we need auto-sync (stale data)
+    checkAndAutoSync();
   } catch (e) {
     container.innerHTML = `<div class="error">Failed to load feed: ${e.message}</div>`;
   }
@@ -720,6 +820,51 @@ function formatThesisTime(dateStr) {
     minute: '2-digit'
   });
 }
+
+// Full pipeline: Scrape → Extract → Thesis → Memory Extract → Memory Match
+window.triggerFullSync = async function(event) {
+  if (event) event.stopPropagation();
+  const btn = document.getElementById('fullSyncBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⚡ Scraping...';
+  }
+
+  try {
+    const result = await feedFetch('/api/feed/sync', { method: 'POST' });
+
+    if (result.success) {
+      // Show step-by-step results
+      const steps = result.steps || [];
+      const parts = [];
+      const scrape = steps.find(s => s.step === 'scrape');
+      const extract = steps.find(s => s.step === 'extract');
+      const thesis = steps.find(s => s.step === 'thesis');
+      const memExtract = steps.find(s => s.step === 'memory_extract');
+      const memMatch = steps.find(s => s.step === 'memory_match');
+
+      if (scrape?.captured) parts.push(`${scrape.captured} tweets`);
+      if (extract?.processed) parts.push(`${extract.processed} signals`);
+      if (thesis?.success) parts.push(`thesis v${thesis.version}`);
+      if (memExtract?.extracted) parts.push(`${memExtract.extracted} memories`);
+      if (memMatch?.matched) parts.push(`${memMatch.matched} matched`);
+
+      showToast(`Sync: ${parts.join(' → ') || 'up to date'} (${result.duration})`);
+    } else {
+      showToast(result.error || 'Sync failed');
+    }
+
+    // Reload everything
+    await loadFeed();
+  } catch (e) {
+    showToast('Sync failed: ' + e.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '⚡ Sync All';
+    }
+  }
+};
 
 window.triggerThesisRegen = async function(event) {
   if (event) event.stopPropagation();

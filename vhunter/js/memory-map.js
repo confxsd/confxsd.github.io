@@ -86,6 +86,9 @@ export async function generateMemoryThesis() {
 // MAIN LOAD FUNCTION
 // ============================================================================
 
+let autoSyncInProgress = false;
+let lastAutoSync = 0;
+
 export async function loadMemoryMap() {
   const container = document.getElementById('memoryContainer');
   if (!container) return;
@@ -101,8 +104,48 @@ export async function loadMemoryMap() {
     const response = await getMemories('active');
     memories = Array.isArray(response) ? response : [];
     renderMemoryMap(container);
+
+    // Auto-sync: extract + match if not done recently (throttle to once per 4 hours)
+    const now = Date.now();
+    if (!autoSyncInProgress && (now - lastAutoSync) > 4 * 60 * 60 * 1000) {
+      autoSyncMemoryOps();
+    }
   } catch (e) {
     container.innerHTML = `<div class="error">Failed to load memories: ${e.message}</div>`;
+  }
+}
+
+async function autoSyncMemoryOps() {
+  autoSyncInProgress = true;
+  const btn = document.getElementById('runAllMemoryBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⚡ Auto-syncing...';
+  }
+
+  try {
+    // Step 1: Extract from thesis
+    const extractResult = await extractMemories();
+    const hasNew = (extractResult.extracted || 0) + (extractResult.updated || 0) > 0;
+
+    // Step 2: Match feed to memories
+    const matchResult = await matchMemories();
+    const matched = matchResult.matched || 0;
+
+    if (hasNew || matched > 0) {
+      showToast(`Memory auto-sync: ${extractResult.extracted || 0} new, ${matched} matched`);
+      loadMemoryMap();
+    }
+
+    lastAutoSync = Date.now();
+  } catch (e) {
+    console.error('[MEMORY AUTO-SYNC] Failed:', e.message);
+  } finally {
+    autoSyncInProgress = false;
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '⚡ Run All';
+    }
   }
 }
 
@@ -531,6 +574,57 @@ async function saveMemory(event) {
 // ACTIONS
 // ============================================================================
 
+// Chained pipeline: Extract from Thesis → Match Feed → Generate Thesis
+async function runAllMemoryOps() {
+  const btn = document.getElementById('runAllMemoryBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⚡ Extracting...';
+  }
+
+  const results = [];
+
+  try {
+    // Step 1: Extract memories from thesis
+    const extractResult = await extractMemories();
+    const extractParts = [];
+    if (extractResult.extracted) extractParts.push(`${extractResult.extracted} new`);
+    if (extractResult.updated) extractParts.push(`${extractResult.updated} updated`);
+    results.push(extractParts.length ? `Extract: ${extractParts.join(', ')}` : 'Extract: no changes');
+
+    if (btn) btn.textContent = '⚡ Matching...';
+
+    // Step 2: Match feed signals to memories
+    const matchResult = await matchMemories();
+    if (matchResult.error) {
+      results.push(`Match: ${matchResult.error}`);
+    } else {
+      results.push(`Match: ${matchResult.matched || 0} from ${matchResult.processed || 0} items`);
+    }
+
+    if (btn) btn.textContent = '⚡ Generating...';
+
+    // Step 3: Generate thesis from memories
+    const thesisResult = await generateMemoryThesis();
+    if (thesisResult.success && thesisResult.thesis) {
+      results.push('Thesis: generated');
+      showThesisModal(thesisResult.thesis);
+    } else {
+      results.push('Thesis: skipped');
+    }
+
+    showToast(results.join(' → '));
+    loadMemoryMap();
+  } catch (e) {
+    showToast('Pipeline failed: ' + e.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '⚡ Run All';
+    }
+  }
+}
+
 async function extractMemoriesFromThesis() {
   const btn = document.getElementById('extractMemoriesBtn') || document.querySelector('[onclick="window.extractMemoriesFromThesis()"]');
   if (btn) {
@@ -729,6 +823,7 @@ window.openMemoryModal = openMemoryModal;
 window.closeMemoryModal = closeMemoryModal;
 window.saveMemory = saveMemory;
 window.deleteMemoryConfirm = deleteMemoryConfirm;
+window.runAllMemoryOps = runAllMemoryOps;
 window.extractMemoriesFromThesis = extractMemoriesFromThesis;
 window.matchMemoriesToFeed = matchMemoriesToFeed;
 window.generateThesisFromMemories = generateThesisFromMemories;

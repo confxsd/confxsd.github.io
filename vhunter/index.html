@@ -769,6 +769,13 @@
             <div class="header-actions">
               <button
                 class="btn-secondary"
+                onclick="triggerFullSync(event)"
+                id="fullSyncBtn"
+              >
+                ⚡ Sync All
+              </button>
+              <button
+                class="btn-secondary"
                 onclick="triggerThesisRegen(event)"
                 id="regenThesisBtn"
               >
@@ -802,6 +809,9 @@
                 </div>
               </div>
             </div>
+
+            <!-- Pipeline Status -->
+            <div class="feed-pipeline-status" id="feedPipelineStatus"></div>
 
             <!-- Feed Stats -->
             <div class="feed-stats" id="feedStats">
@@ -882,6 +892,13 @@
             </h1>
             <div class="header-actions">
               <button
+                class="memory-action-btn primary"
+                id="runAllMemoryBtn"
+                onclick="runAllMemoryOps()"
+              >
+                ⚡ Run All
+              </button>
+              <button
                 class="memory-action-btn secondary"
                 id="extractMemoriesBtn"
                 onclick="extractMemoriesFromThesis()"
@@ -903,7 +920,7 @@
                 Generate Thesis
               </button>
               <button
-                class="memory-action-btn primary"
+                class="memory-action-btn secondary"
                 onclick="openMemoryModal()"
               >
                 + New Memory

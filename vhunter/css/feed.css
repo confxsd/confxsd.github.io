@@ -4,6 +4,29 @@
   padding: 12px;
 }
 
+/* Pipeline Status Bar */
+.feed-pipeline-status {
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  font-size: var(--t-xs);
+  font-weight: 500;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.pipeline-fresh {
+  color: #059669;
+}
+
+.pipeline-warm {
+  color: #d97706;
+}
+
+.pipeline-stale {
+  color: #dc2626;
+}
+
 .feed-stats {
   display: flex;
   gap: 12px;
