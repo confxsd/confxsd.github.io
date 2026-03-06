@@ -53,6 +53,7 @@ export async function loadFilings() {
     renderPipeTable();
     renderFundsGrid();
     renderHoldingsStats();
+    renderTopHeld();
     renderHoldingsTable();
     updateLastScan();
 
@@ -154,6 +155,32 @@ async function fetchHoldingsByTicker(ticker) {
   return response.json();
 }
 
+// ============== FILING NOTES API ==============
+
+async function fetchFilingNotes(filingId) {
+  const response = await fetch(`${CONFIG.PROXY_URL}/api/filings/${filingId}/notes`, {
+    headers: { 'X-User-Id': getUserId() }
+  });
+  return response.json();
+}
+
+async function addFilingNote(filingId, content) {
+  const response = await fetch(`${CONFIG.PROXY_URL}/api/filings/${filingId}/notes`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() },
+    body: JSON.stringify({ content })
+  });
+  return response.json();
+}
+
+async function deleteFilingNote(filingId, noteId) {
+  const response = await fetch(`${CONFIG.PROXY_URL}/api/filings/${filingId}/notes/${noteId}`, {
+    method: 'DELETE',
+    headers: { 'X-User-Id': getUserId() }
+  });
+  return response.json();
+}
+
 // ============== DASHBOARD STATS ==============
 
 function renderDashboardStats() {
@@ -244,13 +271,16 @@ function renderFilingRow(filing) {
   }[filing.alert_priority] || '';
 
   const typeIcon = getTypeIcon(filing.filing_type);
+  const parsedPreview = buildParsedPreview(filing);
+  const notesBadge = filing.notes_count > 0 ? `<span class="fil-note-indicator" title="${filing.notes_count} note(s)"><i class="fa-solid fa-sticky-note"></i>${filing.notes_count}</span>` : '';
+  const parsedDot = filing.parsed_data?.parsed ? '<span class="fil-parsed-dot" title="Parsed"></span>' : '';
 
   return `
     <tr class="fil-row ${priorityClass}" onclick="showFilingDetails('${filing.id}')">
       <td class="fil-td-type">
-        <span class="fil-type-badge">${typeIcon} ${filing.filing_type}</span>
+        <span class="fil-type-badge">${parsedDot}${typeIcon} ${filing.filing_type}</span>
       </td>
-      <td class="fil-td-fund">${filing.fund_name || filing.filer_name || 'Unknown'}</td>
+      <td class="fil-td-fund">${filing.fund_name || filing.filer_name || 'Unknown'} ${notesBadge}</td>
       <td class="fil-td-ticker">${filing.subject_ticker || '-'}</td>
       <td class="fil-td-date">${formatDate(filing.filed_date)}</td>
       <td class="fil-td-priority">
@@ -292,16 +322,19 @@ function renderFeedItem(filing) {
   const priorityClass = filing.alert_priority === 'critical' ? 'fil-feed-critical' :
                          filing.alert_priority === 'high' ? 'fil-feed-high' : '';
   const preview = buildParsedPreview(filing);
+  const notesBadge = filing.notes_count > 0 ? `<span class="fil-note-indicator" title="${filing.notes_count} note(s)"><i class="fa-solid fa-sticky-note"></i>${filing.notes_count}</span>` : '';
+  const parsedDot = filing.parsed_data?.parsed ? '<span class="fil-parsed-dot" title="Parsed"></span>' : '';
 
   return `
     <div class="fil-feed-item ${priorityClass}" onclick="showFilingDetails('${filing.id}')">
-      <span class="fil-feed-type" style="border-color:${typeColor};color:${typeColor}">${filing.filing_type}</span>
+      <span class="fil-feed-type" style="border-color:${typeColor};color:${typeColor}">${parsedDot}${filing.filing_type}</span>
       <div class="fil-feed-body">
         <div class="fil-feed-top">
           <span class="fil-feed-fund">${filing.fund_name || filing.filer_name || 'Unknown'}</span>
           ${filing.subject_ticker ? `<code class="fil-feed-ticker" onclick="event.stopPropagation()">${filing.subject_ticker}</code>` : ''}
+          ${notesBadge}
         </div>
-        ${preview ? `<div class="fil-feed-preview">${preview}</div>` : ''}
+        ${preview ? `<div class="fil-feed-preview fil-parsed-preview">${preview}</div>` : ''}
         <div class="fil-feed-meta">
           <span class="fil-feed-time">${formatRelativeDate(filing.filed_date)}</span>
           <a href="${filing.filing_url}" target="_blank" class="fil-link-btn" onclick="event.stopPropagation()" title="SEC EDGAR">
@@ -325,7 +358,45 @@ function getTypeColor(type) {
 
 function buildParsedPreview(filing) {
   const pd = filing.parsed_data;
-  if (!pd) return '';
+  if (!pd || !pd.parsed) return '';
+
+  const type = filing.filing_type || '';
+
+  // 13F: positions and value
+  if (type.includes('13F')) {
+    const positions = pd.totalPositions || pd.positions_count || 0;
+    const val = pd.totalValue || pd.total_value || 0;
+    const parts = [];
+    if (positions) parts.push(`${positions} positions`);
+    if (val) parts.push(formatValue(val));
+    return parts.join(' · ');
+  }
+
+  // 13D/G: ownership percentage
+  if (type.includes('13D') || type.includes('13G')) {
+    const parts = [];
+    if (pd.percentOwned) parts.push(`${pd.percentOwned}% ownership`);
+    if (pd.sharesOwned) parts.push(`${formatNumber(pd.sharesOwned)} shares`);
+    if (filing.subject_ticker && pd.percentOwned) {
+      return `${pd.percentOwned}% ownership in ${filing.subject_ticker}`;
+    }
+    return parts.join(' · ');
+  }
+
+  // 8-K: items
+  if (type.includes('8-K') && pd.items?.length) {
+    return pd.items.map(i => `Item ${i.number}`).join(', ');
+  }
+
+  // S-1
+  if (type.includes('S-1') || type === 'EFFECT') {
+    const parts = [];
+    if (pd.hasSellingStockholders) parts.push('Selling stockholders');
+    if (pd.companyName) parts.push(pd.companyName);
+    return parts.join(' · ');
+  }
+
+  // Fallback
   if (pd.positions_count) {
     const val = pd.total_value ? `, ${formatValue(pd.total_value)}` : '';
     return `${pd.positions_count} positions${val}`;
@@ -364,14 +435,14 @@ function formatRelativeDate(dateStr) {
 }
 
 function getTypeIcon(type) {
-  if (!type) return '📄';
-  if (type.includes('13F')) return '📊';
-  if (type.includes('13D')) return '🎯';
-  if (type.includes('13G')) return '📈';
-  if (type.includes('8-K')) return '📢';
-  if (type.includes('S-1') || type.includes('EFFECT')) return '📋';
-  if (type === '4' || type === '4/A') return '👤';
-  return '📄';
+  if (!type) return '';
+  if (type.includes('13F')) return '<i class="fa-solid fa-chart-pie" style="font-size:11px"></i>';
+  if (type.includes('13D')) return '<i class="fa-solid fa-crosshairs" style="font-size:11px"></i>';
+  if (type.includes('13G')) return '<i class="fa-solid fa-chart-line" style="font-size:11px"></i>';
+  if (type.includes('8-K')) return '<i class="fa-solid fa-bullhorn" style="font-size:11px"></i>';
+  if (type.includes('S-1') || type.includes('EFFECT')) return '<i class="fa-solid fa-file-contract" style="font-size:11px"></i>';
+  if (type === '4' || type === '4/A') return '<i class="fa-solid fa-user" style="font-size:11px"></i>';
+  return '<i class="fa-solid fa-file" style="font-size:11px"></i>';
 }
 
 function getFilteredFilings() {
@@ -524,6 +595,40 @@ function renderHoldingsStats() {
   }
 }
 
+function renderTopHeld() {
+  const container = document.getElementById('filTopHeld');
+  if (!container) return;
+
+  if (!holdings || holdings.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  // Top 5 by fund count
+  const topByFunds = [...holdings]
+    .sort((a, b) => (b.fund_count || 0) - (a.fund_count || 0))
+    .slice(0, 5);
+
+  const period = holdingsSummary?.period ? formatQuarter(holdingsSummary.period) : '';
+  const totalFunds = holdingsSummary?.summary?.totalFunds || 0;
+  const totalVal = holdingsSummary?.summary?.totalValue || 0;
+
+  container.innerHTML = `
+    <div class="fil-top-held-row">
+      <div class="fil-top-held-label">Top Held</div>
+      <div class="fil-top-held-pills">
+        ${topByFunds.map(h => `
+          <span class="fil-top-pill" onclick="showTickerHoldings('${h.ticker}')" title="${h.issuer_name || h.ticker}">
+            <strong>${h.ticker}</strong>
+            <span class="fil-top-pill-count">${h.fund_count} funds</span>
+          </span>
+        `).join('')}
+      </div>
+      <div class="fil-top-held-coverage">${totalFunds} funds · ${period} · ${formatValue(totalVal)} total</div>
+    </div>
+  `;
+}
+
 function renderHoldingsTable() {
   const container = document.getElementById('filHoldingsTable');
   if (!container) return;
@@ -538,6 +643,7 @@ function renderHoldingsTable() {
         <i class="fa-solid fa-chart-pie"></i>
         <p>No holdings data yet</p>
         <p class="fil-empty-sub">Holdings are populated when 13F filings are parsed.<br>Run a scan and parse 13F filings to see aggregated holdings.</p>
+        <button class="fil-btn fil-btn-primary" onclick="scanFilings()"><i class="fa-solid fa-radar"></i> Scan Filings</button>
       </div>
     `;
     return;
@@ -937,7 +1043,13 @@ window.showFilingDetails = async function(id) {
       headers: { 'X-User-Id': getUserId() }
     });
     const filing = await response.json();
-    showModal(`${filing.filing_type} Filing`, buildFilingModal(filing));
+    showModal(`${filing.filing_type} Filing`, buildFilingModal(filing), 'fil-detail-modal');
+
+    // If filing not parsed, try client-side parsing (SEC blocks server IPs but allows browsers)
+    const pd = filing.parsed_data;
+    if (!pd?.parsed && filing.filing_url) {
+      clientParseFiling(filing);
+    }
   } catch (e) {
     console.error('Failed to load filing:', e);
     showToast('Failed to load filing details', 'error');
@@ -1048,9 +1160,230 @@ window.submitPipeDeal = async function() {
   }
 };
 
-// ============== MODAL BUILDERS ==============
+// ============== MODAL BUILDERS — TYPE-AWARE ==============
 
 function buildFilingModal(filing) {
+  const type = filing.filing_type || '';
+  const pd = filing.parsed_data;
+
+  // Route to type-specific builder
+  if (type.includes('13F')) return build13FModal(filing);
+  if (type.includes('13D') || type.includes('13G')) return build13DGModal(filing);
+  if (type.includes('8-K')) return build8KModal(filing);
+  if (type.includes('S-1') || type === 'EFFECT') return buildS1Modal(filing);
+
+  // Default/fallback
+  return buildGenericFilingModal(filing);
+}
+
+function build13FModal(filing) {
+  const pd = filing.parsed_data || {};
+  const period = pd.period ? formatQuarter(pd.period) : formatDate(filing.filed_date);
+  const totalVal = pd.totalValue || pd.total_value || 0;
+  const posCount = pd.totalPositions || pd.positions_count || 0;
+
+  // Count put/call
+  let puts = 0, calls = 0;
+  if (filing.holdings) {
+    for (const h of filing.holdings) {
+      if (h.put_call === 'Put') puts++;
+      else if (h.put_call === 'Call') calls++;
+    }
+  }
+
+  let html = `
+    <div class="fil-detail-header fil-detail-13f">
+      <div class="fil-detail-header-top">
+        <span class="fil-detail-type-label">13F Holdings Report</span>
+      </div>
+      <div class="fil-detail-header-title">${filing.fund_name || filing.filer_name}</div>
+      <div class="fil-detail-header-sub">${period}</div>
+    </div>
+    <div class="fil-detail-stats">
+      <div class="fil-detail-stat">
+        <span class="fil-detail-stat-value">${formatValue(totalVal)}</span>
+        <span class="fil-detail-stat-label">Total Value</span>
+      </div>
+      <div class="fil-detail-stat">
+        <span class="fil-detail-stat-value">${posCount}</span>
+        <span class="fil-detail-stat-label">Positions</span>
+      </div>
+      <div class="fil-detail-stat">
+        <span class="fil-detail-stat-value">${puts}</span>
+        <span class="fil-detail-stat-label">Puts</span>
+      </div>
+      <div class="fil-detail-stat">
+        <span class="fil-detail-stat-value">${calls}</span>
+        <span class="fil-detail-stat-label">Calls</span>
+      </div>
+    </div>
+  `;
+
+  // Holdings table
+  if (filing.holdings?.length) {
+    html += `
+      <div class="fil-modal-section">
+        <h4>Top Holdings</h4>
+        <table class="fil-detail-holdings-table">
+          <thead><tr><th>Ticker</th><th>Company</th><th>Shares</th><th>Value</th><th>%</th></tr></thead>
+          <tbody>
+            ${filing.holdings.slice(0, 20).map(h => {
+              const pct = totalVal > 0 ? ((h.value_usd || 0) / totalVal * 100).toFixed(1) : '0.0';
+              return `<tr>
+                <td class="fil-td-ticker">${h.ticker || h.cusip || '-'}</td>
+                <td class="fil-td-name">${truncate(h.issuer_name || '', 25)}</td>
+                <td class="fil-td-shares">${formatNumber(h.shares)}</td>
+                <td class="fil-td-value">${formatValue(h.value_usd)}</td>
+                <td>${pct}%</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+        ${filing.holdings.length > 20 ? `<div class="fil-more">+${filing.holdings.length - 20} more positions</div>` : ''}
+      </div>
+    `;
+  }
+
+  html += buildNotesSection(filing);
+  html += buildMetadataFooter(filing);
+
+  return html;
+}
+
+function build13DGModal(filing) {
+  const pd = filing.parsed_data || {};
+
+  let html = `
+    <div class="fil-detail-header fil-detail-13dg">
+      <div class="fil-detail-header-top">
+        <span class="fil-detail-type-label">${filing.filing_type} Ownership Filing</span>
+      </div>
+      <div class="fil-detail-header-title">${filing.fund_name || filing.filer_name}</div>
+      ${pd.subjectCompany || filing.subject_ticker ? `
+        <div class="fil-detail-header-sub">
+          <i class="fa-solid fa-arrow-right"></i>
+          ${pd.subjectCompany || ''} ${filing.subject_ticker ? `(${filing.subject_ticker})` : ''}
+        </div>
+      ` : ''}
+    </div>
+    <div class="fil-detail-stats">
+      ${pd.percentOwned ? `
+        <div class="fil-detail-stat fil-detail-stat-accent">
+          <span class="fil-detail-stat-value">${pd.percentOwned}%</span>
+          <span class="fil-detail-stat-label">Ownership</span>
+        </div>
+      ` : ''}
+      ${pd.sharesOwned ? `
+        <div class="fil-detail-stat">
+          <span class="fil-detail-stat-value">${formatNumber(pd.sharesOwned)}</span>
+          <span class="fil-detail-stat-label">Shares</span>
+        </div>
+      ` : ''}
+      ${pd.reportingPersonType ? `
+        <div class="fil-detail-stat">
+          <span class="fil-detail-stat-value">${pd.reportingPersonType}</span>
+          <span class="fil-detail-stat-label">Entity Type</span>
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  if (pd.purpose) {
+    html += `
+      <div class="fil-modal-section">
+        <h4>Purpose of Transaction</h4>
+        <p class="fil-detail-excerpt">${escapeHtml(pd.purpose)}</p>
+      </div>
+    `;
+  }
+
+  html += buildNotesSection(filing);
+  html += buildMetadataFooter(filing);
+
+  return html;
+}
+
+function build8KModal(filing) {
+  const pd = filing.parsed_data || {};
+
+  let html = `
+    <div class="fil-detail-header fil-detail-8k">
+      <div class="fil-detail-header-top">
+        <span class="fil-detail-type-label">8-K Current Report</span>
+        ${filing.alert_priority !== 'normal' ? `<span class="fil-detail-priority-badge fil-priority-${filing.alert_priority}">${filing.alert_priority}</span>` : ''}
+      </div>
+      <div class="fil-detail-header-title">${filing.fund_name || filing.filer_name}</div>
+      <div class="fil-detail-header-sub">${formatDate(filing.filed_date)}</div>
+    </div>
+  `;
+
+  // Item badges
+  if (pd.items?.length) {
+    html += `
+      <div class="fil-modal-section">
+        <h4>Items Reported</h4>
+        <div class="fil-item-badges">
+          ${pd.items.map(item => `
+            <div class="fil-item-badge">
+              <span class="fil-item-badge-num">Item ${item.number}</span>
+              <span class="fil-item-badge-desc">${item.description}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  if (pd.excerpt) {
+    html += `
+      <div class="fil-modal-section">
+        <h4>Excerpt</h4>
+        <p class="fil-detail-excerpt">${escapeHtml(pd.excerpt)}</p>
+      </div>
+    `;
+  }
+
+  html += buildNotesSection(filing);
+  html += buildMetadataFooter(filing);
+
+  return html;
+}
+
+function buildS1Modal(filing) {
+  const pd = filing.parsed_data || {};
+
+  let html = `
+    <div class="fil-detail-header fil-detail-s1">
+      <div class="fil-detail-header-top">
+        <span class="fil-detail-type-label">${filing.filing_type === 'EFFECT' ? 'S-1 Effective Notice' : 'S-1 Registration'}</span>
+      </div>
+      <div class="fil-detail-header-title">${pd.companyName || filing.fund_name || filing.filer_name}</div>
+      <div class="fil-detail-header-sub">${formatDate(filing.filed_date)}</div>
+    </div>
+    <div class="fil-detail-stats">
+      <div class="fil-detail-stat ${pd.hasSellingStockholders ? 'fil-detail-stat-warn' : ''}">
+        <span class="fil-detail-stat-value">${pd.hasSellingStockholders ? 'Yes' : 'No'}</span>
+        <span class="fil-detail-stat-label">Selling Stockholders</span>
+      </div>
+    </div>
+  `;
+
+  if (pd.excerpt) {
+    html += `
+      <div class="fil-modal-section">
+        <h4>Prospectus Summary</h4>
+        <p class="fil-detail-excerpt">${escapeHtml(pd.excerpt)}</p>
+      </div>
+    `;
+  }
+
+  html += buildNotesSection(filing);
+  html += buildMetadataFooter(filing);
+
+  return html;
+}
+
+function buildGenericFilingModal(filing) {
   const pd = filing.parsed_data;
   const tickers = extractTickersFromFiling(filing);
 
@@ -1058,7 +1391,6 @@ function buildFilingModal(filing) {
     <div class="fil-modal-grid">
       <div class="fil-modal-row"><span class="fil-modal-label">Type</span><span class="fil-feed-type" style="border-color:${getTypeColor(filing.filing_type)};color:${getTypeColor(filing.filing_type)}">${filing.filing_type}</span></div>
       <div class="fil-modal-row"><span class="fil-modal-label">Filer</span><span>${filing.fund_name || filing.filer_name}</span></div>
-      <div class="fil-modal-row"><span class="fil-modal-label">CIK</span><span>${filing.filer_cik}</span></div>
       <div class="fil-modal-row"><span class="fil-modal-label">Filed</span><span>${formatDate(filing.filed_date)}</span></div>
       <div class="fil-modal-row"><span class="fil-modal-label">Subject</span><span>${filing.subject_ticker || '-'}</span></div>
       <div class="fil-modal-row"><span class="fil-modal-label">Priority</span><span>${filing.alert_priority}</span></div>
@@ -1068,45 +1400,123 @@ function buildFilingModal(filing) {
   // Parsed data summary
   if (pd) {
     html += `<div class="fil-modal-section"><h4>Parsed Summary</h4><div class="fil-parsed-summary">`;
-    if (pd.positions_count) html += `<div class="fil-parsed-row"><span>Positions</span><span>${pd.positions_count}</span></div>`;
-    if (pd.total_value) html += `<div class="fil-parsed-row"><span>Total Value</span><span>${formatValue(pd.total_value)}</span></div>`;
-    if (pd.shares_owned) html += `<div class="fil-parsed-row"><span>Shares Owned</span><span>${formatNumber(pd.shares_owned)}</span></div>`;
-    if (pd.percent_owned) html += `<div class="fil-parsed-row"><span>% Owned</span><span>${pd.percent_owned}%</span></div>`;
-    if (pd.event_type) html += `<div class="fil-parsed-row"><span>Event</span><span>${pd.event_type}</span></div>`;
-    if (pd.transaction_type) html += `<div class="fil-parsed-row"><span>Transaction</span><span>${pd.transaction_type}</span></div>`;
-    if (pd.shares_transacted) html += `<div class="fil-parsed-row"><span>Shares Transacted</span><span>${formatNumber(pd.shares_transacted)}</span></div>`;
-    if (pd.price_per_share) html += `<div class="fil-parsed-row"><span>Price/Share</span><span>$${pd.price_per_share.toFixed(2)}</span></div>`;
+    for (const [key, val] of Object.entries(pd)) {
+      if (key === 'parsed' || key === 'note' || key === 'documentUrl' || key === 'filingType' || key === 'filerName') continue;
+      if (val === null || val === undefined) continue;
+      html += `<div class="fil-parsed-row"><span>${key}</span><span>${typeof val === 'object' ? JSON.stringify(val) : val}</span></div>`;
+    }
     html += `</div></div>`;
   }
 
-  // Ticker chips
   if (tickers.length > 0) {
     html += `<div class="fil-modal-section"><h4>Tickers</h4><div class="fil-ticker-chips">`;
-    html += tickers.map(t => `<span class="fil-ticker-chip" onclick="event.stopPropagation()">${t}</span>`).join('');
+    html += tickers.map(t => `<span class="fil-ticker-chip">${t}</span>`).join('');
     html += `</div></div>`;
   }
 
-  // Holdings (13F)
-  if (filing.holdings?.length) {
-    html += `
-      <div class="fil-modal-section">
-        <h4>Top Holdings (${filing.holdings.length} total)</h4>
-        <div class="fil-holdings-mini">
-          ${filing.holdings.slice(0, 10).map(h => `
-            <div class="fil-holding-row">
-              <span>${h.ticker || h.cusip}</span>
-              <span>${h.shares?.toLocaleString()} shares</span>
-              <span>$${((h.value_usd || 0) / 1e6).toFixed(1)}M</span>
-            </div>
-          `).join('')}
-          ${filing.holdings.length > 10 ? `<div class="fil-more">+${filing.holdings.length - 10} more</div>` : ''}
-        </div>
-      </div>
-    `;
-  }
+  html += buildNotesSection(filing);
+  html += buildMetadataFooter(filing);
 
-  html += `<a href="${filing.filing_url}" target="_blank" class="fil-btn fil-btn-primary fil-btn-block">View on SEC EDGAR</a>`;
   return html;
+}
+
+// ============== NOTES SECTION ==============
+
+function buildNotesSection(filing) {
+  const notes = filing.notes || [];
+
+  return `
+    <div class="fil-modal-section fil-notes-section">
+      <h4>Analyst Notes</h4>
+      <div class="fil-note-input">
+        <textarea id="filNoteInput_${filing.id}" class="fil-note-textarea" placeholder="Add observation..." rows="2"></textarea>
+        <button class="fil-btn fil-btn-primary fil-btn-sm" onclick="submitFilingNote('${filing.id}')">Add Note</button>
+      </div>
+      <div class="fil-notes-list" id="filNotesList_${filing.id}">
+        ${notes.length > 0 ? notes.map(n => buildNoteCard(filing.id, n)).join('') : '<div class="fil-notes-empty">No notes yet</div>'}
+      </div>
+    </div>
+  `;
+}
+
+function buildNoteCard(filingId, note) {
+  const time = formatRelativeDate(note.created_at);
+  return `
+    <div class="fil-note-card" id="fnote_${note.id}">
+      <div class="fil-note-card-content">${escapeHtml(note.content)}</div>
+      <div class="fil-note-card-footer">
+        <span class="fil-note-card-time">${time}</span>
+        <button class="fil-note-card-delete" onclick="event.stopPropagation(); deleteNote('${filingId}', '${note.id}')" title="Delete note">&times;</button>
+      </div>
+    </div>
+  `;
+}
+
+window.submitFilingNote = async function(filingId) {
+  const textarea = document.getElementById(`filNoteInput_${filingId}`);
+  const content = textarea?.value?.trim();
+  if (!content) return;
+
+  try {
+    textarea.disabled = true;
+    const result = await addFilingNote(filingId, content);
+    if (result.success) {
+      textarea.value = '';
+      // Refresh notes list
+      const notes = await fetchFilingNotes(filingId);
+      const list = document.getElementById(`filNotesList_${filingId}`);
+      if (list) {
+        list.innerHTML = notes.length > 0
+          ? notes.map(n => buildNoteCard(filingId, n)).join('')
+          : '<div class="fil-notes-empty">No notes yet</div>';
+      }
+      // Update notes_count in the filings array
+      const filing = filings.find(f => f.id === filingId);
+      if (filing) filing.notes_count = (filing.notes_count || 0) + 1;
+    }
+  } catch (e) {
+    showToast('Failed to add note', 'error');
+  } finally {
+    if (textarea) textarea.disabled = false;
+  }
+};
+
+window.deleteNote = async function(filingId, noteId) {
+  try {
+    const result = await deleteFilingNote(filingId, noteId);
+    if (result.success) {
+      const el = document.getElementById(`fnote_${noteId}`);
+      if (el) el.remove();
+      // Check if list is now empty
+      const list = document.getElementById(`filNotesList_${filingId}`);
+      if (list && list.children.length === 0) {
+        list.innerHTML = '<div class="fil-notes-empty">No notes yet</div>';
+      }
+      const filing = filings.find(f => f.id === filingId);
+      if (filing && filing.notes_count > 0) filing.notes_count--;
+    }
+  } catch (e) {
+    showToast('Failed to delete note', 'error');
+  }
+};
+
+// ============== METADATA FOOTER ==============
+
+function buildMetadataFooter(filing) {
+  const pd = filing.parsed_data || {};
+  return `
+    <div class="fil-detail-footer">
+      <div class="fil-detail-footer-row">
+        <span>CIK: ${filing.filer_cik}</span>
+        <span>Accession: ${filing.accession_number}</span>
+      </div>
+      <div class="fil-detail-footer-row">
+        <span>Accepted: ${filing.accepted_date ? formatDate(filing.accepted_date) : '--'}</span>
+        ${pd.parsed ? '<span class="fil-parsed-indicator">Parsed</span>' : '<span class="fil-unparsed-indicator">Not parsed</span>'}
+      </div>
+      <a href="${pd.documentUrl || filing.filing_url}" target="_blank" class="fil-btn fil-btn-primary fil-btn-block">View on SEC EDGAR</a>
+    </div>
+  `;
 }
 
 function extractTickersFromFiling(filing) {
@@ -1197,6 +1607,346 @@ function buildFundModal(fund) {
   `;
 }
 
+// ============== CLIENT-SIDE SEC PARSING ==============
+// SEC (Akamai) blocks Cloudflare Worker IPs but allows browser requests.
+// When a filing is unparsed, the browser fetches SEC docs directly and parses them.
+
+const SEC_ARCHIVES = 'https://www.sec.gov/Archives/edgar/data';
+
+async function clientParseFiling(filing) {
+  const type = filing.filing_type || '';
+  const modalBody = document.querySelector('.fil-modal-body');
+
+  // Show parsing indicator
+  const indicator = document.createElement('div');
+  indicator.className = 'fil-parse-indicator';
+  indicator.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Parsing filing from SEC...';
+  if (modalBody) modalBody.prepend(indicator);
+
+  try {
+    let result = null;
+
+    if (type.includes('13F')) {
+      result = await clientParse13F(filing);
+    } else if (type.includes('13D') || type.includes('13G')) {
+      result = await clientParse13DG(filing);
+    } else if (type.includes('8-K')) {
+      result = await clientParse8K(filing);
+    } else if (type.includes('S-1') || type === 'EFFECT') {
+      result = await clientParseS1(filing);
+    }
+
+    if (!result?.summary?.parsed) {
+      indicator.innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i> Could not parse filing';
+      setTimeout(() => indicator.remove(), 3000);
+      return;
+    }
+
+    // Send parsed data to backend
+    await fetch(`${CONFIG.PROXY_URL}/api/filings/${filing.id}/parse-client`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() },
+      body: JSON.stringify(result)
+    });
+
+    // Re-open modal with parsed data
+    indicator.remove();
+    filing.parsed_data = result.summary;
+    if (result.holdings) filing.holdings = result.holdings;
+
+    // Update modal content
+    if (modalBody) {
+      modalBody.innerHTML = buildFilingModal(filing);
+    }
+
+    showToast('Filing parsed successfully', 'success');
+  } catch (e) {
+    console.error('[CLIENT-PARSE]', e);
+    indicator.innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i> Parse failed';
+    setTimeout(() => indicator.remove(), 3000);
+  }
+}
+
+/**
+ * Build SEC archive base path for a filing
+ */
+function secBasePath(filing) {
+  const accessionNoDash = filing.accession_number.replace(/-/g, '');
+  const cik = filing.filer_cik.replace(/^0+/, '');
+  return `${SEC_ARCHIVES}/${cik}/${accessionNoDash}`;
+}
+
+/**
+ * Fetch a SEC URL via the backend proxy (SEC blocks direct browser CORS + CF Worker IPs)
+ * The proxy caches in KV, so retries on the same URL are instant.
+ */
+async function secBrowserFetch(url) {
+  const proxyUrl = `${CONFIG.PROXY_URL}/api/filings/sec-proxy?url=${encodeURIComponent(url)}`;
+  const resp = await fetch(proxyUrl, {
+    headers: { 'X-User-Id': getUserId() }
+  });
+  if (!resp.ok) throw new Error(`SEC proxy returned ${resp.status}`);
+  return resp.text();
+}
+
+/**
+ * Fetch the filing index and find the primary document URL
+ */
+async function fetchFilingIndex(filing) {
+  const base = secBasePath(filing);
+  const indexUrl = `${base}/${filing.accession_number}-index.htm`;
+  const indexHtml = await secBrowserFetch(indexUrl);
+  return { base, indexHtml };
+}
+
+/**
+ * Strip HTML tags from a document
+ */
+function stripHtml(html) {
+  return html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/\s+/g, ' ');
+}
+
+// --- 13F Client Parser ---
+async function clientParse13F(filing) {
+  const base = secBasePath(filing);
+
+  // Try common filenames first
+  let xmlText = null;
+  for (const name of ['infotable.xml', 'InfoTable.xml']) {
+    try {
+      xmlText = await secBrowserFetch(`${base}/${name}`);
+      break;
+    } catch { /* try next */ }
+  }
+
+  // Fallback: parse index to find XML
+  if (!xmlText) {
+    const { indexHtml } = await fetchFilingIndex(filing);
+
+    let xmlFilename = null;
+    const m1 = indexHtml.match(/href="[^"]*?\/([^"\/]*?infotable[^"\/]*?\.xml)"/i);
+    const m2 = indexHtml.match(/href="[^"]*?\/([^"\/]*?13[fF][^"\/]*?\.xml)"/i);
+    const m3 = indexHtml.match(/href="([^"]+\.xml)"[\s\S]{0,200}?INFORMATION\s+TABLE/i);
+
+    if (m1) xmlFilename = m1[1].split('/').pop();
+    else if (m2) xmlFilename = m2[1].split('/').pop();
+    else if (m3) xmlFilename = m3[1].split('/').pop();
+    else {
+      // Last resort: any .xml that's not primary_doc.xml
+      const allXml = [...indexHtml.matchAll(/href="[^"]*\/([^"\/]+\.xml)"/gi)];
+      const nonPrimary = allXml.find(m => !m[1].toLowerCase().includes('primary_doc'));
+      if (nonPrimary) xmlFilename = nonPrimary[1];
+    }
+
+    if (!xmlFilename) return { summary: { parsed: false } };
+    xmlText = await secBrowserFetch(`${base}/${xmlFilename}`);
+  }
+
+  // Parse XML (namespace-aware)
+  const holdings = [];
+  const periodMatch = xmlText.match(/<(?:\w+:)?reportCalendarOrQuarter>(\d{2})-(\d{2})-(\d{4})<\/(?:\w+:)?reportCalendarOrQuarter>/);
+  const period = periodMatch ? `${periodMatch[3]}-${periodMatch[1]}-${periodMatch[2]}` : null;
+
+  const infoTableRegex = /<(?:\w+:)?infoTable>([\s\S]*?)<\/(?:\w+:)?infoTable>/gi;
+  let match;
+  while ((match = infoTableRegex.exec(xmlText)) !== null) {
+    const entry = match[1];
+    const getVal = (tag) => {
+      const m = entry.match(new RegExp(`<(?:\\w+:)?${tag}>([^<]*)</(?:\\w+:)?${tag}>`));
+      return m ? m[1].trim() : null;
+    };
+
+    const cusip = getVal('cusip');
+    const issuerName = getVal('nameOfIssuer');
+    const classTitle = getVal('titleOfClass');
+    const value = parseInt(getVal('value')) || 0;
+    const shares = parseInt(getVal('sshPrnamt')) || 0;
+    const putCall = getVal('putCall');
+
+    holdings.push({
+      cusip, ticker: null, issuer_name: issuerName, class_title: classTitle,
+      value_usd: value * 1000, shares, put_call: putCall
+    });
+  }
+
+  return {
+    holdings,
+    tickers: [],
+    summary: {
+      totalPositions: holdings.length,
+      totalValue: holdings.reduce((s, h) => s + h.value_usd, 0),
+      period,
+      parsed: true
+    }
+  };
+}
+
+// --- 13D/G Client Parser ---
+async function clientParse13DG(filing) {
+  const { base, indexHtml } = await fetchFilingIndex(filing);
+
+  // Strategy 1: Try primary_doc.xml (newer structured XML format)
+  const xmlMatch = indexHtml.match(/href="([^"]*?primary_doc\.xml)"/i);
+  if (xmlMatch) {
+    try {
+      const xmlFilename = xmlMatch[1].split('/').pop();
+      const xmlUrl = `${base}/${xmlFilename}`;
+      const xmlText = await secBrowserFetch(xmlUrl);
+
+      const getTag = (tag) => {
+        const m = xmlText.match(new RegExp(`<(?:\\w+:)?${tag}>([^<]*)</(?:\\w+:)?${tag}>`));
+        return m ? m[1].trim() : null;
+      };
+
+      const issuerName = getTag('issuerName');
+      const classPercent = getTag('classPercent');
+      const aggShares = getTag('reportingPersonBeneficiallyOwnedAggregateNumberOfShares');
+      const personType = getTag('typeOfReportingPerson');
+
+      if (issuerName || classPercent) {
+        return {
+          tickers: filing.subject_ticker ? [filing.subject_ticker] : [],
+          summary: {
+            filingType: filing.filing_type, filerName: filing.filer_name,
+            subjectCompany: issuerName || filing.subject_company || null,
+            percentOwned: classPercent ? parseFloat(classPercent) : null,
+            sharesOwned: aggShares ? parseInt(parseFloat(aggShares)) : null,
+            purpose: null, reportingPersonType: personType || null,
+            documentUrl: xmlUrl, parsed: true
+          }
+        };
+      }
+    } catch { /* fall through to HTML */ }
+  }
+
+  // Strategy 2: HTML document (legacy format)
+  const docMatch = indexHtml.match(/href="([^"]*?\.htm)"[^>]*>[^<]*(?:SC 13|13D|13G|SCHEDULE)/i)
+    || indexHtml.match(/href="([^"]*?\.htm)"/i);
+  if (!docMatch) return { summary: { parsed: false } };
+
+  const docFilename = docMatch[1].split('/').pop();
+  const docUrl = `${base}/${docFilename}`;
+  const docText = await secBrowserFetch(docUrl);
+  const plainText = stripHtml(docText);
+
+  let percentOwned = null, sharesOwned = null, purpose = null, reportingPersonType = null, subjectCompany = null;
+
+  const pctMatch = plainText.match(/(?:percent|percentage)\s+(?:of\s+)?(?:class|shares|outstanding)[^.]*?(\d+\.?\d*)\s*%/i)
+    || plainText.match(/(\d+\.?\d*)\s*%\s*(?:of\s+)?(?:class|outstanding|shares)/i);
+  if (pctMatch) percentOwned = parseFloat(pctMatch[1]);
+
+  const sharesMatch = plainText.match(/(?:aggregate\s+number|number\s+of\s+shares|shares\s+beneficially\s+owned)[^.]*?([\d,]+)\s*(?:shares|common)/i)
+    || plainText.match(/(?:beneficially\s+own[s]?)[^.]*?([\d,]+)\s*(?:shares|common)/i);
+  if (sharesMatch) sharesOwned = parseInt(sharesMatch[1].replace(/,/g, ''));
+
+  const purposeMatch = plainText.match(/(?:Item\s*4|PURPOSE\s+OF\s+(?:THE\s+)?TRANSACTION)[:\s]*([^]*?)(?:Item\s*5|INTEREST\s+IN\s+SECURITIES)/i);
+  if (purposeMatch) {
+    purpose = purposeMatch[1].trim().slice(0, 500).replace(/\s+/g, ' ').trim();
+    if (purpose.length < 5) purpose = null;
+  }
+
+  const typeMatch = plainText.match(/(?:type\s+of\s+reporting\s+person)[:\s]*([A-Z]{2})/i);
+  if (typeMatch) reportingPersonType = typeMatch[1].toUpperCase();
+
+  const subjectMatch = plainText.match(/(?:name\s+of\s+issuer|subject\s+company)[:\s]*([A-Za-z0-9\s,.&'-]+?)(?:\n|Item|\d|CUSIP)/i);
+  if (subjectMatch) subjectCompany = subjectMatch[1].trim().slice(0, 100);
+
+  return {
+    tickers: filing.subject_ticker ? [filing.subject_ticker] : [],
+    summary: {
+      filingType: filing.filing_type, filerName: filing.filer_name,
+      subjectCompany: subjectCompany || filing.subject_company || null,
+      percentOwned, sharesOwned, purpose, reportingPersonType,
+      documentUrl: docUrl, parsed: true
+    }
+  };
+}
+
+// --- 8-K Client Parser ---
+const ITEM_DESCRIPTIONS = {
+  '1.01': 'Entry into Material Agreement', '1.02': 'Termination of Material Agreement',
+  '1.03': 'Bankruptcy or Receivership', '2.01': 'Completion of Acquisition/Disposition',
+  '2.02': 'Results of Operations', '2.03': 'Creation of Direct Financial Obligation',
+  '2.05': 'Costs for Exit/Disposal Activities', '2.06': 'Material Impairments',
+  '3.01': 'Delisting/Transfer/Failure to Satisfy Listing Rule', '3.02': 'Unregistered Sales of Equity',
+  '4.01': "Changes in Certifying Accountant", '4.02': 'Non-Reliance on Previously Issued Financials',
+  '5.01': 'Changes in Control', '5.02': 'Departure/Election of Directors or Officers',
+  '5.03': 'Amendments to Articles/Bylaws', '5.07': 'Submission of Matters to Vote',
+  '7.01': 'Regulation FD Disclosure', '8.01': 'Other Events', '9.01': 'Financial Statements and Exhibits'
+};
+
+async function clientParse8K(filing) {
+  const { base, indexHtml } = await fetchFilingIndex(filing);
+
+  const docMatch = indexHtml.match(/href="([^"]*?\.htm)"[^>]*>[^<]*8-K/i)
+    || indexHtml.match(/href="([^"]*?\.htm)"/i);
+  if (!docMatch) return { summary: { parsed: false } };
+
+  const docFilename = docMatch[1].split('/').pop();
+  const docUrl = `${base}/${docFilename}`;
+  const docText = await secBrowserFetch(docUrl);
+  const plainText = stripHtml(docText);
+
+  const foundItems = new Set();
+  const itemRegex = /Item\s+(\d+\.\d+)/gi;
+  let m;
+  while ((m = itemRegex.exec(plainText)) !== null) {
+    if (ITEM_DESCRIPTIONS[m[1]]) foundItems.add(m[1]);
+  }
+
+  const items = Array.from(foundItems).sort().map(num => ({
+    number: num, description: ITEM_DESCRIPTIONS[num] || 'Unknown'
+  }));
+
+  let excerpt = null;
+  const contentMatch = plainText.match(/Item\s+\d+\.\d+[^.]*\.\s*(.{50,}?)(?:\.\s+Item|\.\s+SIGNATURE|\.\s+EXHIBIT)/i);
+  if (contentMatch) {
+    excerpt = contentMatch[1].trim().slice(0, 500).replace(/\s+/g, ' ').trim();
+    if (excerpt.length < 10) excerpt = null;
+  }
+
+  return {
+    tickers: [],
+    summary: {
+      filingType: filing.filing_type, filerName: filing.filer_name,
+      items, excerpt, documentUrl: docUrl, parsed: true
+    }
+  };
+}
+
+// --- S-1 Client Parser ---
+async function clientParseS1(filing) {
+  const { base, indexHtml } = await fetchFilingIndex(filing);
+
+  const docMatch = indexHtml.match(/href="([^"]*?\.htm)"[^>]*>[^<]*(?:S-1|PROSPECTUS|REGISTRATION)/i)
+    || indexHtml.match(/href="([^"]*?\.htm)"/i);
+  if (!docMatch) return { summary: { parsed: false } };
+
+  const docFilename = docMatch[1].split('/').pop();
+  const docUrl = `${base}/${docFilename}`;
+  const docText = await secBrowserFetch(docUrl);
+  const plainText = stripHtml(docText);
+
+  const hasSellingStockholders = /selling\s+(?:stock|security)\s*holders/i.test(plainText);
+  let companyName = filing.filer_name || null;
+  let excerpt = null;
+
+  const summaryMatch = plainText.match(/(?:PROSPECTUS\s+SUMMARY|SUMMARY)[:\s]*([^]*?)(?:THE\s+OFFERING|RISK\s+FACTORS|USE\s+OF\s+PROCEEDS)/i);
+  if (summaryMatch) {
+    excerpt = summaryMatch[1].trim().slice(0, 500).replace(/\s+/g, ' ').trim();
+    if (excerpt.length < 10) excerpt = null;
+  }
+
+  return {
+    tickers: [],
+    summary: {
+      filingType: filing.filing_type, filerName: filing.filer_name,
+      companyName, hasSellingStockholders, excerpt,
+      documentUrl: docUrl, parsed: true
+    }
+  };
+}
+
 // ============== HELPERS ==============
 
 function formatDate(dateStr) {
@@ -1208,6 +1958,11 @@ function formatDate(dateStr) {
 function formatFundType(type) {
   if (!type) return 'Other';
   return type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function updateLastScan() {
@@ -1228,14 +1983,14 @@ function showError(msg) {
   if (table) table.innerHTML = `<div class="fil-error">${msg}</div>`;
 }
 
-function showModal(title, content) {
+function showModal(title, content, extraClass = '') {
   const existing = document.querySelector('.fil-modal-overlay');
   if (existing) existing.remove();
 
   const modal = document.createElement('div');
   modal.className = 'fil-modal-overlay';
   modal.innerHTML = `
-    <div class="fil-modal">
+    <div class="fil-modal ${extraClass}">
       <div class="fil-modal-header">
         <h3>${title}</h3>
         <button class="fil-modal-close" onclick="this.closest('.fil-modal-overlay').remove()">&times;</button>
