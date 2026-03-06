@@ -1044,12 +1044,6 @@ window.showFilingDetails = async function(id) {
     });
     const filing = await response.json();
     showModal(`${filing.filing_type} Filing`, buildFilingModal(filing), 'fil-detail-modal');
-
-    // If filing not parsed, try client-side parsing (SEC blocks server IPs but allows browsers)
-    const pd = filing.parsed_data;
-    if (!pd?.parsed && filing.filing_url) {
-      clientParseFiling(filing);
-    }
   } catch (e) {
     console.error('Failed to load filing:', e);
     showToast('Failed to load filing details', 'error');
@@ -1504,6 +1498,9 @@ window.deleteNote = async function(filingId, noteId) {
 
 function buildMetadataFooter(filing) {
   const pd = filing.parsed_data || {};
+  const type = filing.filing_type || '';
+  const hasParser = type.includes('13F') || type.includes('13D') || type.includes('13G') || type.includes('8-K') || type.includes('S-1') || type === 'EFFECT';
+
   return `
     <div class="fil-detail-footer">
       <div class="fil-detail-footer-row">
@@ -1514,6 +1511,11 @@ function buildMetadataFooter(filing) {
         <span>Accepted: ${filing.accepted_date ? formatDate(filing.accepted_date) : '--'}</span>
         ${pd.parsed ? '<span class="fil-parsed-indicator">Parsed</span>' : '<span class="fil-unparsed-indicator">Not parsed</span>'}
       </div>
+      ${!pd.parsed && hasParser ? `
+        <button class="fil-btn fil-btn-secondary fil-btn-block fil-parse-btn" onclick="parseFilingServer('${filing.id}')">
+          <i class="fa-solid fa-rotate"></i> Parse Filing
+        </button>
+      ` : ''}
       <a href="${pd.documentUrl || filing.filing_url}" target="_blank" class="fil-btn fil-btn-primary fil-btn-block">View on SEC EDGAR</a>
     </div>
   `;
@@ -1607,345 +1609,45 @@ function buildFundModal(fund) {
   `;
 }
 
-// ============== CLIENT-SIDE SEC PARSING ==============
-// SEC (Akamai) blocks Cloudflare Worker IPs but allows browser requests.
-// When a filing is unparsed, the browser fetches SEC docs directly and parses them.
+// ============== SERVER-SIDE PARSE TRIGGER ==============
 
-const SEC_ARCHIVES = 'https://www.sec.gov/Archives/edgar/data';
-
-async function clientParseFiling(filing) {
-  const type = filing.filing_type || '';
-  const modalBody = document.querySelector('.fil-modal-body');
-
-  // Show parsing indicator
-  const indicator = document.createElement('div');
-  indicator.className = 'fil-parse-indicator';
-  indicator.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Parsing filing from SEC...';
-  if (modalBody) modalBody.prepend(indicator);
+/**
+ * Trigger server-side parse for an unparsed filing
+ */
+window.parseFilingServer = async function(id) {
+  const btn = document.querySelector('.fil-parse-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Parsing...';
+  }
 
   try {
-    let result = null;
-
-    if (type.includes('13F')) {
-      result = await clientParse13F(filing);
-    } else if (type.includes('13D') || type.includes('13G')) {
-      result = await clientParse13DG(filing);
-    } else if (type.includes('8-K')) {
-      result = await clientParse8K(filing);
-    } else if (type.includes('S-1') || type === 'EFFECT') {
-      result = await clientParseS1(filing);
-    }
-
-    if (!result?.summary?.parsed) {
-      indicator.innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i> Could not parse filing';
-      setTimeout(() => indicator.remove(), 3000);
-      return;
-    }
-
-    // Send parsed data to backend
-    await fetch(`${CONFIG.PROXY_URL}/api/filings/${filing.id}/parse-client`, {
+    const response = await fetch(`${CONFIG.PROXY_URL}/api/filings/${id}/parse`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-User-Id': getUserId() },
-      body: JSON.stringify(result)
+      headers: { 'X-User-Id': getUserId() }
     });
+    const result = await response.json();
 
-    // Re-open modal with parsed data
-    indicator.remove();
-    filing.parsed_data = result.summary;
-    if (result.holdings) filing.holdings = result.holdings;
-
-    // Update modal content
-    if (modalBody) {
-      modalBody.innerHTML = buildFilingModal(filing);
-    }
-
-    showToast('Filing parsed successfully', 'success');
-  } catch (e) {
-    console.error('[CLIENT-PARSE]', e);
-    indicator.innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i> Parse failed';
-    setTimeout(() => indicator.remove(), 3000);
-  }
-}
-
-/**
- * Build SEC archive base path for a filing
- */
-function secBasePath(filing) {
-  const accessionNoDash = filing.accession_number.replace(/-/g, '');
-  const cik = filing.filer_cik.replace(/^0+/, '');
-  return `${SEC_ARCHIVES}/${cik}/${accessionNoDash}`;
-}
-
-/**
- * Fetch a SEC URL via the backend proxy (SEC blocks direct browser CORS + CF Worker IPs)
- * The proxy caches in KV, so retries on the same URL are instant.
- */
-async function secBrowserFetch(url) {
-  const proxyUrl = `${CONFIG.PROXY_URL}/api/filings/sec-proxy?url=${encodeURIComponent(url)}`;
-  const resp = await fetch(proxyUrl, {
-    headers: { 'X-User-Id': getUserId() }
-  });
-  if (!resp.ok) throw new Error(`SEC proxy returned ${resp.status}`);
-  return resp.text();
-}
-
-/**
- * Fetch the filing index and find the primary document URL
- */
-async function fetchFilingIndex(filing) {
-  const base = secBasePath(filing);
-  const indexUrl = `${base}/${filing.accession_number}-index.htm`;
-  const indexHtml = await secBrowserFetch(indexUrl);
-  return { base, indexHtml };
-}
-
-/**
- * Strip HTML tags from a document
- */
-function stripHtml(html) {
-  return html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/\s+/g, ' ');
-}
-
-// --- 13F Client Parser ---
-async function clientParse13F(filing) {
-  const base = secBasePath(filing);
-
-  // Try common filenames first
-  let xmlText = null;
-  for (const name of ['infotable.xml', 'InfoTable.xml']) {
-    try {
-      xmlText = await secBrowserFetch(`${base}/${name}`);
-      break;
-    } catch { /* try next */ }
-  }
-
-  // Fallback: parse index to find XML
-  if (!xmlText) {
-    const { indexHtml } = await fetchFilingIndex(filing);
-
-    let xmlFilename = null;
-    const m1 = indexHtml.match(/href="[^"]*?\/([^"\/]*?infotable[^"\/]*?\.xml)"/i);
-    const m2 = indexHtml.match(/href="[^"]*?\/([^"\/]*?13[fF][^"\/]*?\.xml)"/i);
-    const m3 = indexHtml.match(/href="([^"]+\.xml)"[\s\S]{0,200}?INFORMATION\s+TABLE/i);
-
-    if (m1) xmlFilename = m1[1].split('/').pop();
-    else if (m2) xmlFilename = m2[1].split('/').pop();
-    else if (m3) xmlFilename = m3[1].split('/').pop();
-    else {
-      // Last resort: any .xml that's not primary_doc.xml
-      const allXml = [...indexHtml.matchAll(/href="[^"]*\/([^"\/]+\.xml)"/gi)];
-      const nonPrimary = allXml.find(m => !m[1].toLowerCase().includes('primary_doc'));
-      if (nonPrimary) xmlFilename = nonPrimary[1];
-    }
-
-    if (!xmlFilename) return { summary: { parsed: false } };
-    xmlText = await secBrowserFetch(`${base}/${xmlFilename}`);
-  }
-
-  // Parse XML (namespace-aware)
-  const holdings = [];
-  const periodMatch = xmlText.match(/<(?:\w+:)?reportCalendarOrQuarter>(\d{2})-(\d{2})-(\d{4})<\/(?:\w+:)?reportCalendarOrQuarter>/);
-  const period = periodMatch ? `${periodMatch[3]}-${periodMatch[1]}-${periodMatch[2]}` : null;
-
-  const infoTableRegex = /<(?:\w+:)?infoTable>([\s\S]*?)<\/(?:\w+:)?infoTable>/gi;
-  let match;
-  while ((match = infoTableRegex.exec(xmlText)) !== null) {
-    const entry = match[1];
-    const getVal = (tag) => {
-      const m = entry.match(new RegExp(`<(?:\\w+:)?${tag}>([^<]*)</(?:\\w+:)?${tag}>`));
-      return m ? m[1].trim() : null;
-    };
-
-    const cusip = getVal('cusip');
-    const issuerName = getVal('nameOfIssuer');
-    const classTitle = getVal('titleOfClass');
-    const value = parseInt(getVal('value')) || 0;
-    const shares = parseInt(getVal('sshPrnamt')) || 0;
-    const putCall = getVal('putCall');
-
-    holdings.push({
-      cusip, ticker: null, issuer_name: issuerName, class_title: classTitle,
-      value_usd: value * 1000, shares, put_call: putCall
-    });
-  }
-
-  return {
-    holdings,
-    tickers: [],
-    summary: {
-      totalPositions: holdings.length,
-      totalValue: holdings.reduce((s, h) => s + h.value_usd, 0),
-      period,
-      parsed: true
-    }
-  };
-}
-
-// --- 13D/G Client Parser ---
-async function clientParse13DG(filing) {
-  const { base, indexHtml } = await fetchFilingIndex(filing);
-
-  // Strategy 1: Try primary_doc.xml (newer structured XML format)
-  const xmlMatch = indexHtml.match(/href="([^"]*?primary_doc\.xml)"/i);
-  if (xmlMatch) {
-    try {
-      const xmlFilename = xmlMatch[1].split('/').pop();
-      const xmlUrl = `${base}/${xmlFilename}`;
-      const xmlText = await secBrowserFetch(xmlUrl);
-
-      const getTag = (tag) => {
-        const m = xmlText.match(new RegExp(`<(?:\\w+:)?${tag}>([^<]*)</(?:\\w+:)?${tag}>`));
-        return m ? m[1].trim() : null;
-      };
-
-      const issuerName = getTag('issuerName');
-      const classPercent = getTag('classPercent');
-      const aggShares = getTag('reportingPersonBeneficiallyOwnedAggregateNumberOfShares');
-      const personType = getTag('typeOfReportingPerson');
-
-      if (issuerName || classPercent) {
-        return {
-          tickers: filing.subject_ticker ? [filing.subject_ticker] : [],
-          summary: {
-            filingType: filing.filing_type, filerName: filing.filer_name,
-            subjectCompany: issuerName || filing.subject_company || null,
-            percentOwned: classPercent ? parseFloat(classPercent) : null,
-            sharesOwned: aggShares ? parseInt(parseFloat(aggShares)) : null,
-            purpose: null, reportingPersonType: personType || null,
-            documentUrl: xmlUrl, parsed: true
-          }
-        };
+    if (result.success && result.parsedData?.parsed) {
+      showToast('Filing parsed successfully', 'success');
+      // Re-open modal with fresh data
+      window.showFilingDetails(id);
+    } else {
+      showToast('Parse failed — SEC may be rate limiting. Try again later.', 'error');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Retry Parse';
       }
-    } catch { /* fall through to HTML */ }
-  }
-
-  // Strategy 2: HTML document (legacy format)
-  const docMatch = indexHtml.match(/href="([^"]*?\.htm)"[^>]*>[^<]*(?:SC 13|13D|13G|SCHEDULE)/i)
-    || indexHtml.match(/href="([^"]*?\.htm)"/i);
-  if (!docMatch) return { summary: { parsed: false } };
-
-  const docFilename = docMatch[1].split('/').pop();
-  const docUrl = `${base}/${docFilename}`;
-  const docText = await secBrowserFetch(docUrl);
-  const plainText = stripHtml(docText);
-
-  let percentOwned = null, sharesOwned = null, purpose = null, reportingPersonType = null, subjectCompany = null;
-
-  const pctMatch = plainText.match(/(?:percent|percentage)\s+(?:of\s+)?(?:class|shares|outstanding)[^.]*?(\d+\.?\d*)\s*%/i)
-    || plainText.match(/(\d+\.?\d*)\s*%\s*(?:of\s+)?(?:class|outstanding|shares)/i);
-  if (pctMatch) percentOwned = parseFloat(pctMatch[1]);
-
-  const sharesMatch = plainText.match(/(?:aggregate\s+number|number\s+of\s+shares|shares\s+beneficially\s+owned)[^.]*?([\d,]+)\s*(?:shares|common)/i)
-    || plainText.match(/(?:beneficially\s+own[s]?)[^.]*?([\d,]+)\s*(?:shares|common)/i);
-  if (sharesMatch) sharesOwned = parseInt(sharesMatch[1].replace(/,/g, ''));
-
-  const purposeMatch = plainText.match(/(?:Item\s*4|PURPOSE\s+OF\s+(?:THE\s+)?TRANSACTION)[:\s]*([^]*?)(?:Item\s*5|INTEREST\s+IN\s+SECURITIES)/i);
-  if (purposeMatch) {
-    purpose = purposeMatch[1].trim().slice(0, 500).replace(/\s+/g, ' ').trim();
-    if (purpose.length < 5) purpose = null;
-  }
-
-  const typeMatch = plainText.match(/(?:type\s+of\s+reporting\s+person)[:\s]*([A-Z]{2})/i);
-  if (typeMatch) reportingPersonType = typeMatch[1].toUpperCase();
-
-  const subjectMatch = plainText.match(/(?:name\s+of\s+issuer|subject\s+company)[:\s]*([A-Za-z0-9\s,.&'-]+?)(?:\n|Item|\d|CUSIP)/i);
-  if (subjectMatch) subjectCompany = subjectMatch[1].trim().slice(0, 100);
-
-  return {
-    tickers: filing.subject_ticker ? [filing.subject_ticker] : [],
-    summary: {
-      filingType: filing.filing_type, filerName: filing.filer_name,
-      subjectCompany: subjectCompany || filing.subject_company || null,
-      percentOwned, sharesOwned, purpose, reportingPersonType,
-      documentUrl: docUrl, parsed: true
     }
-  };
-}
-
-// --- 8-K Client Parser ---
-const ITEM_DESCRIPTIONS = {
-  '1.01': 'Entry into Material Agreement', '1.02': 'Termination of Material Agreement',
-  '1.03': 'Bankruptcy or Receivership', '2.01': 'Completion of Acquisition/Disposition',
-  '2.02': 'Results of Operations', '2.03': 'Creation of Direct Financial Obligation',
-  '2.05': 'Costs for Exit/Disposal Activities', '2.06': 'Material Impairments',
-  '3.01': 'Delisting/Transfer/Failure to Satisfy Listing Rule', '3.02': 'Unregistered Sales of Equity',
-  '4.01': "Changes in Certifying Accountant", '4.02': 'Non-Reliance on Previously Issued Financials',
-  '5.01': 'Changes in Control', '5.02': 'Departure/Election of Directors or Officers',
-  '5.03': 'Amendments to Articles/Bylaws', '5.07': 'Submission of Matters to Vote',
-  '7.01': 'Regulation FD Disclosure', '8.01': 'Other Events', '9.01': 'Financial Statements and Exhibits'
+  } catch (e) {
+    console.error('Parse failed:', e);
+    showToast('Parse failed', 'error');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Retry Parse';
+    }
+  }
 };
-
-async function clientParse8K(filing) {
-  const { base, indexHtml } = await fetchFilingIndex(filing);
-
-  const docMatch = indexHtml.match(/href="([^"]*?\.htm)"[^>]*>[^<]*8-K/i)
-    || indexHtml.match(/href="([^"]*?\.htm)"/i);
-  if (!docMatch) return { summary: { parsed: false } };
-
-  const docFilename = docMatch[1].split('/').pop();
-  const docUrl = `${base}/${docFilename}`;
-  const docText = await secBrowserFetch(docUrl);
-  const plainText = stripHtml(docText);
-
-  const foundItems = new Set();
-  const itemRegex = /Item\s+(\d+\.\d+)/gi;
-  let m;
-  while ((m = itemRegex.exec(plainText)) !== null) {
-    if (ITEM_DESCRIPTIONS[m[1]]) foundItems.add(m[1]);
-  }
-
-  const items = Array.from(foundItems).sort().map(num => ({
-    number: num, description: ITEM_DESCRIPTIONS[num] || 'Unknown'
-  }));
-
-  let excerpt = null;
-  const contentMatch = plainText.match(/Item\s+\d+\.\d+[^.]*\.\s*(.{50,}?)(?:\.\s+Item|\.\s+SIGNATURE|\.\s+EXHIBIT)/i);
-  if (contentMatch) {
-    excerpt = contentMatch[1].trim().slice(0, 500).replace(/\s+/g, ' ').trim();
-    if (excerpt.length < 10) excerpt = null;
-  }
-
-  return {
-    tickers: [],
-    summary: {
-      filingType: filing.filing_type, filerName: filing.filer_name,
-      items, excerpt, documentUrl: docUrl, parsed: true
-    }
-  };
-}
-
-// --- S-1 Client Parser ---
-async function clientParseS1(filing) {
-  const { base, indexHtml } = await fetchFilingIndex(filing);
-
-  const docMatch = indexHtml.match(/href="([^"]*?\.htm)"[^>]*>[^<]*(?:S-1|PROSPECTUS|REGISTRATION)/i)
-    || indexHtml.match(/href="([^"]*?\.htm)"/i);
-  if (!docMatch) return { summary: { parsed: false } };
-
-  const docFilename = docMatch[1].split('/').pop();
-  const docUrl = `${base}/${docFilename}`;
-  const docText = await secBrowserFetch(docUrl);
-  const plainText = stripHtml(docText);
-
-  const hasSellingStockholders = /selling\s+(?:stock|security)\s*holders/i.test(plainText);
-  let companyName = filing.filer_name || null;
-  let excerpt = null;
-
-  const summaryMatch = plainText.match(/(?:PROSPECTUS\s+SUMMARY|SUMMARY)[:\s]*([^]*?)(?:THE\s+OFFERING|RISK\s+FACTORS|USE\s+OF\s+PROCEEDS)/i);
-  if (summaryMatch) {
-    excerpt = summaryMatch[1].trim().slice(0, 500).replace(/\s+/g, ' ').trim();
-    if (excerpt.length < 10) excerpt = null;
-  }
-
-  return {
-    tickers: [],
-    summary: {
-      filingType: filing.filing_type, filerName: filing.filer_name,
-      companyName, hasSellingStockholders, excerpt,
-      documentUrl: docUrl, parsed: true
-    }
-  };
-}
 
 // ============== HELPERS ==============
 
