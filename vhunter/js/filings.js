@@ -1231,9 +1231,31 @@ function build13FModal(filing) {
                 <td>${pct}%</td>
               </tr>`;
             }).join('')}
+            ${filing.holdings.length > 20 ? `
+              <tr class="fil-more-rows" style="display:none">
+                <td colspan="5" style="padding:0">
+                  <div class="fil-more-scroll">
+                    <table class="fil-detail-holdings-table fil-detail-holdings-inner">
+                      <tbody>
+                        ${filing.holdings.slice(20).map(h => {
+                          const pct = totalVal > 0 ? ((h.value_usd || 0) / totalVal * 100).toFixed(1) : '0.0';
+                          return `<tr>
+                            <td class="fil-td-ticker">${h.ticker || h.cusip || '-'}</td>
+                            <td class="fil-td-name">${truncate(h.issuer_name || '', 25)}</td>
+                            <td class="fil-td-shares">${formatNumber(h.shares)}</td>
+                            <td class="fil-td-value">${formatValue(h.value_usd)}</td>
+                            <td>${pct}%</td>
+                          </tr>`;
+                        }).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </td>
+              </tr>
+            ` : ''}
           </tbody>
         </table>
-        ${filing.holdings.length > 20 ? `<div class="fil-more">+${filing.holdings.length - 20} more positions</div>` : ''}
+        ${filing.holdings.length > 20 ? `<div class="fil-more fil-more-toggle" onclick="this.previousElementSibling.querySelector('.fil-more-rows').style.display=this.previousElementSibling.querySelector('.fil-more-rows').style.display==='none'?'table-row':'none';this.textContent=this.textContent.startsWith('+')?'Show less':'+ ${filing.holdings.length - 20} more positions'">+${filing.holdings.length - 20} more positions</div>` : ''}
       </div>
     `;
   }

@@ -1020,6 +1020,30 @@
   color: #64748b;
   font-size: var(--t-xs);
 }
+.fil-more-toggle {
+  cursor: pointer;
+  color: #818cf8;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+.fil-more-toggle:hover {
+  color: #6366f1;
+}
+.fil-more-scroll {
+  max-height: 300px;
+  overflow-y: auto;
+}
+.fil-detail-holdings-inner {
+  border: none;
+  margin: 0;
+}
+.fil-more-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.fil-more-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
+}
 
 .fil-patterns {
   display: flex;
