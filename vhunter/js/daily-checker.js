@@ -112,6 +112,31 @@ function renderCard(check) {
   const stale = isStale(r?.created_at);
   const tags = check.tags ? check.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
 
+  // ── Earnings date badge ──
+  const earningsHtml = (() => {
+    if (!market?.earningsDate) return '';
+    const days = market.daysToEarnings;
+    if (days == null || days < 0) return '';
+    const urgent = days <= 7;
+    const soon = days <= 14;
+    if (!soon) return '';
+    const label = days === 0 ? 'TODAY' : days === 1 ? 'TOMORROW' : `${days}d`;
+    const cls = urgent ? 'dc-earnings-urgent' : 'dc-earnings-soon';
+    return `<span class="${cls}" title="Earnings ${market.earningsDate}">ER ${label}</span>`;
+  })();
+
+  // ── Fund holders compact ──
+  const fundHolders = market?.fundHolders || [];
+  const fundHtml = fundHolders.length > 0 ? `
+    <div class="dc-funds-row">
+      ${fundHolders.slice(0, 5).map(f => {
+        const cls = f.isNew ? 'dc-fund-new' : f.isExit ? 'dc-fund-exit' : (f.pctChange > 20 ? 'dc-fund-up' : f.pctChange < -20 ? 'dc-fund-down' : '');
+        const tag = f.isNew ? ' NEW' : f.isExit ? ' EXIT' : '';
+        return `<span class="dc-fund-chip ${cls}" title="${f.name} — ${((f.shares || 0) / 1e3).toFixed(0)}K shares${tag}">${f.name?.split(' ')[0] || '?'}</span>`;
+      }).join('')}
+      ${fundHolders.length > 5 ? `<span class="dc-fund-chip dc-fund-more">+${fundHolders.length - 5}</span>` : ''}
+    </div>` : '';
+
   // ── Collapsed metrics ──
   const metricsHtml = market ? `
     <div class="dc-metric">
@@ -300,6 +325,7 @@ function renderCard(check) {
           <span class="dc-dir-badge ${check.direction}">${check.direction}</span>
           ${priorityDots(check.priority)}
           ${conviction ? `<span class="dc-conv-badge ${convictionClass(conviction)}">${conviction}</span>` : ''}
+          ${earningsHtml}
           ${review ? `<span class="dc-review-badge dc-review-${review.action?.toLowerCase() || 'flag'}" title="${review.key_concern || ''}">${review.grade}</span>` : ''}
           ${stale && r ? '<span class="dc-stale-dot" title="Data >24h old"></span>' : ''}
         </div>
@@ -315,6 +341,7 @@ function renderCard(check) {
         <button class="dc-expand-btn" id="dc-expand-${check.id}">▼</button>
       </div>
       ${tags.length ? `<div class="dc-tags-row">${tags.map(t => `<span class="dc-tag">${t}</span>`).join('')}</div>` : ''}
+      ${fundHtml}
       ${r?.ai_summary ? `<div class="dc-summary">"${r.ai_summary}"</div>` : ''}
       <div class="dc-expanded" id="dc-exp-${check.id}">
         <div class="dc-expanded-grid">
@@ -350,7 +377,7 @@ function renderCard(check) {
           ${validationHtml}
         </div>
         <div class="dc-exp-actions">
-          <button class="btn btn-sm" onclick="window.dcRunOne('${check.id}')">↻ Run Now</button>
+          <button class="btn btn-sm dc-run-one-btn" id="dc-run-btn-${check.id}" onclick="window.dcRunOne('${check.id}')">↻ Run Now</button>
           <button class="btn btn-sm" onclick="window.dcGoAnalyze('${check.ticker}')">📊 Analyze</button>
           <button class="btn btn-sm" onclick="window.dcGoOptions('${check.ticker}')">📈 Options</button>
           <button class="btn btn-sm" onclick="window.dcOpenModal('${check.id}')">✎ Edit</button>

@@ -286,6 +286,12 @@ function renderDetail(el, a) {
     const flags = renderFlags(s.flags);
     const findings = s.findings ? renderFindings(s.findings) : '';
 
+    const hints = s.nextStageHints ? `<div class="tp-stage-hints">${esc(s.nextStageHints)}</div>` : '';
+    const hasBody = findings || flags || s.assessment || hints;
+    const bodyContent = (findings || flags)
+      ? `${findings}${flags}${hints}`
+      : `<div class="tp-stage-assessment-full">${esc(s.assessment || 'No details available')}</div>${hints}`;
+
     stageCards += `
       <div class="tp-stage-card">
         <div class="tp-stage-header" onclick="window.tpToggleStage(this)">
@@ -295,8 +301,7 @@ function renderDetail(el, a) {
           <button class="tp-stage-toggle">▼</button>
         </div>
         <div class="tp-stage-body">
-          ${findings}
-          ${flags}
+          ${bodyContent}
         </div>
       </div>`;
   }

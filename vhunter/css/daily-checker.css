@@ -585,6 +585,73 @@
 .dc-conv-badge.conv-med  { color: #a16207; background: #fef9c3; }
 .dc-conv-badge.conv-low  { color: #94a3b8; background: #f1f5f9; }
 
+/* ── Earnings date badges ── */
+.dc-earnings-urgent {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  flex-shrink: 0;
+  animation: dc-pulse 2s ease-in-out infinite;
+}
+.dc-earnings-soon {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fdba74;
+  flex-shrink: 0;
+}
+
+/* ── Fund holder chips ── */
+.dc-funds-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 0 14px 8px;
+}
+.dc-fund-chip {
+  font-size: 0.6rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  letter-spacing: 0.02em;
+}
+.dc-fund-chip.dc-fund-new {
+  background: #d1fae5;
+  color: #059669;
+  border-color: #a7f3d0;
+}
+.dc-fund-chip.dc-fund-exit {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+  text-decoration: line-through;
+}
+.dc-fund-chip.dc-fund-up {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+.dc-fund-chip.dc-fund-down {
+  background: #fff7ed;
+  color: #c2410c;
+  border-color: #fed7aa;
+}
+.dc-fund-chip.dc-fund-more {
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+}
+
 /* ── Stale indicator ── */
 .dc-stale { border-left: 3px solid #f59e0b; }
 .dc-stale-dot {
