@@ -80,7 +80,7 @@
   border-left-color: #818cf8;
 }
 
-.nav-icon { font-size: var(--t-xl); }
+.nav-icon { display: flex; align-items: center; width: 18px; font-size: 15px; justify-content: center; }
 
 .sidebar-footer {
   padding: 16px;
