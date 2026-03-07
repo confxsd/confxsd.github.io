@@ -338,6 +338,10 @@ function renderCard(check) {
             <div class="dc-exp-title">Options</div>
             <div class="dc-exp-text">${analysis?.options_summary || '--'}</div>
           </div>
+          ${analysis?.institutional_summary ? `<div class="dc-exp-block">
+            <div class="dc-exp-title">Institutional Filings</div>
+            <div class="dc-exp-text" style="color:#f59e0b">${analysis.institutional_summary}</div>
+          </div>` : ''}
           ${tradeHtml}
           ${catHtml}
           ${macroHtml}
