@@ -7,6 +7,7 @@ const STAGES = ['screening', 'story', 'fundamentals', 'technical', 'catalyst', '
 let analyses = [];
 let currentFilter = 'all';
 let pollInterval = null;
+let expandedCards = new Set();
 
 export async function loadPipeline() {
   renderPage();
@@ -16,6 +17,7 @@ export async function loadPipeline() {
 
 export function unloadPipeline() {
   if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+  expandedCards.clear();
 }
 
 function startPolling() {
@@ -138,7 +140,52 @@ function renderCards() {
     return;
   }
 
-  el.innerHTML = analyses.map(a => renderCard(a)).join('');
+  // If no cards expanded, just re-render everything
+  if (!expandedCards.size) {
+    el.innerHTML = analyses.map(a => renderCard(a)).join('');
+    return;
+  }
+
+  // Update cards in-place to preserve expanded detail panels
+  const existingIds = new Set([...el.querySelectorAll('.tp-card')].map(c => c.id.replace('tp-card-', '')));
+  const newIds = new Set(analyses.map(a => a.id));
+
+  // Remove cards no longer in the list
+  for (const id of existingIds) {
+    if (!newIds.has(id)) {
+      document.getElementById(`tp-card-${id}`)?.remove();
+      expandedCards.delete(id);
+    }
+  }
+
+  // Update or insert cards
+  for (let i = 0; i < analyses.length; i++) {
+    const a = analyses[i];
+    const existing = document.getElementById(`tp-card-${a.id}`);
+    if (existing) {
+      // Update only the header (preserve detail panel if open)
+      const header = existing.querySelector('.tp-card-header');
+      if (header && !expandedCards.has(a.id)) {
+        // Not expanded — safe to replace entire card
+        existing.outerHTML = renderCard(a);
+      } else if (header) {
+        // Expanded — only update header content
+        const temp = document.createElement('div');
+        temp.innerHTML = renderCard(a);
+        const newHeader = temp.querySelector('.tp-card-header');
+        if (newHeader) header.innerHTML = newHeader.innerHTML;
+      }
+    } else {
+      // New card — insert at correct position
+      const html = renderCard(a);
+      const nextSibling = i < analyses.length - 1 ? document.getElementById(`tp-card-${analyses[i + 1]?.id}`) : null;
+      if (nextSibling) {
+        nextSibling.insertAdjacentHTML('beforebegin', html);
+      } else {
+        el.insertAdjacentHTML('beforeend', html);
+      }
+    }
+  }
 }
 
 function renderCard(a) {
@@ -182,12 +229,14 @@ async function toggleDetail(id) {
   if (detail.classList.contains('open')) {
     detail.classList.remove('open');
     btn?.classList.remove('open');
+    expandedCards.delete(id);
     return;
   }
 
   detail.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8">Loading...</div>';
   detail.classList.add('open');
   btn?.classList.add('open');
+  expandedCards.add(id);
 
   const data = await fetchDetail(id);
   if (data.error) {
