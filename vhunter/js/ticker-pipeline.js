@@ -74,6 +74,13 @@ async function retryAnalysis(id) {
   await fetchAnalyses();
 }
 
+async function deleteAnalysis(id) {
+  if (!confirm('Delete this analysis?')) return;
+  await apiCall(`/api/ticker-pipeline/analyses/${id}`, { method: 'DELETE' });
+  expandedCards.delete(id);
+  await Promise.all([fetchAnalyses(), fetchStats()]);
+}
+
 // ── Render ──
 
 function renderPage() {
@@ -213,6 +220,7 @@ function renderCard(a) {
         <span class="tp-source">${a.source || 'manual'}</span>
         <div class="tp-card-meta">
           <span class="tp-time">${timeAgo}</span>
+          <button class="tp-delete-btn" onclick="event.stopPropagation(); window.tpDelete('${a.id}')" title="Delete">✕</button>
           <button class="tp-expand-btn" id="tp-expand-${a.id}">▼</button>
         </div>
       </div>
@@ -475,4 +483,5 @@ window.tpToggleStage = (headerEl) => {
 
 window.tpCancel = (id) => cancelAnalysis(id);
 window.tpRetry = (id) => retryAnalysis(id);
+window.tpDelete = (id) => deleteAnalysis(id);
 window.unloadPipeline = unloadPipeline;

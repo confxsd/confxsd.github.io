@@ -279,6 +279,20 @@
   white-space: nowrap;
 }
 
+.tp-delete-btn {
+  background: none;
+  border: none;
+  color: #cbd5e1;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 2px 4px;
+  flex-shrink: 0;
+  line-height: 1;
+  border-radius: 3px;
+  transition: color 0.15s, background 0.15s;
+}
+.tp-delete-btn:hover { color: #ef4444; background: #fef2f2; }
+
 .tp-expand-btn {
   background: none;
   border: none;
