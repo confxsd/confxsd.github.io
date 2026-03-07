@@ -65,7 +65,7 @@ const chartOptions = {
   }
 };
 
-// RSI/MFI scale with overbought/oversold lines
+// RSI scale with overbought/oversold lines
 const oscillatorOptions = {
   ...chartOptions,
   scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0, max: 100 } },
@@ -79,6 +79,7 @@ const oscillatorOptions = {
           yMax: 70,
           borderColor: 'rgba(239, 68, 68, 0.5)',
           ...lineStyle,
+          adjustScaleRange: false,
           label: { ...labelStyle, content: '70', color: '#ef4444', backgroundColor: 'transparent' }
         },
         oversold: {
@@ -87,6 +88,7 @@ const oscillatorOptions = {
           yMax: 30,
           borderColor: 'rgba(16, 185, 129, 0.5)',
           ...lineStyle,
+          adjustScaleRange: false,
           label: { ...labelStyle, content: '30', color: '#10b981', backgroundColor: 'transparent' }
         },
         midline: {
@@ -95,70 +97,26 @@ const oscillatorOptions = {
           yMax: 50,
           borderColor: 'rgba(148, 163, 184, 0.3)',
           borderWidth: 1,
-          borderDash: [2, 2]
+          borderDash: [2, 2],
+          adjustScaleRange: false
         }
       }
     }
   }
 };
 
-// MFI uses 80/20 thresholds
+// MFI - no fixed annotations, they get added dynamically based on data range
 const mfiOptions = {
   ...chartOptions,
-  scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0, max: 100 } },
-  plugins: {
-    ...chartOptions.plugins,
-    annotation: {
-      annotations: {
-        overbought: {
-          type: 'line',
-          yMin: 80,
-          yMax: 80,
-          borderColor: 'rgba(239, 68, 68, 0.5)',
-          ...lineStyle,
-          label: { ...labelStyle, content: '80', color: '#ef4444', backgroundColor: 'transparent' }
-        },
-        oversold: {
-          type: 'line',
-          yMin: 20,
-          yMax: 20,
-          borderColor: 'rgba(16, 185, 129, 0.5)',
-          ...lineStyle,
-          label: { ...labelStyle, content: '20', color: '#10b981', backgroundColor: 'transparent' }
-        }
-      }
-    }
-  }
+  scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, beginAtZero: true } },
+  plugins: { ...chartOptions.plugins }
 };
 
-// ADX with trend strength threshold
+// ADX - no fixed annotations, they get added dynamically based on data range
 const adxOptions = {
   ...chartOptions,
-  scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, min: 0, max: 100 } },
-  plugins: {
-    ...chartOptions.plugins,
-    annotation: {
-      annotations: {
-        trendThreshold: {
-          type: 'line',
-          yMin: 25,
-          yMax: 25,
-          borderColor: 'rgba(245, 158, 11, 0.6)',
-          ...lineStyle,
-          label: { ...labelStyle, content: '25 (Trend)', color: '#f59e0b', backgroundColor: 'transparent' }
-        },
-        strongTrend: {
-          type: 'line',
-          yMin: 40,
-          yMax: 40,
-          borderColor: 'rgba(139, 92, 246, 0.4)',
-          borderWidth: 1,
-          borderDash: [2, 2],
-          label: { ...labelStyle, content: '40', color: '#8b5cf6', backgroundColor: 'transparent' }
-        }
-      }
-    }
-  }
+  scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, beginAtZero: true } },
+  plugins: { ...chartOptions.plugins }
 };
 
 // MACD with zero line
@@ -271,9 +229,9 @@ export function initCharts() {
     data: {
       labels: [],
       datasets: [
-        { data: [], borderColor: '#f59e0b', borderWidth: 2, pointRadius: 0, tension: 0.2 },
-        { data: [], borderColor: '#10b981', borderWidth: 1.5, pointRadius: 0, borderDash: [3, 3], tension: 0.2 },
-        { data: [], borderColor: '#ef4444', borderWidth: 1.5, pointRadius: 0, borderDash: [3, 3], tension: 0.2 }
+        { data: [], borderColor: '#6366f1', borderWidth: 2, pointRadius: 0, tension: 0.3, order: 1 },
+        { data: [], borderColor: 'rgba(16, 185, 129, 0.7)', borderWidth: 1, pointRadius: 0, tension: 0.3, fill: '+1', backgroundColor: 'rgba(16, 185, 129, 0.05)', order: 2 },
+        { data: [], borderColor: 'rgba(239, 68, 68, 0.7)', borderWidth: 1, pointRadius: 0, tension: 0.3, order: 2 }
       ]
     },
     options: adxOptions
@@ -339,7 +297,7 @@ export function initCharts() {
         }
       }]
     },
-    options: chartOptions
+    options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, beginAtZero: false } } }
   });
 
   // ATR with average line - enhanced gradient
@@ -395,7 +353,7 @@ export function updateCharts(data) {
   charts.volume.update();
 
   // RSI
-  charts.rsi.data.labels = labels.slice(14);
+  charts.rsi.data.labels = labels;
   charts.rsi.data.datasets[0].data = rsi;
   charts.rsi.update();
 
@@ -408,7 +366,7 @@ export function updateCharts(data) {
   charts.macd.update();
 
   // ADX
-  charts.adx.data.labels = labels.slice(1);
+  charts.adx.data.labels = labels;
   charts.adx.data.datasets[0].data = adxData.adx;
   charts.adx.data.datasets[1].data = adxData.pdi;
   charts.adx.data.datasets[2].data = adxData.mdi;
@@ -423,8 +381,8 @@ export function updateCharts(data) {
   charts.bb.update();
 
   // MFI
-  charts.mfi.data.labels = labels.slice(1);
-  charts.mfi.data.datasets[0].data = mfi.slice(1);
+  charts.mfi.data.labels = labels;
+  charts.mfi.data.datasets[0].data = mfi;
   charts.mfi.update();
 
   // A/D Line
@@ -437,6 +395,32 @@ export function updateCharts(data) {
   charts.atr.data.datasets[0].data = atr;
   charts.atr.data.datasets[1].data = avgAtrArr;
   charts.atr.update();
+
+  // Dynamic annotations - only show reference lines within data range
+  const refLine = (val, color, label) => ({
+    type: 'line', yMin: val, yMax: val,
+    borderColor: color, ...lineStyle,
+    label: { ...labelStyle, content: label, color, backgroundColor: 'transparent' }
+  });
+
+  // ADX: show 25/40 lines only if data reaches near them
+  const adxVals = adxData.adx.filter(v => v !== null);
+  const adxMax = Math.max(...adxVals, 0);
+  const adxAnnotations = {};
+  if (adxMax >= 20) adxAnnotations.trend = refLine(25, '#f59e0b', '25 (Trend)');
+  if (adxMax >= 35) adxAnnotations.strong = refLine(40, '#8b5cf6', '40');
+  charts.adx.options.plugins.annotation = { annotations: adxAnnotations };
+  charts.adx.update();
+
+  // MFI: show 80/20 lines only if data reaches near them
+  const mfiVals = mfi.filter(v => v !== null);
+  const mfiMax = Math.max(...mfiVals, 0);
+  const mfiMin = Math.min(...mfiVals, 100);
+  const mfiAnnotations = {};
+  if (mfiMax >= 70) mfiAnnotations.ob = refLine(80, '#ef4444', '80');
+  if (mfiMin <= 30) mfiAnnotations.os = refLine(20, '#10b981', '20');
+  charts.mfi.options.plugins.annotation = { annotations: mfiAnnotations };
+  charts.mfi.update();
 
   // Update chart metrics
   updateChartMetrics(data);

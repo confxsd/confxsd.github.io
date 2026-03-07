@@ -33,11 +33,12 @@ export async function fetchClaude(prompt, skipCache = false) {
 }
 
 // Period configuration for chart time ranges
+// extraDays: additional historical data for indicator warm-up (SMA50 needs 50 bars, etc.)
 const PERIOD_CONFIG = {
-  '1d': { days: 1, multiplier: 5, timespan: 'minute', labelFormat: 'time' },
-  '1w': { days: 7, multiplier: 30, timespan: 'minute', labelFormat: 'day-time' },
-  '1m': { days: 30, multiplier: 1, timespan: 'day', labelFormat: 'date' },
-  '1y': { days: 365, multiplier: 1, timespan: 'day', labelFormat: 'month' }
+  '1d': { days: 1, multiplier: 5, timespan: 'minute', labelFormat: 'time', extraDays: 0 },
+  '1w': { days: 7, multiplier: 30, timespan: 'minute', labelFormat: 'day-time', extraDays: 0 },
+  '1m': { days: 30, multiplier: 1, timespan: 'day', labelFormat: 'date', extraDays: 75 },
+  '1y': { days: 365, multiplier: 1, timespan: 'day', labelFormat: 'month', extraDays: 75 }
 };
 
 export function getPeriodConfig(period) {
@@ -47,7 +48,8 @@ export function getPeriodConfig(period) {
 export async function fetchTickerData(ticker, period = '1m') {
   const config = PERIOD_CONFIG[period] || PERIOD_CONFIG['1m'];
   const to = new Date();
-  const fr = new Date(to - config.days * 24 * 60 * 60 * 1000);
+  const totalDays = config.days + (config.extraDays || 0);
+  const fr = new Date(to - totalDays * 24 * 60 * 60 * 1000);
 
   // Get price data - use snapshot for real-time, prev as fallback
   const [snapshot, aggs] = await Promise.all([

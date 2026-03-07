@@ -23,6 +23,13 @@ let holdingsFilters = {
   sortBy: 'value',
   minFunds: 1
 };
+let changesData = null;
+let changesFilters = {
+  search: '',
+  changeType: '',
+  sortBy: 'value_change',
+  minValue: 0
+};
 let currentView = 'feed';
 
 const getUserId = () => localStorage.getItem('vhunter_user_id') || 'vhunter-serhat';
@@ -780,6 +787,12 @@ window.switchFilingsTab = function(tab) {
   // Show/hide tab content
   document.getElementById('filTabFilings').classList.toggle('active', tab === 'filings');
   document.getElementById('filTabHoldings').classList.toggle('active', tab === 'holdings');
+  document.getElementById('filTabChanges').classList.toggle('active', tab === 'changes');
+
+  // Lazy-load changes on first visit
+  if (tab === 'changes' && !changesData) {
+    loadChanges();
+  }
 };
 
 // ============== HOLDINGS ACTIONS ==============
@@ -807,6 +820,154 @@ window.showTickerHoldings = async function(ticker) {
     console.error('Failed to load ticker holdings:', e);
     showToast('Failed to load ticker holdings', 'error');
   }
+};
+
+// ============== CHANGES TAB ==============
+
+async function loadChanges() {
+  const container = document.getElementById('filChangesTable');
+  if (container) container.innerHTML = '<div class="fil-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading changes...</div>';
+
+  try {
+    const params = new URLSearchParams({ limit: '500' });
+    const type = changesFilters.changeType;
+    if (type) params.set('change_type', type);
+    params.set('sort', changesFilters.sortBy);
+    if (changesFilters.minValue > 0) params.set('min_value', changesFilters.minValue);
+
+    const response = await fetch(`${CONFIG.PROXY_URL}/api/holdings/changes?${params}`, {
+      headers: { 'X-User-Id': getUserId() }
+    });
+    changesData = await response.json();
+    renderChangesSummary();
+    renderChangesTable();
+  } catch (e) {
+    console.error('Failed to load changes:', e);
+    if (container) container.innerHTML = '<div class="fil-empty">Failed to load changes data</div>';
+  }
+}
+
+function renderChangesSummary() {
+  if (!changesData?.summary) return;
+  const s = changesData.summary;
+  const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+
+  el('changesPeriod', changesData.period ? formatQuarter(changesData.period) : '--');
+  el('changesNew', s.new_positions || 0);
+  el('changesExits', s.exits || 0);
+  el('changesInc', s.increases || 0);
+  el('changesDec', s.decreases || 0);
+  el('changesFunds', s.funds_reporting || 0);
+}
+
+function renderChangesTable() {
+  const container = document.getElementById('filChangesTable');
+  if (!container) return;
+
+  let items = changesData?.changes || [];
+
+  // Client-side search filter
+  if (changesFilters.search) {
+    const q = changesFilters.search.toLowerCase();
+    items = items.filter(c =>
+      (c.ticker || '').toLowerCase().includes(q) ||
+      (c.fund_name || '').toLowerCase().includes(q) ||
+      (c.issuer_name || '').toLowerCase().includes(q)
+    );
+  }
+
+  const countEl = document.getElementById('changesDisplayCount');
+  if (countEl) countEl.textContent = items.length;
+
+  if (items.length === 0) {
+    container.innerHTML = `
+      <div class="fil-empty">
+        <i class="fa-solid fa-arrows-rotate"></i>
+        <p>No changes data yet</p>
+        <p class="fil-empty-sub">Changes are computed when 13F filings are parsed across multiple quarters.<br>Run a backfill to populate historical data.</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <table class="fil-table fil-holdings-table">
+      <thead>
+        <tr>
+          <th>Change</th>
+          <th>Ticker</th>
+          <th>Fund</th>
+          <th class="fil-th-value">Shares</th>
+          <th class="fil-th-value">Value</th>
+          <th class="fil-th-value">Change</th>
+          <th class="fil-th-value">Weight</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${items.map(c => renderChangeRow(c)).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderChangeRow(c) {
+  const typeConfig = {
+    NEW: { label: 'NEW', cls: 'fil-change-new', icon: 'fa-plus' },
+    EXIT: { label: 'EXIT', cls: 'fil-change-exit', icon: 'fa-xmark' },
+    INCREASE: { label: 'INC', cls: 'fil-change-inc', icon: 'fa-arrow-up' },
+    DECREASE: { label: 'DEC', cls: 'fil-change-dec', icon: 'fa-arrow-down' },
+    UNCHANGED: { label: '—', cls: 'fil-change-unch', icon: 'fa-minus' }
+  };
+  const t = typeConfig[c.change_type] || typeConfig.UNCHANGED;
+
+  const shareStr = c.change_type === 'EXIT'
+    ? `<span class="fil-trend-down">${formatNumber(c.prior_shares)}</span>`
+    : formatNumber(c.current_shares);
+
+  const valueStr = c.change_type === 'EXIT'
+    ? `<span class="fil-trend-down">${formatValue(c.prior_value)}</span>`
+    : formatValue(c.current_value);
+
+  let changeStr = '';
+  if (c.change_type === 'NEW') {
+    changeStr = `<span class="fil-trend-up">+${formatNumber(c.current_shares)}</span>`;
+  } else if (c.change_type === 'EXIT') {
+    changeStr = `<span class="fil-trend-down">-${formatNumber(c.prior_shares)}</span>`;
+  } else if (c.share_change > 0) {
+    changeStr = `<span class="fil-trend-up">+${formatNumber(c.share_change)}</span>`;
+    if (c.pct_change) changeStr += ` <small class="fil-trend-up">(+${c.pct_change.toFixed(0)}%)</small>`;
+  } else if (c.share_change < 0) {
+    changeStr = `<span class="fil-trend-down">${formatNumber(c.share_change)}</span>`;
+    if (c.pct_change) changeStr += ` <small class="fil-trend-down">(${c.pct_change.toFixed(0)}%)</small>`;
+  } else {
+    changeStr = '--';
+  }
+
+  const weight = c.weight_current_pct != null ? `${c.weight_current_pct.toFixed(1)}%` : '--';
+
+  return `
+    <tr class="fil-holding-row" onclick="showTickerHoldings('${c.ticker || ''}')">
+      <td><span class="fil-change-badge ${t.cls}"><i class="fa-solid ${t.icon}"></i> ${t.label}</span></td>
+      <td class="fil-td-ticker"><strong>${c.ticker || c.cusip}</strong></td>
+      <td class="fil-td-name" title="${c.fund_name}">${truncate(c.fund_name || '', 25)}</td>
+      <td class="fil-td-value">${shareStr}</td>
+      <td class="fil-td-value">${valueStr}</td>
+      <td class="fil-td-value">${changeStr}</td>
+      <td class="fil-td-value">${weight}</td>
+    </tr>
+  `;
+}
+
+window.searchChanges = function(query) {
+  changesFilters.search = query;
+  renderChangesTable();
+};
+
+window.filterChanges = function() {
+  changesFilters.changeType = document.getElementById('changesTypeFilter')?.value || '';
+  changesFilters.sortBy = document.getElementById('changesSortBy')?.value || 'value_change';
+  changesFilters.minValue = parseInt(document.getElementById('changesMinValue')?.value) || 0;
+  changesData = null; // Force reload with new server-side filters
+  loadChanges();
 };
 
 function buildTickerHoldingsModal(ticker, data) {
@@ -1255,10 +1416,93 @@ function build13FModal(filing) {
     `;
   }
 
+  // Changes section — show quarter-over-quarter diffs for this fund
+  if (filing.fund_id) {
+    html += `
+      <div class="fil-modal-section" id="fil13fChanges">
+        <h4>Quarter Changes</h4>
+        <div class="fil-loading" id="fil13fChangesLoading"><i class="fa-solid fa-spinner fa-spin"></i> Loading changes...</div>
+      </div>
+    `;
+    // Load async after modal renders
+    setTimeout(() => load13FChanges(filing.fund_id, pd.period || null), 50);
+  }
+
   html += buildNotesSection(filing);
   html += buildMetadataFooter(filing);
 
   return html;
+}
+
+async function load13FChanges(fundId, period) {
+  const container = document.getElementById('fil13fChanges');
+  const loading = document.getElementById('fil13fChangesLoading');
+  if (!container) return;
+
+  try {
+    const params = new URLSearchParams({ fund_id: fundId, limit: '200' });
+    if (period) params.set('period', period);
+    const response = await fetch(`${CONFIG.PROXY_URL}/api/holdings/changes?${params}`, {
+      headers: { 'X-User-Id': getUserId() }
+    });
+    const data = await response.json();
+    const changes = data.changes || [];
+
+    if (loading) loading.remove();
+
+    if (changes.length === 0) {
+      container.innerHTML += '<p class="fil-empty-sub">No prior quarter to compare (need 2+ quarters of data)</p>';
+      return;
+    }
+
+    const newPos = changes.filter(c => c.change_type === 'NEW');
+    const exits = changes.filter(c => c.change_type === 'EXIT');
+    const increases = changes.filter(c => c.change_type === 'INCREASE').sort((a, b) => (b.pct_change || 0) - (a.pct_change || 0));
+    const decreases = changes.filter(c => c.change_type === 'DECREASE').sort((a, b) => (a.pct_change || 0) - (b.pct_change || 0));
+
+    let html = `
+      <div class="fil-detail-stats" style="margin-bottom:12px">
+        <div class="fil-detail-stat"><span class="fil-detail-stat-value fil-trend-up">${newPos.length}</span><span class="fil-detail-stat-label">New</span></div>
+        <div class="fil-detail-stat"><span class="fil-detail-stat-value fil-trend-down">${exits.length}</span><span class="fil-detail-stat-label">Exits</span></div>
+        <div class="fil-detail-stat"><span class="fil-detail-stat-value" style="color:#3b82f6">${increases.length}</span><span class="fil-detail-stat-label">Increased</span></div>
+        <div class="fil-detail-stat"><span class="fil-detail-stat-value" style="color:#f97316">${decreases.length}</span><span class="fil-detail-stat-label">Decreased</span></div>
+      </div>
+    `;
+
+    const buildChangeTable = (items, label, showPrior) => {
+      if (items.length === 0) return '';
+      const rows = items.slice(0, 15).map(c => {
+        const pctStr = c.pct_change != null ? `${c.pct_change > 0 ? '+' : ''}${c.pct_change.toFixed(0)}%` : '';
+        return `<tr>
+          <td class="fil-td-ticker">${c.ticker || c.cusip || '-'}</td>
+          <td class="fil-td-name">${truncate(c.issuer_name || '', 20)}</td>
+          <td class="fil-td-value">${formatNumber(showPrior ? c.prior_shares : c.current_shares)}</td>
+          <td class="fil-td-value">${formatValue(showPrior ? c.prior_value : c.current_value)}</td>
+          <td class="fil-td-value">${pctStr}</td>
+        </tr>`;
+      }).join('');
+      return `
+        <div style="margin-bottom:10px">
+          <div style="font-weight:600;font-size:12px;margin-bottom:4px;color:#64748b">${label} (${items.length})</div>
+          <table class="fil-detail-holdings-table">
+            <thead><tr><th>Ticker</th><th>Company</th><th>Shares</th><th>Value</th><th>Chg</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+          ${items.length > 15 ? `<div class="fil-empty-sub">+${items.length - 15} more</div>` : ''}
+        </div>
+      `;
+    };
+
+    html += buildChangeTable(newPos, 'New Positions', false);
+    html += buildChangeTable(exits, 'Exited Positions', true);
+    html += buildChangeTable(increases, 'Increased', false);
+    html += buildChangeTable(decreases, 'Decreased', false);
+
+    container.innerHTML = '<h4>Quarter Changes</h4>' + html;
+  } catch (e) {
+    console.error('Failed to load 13F changes:', e);
+    if (loading) loading.textContent = 'Failed to load changes';
+  }
 }
 
 function build13DGModal(filing) {

@@ -502,249 +502,6 @@
             </div>
           </div>
 
-          <!-- AI Analysis Section -->
-          <div class="section" id="sec-ai">
-            <div class="section-header" onclick="toggleSection('sec-ai')">
-              <span class="section-title">AI Analysis</span>
-              <span class="section-toggle">▼</span>
-            </div>
-            <div class="section-content">
-              <div class="cell" style="grid-column: span 2">
-                <div class="t">
-                  AI Thesis <span id="aiSt" style="color: #818cf8"></span>
-                </div>
-                <div
-                  id="aiOut"
-                  style="
-                    font-size: 11px;
-                    line-height: 1.5;
-                    color: #475569;
-                    max-height: 200px;
-                    overflow-y: auto;
-                  "
-                >
-                  Loading...
-                </div>
-              </div>
-              <div class="cell" style="grid-column: span 2">
-                <div class="t">Trade Ideas</div>
-                <div
-                  id="tradeOut"
-                  style="
-                    font-size: 11px;
-                    line-height: 1.5;
-                    color: #475569;
-                    max-height: 200px;
-                    overflow-y: auto;
-                  "
-                >
-                  Waiting...
-                </div>
-              </div>
-              <div class="cell" style="grid-column: span 2">
-                <div class="t">News & Catalysts</div>
-                <div
-                  id="newsOut"
-                  style="
-                    font-size: 11px;
-                    line-height: 1.5;
-                    color: #475569;
-                    max-height: 200px;
-                    overflow-y: auto;
-                  "
-                >
-                  Loading news...
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Options & Levels Section -->
-          <div class="section" id="sec-options">
-            <div class="section-header" onclick="toggleSection('sec-options')">
-              <span class="section-title">Options & Levels</span>
-              <span class="section-toggle">▼</span>
-            </div>
-            <div class="section-content">
-              <div class="cell">
-                <div class="t">Options Flow</div>
-                <div class="fl">
-                  <span class="g">Calls</span><span id="cP">--</span>
-                </div>
-                <div class="flow">
-                  <div class="g" id="cB" style="width: 50%"></div>
-                </div>
-                <div class="fl">
-                  <span class="r">Puts</span><span id="pP">--</span>
-                </div>
-                <div class="flow">
-                  <div class="r" id="pB" style="width: 50%"></div>
-                </div>
-                <div class="dr">
-                  <span class="l">Call Vol</span
-                  ><span class="v g" id="cV">--</span>
-                </div>
-                <div class="dr">
-                  <span class="l">Put Vol</span
-                  ><span class="v r" id="pV">--</span>
-                </div>
-                <div class="dr">
-                  <span class="l">Net</span><span class="v" id="oN">--</span>
-                </div>
-              </div>
-              <div class="cell">
-                <div class="t">Key Levels</div>
-                <div class="dr">
-                  <span class="l">R2</span><span class="v r" id="r2">--</span>
-                </div>
-                <div class="dr">
-                  <span class="l">R1</span><span class="v r" id="r1">--</span>
-                </div>
-                <div class="dr">
-                  <span class="l">Pivot</span><span class="v" id="pv">--</span>
-                </div>
-                <div class="dr">
-                  <span class="l">S1</span><span class="v g" id="s1">--</span>
-                </div>
-                <div class="dr">
-                  <span class="l">S2</span><span class="v g" id="s2">--</span>
-                </div>
-              </div>
-              <div class="cell">
-                <div class="t">Options Metrics</div>
-                <div class="dr">
-                  <span class="l">Impl. Vol</span
-                  ><span class="v p" id="iV">--</span>
-                </div>
-                <div class="dr">
-                  <span class="l">Exp. Move</span
-                  ><span class="v c" id="eM">--</span>
-                </div>
-                <div class="dr">
-                  <span class="l">P/C OI</span><span class="v" id="pO">--</span>
-                </div>
-                <div
-                  class="t"
-                  style="
-                    margin-top: 8px;
-                    border-top: 1px solid #e2e8f0;
-                    padding-top: 6px;
-                  "
-                >
-                  Max Pain Levels
-                </div>
-                <div class="dr">
-                  <span class="l">Weekly</span
-                  ><span class="v y" id="mPw">--</span
-                  ><span class="sub" id="mPwD"></span>
-                </div>
-                <div class="dr">
-                  <span class="l">Monthly</span
-                  ><span class="v y" id="mPm">--</span
-                  ><span class="sub" id="mPmD"></span>
-                </div>
-                <div class="dr">
-                  <span class="l">6-Month</span
-                  ><span class="v y" id="mP6">--</span
-                  ><span class="sub" id="mP6D"></span>
-                </div>
-              </div>
-              <div class="cell vrp-cell">
-                <div class="t">
-                  Volatility Premium
-                  <span class="vrp-badge" id="volSetup">--</span>
-                </div>
-                <div class="vrp-gauge">
-                  <div class="vrp-gauge-track">
-                    <div class="vrp-gauge-fill" id="vrpGauge"></div>
-                  </div>
-                  <div class="vrp-gauge-labels">
-                    <span class="g">Cheap</span>
-                    <span>Fair</span>
-                    <span class="r">Expensive</span>
-                  </div>
-                </div>
-                <div id="vrpPanel" class="vrp-panel">
-                  <div class="vrp-row">
-                    <span class="vrp-label">IV (Implied)</span>
-                    <span class="vrp-value p">--</span>
-                  </div>
-                  <div class="vrp-row">
-                    <span class="vrp-label">RV (Realized 30d)</span>
-                    <span class="vrp-value" id="rv30">--</span>
-                  </div>
-                  <div class="vrp-row highlight">
-                    <span class="vrp-label">VRP (IV - RV)</span>
-                    <span class="vrp-value" id="vrp">--</span>
-                  </div>
-                  <div class="vrp-hint">
-                    VRP > 0: Options expensive. VRP < 0: Options cheap.
-                  </div>
-                </div>
-              </div>
-              <div class="cell">
-                <div class="t">Risk Analysis</div>
-                <div class="dr">
-                  <span class="l">Stop (2xATR)</span
-                  ><span class="v r" id="sp">--</span>
-                </div>
-                <div class="dr">
-                  <span class="l">Target (1:2)</span
-                  ><span class="v g" id="tg">--</span>
-                </div>
-                <div class="dr">
-                  <span class="l">Risk %</span><span class="v" id="rk">--</span>
-                </div>
-                <div class="dr">
-                  <span class="l">SMA 20</span
-                  ><span class="v" id="s20">--</span>
-                </div>
-                <div class="dr">
-                  <span class="l">SMA 50</span
-                  ><span class="v" id="s50">--</span>
-                </div>
-              </div>
-              <div class="cell">
-                <div class="t">Performance</div>
-                <div class="g3">
-                  <div class="ms">
-                    <div class="l">1D</div>
-                    <div class="v" id="d1">--</div>
-                  </div>
-                  <div class="ms">
-                    <div class="l">1W</div>
-                    <div class="v" id="w1">--</div>
-                  </div>
-                  <div class="ms">
-                    <div class="l">1M</div>
-                    <div class="v" id="m1">--</div>
-                  </div>
-                </div>
-                <div class="dr" style="margin-top: 6px">
-                  <span class="l">52W Range</span
-                  ><span class="v" id="hl">--</span>
-                </div>
-                <div class="dr">
-                  <span class="l">Day Range</span
-                  ><span class="v" id="dr2">--</span>
-                </div>
-              </div>
-              <div class="cell">
-                <div class="t">Top Options Strikes</div>
-                <div class="opt">
-                  <div class="c">
-                    <div class="h g">Calls</div>
-                    <div id="tC">--</div>
-                  </div>
-                  <div class="p">
-                    <div class="h r">Puts</div>
-                    <div id="tP">--</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <!-- Financials Section -->
           <div class="section collapsed" id="sec-financials">
             <div
@@ -1267,6 +1024,13 @@
                 >
                   <i class="fa-solid fa-chart-pie"></i> Holdings
                 </button>
+                <button
+                  class="fil-tab"
+                  data-tab="changes"
+                  onclick="switchFilingsTab('changes')"
+                >
+                  <i class="fa-solid fa-arrows-rotate"></i> Changes
+                </button>
               </div>
               <div class="fil-header-right">
                 <span class="fil-last-scan" id="filLastScan"
@@ -1547,6 +1311,84 @@
               </div>
             </div>
             <!-- End Holdings Tab -->
+
+            <!-- CHANGES TAB -->
+            <div class="fil-tab-content" id="filTabChanges">
+              <!-- Changes Summary -->
+              <div class="fil-holdings-summary" id="changesSummary">
+                <div class="fil-summary-stat">
+                  <div class="fil-summary-value" id="changesPeriod">--</div>
+                  <div class="fil-summary-label">Quarter</div>
+                </div>
+                <div class="fil-summary-stat">
+                  <div class="fil-summary-value fil-trend-up" id="changesNew">0</div>
+                  <div class="fil-summary-label">New Positions</div>
+                </div>
+                <div class="fil-summary-stat">
+                  <div class="fil-summary-value fil-trend-down" id="changesExits">0</div>
+                  <div class="fil-summary-label">Exits</div>
+                </div>
+                <div class="fil-summary-stat">
+                  <div class="fil-summary-value" id="changesInc">0</div>
+                  <div class="fil-summary-label">Increases</div>
+                </div>
+                <div class="fil-summary-stat">
+                  <div class="fil-summary-value" id="changesDec">0</div>
+                  <div class="fil-summary-label">Decreases</div>
+                </div>
+                <div class="fil-summary-stat">
+                  <div class="fil-summary-value" id="changesFunds">0</div>
+                  <div class="fil-summary-label">Funds Reporting</div>
+                </div>
+              </div>
+
+              <!-- Changes Filters -->
+              <div class="fil-toolbar">
+                <div class="fil-search">
+                  <i class="fa-solid fa-search"></i>
+                  <input type="text" id="changesSearchInput" placeholder="Search by ticker..." onkeyup="searchChanges(this.value)" />
+                </div>
+                <div class="fil-filter-group">
+                  <select class="fil-select" id="changesTypeFilter" onchange="filterChanges()">
+                    <option value="">All Changes</option>
+                    <option value="NEW">New Positions</option>
+                    <option value="EXIT">Exits</option>
+                    <option value="INCREASE">Increases</option>
+                    <option value="DECREASE">Decreases</option>
+                  </select>
+                  <select class="fil-select" id="changesSortBy" onchange="filterChanges()">
+                    <option value="value_change">Sort by Value Change</option>
+                    <option value="pct_change">Sort by % Change</option>
+                    <option value="current_value">Sort by Position Size</option>
+                    <option value="fund_priority">Sort by Fund Priority</option>
+                  </select>
+                  <select class="fil-select" id="changesMinValue" onchange="filterChanges()">
+                    <option value="0">Any Value</option>
+                    <option value="1000000">Min $1M</option>
+                    <option value="10000000">Min $10M</option>
+                    <option value="100000000">Min $100M</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Changes Table -->
+              <div class="fil-section">
+                <div class="fil-section-header">
+                  <div class="fil-section-title">
+                    Portfolio Changes
+                    <span class="fil-count" id="changesDisplayCount">0</span>
+                  </div>
+                </div>
+                <div class="fil-table-wrapper" id="filChangesTable">
+                  <div class="fil-empty">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                    <p>No changes data yet</p>
+                    <p class="fil-empty-sub">Changes are computed when 13F filings are parsed across multiple quarters.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- End Changes Tab -->
           </div>
         </div>
 

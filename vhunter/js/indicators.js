@@ -92,46 +92,81 @@ export function calcMFI(data, period) {
 }
 
 export function calcADX(data, period) {
-  const pdi = [], mdi = [], adx = [];
-  let pSum = 0, mSum = 0, trSum = 0;
-
+  // Standard Wilder ADX (matches TradingView)
+  // Step 1: Calculate raw +DM, -DM, TR for each bar
+  const rawPDM = [], rawMDM = [], rawTR = [];
   for (let i = 1; i < data.length; i++) {
     const upMove = data[i].h - data[i - 1].h;
     const downMove = data[i - 1].l - data[i].l;
-    const plusDM = upMove > downMove && upMove > 0 ? upMove : 0;
-    const minusDM = downMove > upMove && downMove > 0 ? downMove : 0;
-    const tr = Math.max(
+    rawPDM.push(upMove > downMove && upMove > 0 ? upMove : 0);
+    rawMDM.push(downMove > upMove && downMove > 0 ? downMove : 0);
+    rawTR.push(Math.max(
       data[i].h - data[i].l,
       Math.abs(data[i].h - data[i - 1].c),
       Math.abs(data[i].l - data[i - 1].c)
-    );
+    ));
+  }
 
-    if (i <= period) {
-      pSum += plusDM;
-      mSum += minusDM;
-      trSum += tr;
-      if (i === period) {
-        pdi.push(100 * pSum / trSum);
-        mdi.push(100 * mSum / trSum);
-      } else {
+  const n = rawPDM.length;
+  const pdi = [], mdi = [], adx = [];
+
+  // Step 2: Wilder smooth +DM, -DM, TR (running sum method)
+  // First value = sum of first `period` values
+  // Subsequent = prev - prev/period + current
+  let sPDM = 0, sMDM = 0, sTR = 0;
+  const dxValues = [];
+
+  for (let i = 0; i < n; i++) {
+    if (i < period) {
+      // Accumulate first period
+      sPDM += rawPDM[i];
+      sMDM += rawMDM[i];
+      sTR += rawTR[i];
+      if (i < period - 1) {
         pdi.push(null);
         mdi.push(null);
+        dxValues.push(null);
+      } else {
+        // First smoothed DI values
+        const p = sTR > 0 ? 100 * sPDM / sTR : 0;
+        const m = sTR > 0 ? 100 * sMDM / sTR : 0;
+        pdi.push(p);
+        mdi.push(m);
+        dxValues.push((p + m) > 0 ? 100 * Math.abs(p - m) / (p + m) : 0);
       }
     } else {
-      pSum = (pSum * (period - 1) + plusDM) / period;
-      mSum = (mSum * (period - 1) + minusDM) / period;
-      trSum = (trSum * (period - 1) + tr) / period;
-      pdi.push(100 * pSum / trSum);
-      mdi.push(100 * mSum / trSum);
+      // Wilder smoothing: smooth = prev - prev/period + current
+      sPDM = sPDM - sPDM / period + rawPDM[i];
+      sMDM = sMDM - sMDM / period + rawMDM[i];
+      sTR = sTR - sTR / period + rawTR[i];
+      const p = sTR > 0 ? 100 * sPDM / sTR : 0;
+      const m = sTR > 0 ? 100 * sMDM / sTR : 0;
+      pdi.push(p);
+      mdi.push(m);
+      dxValues.push((p + m) > 0 ? 100 * Math.abs(p - m) / (p + m) : 0);
     }
   }
 
-  for (let i = 0; i < pdi.length; i++) {
-    if (pdi[i] === null) {
+  // Step 3: Smooth DX into ADX using same Wilder method
+  let adxSmooth = 0;
+  let validDX = 0;
+  for (let i = 0; i < dxValues.length; i++) {
+    if (dxValues[i] === null) {
       adx.push(null);
     } else {
-      const dx = 100 * Math.abs(pdi[i] - mdi[i]) / (pdi[i] + mdi[i] || 1);
-      adx.push(dx);
+      validDX++;
+      if (validDX <= period) {
+        adxSmooth += dxValues[i];
+        if (validDX < period) {
+          adx.push(null);
+        } else {
+          adxSmooth = adxSmooth / period; // First ADX = simple average
+          adx.push(adxSmooth);
+        }
+      } else {
+        adxSmooth = (adxSmooth * (period - 1) + dxValues[i]) / period;
+        adx.push(adxSmooth);
+      }
     }
   }
 

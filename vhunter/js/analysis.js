@@ -228,9 +228,38 @@ function processHistoricalData(ticker, data) {
     hv30: vol // Alias for clarity
   };
 
-  // Update charts with period-appropriate labels
+  // Determine display window (trim warm-up bars for charts)
   const periodConfig = getPeriodConfig(currentPeriod);
-  const labels = data.map(d => {
+  const cutoff = data[data.length - 1].t - (periodConfig.days || 30) * 24 * 60 * 60 * 1000;
+  const displayStart = data.findIndex(d => d.t >= cutoff);
+  const ds = displayStart > 0 ? displayStart : 0;
+
+  // Pad shorter indicator arrays to match data length, then slice to display window
+  const pad = (arr, len) => arr.length < len ? Array(len - arr.length).fill(null).concat(arr) : arr;
+  const N = data.length;
+  const rsiPadded = pad(rsiValues, N);
+  const adxPadded = { adx: pad(adxData.adx, N), pdi: pad(adxData.pdi, N), mdi: pad(adxData.mdi, N) };
+
+  // Slice all arrays to display window
+  const dData = data.slice(ds);
+  const dPrices = prices.slice(ds);
+  const dVolumes = volumes.slice(ds);
+  const dRsi = rsiPadded.slice(ds);
+  const dMacd = {
+    histogram: macd.histogram.slice(ds),
+    macdLine: macd.macdLine.slice(ds),
+    signalLine: macd.signalLine.slice(ds)
+  };
+  const dAdx = { adx: adxPadded.adx.slice(ds), pdi: adxPadded.pdi.slice(ds), mdi: adxPadded.mdi.slice(ds) };
+  const dBb = { upper: bb.upper.slice(ds), lower: bb.lower.slice(ds), middle: bb.middle.slice(ds) };
+  const dMfi = mfiValues.slice(ds);
+  const dAdl = adl.slice(ds);
+  const dAtr = atrValues.slice(ds);
+  const dSma20 = sma20Arr.slice(ds);
+  const dSma50 = sma50Arr.slice(ds);
+
+  // Update charts with period-appropriate labels
+  const labels = dData.map(d => {
     const date = new Date(d.t);
     switch (periodConfig.labelFormat) {
       case 'time':
@@ -246,18 +275,18 @@ function processHistoricalData(ticker, data) {
   });
   updateCharts({
     labels,
-    prices,
-    volumes,
-    bars: data,
-    rsi: rsiValues,
-    macd,
-    adxData,
-    bb,
-    mfi: mfiValues,
-    adl,
-    atr: atrValues,
-    sma20: sma20Arr,
-    sma50: sma50Arr
+    prices: dPrices,
+    volumes: dVolumes,
+    bars: dData,
+    rsi: dRsi,
+    macd: dMacd,
+    adxData: dAdx,
+    bb: dBb,
+    mfi: dMfi,
+    adl: dAdl,
+    atr: dAtr,
+    sma20: dSma20,
+    sma50: dSma50
   });
 }
 

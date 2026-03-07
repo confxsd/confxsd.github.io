@@ -1,7 +1,8 @@
 // UI Module - DOM manipulation and updates
 import { createTooltip, TEACHING_TIPS } from './teaching-tips.js';
 
-export const $ = (id) => document.getElementById(id);
+const _noop = new Proxy({}, { get: (_, prop) => prop === 'style' ? _noop : '', set: () => true });
+export const $ = (id) => document.getElementById(id) || _noop;
 
 // Re-export for use in other modules
 export { createTooltip, TEACHING_TIPS };
