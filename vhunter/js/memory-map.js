@@ -78,6 +78,10 @@ export async function matchMemories() {
   return memoryFetch('/api/memory/match', { method: 'POST', body: JSON.stringify({}) });
 }
 
+export async function matchNewsToMemories() {
+  return memoryFetch('/api/memory/match-news', { method: 'POST', body: JSON.stringify({}) });
+}
+
 export async function generateMemoryThesis() {
   return memoryFetch('/api/memory/thesis', { method: 'POST' });
 }
@@ -130,10 +134,24 @@ async function autoSyncMemoryOps() {
 
     // Step 2: Match feed to memories
     const matchResult = await matchMemories();
-    const matched = matchResult.matched || 0;
+    const feedMatched = matchResult.matched || 0;
 
-    if (hasNew || matched > 0) {
-      showToast(`Memory auto-sync: ${extractResult.extracted || 0} new, ${matched} matched`);
+    // Step 3: Match news report to memories
+    let newsMatched = 0;
+    try {
+      const newsResult = await matchNewsToMemories();
+      newsMatched = newsResult.matched || 0;
+    } catch (e) {
+      console.error('[MEMORY AUTO-SYNC] News match failed:', e.message);
+    }
+
+    const totalMatched = feedMatched + newsMatched;
+    if (hasNew || totalMatched > 0) {
+      const parts = [];
+      if (extractResult.extracted) parts.push(`${extractResult.extracted} new`);
+      if (feedMatched) parts.push(`${feedMatched} feed`);
+      if (newsMatched) parts.push(`${newsMatched} news`);
+      showToast(`Memory auto-sync: ${parts.join(', ')}`);
       loadMemoryMap();
     }
 
@@ -592,19 +610,33 @@ async function runAllMemoryOps() {
     if (extractResult.updated) extractParts.push(`${extractResult.updated} updated`);
     results.push(extractParts.length ? `Extract: ${extractParts.join(', ')}` : 'Extract: no changes');
 
-    if (btn) btn.textContent = '⚡ Matching...';
+    if (btn) btn.textContent = '⚡ Matching feed...';
 
     // Step 2: Match feed signals to memories
     const matchResult = await matchMemories();
     if (matchResult.error) {
-      results.push(`Match: ${matchResult.error}`);
+      results.push(`Feed: ${matchResult.error}`);
     } else {
-      results.push(`Match: ${matchResult.matched || 0} from ${matchResult.processed || 0} items`);
+      results.push(`Feed: ${matchResult.matched || 0} from ${matchResult.processed || 0}`);
+    }
+
+    if (btn) btn.textContent = '⚡ Matching news...';
+
+    // Step 3: Match news report to memories
+    try {
+      const newsResult = await matchNewsToMemories();
+      if (newsResult.matched > 0) {
+        results.push(`News: ${newsResult.matched} matched`);
+      } else {
+        results.push(`News: ${newsResult.message || 'no matches'}`);
+      }
+    } catch (e) {
+      results.push(`News: ${e.message}`);
     }
 
     if (btn) btn.textContent = '⚡ Generating...';
 
-    // Step 3: Generate thesis from memories
+    // Step 4: Generate thesis from memories
     const thesisResult = await generateMemoryThesis();
     if (thesisResult.success && thesisResult.thesis) {
       results.push('Thesis: generated');
