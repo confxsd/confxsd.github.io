@@ -594,9 +594,14 @@ window.dcRunAll = async function(force = false) {
 window.dcRunOne = async function(id) {
   const card = document.getElementById(`dc-card-${id}`);
   const signalEl = card?.querySelector('.dc-signal');
+  const runBtn = document.getElementById(`dc-run-btn-${id}`);
   const origText = signalEl?.textContent;
   const origCls  = signalEl?.className;
   if (signalEl) { signalEl.textContent = '...'; signalEl.className = 'dc-signal running'; }
+  if (runBtn) {
+    runBtn.disabled = true;
+    runBtn.innerHTML = '<span class="dc-run-spinner"></span>Running...';
+  }
 
   try {
     const res = await runDailyCheck(id);
@@ -608,6 +613,7 @@ window.dcRunOne = async function(id) {
   } catch (e) {
     console.error('[DAILY_CHECKER] Run one failed:', e);
     if (signalEl) { signalEl.textContent = origText; signalEl.className = origCls; }
+    if (runBtn) { runBtn.disabled = false; runBtn.innerHTML = '↻ Run Now'; }
   }
 };
 

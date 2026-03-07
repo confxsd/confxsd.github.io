@@ -251,6 +251,14 @@
 
 /* Expanded actions */
 .dc-exp-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.dc-run-one-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-color: #93c5fd;
+}
 
 /* Empty state */
 .dc-empty { text-align: center; padding: 60px 20px; color: #94a3b8; }
