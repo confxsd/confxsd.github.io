@@ -23,6 +23,7 @@ let holdingsFilters = {
   sortBy: 'value',
   minFunds: 1
 };
+let holdingsPage = 50; // how many to show initially
 let changesData = null;
 let changesFilters = {
   search: '',
@@ -52,6 +53,7 @@ export async function loadFilings() {
     pipeDeals = pipesData;
     funds = fundsData;
     holdings = holdingsData.holdings || [];
+    _holdingsBaseSet = [...holdings];
     holdingsSummary = holdingsData;
 
     populateFundFilter();
@@ -145,10 +147,11 @@ async function fetchFunds() {
 
 async function fetchHoldingsAggregated(options = {}) {
   const params = new URLSearchParams({
-    limit: options.limit || 200,
+    limit: options.limit || 500,
     min_funds: options.minFunds || 1,
     sort: options.sortBy || 'value'
   });
+  if (options.search) params.set('search', options.search);
   const response = await fetch(`${CONFIG.PROXY_URL}/api/holdings/aggregated?${params}`, {
     headers: { 'X-User-Id': getUserId() }
   });
@@ -661,6 +664,9 @@ function renderHoldingsTable() {
     return;
   }
 
+  const visible = filtered.slice(0, holdingsPage);
+  const hasMore = filtered.length > holdingsPage;
+
   container.innerHTML = `
     <table class="fil-table fil-holdings-table">
       <thead>
@@ -674,9 +680,10 @@ function renderHoldingsTable() {
         </tr>
       </thead>
       <tbody>
-        ${filtered.map(h => renderHoldingRow(h)).join('')}
+        ${visible.map(h => renderHoldingRow(h)).join('')}
       </tbody>
     </table>
+    ${hasMore ? `<div class="fil-load-more"><button class="fil-btn fil-btn-ghost" onclick="loadMoreHoldings()">Show more (${filtered.length - holdingsPage} remaining)</button></div>` : ''}
   `;
 }
 
@@ -797,18 +804,78 @@ window.switchFilingsTab = function(tab) {
 
 // ============== HOLDINGS ACTIONS ==============
 
+let _holdingsSearchTimer = null;
+let _holdingsBaseSet = []; // full unfiltered set from last server load
+
 window.searchHoldings = function(query) {
   holdingsFilters.search = query;
-  renderHoldingsTable();
+  holdingsPage = 50;
+  clearTimeout(_holdingsSearchTimer);
+  if (query && query.length >= 1) {
+    // Server-side search to cover ALL records
+    _holdingsSearchTimer = setTimeout(async () => {
+      try {
+        const data = await fetchHoldingsAggregated({
+          search: query,
+          limit: 500,
+          sortBy: holdingsFilters.sortBy,
+          minFunds: holdingsFilters.minFunds
+        });
+        holdings = data.holdings || [];
+        holdingsSummary = data;
+        renderHoldingsStats();
+        renderHoldingsTable();
+      } catch (_) {}
+    }, 300);
+    // Immediate client-side filter for responsiveness
+    renderHoldingsTable();
+  } else {
+    // Empty search — restore full set
+    holdings = _holdingsBaseSet;
+    renderHoldingsTable();
+  }
 };
 
-window.sortHoldings = function() {
+window.sortHoldings = async function() {
   holdingsFilters.sortBy = document.getElementById('holdSortBy')?.value || 'value';
-  renderHoldingsTable();
+  holdingsPage = 50;
+  try {
+    const data = await fetchHoldingsAggregated({
+      sortBy: holdingsFilters.sortBy,
+      minFunds: holdingsFilters.minFunds,
+      search: holdingsFilters.search || undefined
+    });
+    holdings = data.holdings || [];
+    if (!holdingsFilters.search) _holdingsBaseSet = [...holdings];
+    holdingsSummary = data;
+    renderHoldingsStats();
+    renderHoldingsTable();
+  } catch (_) {
+    renderHoldingsTable();
+  }
 };
 
-window.filterHoldings = function() {
+window.filterHoldings = async function() {
   holdingsFilters.minFunds = parseInt(document.getElementById('holdMinFunds')?.value) || 1;
+  holdingsPage = 50;
+  try {
+    const data = await fetchHoldingsAggregated({
+      sortBy: holdingsFilters.sortBy,
+      minFunds: holdingsFilters.minFunds,
+      search: holdingsFilters.search || undefined
+    });
+    holdings = data.holdings || [];
+    if (!holdingsFilters.search) _holdingsBaseSet = [...holdings];
+    holdingsSummary = data;
+    renderHoldingsStats();
+    renderHoldingsTable();
+  } catch (_) {
+    renderHoldingsTable();
+  }
+};
+
+window.loadMoreHoldings = function() {
+  holdingsPage += 50;
   renderHoldingsTable();
 };
 

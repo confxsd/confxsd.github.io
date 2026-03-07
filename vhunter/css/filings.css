@@ -1030,6 +1030,25 @@
   color: #6366f1;
 }
 
+.fil-load-more {
+  text-align: center;
+  padding: 12px 0;
+}
+.fil-load-more .fil-btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border-color, #2a2a3e);
+  color: var(--text-secondary, #94a3b8);
+  padding: 8px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+.fil-load-more .fil-btn-ghost:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+}
+
 .fil-patterns {
   display: flex;
   flex-wrap: wrap;
