@@ -70,6 +70,8 @@
     <link rel="stylesheet" href="css/financials.css" />
     <link rel="stylesheet" href="css/daily-checker.css" />
     <link rel="stylesheet" href="css/signal-log.css" />
+    <link rel="stylesheet" href="css/filings-analytics.css" />
+    <link rel="stylesheet" href="css/ticker-pipeline.css" />
     <link rel="stylesheet" href="css/responsive.css?v=2" />
   </head>
   <body>
@@ -105,6 +107,18 @@
           >
             <span class="nav-icon"><i class="fa-solid fa-calendar-check"></i></span>
             <span class="nav-label">Daily Checker</span>
+          </a>
+          <a
+            href="#"
+            class="nav-item"
+            data-page="pipeline"
+            onclick="
+              event.preventDefault();
+              switchPage('pipeline');
+            "
+          >
+            <span class="nav-icon"><i class="fa-solid fa-microscope"></i></span>
+            <span class="nav-label">Ticker Pipeline</span>
           </a>
           <a
             href="#"
@@ -1031,6 +1045,13 @@
                 >
                   <i class="fa-solid fa-arrows-rotate"></i> Changes
                 </button>
+                <button
+                  class="fil-tab"
+                  data-tab="analytics"
+                  onclick="switchFilingsTab('analytics')"
+                >
+                  <i class="fa-solid fa-chart-bar"></i> Analytics
+                </button>
               </div>
               <div class="fil-header-right">
                 <span class="fil-last-scan" id="filLastScan"
@@ -1389,6 +1410,17 @@
               </div>
             </div>
             <!-- End Changes Tab -->
+
+            <!-- ANALYTICS TAB -->
+            <div class="fil-tab-content" id="filTabAnalytics">
+              <div id="filAnalyticsRoot">
+                <div class="fila-empty">
+                  <i class="fa-solid fa-chart-bar"></i>
+                  <p>Click the Analytics tab to load the dashboard</p>
+                </div>
+              </div>
+            </div>
+            <!-- End Analytics Tab -->
           </div>
         </div>
 
@@ -3160,6 +3192,11 @@
               <div class="dc-empty-text">Loading checks...</div>
             </div>
           </div>
+        </div>
+
+        <!-- Page: Ticker Pipeline -->
+        <div class="page" id="page-pipeline">
+          <div style="padding:40px;text-align:center;color:#64748b">Loading...</div>
         </div>
 
         <!-- Page: Signal Log -->

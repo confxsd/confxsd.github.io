@@ -816,10 +816,16 @@ window.switchFilingsTab = function(tab) {
   document.getElementById('filTabFilings').classList.toggle('active', tab === 'filings');
   document.getElementById('filTabHoldings').classList.toggle('active', tab === 'holdings');
   document.getElementById('filTabChanges').classList.toggle('active', tab === 'changes');
+  document.getElementById('filTabAnalytics').classList.toggle('active', tab === 'analytics');
 
   // Lazy-load changes on first visit
   if (tab === 'changes' && !changesData) {
     loadChanges();
+  }
+
+  // Lazy-load analytics on first visit
+  if (tab === 'analytics') {
+    import('./filings-analytics.js').then(mod => mod.loadAnalytics());
   }
 };
 

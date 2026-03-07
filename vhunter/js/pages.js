@@ -20,6 +20,7 @@ const pageTitles = {
   strategy: 'Strategy',
   macro: 'Macro Dashboard',
   daily: 'Daily Checker',
+  pipeline: 'Ticker Pipeline',
   'signal-log': 'Signal Log'
 };
 
@@ -44,6 +45,11 @@ export function switchPage(page, shouldUpdateRoute = true) {
   // Stop macro auto-refresh if leaving macro page
   if (currentPage === 'macro' && page !== 'macro' && window.unloadMacro) {
     window.unloadMacro();
+  }
+
+  // Stop pipeline polling if leaving pipeline page
+  if (currentPage === 'pipeline' && page !== 'pipeline' && window.unloadPipeline) {
+    window.unloadPipeline();
   }
 
   currentPage = page;
