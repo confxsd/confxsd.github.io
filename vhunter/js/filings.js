@@ -957,13 +957,13 @@ function renderChangesTable() {
   }
 
   container.innerHTML = `
-    <table class="fil-table fil-holdings-table">
+    <table class="fil-table fil-holdings-table fil-changes-table">
       <thead>
         <tr>
-          <th>Change</th>
+          <th class="fil-ch-type">Change</th>
           <th>Ticker</th>
-          <th>Fund</th>
-          <th class="fil-th-value">Shares</th>
+          <th class="fil-ch-fund">Fund</th>
+          <th class="fil-th-value fil-ch-shares">Shares</th>
           <th class="fil-th-value">Value</th>
           <th class="fil-th-value">Change</th>
           <th class="fil-th-value">Weight</th>
@@ -1013,10 +1013,10 @@ function renderChangeRow(c) {
 
   return `
     <tr class="fil-holding-row" onclick="showTickerHoldings('${c.ticker || ''}')">
-      <td><span class="fil-change-badge ${t.cls}"><i class="fa-solid ${t.icon}"></i> ${t.label}</span></td>
+      <td class="fil-ch-type"><span class="fil-change-badge ${t.cls}"><i class="fa-solid ${t.icon}"></i> ${t.label}</span></td>
       <td class="fil-td-ticker"><strong>${c.ticker || c.cusip}</strong></td>
-      <td class="fil-td-name" title="${c.fund_name}">${truncate(c.fund_name || '', 25)}</td>
-      <td class="fil-td-value">${shareStr}</td>
+      <td class="fil-td-name fil-ch-fund" title="${c.fund_name}">${truncate(c.fund_name || '', 25)}</td>
+      <td class="fil-td-value fil-ch-shares">${shareStr}</td>
       <td class="fil-td-value">${valueStr}</td>
       <td class="fil-td-value">${changeStr}</td>
       <td class="fil-td-value">${weight}</td>
@@ -1403,6 +1403,7 @@ function buildFilingModal(filing) {
   if (type.includes('13D') || type.includes('13G')) return build13DGModal(filing);
   if (type.includes('8-K')) return build8KModal(filing);
   if (type.includes('S-1') || type === 'EFFECT') return buildS1Modal(filing);
+  if (/^[345]$/.test(type) || /Form [345]/i.test(type)) return buildInsiderModal(filing);
 
   // Default/fallback
   return buildGenericFilingModal(filing);
@@ -1695,6 +1696,116 @@ function buildS1Modal(filing) {
       <div class="fil-modal-section">
         <h4>Prospectus Summary</h4>
         <p class="fil-detail-excerpt">${escapeHtml(pd.excerpt)}</p>
+      </div>
+    `;
+  }
+
+  html += buildNotesSection(filing);
+  html += buildMetadataFooter(filing);
+
+  return html;
+}
+
+function buildInsiderModal(filing) {
+  const pd = filing.parsed_data || {};
+  const ticker = pd.issuerTicker || filing.subject_ticker || '';
+  const company = pd.issuerName || filing.fund_name || filing.filer_name || '';
+  const owner = pd.ownerName || '';
+  const role = pd.ownerRole || '';
+  const netShares = pd.netShares || 0;
+  const estValue = pd.estimatedValue || 0;
+  const txCount = pd.transactionCount || 0;
+  const isBuy = netShares > 0;
+  const isSell = netShares < 0;
+
+  let html = `
+    <div class="fil-detail-header fil-detail-insider">
+      <div class="fil-detail-header-top">
+        <span class="fil-detail-type-label">Form ${filing.filing_type} Insider Filing</span>
+        ${isBuy ? '<span class="fil-detail-priority-badge fil-priority-high" style="background:#059669;border-color:#059669">BUY</span>' :
+          isSell ? '<span class="fil-detail-priority-badge fil-priority-high" style="background:#dc2626;border-color:#dc2626">SELL</span>' : ''}
+      </div>
+      <div class="fil-detail-header-title">${owner || company}</div>
+      <div class="fil-detail-header-sub">
+        ${role ? `<span style="color:#94a3b8">${role}</span> · ` : ''}
+        ${ticker ? `<span style="font-weight:600">${ticker}</span>` : ''}
+        ${company && owner ? ` · ${company}` : ''}
+      </div>
+    </div>
+    <div class="fil-detail-stats">
+      <div class="fil-detail-stat ${isBuy ? 'fil-detail-stat-accent' : isSell ? 'fil-detail-stat-warn' : ''}">
+        <span class="fil-detail-stat-value">${netShares > 0 ? '+' : ''}${formatNumber(netShares)}</span>
+        <span class="fil-detail-stat-label">Net Shares</span>
+      </div>
+      <div class="fil-detail-stat">
+        <span class="fil-detail-stat-value">${formatValue(estValue)}</span>
+        <span class="fil-detail-stat-label">Est. Value</span>
+      </div>
+      <div class="fil-detail-stat">
+        <span class="fil-detail-stat-value">${txCount}</span>
+        <span class="fil-detail-stat-label">Transactions</span>
+      </div>
+      <div class="fil-detail-stat">
+        <span class="fil-detail-stat-value">${formatDate(filing.filed_date)}</span>
+        <span class="fil-detail-stat-label">Filed</span>
+      </div>
+    </div>
+  `;
+
+  // Transactions table
+  const txns = pd.transactions || [];
+  if (txns.length) {
+    const txRows = txns.map(tx => {
+      const isAcq = (tx.acquiredDisposed || '').toLowerCase().startsWith('a');
+      const dir = isAcq ? 'Acquired' : 'Disposed';
+      const dirClass = isAcq ? 'fil-trend-up' : 'fil-trend-down';
+      const price = tx.pricePerShare != null ? `$${Number(tx.pricePerShare).toFixed(2)}` : '-';
+      const shares = tx.shares != null ? formatNumber(tx.shares) : '-';
+      const security = tx.security || 'Common Stock';
+      // Truncate security name
+      const secShort = security.length > 35 ? security.slice(0, 35) + '...' : security;
+      return `<tr>
+        <td><span class="${dirClass}" style="font-weight:600">${dir}</span></td>
+        <td title="${escapeHtml(security)}">${escapeHtml(secShort)}</td>
+        <td style="text-align:right">${shares}</td>
+        <td style="text-align:right">${price}</td>
+      </tr>`;
+    }).join('');
+
+    html += `
+      <div class="fil-modal-section">
+        <h4>Transactions</h4>
+        <div class="fil-holdings-wrap">
+          <table class="fil-detail-holdings-table">
+            <thead><tr><th>Direction</th><th>Security</th><th style="text-align:right">Shares</th><th style="text-align:right">Price</th></tr></thead>
+            <tbody>${txRows}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  // Holdings after transaction
+  const holdings = pd.holdings || [];
+  if (holdings.length) {
+    const holdRows = holdings.map(h => {
+      const ownership = h.directIndirect === 'D' ? 'Direct' : h.directIndirect === 'I' ? 'Indirect' : (h.directIndirect || '-');
+      return `<tr>
+        <td>${escapeHtml(h.security || 'Common Stock')}</td>
+        <td style="text-align:right">${formatNumber(h.shares || h.sharesOwned || 0)}</td>
+        <td>${ownership}</td>
+      </tr>`;
+    }).join('');
+
+    html += `
+      <div class="fil-modal-section">
+        <h4>Post-Transaction Holdings</h4>
+        <div class="fil-holdings-wrap">
+          <table class="fil-detail-holdings-table">
+            <thead><tr><th>Security</th><th style="text-align:right">Shares Held</th><th>Ownership</th></tr></thead>
+            <tbody>${holdRows}</tbody>
+          </table>
+        </div>
       </div>
     `;
   }

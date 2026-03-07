@@ -1586,6 +1586,17 @@
   .fil-th-shares { width: 30%; }
   .fil-th-value  { width: 35%; }
 
+  /* Changes table: hide type badge, fund, shares — show Ticker | Value | Change | Weight */
+  .fil-ch-type,
+  .fil-ch-fund,
+  .fil-ch-shares {
+    display: none;
+  }
+
+  .fil-changes-table {
+    table-layout: auto;
+  }
+
   .fil-modal {
     max-height: 90vh;
   }
@@ -1643,6 +1654,10 @@
 
 .fil-detail-s1 {
   background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+}
+
+.fil-detail-insider {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
 }
 
 .fil-detail-header-top {
