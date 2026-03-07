@@ -1328,6 +1328,13 @@
   border-radius: 3px;
 }
 
+.fil-feed-insider {
+  margin-top: 2px;
+  font-size: var(--t-xs);
+  color: #475569;
+  font-weight: 500;
+}
+
 .fil-feed-preview {
   margin-top: 4px;
   font-size: var(--t-xs);

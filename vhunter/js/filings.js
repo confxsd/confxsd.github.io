@@ -335,15 +335,22 @@ function renderFeedItem(filing) {
   const notesBadge = filing.notes_count > 0 ? `<span class="fil-note-indicator" title="${filing.notes_count} note(s)"><i class="fa-solid fa-sticky-note"></i>${filing.notes_count}</span>` : '';
   const parsedDot = filing.parsed_data?.parsed ? '<span class="fil-parsed-dot" title="Parsed"></span>' : '';
 
+  // For Form 4, use parsed ticker/insider if subject_ticker is empty
+  const pd = filing.parsed_data;
+  const ticker = filing.subject_ticker || pd?.issuerTicker || '';
+  const isInsider = /^[345](\/A)?$/.test(filing.filing_type);
+  const insiderLabel = isInsider && pd?.ownerName ? pd.ownerName : '';
+
   return `
     <div class="fil-feed-item ${priorityClass}" onclick="showFilingDetails('${filing.id}')">
       <span class="fil-feed-type" style="border-color:${typeColor};color:${typeColor}">${parsedDot}${filing.filing_type}</span>
       <div class="fil-feed-body">
         <div class="fil-feed-top">
           <span class="fil-feed-fund">${filing.fund_name || filing.filer_name || 'Unknown'}</span>
-          ${filing.subject_ticker ? `<code class="fil-feed-ticker" onclick="event.stopPropagation()">${filing.subject_ticker}</code>` : ''}
+          ${ticker ? `<code class="fil-feed-ticker" onclick="event.stopPropagation()">${ticker}</code>` : ''}
           ${notesBadge}
         </div>
+        ${insiderLabel ? `<div class="fil-feed-insider">${insiderLabel}${pd?.ownerRole ? ` · ${pd.ownerRole}` : ''}</div>` : ''}
         ${preview ? `<div class="fil-feed-preview fil-parsed-preview">${preview}</div>` : ''}
         <div class="fil-feed-meta">
           <span class="fil-feed-time">${formatRelativeDate(filing.filed_date)}</span>
@@ -396,6 +403,20 @@ function buildParsedPreview(filing) {
   // 8-K: items
   if (type.includes('8-K') && pd.items?.length) {
     return pd.items.map(i => `Item ${i.number}`).join(', ');
+  }
+
+  // Form 4: insider transactions
+  if (/^[345]$/.test(type) || /Form [345]/i.test(type)) {
+    const parts = [];
+    if (pd.ownerName) parts.push(pd.ownerName);
+    if (pd.ownerRole) parts.push(pd.ownerRole);
+    if (pd.issuerTicker) parts.push(pd.issuerTicker);
+    if (pd.netShares) {
+      const dir = pd.netShares > 0 ? 'Bought' : 'Sold';
+      parts.push(`${dir} ${formatNumber(Math.abs(pd.netShares))} shares`);
+    }
+    if (pd.estimatedValue) parts.push(formatValue(pd.estimatedValue));
+    return parts.join(' · ');
   }
 
   // S-1
@@ -1190,6 +1211,17 @@ window.scanFilings = async function(options = {}) {
     if (result.success) {
       const msg = `Scanned ${result.scanned} funds\nFound ${result.totalNewFilings} new filings`;
       showToast(msg, 'success');
+
+      // Auto-trigger parsing for new + unparsed filings
+      if (result.totalNewFilings > 0) {
+        try {
+          await fetch(`${CONFIG.PROXY_URL}/api/filings/parse-batch?reset_stubs=true&limit=200`, {
+            method: 'POST',
+            headers: { 'X-User-Id': getUserId() }
+          });
+        } catch (_) { /* parsing is best-effort */ }
+      }
+
       loadFilings();
     } else {
       showToast('Scan failed: ' + (result.error || 'Unknown error'), 'error');
@@ -1255,6 +1287,7 @@ window.showScanOptions = function() {
         </div>
         <div class="fil-scan-actions">
           <button class="fil-btn fil-btn-secondary" onclick="this.closest('.fil-modal-overlay').remove()">Cancel</button>
+          <button class="fil-btn fil-btn-secondary" onclick="reparseUnparsed(this)"><i class="fa-solid fa-rotate"></i> Re-parse Unparsed</button>
           <button class="fil-btn fil-btn-primary" onclick="runScanWithOptions()">Start Scan</button>
         </div>
       </div>
@@ -1262,6 +1295,25 @@ window.showScanOptions = function() {
   `;
   document.body.appendChild(modal);
   modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+};
+
+window.reparseUnparsed = async function(btn) {
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Parsing...';
+  try {
+    const response = await fetch(`${CONFIG.PROXY_URL}/api/filings/parse-batch?reset_stubs=true&limit=200`, {
+      method: 'POST',
+      headers: { 'X-User-Id': getUserId() }
+    });
+    const result = await response.json();
+    showToast(`Reset ${result.resetCount || 0}, enqueued ${result.enqueued || 0} for parsing`, 'success');
+    document.querySelector('.fil-modal-overlay')?.remove();
+    setTimeout(() => loadFilings(), 3000);
+  } catch (e) {
+    showToast('Re-parse failed: ' + e.message, 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Re-parse Unparsed';
+  }
 };
 
 window.runScanWithOptions = function() {
@@ -1281,6 +1333,21 @@ window.showFilingDetails = async function(id) {
       headers: { 'X-User-Id': getUserId() }
     });
     const filing = await response.json();
+
+    // If not parsed yet, try on-demand parsing
+    if (!filing.parsed_data?.parsed) {
+      try {
+        const parseResp = await fetch(`${CONFIG.PROXY_URL}/api/filings/${id}/parse`, {
+          method: 'POST',
+          headers: { 'X-User-Id': getUserId() }
+        });
+        const parseResult = await parseResp.json();
+        if (parseResult.parsedData) {
+          filing.parsed_data = parseResult.parsedData;
+        }
+      } catch (_) { /* parsing is best-effort */ }
+    }
+
     showModal(`${filing.filing_type} Filing`, buildFilingModal(filing), 'fil-detail-modal');
   } catch (e) {
     console.error('Failed to load filing:', e);
