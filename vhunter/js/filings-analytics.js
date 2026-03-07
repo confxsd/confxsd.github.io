@@ -22,7 +22,11 @@ const MEGA_CAP_TICKERS = new Set([
   'DIS', 'VZ', 'T', 'PFE', 'ABT', 'TMO', 'DHR', 'PM', 'RTX',
   'NEE', 'LOW', 'SPGI', 'TXN', 'QCOM', 'INTU', 'AMAT', 'GS', 'MS',
   'BLK', 'ISRG', 'PANW', 'LRCX', 'KLAC', 'SNPS', 'CDNS', 'MRVL',
-  'NOW', 'UBER', 'SQ', 'SHOP', 'SPOT', 'ABNB', 'COIN', 'SNOW', 'PLTR'
+  'NOW', 'UBER', 'SQ', 'SHOP', 'SPOT', 'ABNB', 'COIN', 'SNOW', 'PLTR',
+  // Major ETFs & Indices
+  'SPY', 'QQQ', 'IWM', 'DIA', 'VOO', 'VTI', 'IVV', 'VEA', 'VWO', 'EFA',
+  'AGG', 'BND', 'TLT', 'HYG', 'LQD', 'XLF', 'XLE', 'XLK', 'XLV', 'XLI',
+  'XLP', 'XLY', 'XLB', 'XLU', 'XLRE', 'XLC', 'GLD', 'SLV', 'USO', 'ARKK'
 ]);
 
 function filterMegaCaps(arr, tickerKey = 'ticker') {
