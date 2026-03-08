@@ -1795,14 +1795,12 @@ function buildInsiderModal(filing) {
     <div class="fil-detail-header fil-detail-insider">
       <div class="fil-detail-header-top">
         <span class="fil-detail-type-label">Form ${filing.filing_type} Insider Filing</span>
-        ${isBuy ? '<span class="fil-detail-priority-badge fil-priority-high" style="background:#059669;border-color:#059669">BUY</span>' :
-          isSell ? '<span class="fil-detail-priority-badge fil-priority-high" style="background:#dc2626;border-color:#dc2626">SELL</span>' : ''}
+        ${isBuy ? '<span class="fil-detail-priority-badge fil-detail-priority-badge-buy">BUY</span>' :
+          isSell ? '<span class="fil-detail-priority-badge fil-detail-priority-badge-sell">SELL</span>' : ''}
       </div>
       <div class="fil-detail-header-title">${owner || company}</div>
       <div class="fil-detail-header-sub">
-        ${role ? `<span style="color:#94a3b8">${role}</span> · ` : ''}
-        ${ticker ? `<span style="font-weight:600">${ticker}</span>` : ''}
-        ${company && owner ? ` · ${company}` : ''}
+        ${role ? `${role}` : ''}${role && ticker ? ' · ' : ''}${ticker ? `<strong>${ticker}</strong>` : ''}${company && owner ? ` · ${company}` : ''}
       </div>
     </div>
     <div class="fil-detail-stats">
