@@ -11,6 +11,7 @@ let pipeDeals = [];
 let funds = [];
 let holdings = [];
 let holdingsSummary = null;
+let filingsStats = null;
 let currentTab = 'filings';
 let currentFilters = {
   type: 'all',
@@ -49,7 +50,8 @@ export async function loadFilings() {
       fetchHoldingsAggregated()
     ]);
 
-    filings = filingsData;
+    filings = filingsData.filings || filingsData;
+    filingsStats = filingsData.stats || null;
     pipeDeals = pipesData;
     funds = fundsData;
     holdings = holdingsData.holdings || [];
@@ -194,22 +196,20 @@ async function deleteFilingNote(filingId, noteId) {
 // ============== DASHBOARD STATS ==============
 
 function renderDashboardStats() {
-  const stats = {
-    '13F': 0,
-    '13DG': 0,
-    '8K': 0,
-    'S1': 0,
-    'Form4': 0,
-    'total': filings.length
-  };
-
-  for (const f of filings) {
-    const type = f.filing_type || '';
-    if (type.includes('13F')) stats['13F']++;
-    else if (type.includes('13D') || type.includes('13G')) stats['13DG']++;
-    else if (type.includes('8-K')) stats['8K']++;
-    else if (type.includes('S-1') || type.includes('EFFECT')) stats['S1']++;
-    else if (type === '4' || type === '4/A') stats['Form4']++;
+  // Use server-side stats (accurate full counts) if available, otherwise compute from limited results
+  let stats;
+  if (filingsStats) {
+    stats = filingsStats;
+  } else {
+    stats = { '13F': 0, '13DG': 0, '8K': 0, 'S1': 0, 'Form4': 0, total: filings.length };
+    for (const f of filings) {
+      const type = f.filing_type || '';
+      if (type.includes('13F')) stats['13F']++;
+      else if (type.includes('13D') || type.includes('13G')) stats['13DG']++;
+      else if (type.includes('8-K')) stats['8K']++;
+      else if (type.includes('S-1') || type.includes('EFFECT')) stats['S1']++;
+      else if (type === '4' || type === '4/A') stats['Form4']++;
+    }
   }
 
   document.getElementById('fil13F').textContent = stats['13F'];
@@ -220,6 +220,29 @@ function renderDashboardStats() {
   document.getElementById('filTotal').textContent = stats.total;
   document.getElementById('filPipeCount').textContent = pipeDeals.length;
   document.getElementById('filFundsCount').textContent = funds.length;
+
+  // Add delay info subtexts
+  const delayInfo = {
+    'fil13F': '45-day delay',
+    'fil13DG': '~10-day delay',
+    'fil8K': 'Same day',
+    'filS1': 'Same day',
+    'filForm4': '2-day delay',
+    'filTotal': `${currentFilters.days}d window`
+  };
+  for (const [id, text] of Object.entries(delayInfo)) {
+    const el = document.getElementById(id);
+    if (el) {
+      let sub = el.parentElement.querySelector('.stat-delay');
+      if (!sub) {
+        sub = document.createElement('span');
+        sub.className = 'stat-delay';
+        sub.style.cssText = 'display:block;font-size:10px;color:var(--text-muted, #888);margin-top:2px;';
+        el.parentElement.appendChild(sub);
+      }
+      sub.textContent = text;
+    }
+  }
 }
 
 function populateFundFilter() {
@@ -1144,7 +1167,8 @@ window.applyFilters = function() {
     currentFilters.days = newDays;
     // Refetch with new days
     fetchFilings({ days: newDays }).then(data => {
-      filings = data;
+      filings = data.filings || data;
+      filingsStats = data.stats || null;
       renderDashboardStats();
       renderFilingsTable();
     });
