@@ -2,7 +2,7 @@
 import { CONFIG } from './config.js';
 
 const API = CONFIG.PROXY_URL;
-const STAGES = ['screening', 'story', 'fundamentals', 'technical', 'catalyst', 'flow', 'risk', 'trade'];
+const STAGES = ['screening', 'technical', 'catalyst', 'trade'];
 
 let analyses = [];
 let currentFilter = 'all';
