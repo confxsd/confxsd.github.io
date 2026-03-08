@@ -646,9 +646,6 @@ export async function loadFeed() {
     updateFeedStats();
     loadThesis();
     loadLatestNewsReport();
-
-    // Check if we need auto-sync (stale data)
-    checkAndAutoSync();
   } catch (e) {
     container.innerHTML = `<div class="error">Failed to load feed: ${e.message}</div>`;
   }
