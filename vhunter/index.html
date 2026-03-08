@@ -70,6 +70,7 @@
     <link rel="stylesheet" href="css/financials.css" />
     <link rel="stylesheet" href="css/daily-checker.css" />
     <link rel="stylesheet" href="css/signal-log.css" />
+    <link rel="stylesheet" href="css/active-trades.css" />
     <link rel="stylesheet" href="css/filings-analytics.css" />
     <link rel="stylesheet" href="css/ticker-pipeline.css" />
     <link rel="stylesheet" href="css/responsive.css?v=2" />
@@ -183,6 +184,18 @@
           >
             <span class="nav-icon"><i class="fa-solid fa-list"></i></span>
             <span class="nav-label">Signal Log</span>
+          </a>
+          <a
+            href="#"
+            class="nav-item"
+            data-page="active-trades"
+            onclick="
+              event.preventDefault();
+              switchPage('active-trades');
+            "
+          >
+            <span class="nav-icon"><i class="fa-solid fa-crosshairs"></i></span>
+            <span class="nav-label">Active Trades</span>
           </a>
           <a
             href="#"
@@ -3219,6 +3232,15 @@
         <!-- Page: Signal Log -->
         <div class="page" id="page-signal-log">
           <div id="slPage">
+            <div style="padding: 40px; text-align: center; color: #64748b">
+              Loading...
+            </div>
+          </div>
+        </div>
+
+        <!-- Page: Active Trades -->
+        <div class="page" id="page-active-trades">
+          <div id="atPage">
             <div style="padding: 40px; text-align: center; color: #64748b">
               Loading...
             </div>
