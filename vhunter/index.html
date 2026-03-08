@@ -105,7 +105,9 @@
               switchPage('daily');
             "
           >
-            <span class="nav-icon"><i class="fa-solid fa-calendar-check"></i></span>
+            <span class="nav-icon"
+              ><i class="fa-solid fa-calendar-check"></i
+            ></span>
             <span class="nav-label">Daily Checker</span>
           </a>
           <a
@@ -123,38 +125,16 @@
           <a
             href="#"
             class="nav-item"
-            data-page="signal-log"
-            onclick="
-              event.preventDefault();
-              switchPage('signal-log');
-            "
-          >
-            <span class="nav-icon"><i class="fa-solid fa-list"></i></span>
-            <span class="nav-label">Signal Log</span>
-          </a>
-          <a
-            href="#"
-            class="nav-item"
             data-page="options"
             onclick="
               event.preventDefault();
               switchPage('options');
             "
           >
-            <span class="nav-icon"><i class="fa-solid fa-arrow-trend-up"></i></span>
+            <span class="nav-icon"
+              ><i class="fa-solid fa-arrow-trend-up"></i
+            ></span>
             <span class="nav-label">Options</span>
-          </a>
-          <a
-            href="#"
-            class="nav-item"
-            data-page="feed"
-            onclick="
-              event.preventDefault();
-              switchPage('feed');
-            "
-          >
-            <span class="nav-icon"><i class="fa-solid fa-rss"></i></span>
-            <span class="nav-label">Feed</span>
           </a>
           <a
             href="#"
@@ -171,6 +151,18 @@
           <a
             href="#"
             class="nav-item"
+            data-page="feed"
+            onclick="
+              event.preventDefault();
+              switchPage('feed');
+            "
+          >
+            <span class="nav-icon"><i class="fa-solid fa-rss"></i></span>
+            <span class="nav-label">Feed</span>
+          </a>
+          <a
+            href="#"
+            class="nav-item"
             data-page="filings"
             onclick="
               event.preventDefault();
@@ -179,6 +171,18 @@
           >
             <span class="nav-icon"><i class="fa-solid fa-file-lines"></i></span>
             <span class="nav-label">Filings</span>
+          </a>
+          <a
+            href="#"
+            class="nav-item"
+            data-page="signal-log"
+            onclick="
+              event.preventDefault();
+              switchPage('signal-log');
+            "
+          >
+            <span class="nav-icon"><i class="fa-solid fa-list"></i></span>
+            <span class="nav-label">Signal Log</span>
           </a>
           <a
             href="#"
@@ -1287,11 +1291,18 @@
                   <div class="fil-summary-label">Quarter</div>
                 </div>
                 <div class="fil-summary-stat">
-                  <div class="fil-summary-value fil-trend-up" id="changesNew">0</div>
+                  <div class="fil-summary-value fil-trend-up" id="changesNew">
+                    0
+                  </div>
                   <div class="fil-summary-label">New Positions</div>
                 </div>
                 <div class="fil-summary-stat">
-                  <div class="fil-summary-value fil-trend-down" id="changesExits">0</div>
+                  <div
+                    class="fil-summary-value fil-trend-down"
+                    id="changesExits"
+                  >
+                    0
+                  </div>
                   <div class="fil-summary-label">Exits</div>
                 </div>
                 <div class="fil-summary-stat">
@@ -1312,23 +1323,40 @@
               <div class="fil-toolbar">
                 <div class="fil-search">
                   <i class="fa-solid fa-search"></i>
-                  <input type="text" id="changesSearchInput" placeholder="Search by ticker..." onkeyup="searchChanges(this.value)" />
+                  <input
+                    type="text"
+                    id="changesSearchInput"
+                    placeholder="Search by ticker..."
+                    onkeyup="searchChanges(this.value)"
+                  />
                 </div>
                 <div class="fil-filter-group">
-                  <select class="fil-select" id="changesTypeFilter" onchange="filterChanges()">
+                  <select
+                    class="fil-select"
+                    id="changesTypeFilter"
+                    onchange="filterChanges()"
+                  >
                     <option value="">All Changes</option>
                     <option value="NEW">New Positions</option>
                     <option value="EXIT">Exits</option>
                     <option value="INCREASE">Increases</option>
                     <option value="DECREASE">Decreases</option>
                   </select>
-                  <select class="fil-select" id="changesSortBy" onchange="filterChanges()">
+                  <select
+                    class="fil-select"
+                    id="changesSortBy"
+                    onchange="filterChanges()"
+                  >
                     <option value="value_change">Sort by Value Change</option>
                     <option value="pct_change">Sort by % Change</option>
                     <option value="current_value">Sort by Position Size</option>
                     <option value="fund_priority">Sort by Fund Priority</option>
                   </select>
-                  <select class="fil-select" id="changesMinValue" onchange="filterChanges()">
+                  <select
+                    class="fil-select"
+                    id="changesMinValue"
+                    onchange="filterChanges()"
+                  >
                     <option value="0">Any Value</option>
                     <option value="1000000">Min $1M</option>
                     <option value="10000000">Min $10M</option>
@@ -1349,7 +1377,10 @@
                   <div class="fil-empty">
                     <i class="fa-solid fa-arrows-rotate"></i>
                     <p>No changes data yet</p>
-                    <p class="fil-empty-sub">Changes are computed when 13F filings are parsed across multiple quarters.</p>
+                    <p class="fil-empty-sub">
+                      Changes are computed when 13F filings are parsed across
+                      multiple quarters.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -3117,13 +3148,52 @@
           <!-- Filter Tabs + Sort -->
           <div class="dc-controls-row">
             <div class="dc-filter-tabs">
-              <button class="dc-filter-tab active" data-filter="all" onclick="window.dcSetFilter('all')" id="dcTabAll">All</button>
-              <button class="dc-filter-tab" data-filter="entry" onclick="window.dcSetFilter('entry')" id="dcTabEntry">Entry</button>
-              <button class="dc-filter-tab" data-filter="watch" onclick="window.dcSetFilter('watch')" id="dcTabWatch">Watch</button>
-              <button class="dc-filter-tab" data-filter="wait" onclick="window.dcSetFilter('wait')" id="dcTabWait">Wait</button>
-              <button class="dc-filter-tab" data-filter="exit" onclick="window.dcSetFilter('exit')" id="dcTabExit">Exit</button>
+              <button
+                class="dc-filter-tab active"
+                data-filter="all"
+                onclick="window.dcSetFilter('all')"
+                id="dcTabAll"
+              >
+                All
+              </button>
+              <button
+                class="dc-filter-tab"
+                data-filter="entry"
+                onclick="window.dcSetFilter('entry')"
+                id="dcTabEntry"
+              >
+                Entry
+              </button>
+              <button
+                class="dc-filter-tab"
+                data-filter="watch"
+                onclick="window.dcSetFilter('watch')"
+                id="dcTabWatch"
+              >
+                Watch
+              </button>
+              <button
+                class="dc-filter-tab"
+                data-filter="wait"
+                onclick="window.dcSetFilter('wait')"
+                id="dcTabWait"
+              >
+                Wait
+              </button>
+              <button
+                class="dc-filter-tab"
+                data-filter="exit"
+                onclick="window.dcSetFilter('exit')"
+                id="dcTabExit"
+              >
+                Exit
+              </button>
             </div>
-            <select class="dc-sort-select" id="dcSortSelect" onchange="window.dcSetSort(this.value)">
+            <select
+              class="dc-sort-select"
+              id="dcSortSelect"
+              onchange="window.dcSetSort(this.value)"
+            >
               <option value="priority">Priority</option>
               <option value="score">Score</option>
               <option value="freshness">Freshness</option>
@@ -3141,13 +3211,17 @@
 
         <!-- Page: Ticker Pipeline -->
         <div class="page" id="page-pipeline">
-          <div style="padding:40px;text-align:center;color:#64748b">Loading...</div>
+          <div style="padding: 40px; text-align: center; color: #64748b">
+            Loading...
+          </div>
         </div>
 
         <!-- Page: Signal Log -->
         <div class="page" id="page-signal-log">
           <div id="slPage">
-            <div style="padding:40px;text-align:center;color:#64748b">Loading...</div>
+            <div style="padding: 40px; text-align: center; color: #64748b">
+              Loading...
+            </div>
           </div>
         </div>
       </main>
