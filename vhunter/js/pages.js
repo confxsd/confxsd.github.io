@@ -21,7 +21,6 @@ const pageTitles = {
   macro: 'Macro Dashboard',
   daily: 'Daily Checker',
   pipeline: 'Ticker Pipeline',
-  'signal-log': 'Signal Log',
   'active-trades': 'Active Trades'
 };
 

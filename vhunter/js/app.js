@@ -17,7 +17,6 @@ import { loadOptionsData, initOptionsPage } from './options-page.js';
 import { initTerminal, startPolling, stopPolling } from './terminal.js';
 import { loadMacro } from './macro.js';
 import { loadDailyChecker } from './daily-checker.js';
-import { loadSignalLog } from './signal-log.js';
 import { loadActiveTrades } from './active-trades.js';
 import { loadPipeline, unloadPipeline } from './ticker-pipeline.js';
 import { initTooltips } from './tooltip.js';
@@ -59,7 +58,6 @@ registerPageLoaders({
   macro: loadMacro,
   daily: loadDailyChecker,
   pipeline: loadPipeline,
-  'signal-log': loadSignalLog,
   'active-trades': loadActiveTrades
 });
 console.log('[APP] Page loaders registered');

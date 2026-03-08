@@ -69,7 +69,6 @@
     <link rel="stylesheet" href="css/macro.css?v=5" />
     <link rel="stylesheet" href="css/financials.css" />
     <link rel="stylesheet" href="css/daily-checker.css" />
-    <link rel="stylesheet" href="css/signal-log.css" />
     <link rel="stylesheet" href="css/active-trades.css" />
     <link rel="stylesheet" href="css/filings-analytics.css" />
     <link rel="stylesheet" href="css/ticker-pipeline.css" />
@@ -172,18 +171,6 @@
           >
             <span class="nav-icon"><i class="fa-solid fa-file-lines"></i></span>
             <span class="nav-label">Filings</span>
-          </a>
-          <a
-            href="#"
-            class="nav-item"
-            data-page="signal-log"
-            onclick="
-              event.preventDefault();
-              switchPage('signal-log');
-            "
-          >
-            <span class="nav-icon"><i class="fa-solid fa-list"></i></span>
-            <span class="nav-label">Signal Log</span>
           </a>
           <a
             href="#"
@@ -3229,15 +3216,6 @@
           </div>
         </div>
 
-        <!-- Page: Signal Log -->
-        <div class="page" id="page-signal-log">
-          <div id="slPage">
-            <div style="padding: 40px; text-align: center; color: #64748b">
-              Loading...
-            </div>
-          </div>
-        </div>
-
         <!-- Page: Active Trades -->
         <div class="page" id="page-active-trades">
           <div id="atPage">
@@ -3827,6 +3805,6 @@
       </svg>
     </button>
 
-    <script type="module" src="js/app.js?v=12"></script>
+    <script type="module" src="js/app.js?v=13"></script>
   </body>
 </html>
