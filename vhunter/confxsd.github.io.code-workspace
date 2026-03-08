@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../../vhunter-proxy"
+		},
+		{
+			"path": "../../vhunter-ml"
 		}
 	],
 	"settings": {}

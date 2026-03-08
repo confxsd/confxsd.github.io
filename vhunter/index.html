@@ -72,6 +72,7 @@
     <link rel="stylesheet" href="css/active-trades.css" />
     <link rel="stylesheet" href="css/filings-analytics.css" />
     <link rel="stylesheet" href="css/ticker-pipeline.css" />
+    <link rel="stylesheet" href="css/deep-analysis.css" />
     <link rel="stylesheet" href="css/responsive.css?v=2" />
   </head>
   <body>
@@ -171,6 +172,18 @@
           >
             <span class="nav-icon"><i class="fa-solid fa-file-lines"></i></span>
             <span class="nav-label">Filings</span>
+          </a>
+          <a
+            href="#"
+            class="nav-item"
+            data-page="deep-analysis"
+            onclick="
+              event.preventDefault();
+              switchPage('deep-analysis');
+            "
+          >
+            <span class="nav-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></span>
+            <span class="nav-label">Deep Analysis</span>
           </a>
           <a
             href="#"
@@ -3201,6 +3214,15 @@
         <div class="page" id="page-pipeline">
           <div style="padding: 40px; text-align: center; color: #64748b">
             Loading...
+          </div>
+        </div>
+
+        <!-- Page: Deep Analysis -->
+        <div class="page" id="page-deep-analysis">
+          <div id="daPage">
+            <div style="padding: 40px; text-align: center; color: #64748b">
+              Loading...
+            </div>
           </div>
         </div>
 

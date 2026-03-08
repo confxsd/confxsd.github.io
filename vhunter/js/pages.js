@@ -21,7 +21,8 @@ const pageTitles = {
   macro: 'Macro Dashboard',
   daily: 'Daily Checker',
   pipeline: 'Ticker Pipeline',
-  'active-trades': 'Active Trades'
+  'active-trades': 'Active Trades',
+  'deep-analysis': 'Deep Analysis'
 };
 
 export function getCurrentPage() {

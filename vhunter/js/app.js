@@ -19,6 +19,7 @@ import { loadMacro } from './macro.js';
 import { loadDailyChecker } from './daily-checker.js';
 import { loadActiveTrades } from './active-trades.js';
 import { loadPipeline, unloadPipeline } from './ticker-pipeline.js';
+import { loadDeepAnalysis } from './deep-analysis.js';
 import { initTooltips } from './tooltip.js';
 import { initTooltipPositioning } from './tooltip-position.js';
 
@@ -58,7 +59,8 @@ registerPageLoaders({
   macro: loadMacro,
   daily: loadDailyChecker,
   pipeline: loadPipeline,
-  'active-trades': loadActiveTrades
+  'active-trades': loadActiveTrades,
+  'deep-analysis': loadDeepAnalysis
 });
 console.log('[APP] Page loaders registered');
 
