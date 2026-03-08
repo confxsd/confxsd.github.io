@@ -250,14 +250,60 @@
 .dc-priority-dot.filled { background: #818cf8; }
 
 /* Expanded actions */
-.dc-exp-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-.dc-run-one-btn:disabled {
+.dc-exp-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+
+.dc-exp-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  font-family: inherit;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.dc-exp-actions .btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.dc-exp-actions .btn-danger {
+  color: #dc2626 !important;
+  border-color: #fca5a5 !important;
+  background: #fff !important;
+}
+
+.dc-exp-actions .btn-danger:hover {
+  background: #fef2f2 !important;
+  border-color: #f87171 !important;
+}
+
+.dc-exp-actions .dc-run-one-btn {
+  color: #818cf8;
+  border-color: #c7d2fe;
+}
+
+.dc-exp-actions .dc-run-one-btn:hover {
+  background: #eef2ff;
+  border-color: #a5b4fc;
+}
+
+.dc-exp-actions .dc-run-one-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   pointer-events: none;
-  background: #dbeafe;
-  color: #1d4ed8;
-  border-color: #93c5fd;
+  background: #eef2ff;
+  color: #818cf8;
+  border-color: #c7d2fe;
 }
 
 /* Empty state */
