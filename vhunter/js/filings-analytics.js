@@ -60,19 +60,7 @@ export async function loadAnalytics() {
   root.innerHTML = `<div class="fila-loading"><i class="fa-solid fa-spinner"></i><p>Loading analytics...</p></div>`;
 
   try {
-    const [summary, convergence, rotation, exitClusters, insiders, velocity, heatmap, overlap, pipeTimeline] = await Promise.all([
-      fetchAnalytics('summary'),
-      fetchAnalytics('convergence'),
-      fetchAnalytics('rotation'),
-      fetchAnalytics('exit-clustering'),
-      fetchAnalytics('insider-clusters'),
-      fetchAnalytics('filing-velocity'),
-      fetchAnalytics('heatmap'),
-      fetchAnalytics('portfolio-overlap'),
-      fetchAnalytics('pipe-timeline')
-    ]);
-
-    analyticsData = { summary, convergence, rotation, exitClusters, insiders, velocity, heatmap, overlap, pipeTimeline };
+    analyticsData = await fetchAnalytics('all');
     renderDashboard(root);
   } catch (err) {
     console.error('[ANALYTICS]', err);
