@@ -614,24 +614,23 @@ export function calcGEX(options, spotPrice) {
 function findGEXZeroLine(strikes, spotPrice) {
   if (!strikes.length) return null;
 
-  // Find where cumulative GEX changes sign
-  let cumulativeGEX = 0;
-  let lastPositive = null;
-  let firstNegative = null;
+  // Find where cumulative GEX crosses zero — interpolate for precision
+  // Matches gamma.js findZeroGamma approach
+  let cumGex = 0;
+  let prevCumGex = 0;
 
-  for (const { strike, gex } of strikes) {
-    const prevCumulative = cumulativeGEX;
-    cumulativeGEX += gex;
+  for (let i = 0; i < strikes.length; i++) {
+    prevCumGex = cumGex;
+    cumGex += strikes[i].gex;
 
-    if (prevCumulative >= 0 && cumulativeGEX < 0) {
-      lastPositive = strike;
-    }
-    if (prevCumulative < 0 && cumulativeGEX >= 0) {
-      firstNegative = strike;
+    if ((prevCumGex <= 0 && cumGex > 0) || (prevCumGex >= 0 && cumGex < 0)) {
+      const ratio = Math.abs(prevCumGex) / (Math.abs(prevCumGex) + Math.abs(cumGex));
+      const prevStrike = i > 0 ? strikes[i - 1].strike : strikes[i].strike;
+      return prevStrike + ratio * (strikes[i].strike - prevStrike);
     }
   }
 
-  // Alternative: find the strike closest to where net GEX = 0
+  // Fallback: find the strike closest to where cumulative GEX = 0
   let runningGEX = 0;
   let zeroStrike = strikes[0]?.strike;
   let minAbsGEX = Infinity;

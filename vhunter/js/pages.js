@@ -15,7 +15,6 @@ const pageTitles = {
   filings: 'Institutional Filings',
   terminal: 'Terminal',
   positions: 'Positions',
-  watchlist: 'Watchlist',
   notes: 'Notes',
   strategy: 'Strategy',
   macro: 'Macro Dashboard',

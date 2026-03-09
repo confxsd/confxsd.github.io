@@ -147,8 +147,11 @@ function processHistoricalData(ticker, data) {
   const buyPct = parseInt((buyVol / (buyVol + sellVol) * 100).toFixed(0));
   const netFlow = buyVol - sellVol;
 
-  // A/D Line change
-  const adlChange = ((adl[adl.length - 1] - adl[adl.length - 10]) / Math.abs(adl[adl.length - 10]) * 100);
+  // A/D Line change (guard against division by zero when ADL reference is ~0)
+  const adlRef = adl[adl.length - 10];
+  const adlChange = Math.abs(adlRef) > 0.001
+    ? ((adl[adl.length - 1] - adlRef) / Math.abs(adlRef) * 100)
+    : 0;
 
   // Risk levels
   const stop = currentPrice - 2 * atr;

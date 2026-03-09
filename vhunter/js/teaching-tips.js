@@ -900,8 +900,8 @@ ${howToTrade}
   if (expMoveTip) {
     if (ticker && spotPrice && avgIV) {
       const daily = spotPrice * (avgIV / 100) * Math.sqrt(1 / 365);
-      const weekly = spotPrice * (avgIV / 100) * Math.sqrt(5 / 365);
-      const monthly = spotPrice * (avgIV / 100) * Math.sqrt(21 / 365);
+      const weekly = spotPrice * (avgIV / 100) * Math.sqrt(7 / 365); // 7 calendar days
+      const monthly = spotPrice * (avgIV / 100) * Math.sqrt(30 / 365); // 30 calendar days
 
       const dailyPct = (daily / spotPrice * 100).toFixed(2);
       const weeklyPct = (weekly / spotPrice * 100).toFixed(2);

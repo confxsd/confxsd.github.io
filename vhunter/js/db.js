@@ -101,23 +101,6 @@ export async function deletePosition(id) {
   return dbFetch(`/api/positions/${id}`, { method: 'DELETE' });
 }
 
-// ==================== WATCHLIST ====================
-
-export async function getWatchlist() {
-  return dbFetch('/api/watchlist');
-}
-
-export async function addToWatchlist(item) {
-  return dbFetch('/api/watchlist', {
-    method: 'POST',
-    body: JSON.stringify(item)
-  });
-}
-
-export async function removeFromWatchlist(id) {
-  return dbFetch(`/api/watchlist/${id}`, { method: 'DELETE' });
-}
-
 // ==================== NOTES ====================
 
 export async function getNotes(ticker = null) {

@@ -335,8 +335,9 @@ function updateQuickStats(avgIV, hv30, spotPrice, pcRatio, termStructure) {
   vrpEl.title = vrp > 10 ? 'Options expensive - consider selling premium' :
     vrp < -5 ? 'Options cheap - consider buying premium' : 'Fair value';
 
-  // Expected move (weekly - 5 trading days) using standardized calculation
-  const expMove = finMath.calcExpectedMove(spotPrice, avgIV, 5);
+  // Expected move (weekly) using standardized calculation
+  // Use 7 calendar days (not 5 trading days) since calcExpectedMove divides by 365
+  const expMove = finMath.calcExpectedMove(spotPrice, avgIV, 7);
   document.getElementById('optExpMove').textContent = '±$' + expMove.toFixed(2);
 
   // P/C Ratio
@@ -408,9 +409,10 @@ function updateVolatilitySection(expiryIV, avgIV, spotPrice, strikeData) {
   document.getElementById('optPcSkew').textContent = rr != null ? (rr >= 0 ? '+' : '') + rr.toFixed(1) + '%' : '--';
 
   // Use standardized expected move calculations for consistency
+  // Calendar days (not trading days) since calcExpectedMove divides by 365
   const daily = finMath.calcExpectedMove(spotPrice, avgIV, 1);
-  const weekly = finMath.calcExpectedMove(spotPrice, avgIV, 5);
-  const monthly = finMath.calcExpectedMove(spotPrice, avgIV, 21);
+  const weekly = finMath.calcExpectedMove(spotPrice, avgIV, 7);
+  const monthly = finMath.calcExpectedMove(spotPrice, avgIV, 30);
   document.getElementById('optExpDaily').textContent = `$${(spotPrice - daily).toFixed(2)} - $${(spotPrice + daily).toFixed(2)}`;
   document.getElementById('optExpWeekly').textContent = `$${(spotPrice - weekly).toFixed(2)} - $${(spotPrice + weekly).toFixed(2)}`;
   document.getElementById('optExpMonthly').textContent = `$${(spotPrice - monthly).toFixed(2)} - $${(spotPrice + monthly).toFixed(2)}`;

@@ -5,7 +5,7 @@ import { parseRoute, initRouter } from './router.js';
 import { renderHistory, setSearchCallback } from './history.js';
 import { switchPage, registerPageLoaders, restoreCollapsedSections, getCurrentPage } from './pages.js';
 import { loadPositions, setRunCallback as setPositionsRunCallback } from './positions.js';
-import { loadWatchlist, setRunCallback as setWatchlistRunCallback } from './watchlist.js';
+
 import { loadNotes, setRunCallback as setNotesRunCallback } from './notes.js';
 import { loadFeed, setRunCallback as setFeedRunCallback } from './feed.js';
 import { loadMemoryMap, setRunCallback as setMemoryRunCallback } from './memory-map.js';
@@ -30,7 +30,7 @@ import './llm-export.js';
 // Initialize callbacks to avoid circular dependencies
 setSearchCallback(() => run());
 setPositionsRunCallback(() => run());
-setWatchlistRunCallback(() => run());
+
 setNotesRunCallback(() => run());
 setFeedRunCallback(() => run());
 setMemoryRunCallback(() => run());
@@ -47,7 +47,7 @@ console.log('[APP] About to register page loaders');
 console.log('[APP] loadMacro:', loadMacro);
 registerPageLoaders({
   positions: loadPositions,
-  watchlist: loadWatchlist,
+
   notes: loadNotes,
   options: loadOptionsData,
   feed: loadFeed,
