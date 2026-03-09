@@ -524,7 +524,7 @@ export function calcGEX(options, spotPrice) {
 
     // If gamma is missing or invalid, estimate it using Black-Scholes
     // This aligns with gamma.js approach for consistency
-    if (!gamma || gamma <= 0 || gamma > 1) {
+    if (!gamma || gamma <= 0 || gamma > 5) {
       gamma = estimateGammaFromBS(spotPrice, strike, dte, iv);
       if (!gamma || gamma <= 0) continue; // Skip if estimation also fails
     }
@@ -577,7 +577,7 @@ export function calcGEX(options, spotPrice) {
   if (netGEX > 0 && spotPrice > (gexZeroLine || spotPrice)) {
     regime = 'POSITIVE_GAMMA';
     regimeDesc = 'Dealers long gamma. Expect mean reversion, lower vol.';
-  } else if (netGEX < 0 || spotPrice < (gexZeroLine || 0)) {
+  } else if (netGEX < 0 && spotPrice < (gexZeroLine || 0)) {
     regime = 'NEGATIVE_GAMMA';
     regimeDesc = 'Dealers short gamma. Expect trend continuation, higher vol.';
   }

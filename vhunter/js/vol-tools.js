@@ -78,7 +78,7 @@ export function extractEarningsVol(termIV, daysToExpiry, baseIV = null, daysToEa
   }
 
   const eventVol = Math.sqrt(eventVar) * 100; // Annualized event vol
-  const dailyEventVol = eventVol / 15.87; // Daily event vol (annualized / sqrt(252))
+  const dailyEventVol = eventVol / Math.sqrt(365); // Daily event vol (annualized / sqrt(365), calendar days for consistency)
   const expectedMove = dailyEventVol; // 1-SD daily expected move (percentage)
 
   // Variance weight: how much of total variance is from the event?

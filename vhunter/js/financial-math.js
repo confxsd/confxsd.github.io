@@ -893,10 +893,10 @@ export function erf(x) {
  * @param {number} strike - Strike price
  * @param {number} iv - Implied volatility as decimal (e.g., 0.30)
  * @param {number} t - Time to expiry in years
- * @param {number} r - Risk-free rate (default 0.05)
+ * @param {number} r - Risk-free rate (default RISK_FREE_RATE, currently 0.04)
  * @returns {number} d1 value
  */
-export function calcD1(spot, strike, iv, t, r = 0.05) {
+export function calcD1(spot, strike, iv, t, r = RISK_FREE_RATE) {
   if (spot <= 0 || strike <= 0 || t <= 0 || iv <= 0) return NaN;
 
   const sqrtT = Math.sqrt(t);

@@ -2164,7 +2164,7 @@ function buildFundModal(fund) {
         <h4>Recent Filings</h4>
         <div class="fil-recent-list">
           ${recentFilings.map(f => `
-            <div class="fil-recent-item ${f.alert_priority === 'critical' ? 'fil-priority-critical' : ''}">
+            <div class="fil-recent-item fil-clickable ${f.alert_priority === 'critical' ? 'fil-priority-critical' : ''}" onclick="showFilingDetails('${f.id}')">
               <span>${f.filing_type}</span>
               <span>${formatDate(f.filed_date)}</span>
             </div>

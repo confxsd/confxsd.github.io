@@ -208,7 +208,7 @@ export function findZeroGamma(gexByStrike, spotPrice) {
     // Find where cumulative GEX crosses zero (either direction)
     if ((prevCumGex <= 0 && cumGex > 0) || (prevCumGex >= 0 && cumGex < 0)) {
       // Interpolate the exact crossing point
-      const ratio = Math.abs(prevCumGex) / (Math.abs(prevCumGex) + cumGex);
+      const ratio = Math.abs(prevCumGex) / (Math.abs(prevCumGex) + Math.abs(cumGex));
       const prevStrike = strikes[strikes.indexOf(strike) - 1] || strike;
       zeroGammaStrike = prevStrike + ratio * (strike - prevStrike);
       break;
@@ -293,6 +293,7 @@ export function findVolatilityTrigger(gexProfile, spotPrice) {
  * Determine GEX Regime
  */
 export function determineGEXRegime(spotPrice, zeroGamma, volTrigger, netGEX) {
+  // Both conditions required symmetrically: net exposure direction + position vs gamma flip
   if (netGEX > 0 && spotPrice > zeroGamma) {
     return {
       regime: 'POSITIVE',
@@ -302,7 +303,7 @@ export function determineGEXRegime(spotPrice, zeroGamma, volTrigger, netGEX) {
       volatilityBias: 'LOW',
       tradingStyle: 'FADE MOVES / SELL VOL'
     };
-  } else if (spotPrice < volTrigger) {
+  } else if (netGEX < 0 && spotPrice < volTrigger) {
     return {
       regime: 'NEGATIVE_DEEP',
       label: '-GEX DEEP',
@@ -311,7 +312,7 @@ export function determineGEXRegime(spotPrice, zeroGamma, volTrigger, netGEX) {
       volatilityBias: 'VERY HIGH',
       tradingStyle: 'TREND FOLLOW / BUY VOL'
     };
-  } else if (spotPrice < zeroGamma || netGEX < 0) {
+  } else if (netGEX < 0 && spotPrice < zeroGamma) {
     return {
       regime: 'NEGATIVE',
       label: '-GEX',

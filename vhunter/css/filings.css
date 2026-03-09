@@ -1096,6 +1096,12 @@
   background: #f1f5f9;
   border-radius: 4px;
   font-size: var(--t-xs);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.fil-recent-item:hover {
+  background: #e2e8f0;
 }
 
 /* ============================================
