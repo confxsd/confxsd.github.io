@@ -108,12 +108,6 @@ export async function loadMemoryMap() {
     const response = await getMemories('active');
     memories = Array.isArray(response) ? response : [];
     renderMemoryMap(container);
-
-    // Auto-sync: extract + match if not done recently (throttle to once per 4 hours)
-    const now = Date.now();
-    if (!autoSyncInProgress && (now - lastAutoSync) > 4 * 60 * 60 * 1000) {
-      autoSyncMemoryOps();
-    }
   } catch (e) {
     container.innerHTML = `<div class="error">Failed to load memories: ${e.message}</div>`;
   }
@@ -152,7 +146,10 @@ async function autoSyncMemoryOps() {
       if (feedMatched) parts.push(`${feedMatched} feed`);
       if (newsMatched) parts.push(`${newsMatched} news`);
       showToast(`Memory auto-sync: ${parts.join(', ')}`);
-      loadMemoryMap();
+      // Only reload UI if memory page is currently active
+      if (document.getElementById('memoryContainer')?.children.length > 0) {
+        loadMemoryMap();
+      }
     }
 
     lastAutoSync = Date.now();
@@ -164,6 +161,15 @@ async function autoSyncMemoryOps() {
       btn.disabled = false;
       btn.textContent = '⚡ Run All';
     }
+  }
+}
+
+// Background auto-sync: runs on app startup, throttled to once per 4 hours
+export function initMemoryAutoSync() {
+  const now = Date.now();
+  if (!autoSyncInProgress && (now - lastAutoSync) > 4 * 60 * 60 * 1000) {
+    console.log('[MEMORY] Background auto-sync starting...');
+    autoSyncMemoryOps();
   }
 }
 
