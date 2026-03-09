@@ -966,6 +966,16 @@
   text-overflow: ellipsis;
 }
 
+.fil-clickable {
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.fil-clickable:hover {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
 .fil-holder-shares {
   text-align: right;
   font-family: 'SF Mono', Monaco, Consolas, monospace;

@@ -126,6 +126,7 @@ async function fetchFilings(filters = {}) {
   });
   if (filters.type && filters.type !== 'all') params.set('type', filters.type);
   if (filters.fund_id && filters.fund_id !== 'all') params.set('fund_id', filters.fund_id);
+  if (filters.search) params.set('search', filters.search);
   if (filters.offset) params.set('offset', filters.offset);
 
   const response = await fetch(`${CONFIG.PROXY_URL}/api/filings?${params}`, {
@@ -1120,7 +1121,7 @@ function buildTickerHoldingsModal(ticker, data) {
         <div class="fil-holders-list">
           ${latest.slice(0, 15).map(h => `
             <div class="fil-holder-row">
-              <span class="fil-holder-name">${h.fund_name}</span>
+              <span class="fil-holder-name fil-clickable" onclick="event.stopPropagation(); showFundDetails('${h.fund_id}')">${h.fund_name}</span>
               <span class="fil-holder-shares">${formatNumber(h.shares)}</span>
               <span class="fil-holder-value">${formatValue(h.value_usd)}</span>
             </div>
@@ -1138,7 +1139,7 @@ function buildTickerHoldingsModal(ticker, data) {
         <div class="fil-changes-list">
           ${changes.slice(0, 10).map(c => `
             <div class="fil-change-row ${c.type === 'NEW_POSITION' ? 'fil-change-new' : c.type === 'COMPLETE_EXIT' ? 'fil-change-exit' : c.type === 'INCREASED' ? 'fil-change-up' : 'fil-change-down'}">
-              <span class="fil-change-fund">${c.fund}</span>
+              <span class="fil-change-fund fil-clickable" onclick="event.stopPropagation(); showFundDetails('${c.fund_id}')">${c.fund}</span>
               <span class="fil-change-type">${c.type.replace(/_/g, ' ')}</span>
               ${c.pctChange ? `<span class="fil-change-pct">${c.pctChange > 0 ? '+' : ''}${c.pctChange}%</span>` : ''}
             </div>
@@ -1188,6 +1189,10 @@ async function reloadFilings() {
   if (currentFilters.type && currentFilters.type !== 'all') {
     fetchOpts.type = currentFilters.type;
   }
+  if (currentFilters.search && currentFilters.search.length >= 3) {
+    fetchOpts.search = currentFilters.search;
+    fetchOpts.limit = 2000;
+  }
   const data = await fetchFilings(fetchOpts);
   filings = data.filings || data;
   filingsStats = data.stats || null;
@@ -1195,9 +1200,18 @@ async function reloadFilings() {
   renderFilingsTable();
 }
 
+let _searchDebounce = null;
 window.searchFilings = function(query) {
   currentFilters.search = query;
+  // Immediate client-side filter for responsiveness
   renderFilingsTable();
+  // Debounced server-side refetch for complete results
+  clearTimeout(_searchDebounce);
+  if (query.length >= 3) {
+    _searchDebounce = setTimeout(() => reloadFilings(), 400);
+  } else if (query.length === 0) {
+    reloadFilings();
+  }
 };
 
 window.setFilingsView = function(view) {
