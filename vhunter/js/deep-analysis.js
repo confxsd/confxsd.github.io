@@ -35,6 +35,8 @@ function renderDashboard(data) {
       <span class="da-status" id="daStatus"></span>
     </div>
 
+    ${renderSmartMoney(data.smart_money)}
+
     <div class="da-grid">
       ${renderAnomalies(data.anomalies)}
       ${renderStalePositions(data.stale_positions)}
@@ -57,21 +59,56 @@ function renderDashboard(data) {
 
 // --- Section Renderers ---
 
+function inferDirection(a) {
+  const desc = (a.description || '').toLowerCase();
+  if (a.anomaly_type === 'herding') {
+    if (desc.includes('bullish')) return 'long';
+    if (desc.includes('bearish')) return 'short';
+  } else if (a.anomaly_type === 'size') {
+    if (desc.includes(': new ') || desc.includes(': increase')) return 'long';
+    if (desc.includes(': exit') || desc.includes(': decrease')) return 'short';
+  } else if (a.anomaly_type === 'return_anomaly') {
+    if (desc.includes('outperformed')) return 'long';
+    if (desc.includes('underperformed')) return 'short';
+  }
+  return null;
+}
+
+function parseOpportunityStatus(desc) {
+  if (desc.includes('[ACTIONABLE]')) return 'actionable';
+  if (desc.includes('[ALREADY MOVED]')) return 'moved';
+  if (desc.includes('[THESIS BROKEN]')) return 'broken';
+  if (desc.includes('[DISTRIBUTING]')) return 'distributing';
+  return null;
+}
+
+function cleanDescription(desc) {
+  return desc.replace(/\[(ACTIONABLE|ALREADY MOVED|THESIS BROKEN|DISTRIBUTING)\]\s*/g, '');
+}
+
 function renderAnomalies(anomalies) {
   if (!anomalies || !anomalies.length) {
     return '<div class="da-card"><div class="da-card-title">Anomalies</div><div class="da-empty">No anomalies detected</div></div>';
   }
-  const rows = anomalies.map(a => `
+  const rows = anomalies.map(a => {
+    const dir = inferDirection(a);
+    const status = parseOpportunityStatus(a.description);
+    const desc = cleanDescription(a.description);
+    const dirBadge = dir ? `<span class="da-badge da-badge-${dir}">${dir}</span>` : '';
+    const statusBadge = status ? `<span class="da-badge da-badge-opp-${status}">${status === 'moved' ? 'moved' : status === 'broken' ? 'broken' : status}</span>` : '';
+    return `
     <div class="da-row da-row-${a.severity}">
       <div class="da-row-header">
         <span class="da-ticker">${a.ticker}</span>
+        ${dirBadge}
+        ${statusBadge}
         <span class="da-badge da-badge-${a.severity}">${a.severity}</span>
-        <span class="da-badge da-badge-type">${a.anomaly_type}</span>
+        <span class="da-badge da-badge-type">${a.anomaly_type.replace(/_/g, ' ')}</span>
         <span class="da-score">${(a.score * 100).toFixed(0)}%</span>
       </div>
-      <div class="da-row-desc">${a.description}</div>
+      <div class="da-row-desc">${desc}</div>
     </div>
-  `).join('');
+  `}).join('');
   return `<div class="da-card">
     <div class="da-card-title">Anomalies <span class="da-count">${anomalies.length}</span></div>
     ${rows}
@@ -172,6 +209,47 @@ function renderVelocity(spikes) {
   </div>`;
 }
 
+function renderSmartMoney(flows) {
+  if (!flows || !flows.length) {
+    return '<div class="da-card da-card-full"><div class="da-card-title">Smart Money Flow</div><div class="da-empty">No flow data</div></div>';
+  }
+  const rows = flows.map(f => {
+    const dir = f.direction === 'bullish' ? 'long' : f.direction === 'bearish' ? 'short' : null;
+    const status = parseOpportunityStatus(f.description);
+    const desc = cleanDescription(f.description);
+    const dirBadge = dir ? `<span class="da-badge da-badge-${dir}">${dir}</span>` : '';
+    const statusBadge = status ? `<span class="da-badge da-badge-opp-${status}">${status === 'moved' ? 'moved' : status === 'broken' ? 'broken' : status}</span>` : '';
+    const scoreColor = f.smart_money_score > 0 ? '#10b981' : f.smart_money_score < 0 ? '#ef4444' : '#94a3b8';
+    const barWidth = Math.min(Math.abs(f.smart_money_score), 100);
+
+    // Parse price context from description
+    let priceCtx = '';
+    const filingMatch = desc.match(/filing→now:\s*([^,)]+)/);
+    const rsiMatch = desc.match(/RSI=(\d+)/);
+    if (filingMatch) priceCtx += filingMatch[1].trim();
+    if (rsiMatch) priceCtx += (priceCtx ? ', ' : '') + 'RSI ' + rsiMatch[1];
+
+    return `
+    <div class="da-smf-item">
+      <div class="da-smf-header">
+        <span class="da-ticker">${f.ticker}</span>
+        ${dirBadge}
+        ${statusBadge}
+        <span class="da-smf-score" style="color:${scoreColor}">${f.smart_money_score > 0 ? '+' : ''}${f.smart_money_score.toFixed(0)}</span>
+        <span class="da-smf-funds">${f.n_funds} funds (${f.n_bullish}↑/${f.n_bearish}↓)</span>
+        ${priceCtx ? `<span class="da-smf-price">${priceCtx}</span>` : ''}
+      </div>
+      <div class="da-smf-bar-wrap">
+        <div class="da-smf-bar" style="width:${barWidth}%; background:${scoreColor}"></div>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="da-card da-card-full">
+    <div class="da-card-title">Smart Money Flow <span class="da-count">${flows.length}</span></div>
+    ${rows}
+  </div>`;
+}
+
 // --- Ticker Lookup ---
 
 async function tickerLookup() {
@@ -183,30 +261,43 @@ async function tickerLookup() {
   result.innerHTML = '<div class="da-loading">Analyzing ' + ticker + '...</div>';
 
   try {
-    const [conf, anomalies, patterns, pipe, vel] = await Promise.all([
+    const [conf, anomalies, patterns, pipe, vel, smf] = await Promise.all([
       fetch(`${ML_BASE}/ml/confidence/${ticker}`).then(r => r.json()),
       fetch(`${ML_BASE}/ml/anomalies`).then(r => r.json()),
       fetch(`${ML_BASE}/ml/patterns/${ticker}`).then(r => r.json()),
       fetch(`${ML_BASE}/ml/pipe/${ticker}`).then(r => r.json()),
       fetch(`${ML_BASE}/ml/velocity`).then(r => r.json()),
+      fetch(`${ML_BASE}/ml/smart-money/${ticker}`).then(r => r.json()),
     ]);
 
     const tickerAnomalies = (anomalies.anomalies || []).filter(a => a.ticker === ticker);
     const tickerVelocity = (vel.velocities || []).find(v => v.ticker === ticker);
+    const flow = smf.flow;
 
     result.innerHTML = `
-      <div class="da-ticker-header">${ticker}</div>
+      <div class="da-ticker-header">
+        ${ticker}
+        ${flow ? `<span class="da-badge da-badge-${flow.direction === 'bullish' ? 'long' : flow.direction === 'bearish' ? 'short' : 'type'}">${flow.direction === 'bullish' ? 'long' : flow.direction === 'bearish' ? 'short' : 'neutral'}</span>` : ''}
+        ${flow ? `<span class="da-smf-score" style="color:${flow.smart_money_score > 0 ? '#10b981' : flow.smart_money_score < 0 ? '#ef4444' : '#94a3b8'}; font-size:var(--t-base); margin-left:8px">${flow.smart_money_score > 0 ? '+' : ''}${flow.smart_money_score.toFixed(0)} score</span>` : ''}
+      </div>
+      ${flow ? renderTickerSmartMoney(flow) : ''}
       <div class="da-grid">
         ${renderConfidenceDetail(conf.scores || [])}
         <div class="da-card">
           <div class="da-card-title">Anomalies</div>
-          ${tickerAnomalies.length ? tickerAnomalies.map(a => `
+          ${tickerAnomalies.length ? tickerAnomalies.map(a => {
+            const dir = inferDirection(a);
+            const status = parseOpportunityStatus(a.description);
+            const desc = cleanDescription(a.description);
+            return `
             <div class="da-row da-row-${a.severity}">
+              ${dir ? `<span class="da-badge da-badge-${dir}">${dir}</span>` : ''}
+              ${status ? `<span class="da-badge da-badge-opp-${status}">${status === 'moved' ? 'moved' : status}</span>` : ''}
               <span class="da-badge da-badge-${a.severity}">${a.severity}</span>
-              <span class="da-badge da-badge-type">${a.anomaly_type}</span>
-              <span class="da-row-desc">${a.description}</span>
-            </div>
-          `).join('') : '<div class="da-empty">None</div>'}
+              <span class="da-badge da-badge-type">${a.anomaly_type.replace(/_/g, ' ')}</span>
+              <div class="da-row-desc">${desc}</div>
+            </div>`;
+          }).join('') : '<div class="da-empty">None</div>'}
         </div>
       </div>
       <div class="da-grid">
@@ -233,6 +324,31 @@ async function tickerLookup() {
   } catch (e) {
     result.innerHTML = `<div class="da-error"><div class="da-error-detail">${e.message}</div></div>`;
   }
+}
+
+function renderTickerSmartMoney(flow) {
+  const dir = flow.direction === 'bullish' ? 'long' : flow.direction === 'bearish' ? 'short' : null;
+  const status = parseOpportunityStatus(flow.description || '');
+  const desc = cleanDescription(flow.description || '');
+  const scoreColor = flow.smart_money_score > 0 ? '#10b981' : flow.smart_money_score < 0 ? '#ef4444' : '#94a3b8';
+  const barWidth = Math.min(Math.abs(flow.smart_money_score), 100);
+
+  return `<div class="da-card da-card-full" style="margin-bottom:12px">
+    <div class="da-card-title">Smart Money Flow</div>
+    <div class="da-smf-item">
+      <div class="da-smf-header">
+        ${dir ? `<span class="da-badge da-badge-${dir}">${dir}</span>` : ''}
+        ${status ? `<span class="da-badge da-badge-opp-${status}">${status === 'moved' ? 'moved' : status}</span>` : ''}
+        <span class="da-smf-score" style="color:${scoreColor}">${flow.smart_money_score > 0 ? '+' : ''}${flow.smart_money_score.toFixed(0)}</span>
+        <span class="da-smf-funds">${flow.n_funds} funds (${flow.n_bullish}↑/${flow.n_bearish}↓) · consensus ${(flow.consensus * 100).toFixed(0)}%</span>
+      </div>
+      <div class="da-smf-bar-wrap">
+        <div class="da-smf-bar" style="width:${barWidth}%; background:${scoreColor}"></div>
+      </div>
+      ${flow.funds_bullish ? `<div class="da-row-meta" style="margin-top:4px">Bullish: ${flow.funds_bullish}</div>` : ''}
+      ${flow.funds_bearish ? `<div class="da-row-meta">Bearish: ${flow.funds_bearish}</div>` : ''}
+    </div>
+  </div>`;
 }
 
 function renderConfidenceDetail(scores) {
