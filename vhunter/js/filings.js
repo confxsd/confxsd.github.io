@@ -1390,6 +1390,7 @@ window.runScanWithOptions = function() {
 // ============== DETAIL MODALS ==============
 
 window.showFilingDetails = async function(id) {
+  showModal('Loading...', '<div class="fil-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading filing...</div>');
   try {
     const response = await fetch(`${CONFIG.PROXY_URL}/api/filings/${id}`, {
       headers: { 'X-User-Id': getUserId() }
@@ -1414,6 +1415,8 @@ window.showFilingDetails = async function(id) {
   } catch (e) {
     console.error('Failed to load filing:', e);
     showToast('Failed to load filing details', 'error');
+    const existing = document.querySelector('.fil-modal-overlay');
+    if (existing) existing.remove();
   }
 };
 
@@ -1431,6 +1434,7 @@ window.showPipeDetails = async function(ticker) {
 };
 
 window.showFundDetails = async function(id) {
+  showModal('Loading...', '<div class="fil-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading fund...</div>');
   try {
     const response = await fetch(`${CONFIG.PROXY_URL}/api/funds/${id}`, {
       headers: { 'X-User-Id': getUserId() }
@@ -1440,6 +1444,8 @@ window.showFundDetails = async function(id) {
   } catch (e) {
     console.error('Failed to load fund:', e);
     showToast('Failed to load fund details', 'error');
+    const existing = document.querySelector('.fil-modal-overlay');
+    if (existing) existing.remove();
   }
 };
 
@@ -2164,7 +2170,7 @@ function buildFundModal(fund) {
         <h4>Recent Filings</h4>
         <div class="fil-recent-list">
           ${recentFilings.map(f => `
-            <div class="fil-recent-item fil-clickable ${f.alert_priority === 'critical' ? 'fil-priority-critical' : ''}" onclick="showFilingDetails('${f.id}')">
+            <div class="fil-recent-item fil-clickable ${f.alert_priority === 'critical' ? 'fil-priority-critical' : ''}" onclick="event.stopPropagation(); showFilingDetails('${f.id}')">
               <span>${f.filing_type}</span>
               <span>${formatDate(f.filed_date)}</span>
             </div>
