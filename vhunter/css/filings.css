@@ -1789,6 +1789,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: var(--t-xs);
+  table-layout: fixed;
 }
 
 .fil-detail-holdings-table th {
@@ -1802,6 +1803,18 @@
   border-bottom: 1px solid #e2e8f0;
   font-size: 10px;
 }
+
+/* 5-column layout: Ticker Company Shares Value Chg */
+.fil-detail-holdings-table th:nth-child(1),
+.fil-detail-holdings-table td:nth-child(1) { width: 14%; }
+.fil-detail-holdings-table th:nth-child(2),
+.fil-detail-holdings-table td:nth-child(2) { width: 32%; }
+.fil-detail-holdings-table th:nth-child(3),
+.fil-detail-holdings-table td:nth-child(3) { width: 18%; text-align: right; }
+.fil-detail-holdings-table th:nth-child(4),
+.fil-detail-holdings-table td:nth-child(4) { width: 22%; text-align: right; }
+.fil-detail-holdings-table th:nth-child(5),
+.fil-detail-holdings-table td:nth-child(5) { width: 14%; text-align: right; }
 
 .fil-detail-holdings-table td {
   padding: 6px 10px;
@@ -1823,7 +1836,6 @@
 
 .fil-detail-holdings-table .fil-td-name {
   color: #64748b;
-  max-width: 120px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
