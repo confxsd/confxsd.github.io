@@ -122,10 +122,11 @@ export async function getHoldingsCompare(options = {}) {
 async function fetchFilings(filters = {}) {
   const params = new URLSearchParams({
     days: filters.days || 30,
-    limit: 500
+    limit: filters.limit || 500
   });
   if (filters.type && filters.type !== 'all') params.set('type', filters.type);
   if (filters.fund_id && filters.fund_id !== 'all') params.set('fund_id', filters.fund_id);
+  if (filters.offset) params.set('offset', filters.offset);
 
   const response = await fetch(`${CONFIG.PROXY_URL}/api/filings?${params}`, {
     headers: { 'X-User-Id': getUserId() }
@@ -1155,27 +1156,44 @@ function buildTickerHoldingsModal(ticker, data) {
 window.filterFilings = function(type) {
   currentFilters.type = type;
   document.getElementById('filTypeFilter').value = type;
-  renderFilingsTable();
+  reloadFilings();
 };
 
 window.applyFilters = function() {
-  currentFilters.type = document.getElementById('filTypeFilter').value;
-  currentFilters.fund = document.getElementById('filFundFilter').value;
+  const newType = document.getElementById('filTypeFilter').value;
+  const newFund = document.getElementById('filFundFilter').value;
   const newDays = parseInt(document.getElementById('filDaysFilter').value);
 
-  if (newDays !== currentFilters.days) {
-    currentFilters.days = newDays;
-    // Refetch with new days
-    fetchFilings({ days: newDays }).then(data => {
-      filings = data.filings || data;
-      filingsStats = data.stats || null;
-      renderDashboardStats();
-      renderFilingsTable();
-    });
+  const needsRefetch = newDays !== currentFilters.days ||
+    newFund !== currentFilters.fund ||
+    newType !== currentFilters.type;
+
+  currentFilters.type = newType;
+  currentFilters.fund = newFund;
+  currentFilters.days = newDays;
+
+  if (needsRefetch) {
+    reloadFilings();
   } else {
     renderFilingsTable();
   }
 };
+
+async function reloadFilings() {
+  const fetchOpts = { days: currentFilters.days };
+  if (currentFilters.fund && currentFilters.fund !== 'all') {
+    fetchOpts.fund_id = currentFilters.fund;
+    fetchOpts.limit = 2000;
+  }
+  if (currentFilters.type && currentFilters.type !== 'all') {
+    fetchOpts.type = currentFilters.type;
+  }
+  const data = await fetchFilings(fetchOpts);
+  filings = data.filings || data;
+  filingsStats = data.stats || null;
+  renderDashboardStats();
+  renderFilingsTable();
+}
 
 window.searchFilings = function(query) {
   currentFilters.search = query;
