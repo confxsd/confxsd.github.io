@@ -22,14 +22,17 @@ const SCORING_WEIGHTS = {
  * @returns {Object} Scores breakdown and composite
  */
 export function scoreOpportunity(opportunity, marketData, thesis) {
+  const validationResult = calculateValidationScore(opportunity, marketData);
   const scores = {
     novelty: calculateNoveltyScore(opportunity),
     alignment: calculateAlignmentScore(opportunity, thesis),
-    validation: calculateValidationScore(opportunity, marketData),
+    validation: typeof validationResult === 'object' ? validationResult.score : validationResult,
     riskReward: calculateRiskRewardScore(opportunity),
     timing: calculateTimingScore(opportunity),
     credibility: calculateCredibilityScore(opportunity)
   };
+  // Store checks separately for breakdown display
+  scores._validationChecks = typeof validationResult === 'object' ? validationResult.checks : [];
 
   // Weighted composite score
   let composite = Object.entries(SCORING_WEIGHTS)
@@ -127,11 +130,16 @@ function calculateValidationScore(opp, marketData) {
     if (direction === 'long' && isPositiveGamma) {
       score += 25;
       checks.push('GEX confirms bounce setup');
-    }
-    // Negative gamma = trending, good for continuation
-    if (direction === 'short' && isNegativeGamma) {
+    } else if (direction === 'short' && isNegativeGamma) {
+      // Negative gamma = trending, good for continuation
       score += 25;
       checks.push('GEX confirms trend continuation');
+    } else if (direction === 'long' && isNegativeGamma) {
+      score -= 10;
+      checks.push('GEX warns: negative gamma opposes long');
+    } else if (direction === 'short' && isPositiveGamma) {
+      score -= 10;
+      checks.push('GEX warns: positive gamma opposes short');
     }
   }
 
@@ -141,12 +149,17 @@ function calculateValidationScore(opp, marketData) {
   const isOptionsPlay = instrument.includes('call') || instrument.includes('put') || instrument.includes('straddle');
 
   if (vrpSetup && isOptionsPlay) {
-    if (vrpSetup.includes('HIGH_VRP') || vrpSetup.includes('SELL')) {
+    const isSellSetup = vrpSetup.includes('HIGH_VRP') || vrpSetup.includes('SELL');
+    const isBuySetup = vrpSetup.includes('BUY_GAMMA') || vrpSetup.includes('LOW');
+    const isSellStrategy = instrument.includes('short') || instrument.includes('sell') || instrument.includes('iron') || instrument.includes('credit');
+    const isBuyStrategy = instrument.includes('long') || instrument.includes('buy') || instrument.includes('straddle') || instrument.includes('debit');
+
+    if ((isSellSetup && isSellStrategy) || (isBuySetup && isBuyStrategy)) {
       score += 25;
-      checks.push('VRP favors option selling');
-    } else if (vrpSetup.includes('BUY_GAMMA') || vrpSetup.includes('LOW')) {
-      score += 25;
-      checks.push('VRP favors option buying');
+      checks.push(`VRP aligns with ${isSellSetup ? 'selling' : 'buying'} strategy`);
+    } else if ((isSellSetup && isBuyStrategy) || (isBuySetup && isSellStrategy)) {
+      score -= 10;
+      checks.push('VRP conflicts with strategy direction');
     }
   }
 
@@ -174,7 +187,7 @@ function calculateValidationScore(opp, marketData) {
     }
   }
 
-  return { score, checks };
+  return { score: Math.max(0, Math.min(100, score)), checks };
 }
 
 /**
@@ -273,7 +286,7 @@ function calculateCredibilityScore(opp) {
 // ============== HELPERS ==============
 
 function getAgeHours(createdAt) {
-  if (!createdAt) return 0;
+  if (!createdAt) return 168; // Treat missing timestamp as 1 week old
   const created = new Date(createdAt);
   const now = new Date();
   return (now - created) / (1000 * 60 * 60);

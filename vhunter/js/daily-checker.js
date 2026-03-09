@@ -344,6 +344,13 @@ function renderCard(check) {
       ${fundHtml}
       ${r?.ai_summary ? `<div class="dc-summary">"${r.ai_summary}"</div>` : ''}
       <div class="dc-expanded" id="dc-exp-${check.id}">
+        <div class="dc-exp-actions">
+          <button class="btn btn-sm dc-run-one-btn" id="dc-run-btn-${check.id}" onclick="window.dcRunOne('${check.id}')">↻ Run Now</button>
+          <button class="btn btn-sm" onclick="window.dcGoAnalyze('${check.ticker}')">📊 Analyze</button>
+          <button class="btn btn-sm" onclick="window.dcGoOptions('${check.ticker}')">📈 Options</button>
+          <button class="btn btn-sm" onclick="window.dcOpenModal('${check.id}')">✎ Edit</button>
+          <button class="btn btn-sm btn-danger" onclick="window.dcDelete('${check.id}', '${check.ticker}')">✕ Delete</button>
+        </div>
         <div class="dc-expanded-grid">
           <div class="dc-exp-block">
             <div class="dc-exp-title">Thesis</div>
@@ -375,13 +382,6 @@ function renderCard(check) {
           ${memHtml}
           ${reviewHtml}
           ${validationHtml}
-        </div>
-        <div class="dc-exp-actions">
-          <button class="btn btn-sm dc-run-one-btn" id="dc-run-btn-${check.id}" onclick="window.dcRunOne('${check.id}')">↻ Run Now</button>
-          <button class="btn btn-sm" onclick="window.dcGoAnalyze('${check.ticker}')">📊 Analyze</button>
-          <button class="btn btn-sm" onclick="window.dcGoOptions('${check.ticker}')">📈 Options</button>
-          <button class="btn btn-sm" onclick="window.dcOpenModal('${check.id}')">✎ Edit</button>
-          <button class="btn btn-sm btn-danger" onclick="window.dcDelete('${check.id}', '${check.ticker}')">✕ Delete</button>
         </div>
         <div style="font-size:0.68rem;color:#94a3b8;margin-top:8px">Last run: ${timeAgo(r?.created_at)}</div>
       </div>
@@ -488,10 +488,15 @@ export function renderDailyChecker() {
   const filtered = filterChecks(checksCache);
 
   const runBtn = document.getElementById('dcRunBtn');
+  const forceBtn = document.getElementById('dcForceRunBtn');
   runBtn.disabled = isRunning;
+  if (forceBtn) forceBtn.disabled = isRunning;
   runBtn.innerHTML = isRunning
     ? '<span class="dc-run-spinner"></span>Running...'
     : '↻ Run All';
+  if (forceBtn) forceBtn.innerHTML = isRunning
+    ? '<span class="dc-run-spinner"></span>Running...'
+    : '↻ Force Run';
 
   const allChecks = checksCache;
   const entryCnt = allChecks.filter(c => ['ENTRY NOW', 'ENTRY SOON'].includes(c.latest_result?.signal)).length;
@@ -581,8 +586,21 @@ window.dcRunAll = async function(force = false) {
   isRunning = true;
   renderDailyChecker();
   try {
-    await runDailyChecks(force);
-    await loadDailyChecker();
+    const resp = await runDailyChecks(force);
+    if (resp?.queued && resp?.enqueued > 0) {
+      // Queue returns immediately — poll until results arrive
+      const maxPolls = 60;       // up to ~5 min
+      const interval = 5000;     // 5s between polls
+      const before = checksCache.map(c => c.latest_result?.created_at).join(',');
+      for (let i = 0; i < maxPolls; i++) {
+        await new Promise(r => setTimeout(r, interval));
+        await loadDailyChecker();
+        const after = checksCache.map(c => c.latest_result?.created_at).join(',');
+        if (after !== before) break;   // results updated
+      }
+    } else {
+      await loadDailyChecker();
+    }
   } catch (e) {
     console.error('[DAILY_CHECKER] Run all failed:', e);
   } finally {

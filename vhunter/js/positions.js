@@ -115,11 +115,7 @@ export async function loadPositions() {
 
     const positionsWithInfo = positionsCache.open.map(p => {
       // Parse option info from notes, handling both long and short options
-      let optionInfo = parseOptionFromNotes(p.notes);
-      // For short_put/short_call, also try to parse option details
-      if (!optionInfo && (p.type === 'short_put' || p.type === 'short_call')) {
-        optionInfo = parseOptionFromNotes(p.notes);
-      }
+      const optionInfo = parseOptionFromNotes(p.notes);
       return { ...p, optionInfo };
     });
 

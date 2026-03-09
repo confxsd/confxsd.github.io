@@ -22,11 +22,12 @@ export function calcExpectedMovePct(iv, daysToExpiry) {
   return finMath.calcExpectedMovePercent(iv, daysToExpiry);
 }
 
-// Derive IV from straddle price
+// Derive IV from straddle price using 0.798 coefficient (ATM BS approximation)
 export function calcIVFromStraddle(straddlePrice, spotPrice, daysToExpiry) {
   const timeYears = daysToExpiry / 365;
-  // Straddle = 0.8 × S × σ × √T → σ = Straddle / (0.8 × S × √T)
-  return (straddlePrice / (0.8 * spotPrice * Math.sqrt(timeYears))) * 100;
+  if (timeYears <= 0 || spotPrice <= 0) return 0;
+  // ATM straddle ≈ 0.798 × S × σ × √T (from Black-Scholes)
+  return (straddlePrice / (0.798 * spotPrice * Math.sqrt(timeYears))) * 100;
 }
 
 // Daily expected move from IV
@@ -77,8 +78,8 @@ export function extractEarningsVol(termIV, daysToExpiry, baseIV = null, daysToEa
   }
 
   const eventVol = Math.sqrt(eventVar) * 100; // Annualized event vol
-  const dailyEventVol = eventVol / 15.87; // Daily event vol
-  const expectedMove = dailyEventVol * 0.8; // Straddle ≈ 0.8 × vol
+  const dailyEventVol = eventVol / 15.87; // Daily event vol (annualized / sqrt(252))
+  const expectedMove = dailyEventVol; // 1-SD daily expected move (percentage)
 
   // Variance weight: how much of total variance is from the event?
   const varianceWeight = (eventVar * eventDays) / totalTermVar * 100;
@@ -192,6 +193,10 @@ export function buildVolatilityCone(data, currentIV) {
     }
 
     // Calculate percentiles
+    if (rvSeries.length === 0) {
+      cone[`${window}d`] = { current: null, p10: null, p25: null, p50: null, p75: null, p90: null, percentile: null, vsIV: null };
+      return;
+    }
     const sorted = [...rvSeries].sort((a, b) => a - b);
     const p10 = sorted[Math.floor(sorted.length * 0.1)];
     const p25 = sorted[Math.floor(sorted.length * 0.25)];
@@ -381,10 +386,10 @@ export function attributePnL(position, priceChange, ivChange, daysElapsed, greek
     vegaPnL: vegaPnL.toFixed(2),
     totalPnL: totalPnL.toFixed(2),
     // Attribution percentages
-    deltaContrib: ((deltaPnL / totalPnL) * 100).toFixed(0),
-    gammaContrib: ((gammaPnL / totalPnL) * 100).toFixed(0),
-    thetaContrib: ((thetaPnL / totalPnL) * 100).toFixed(0),
-    vegaContrib: ((vegaPnL / totalPnL) * 100).toFixed(0)
+    deltaContrib: totalPnL !== 0 ? ((deltaPnL / totalPnL) * 100).toFixed(0) : '0',
+    gammaContrib: totalPnL !== 0 ? ((gammaPnL / totalPnL) * 100).toFixed(0) : '0',
+    thetaContrib: totalPnL !== 0 ? ((thetaPnL / totalPnL) * 100).toFixed(0) : '0',
+    vegaContrib: totalPnL !== 0 ? ((vegaPnL / totalPnL) * 100).toFixed(0) : '0'
   };
 }
 
@@ -447,7 +452,7 @@ export function generateVolTradeIdeas(metrics) {
       strategy: 'PUT_SPREAD',
       conviction: 'MEDIUM',
       rationale: 'Elevated put skew with bearish flow. Put spreads benefit from skew.',
-      structure: 'Bear put spread (buy lower, sell higher strike)',
+      structure: 'Bear put spread (buy higher strike put, sell lower strike put)',
       risk: 'Market rallies or skew flattens'
     });
   }

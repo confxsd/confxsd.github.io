@@ -12,7 +12,7 @@
  * @returns {string} Formatted VRP context
  */
 export function buildVRPContext(data) {
-  if (!data.vrp && !data.ivRank) {
+  if (data.vrp == null && data.ivRank == null) {
     return 'VOLATILITY: No VRP data available';
   }
 
@@ -32,7 +32,7 @@ export function buildVRPContext(data) {
   }
 
   if (volSetup) {
-    context += `\n- Vol Setup: ${volSetup.setup.replace('_', ' ')} (${volSetup.confidence}% confidence)`;
+    context += `\n- Vol Setup: ${volSetup.setup.replace(/_/g, ' ')} (${volSetup.confidence}% confidence)`;
     context += `\n- Recommendation: ${volSetup.description}`;
   }
 

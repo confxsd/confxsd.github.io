@@ -320,7 +320,7 @@ function updateGexLevels(data) {
 
   // Call Wall
   setText('sigCallWall', levels.callWall ? '$' + formatNum(levels.callWall) : '--');
-  const callDist = levels.callWallDist ? '+' + levels.callWallDist + '%' : '--';
+  const callDist = levels.callWallDist ? (parseFloat(levels.callWallDist) >= 0 ? '+' : '') + levels.callWallDist + '%' : '--';
   setText('sigCallWallDist', callDist);
 
   // Zero Gamma
@@ -344,7 +344,7 @@ function updateGexLevels(data) {
   const regimeEl = document.getElementById('sigGexRegime');
   if (regimeEl) {
     const regime = gammaAnalysis.regime?.regime || '--';
-    regimeEl.textContent = regime.replace('_', ' ');
+    regimeEl.textContent = regime.replace(/_/g, ' ');
     regimeEl.className = 'gex-regime-badge';
     if (regime.includes('POSITIVE')) regimeEl.classList.add('positive');
     else if (regime.includes('NEGATIVE')) regimeEl.classList.add('negative');
@@ -591,8 +591,6 @@ export async function refreshAllFocusStocks() {
 // ============================================
 // THESIS FILE HANDLING
 // ============================================
-let pendingThesisContent = '';
-
 window.handleThesisFileUpload = handleThesisFileUpload;
 export function handleThesisFileUpload(event) {
   const file = event.target.files[0];
@@ -601,7 +599,6 @@ export function handleThesisFileUpload(event) {
   const reader = new FileReader();
   reader.onload = (e) => {
     const content = e.target.result;
-    pendingThesisContent = content;
 
     // Show preview
     const preview = document.getElementById('thesisFilePreview');
@@ -798,114 +795,6 @@ function formatAnalysis(parsed) {
   return html || '<div class="analysis-section">Analysis complete.</div>';
 }
 
-// Extract trade recommendations from AI response
-function extractTrades(response, data) {
-  const trades = [];
-  const { spotPrice } = data;
-
-  // Extract STOCK TRADE section
-  const stockSection = response.match(/###\s*STOCK\s*TRADE[\s\S]*?(?=###|$)/i);
-  if (stockSection) {
-    const section = stockSection[0];
-
-    const dirMatch = section.match(/Direction:\s*(LONG|SHORT)/i);
-    const entryMatch = section.match(/Entry:\s*\$?([\d.]+)/i);
-    const stopMatch = section.match(/Stop:\s*\$?([\d.]+)/i);
-    const t1Match = section.match(/Target\s*1?:\s*\$?([\d.]+)/i);
-    const t2Match = section.match(/Target\s*2:\s*\$?([\d.]+)/i);
-    const convMatch = section.match(/Conviction:\s*(HIGH|MEDIUM|LOW)/i);
-    const ratMatch = section.match(/Rationale:\s*([^\n]+)/i);
-
-    if (dirMatch) {
-      const direction = dirMatch[1].toUpperCase();
-      const entry = entryMatch ? parseFloat(entryMatch[1]) : spotPrice;
-      const stop = stopMatch ? parseFloat(stopMatch[1]) : (direction === 'LONG' ? spotPrice * 0.97 : spotPrice * 1.03);
-      const target1 = t1Match ? parseFloat(t1Match[1]) : (direction === 'LONG' ? spotPrice * 1.03 : spotPrice * 0.97);
-      const target2 = t2Match ? parseFloat(t2Match[1]) : null;
-      const conviction = convMatch ? convMatch[1].toUpperCase() : 'MEDIUM';
-      const rationale = ratMatch ? ratMatch[1].trim().substring(0, 80) : '';
-
-      // Calculate R:R
-      const risk = Math.abs(entry - stop);
-      const reward = Math.abs(target1 - entry);
-      const rr = risk > 0 ? (reward / risk).toFixed(1) : '1.0';
-
-      trades.push({
-        type: direction.toLowerCase(),
-        label: direction === 'LONG' ? 'Long Stock' : 'Short Stock',
-        entry: entry.toFixed(2),
-        stop: stop.toFixed(2),
-        target: target1.toFixed(2),
-        target2: target2 ? target2.toFixed(2) : null,
-        rr: '1:' + rr,
-        conviction: conviction.toLowerCase(),
-        rationale
-      });
-    }
-  }
-
-  // Extract OPTIONS TRADE section
-  const optSection = response.match(/###\s*OPTIONS?\s*TRADE[\s\S]*?(?=###|$)/i);
-  if (optSection) {
-    const section = optSection[0];
-
-    const typeMatch = section.match(/Type:\s*(Buy\s*Call|Buy\s*Put|Sell\s*Call|Sell\s*Put|Call\s*Spread|Put\s*Spread)/i);
-    const strikeMatch = section.match(/Strike:\s*\$?([\d.]+)/i);
-    const expiryMatch = section.match(/Expiry:\s*([^\n]+)/i);
-    const costMatch = section.match(/Cost:\s*\$?([\d.]+)/i);
-    const beMatch = section.match(/Breakeven:\s*\$?([\d.]+)/i);
-    const convMatch = section.match(/Conviction:\s*(HIGH|MEDIUM|LOW)/i);
-
-    if (typeMatch) {
-      const optType = typeMatch[1].toLowerCase();
-      let cardType = 'call';
-      if (optType.includes('put')) cardType = 'put';
-      if (optType.includes('spread')) cardType = 'spread';
-      if (optType.includes('sell')) cardType = 'short';
-
-      const strike = strikeMatch ? parseFloat(strikeMatch[1]) : Math.round(spotPrice);
-      const expiry = expiryMatch ? expiryMatch[1].trim().substring(0, 15) : 'Near-term';
-      const cost = costMatch ? parseFloat(costMatch[1]) : 0;
-      const breakeven = beMatch ? parseFloat(beMatch[1]) : strike;
-      const conviction = convMatch ? convMatch[1].toLowerCase() : 'medium';
-
-      trades.push({
-        type: cardType,
-        label: typeMatch[1].replace(/\b\w/g, l => l.toUpperCase()),
-        strike: '$' + strike.toFixed(0),
-        expiry,
-        cost: cost > 0 ? '$' + cost.toFixed(0) : '--',
-        breakeven: '$' + breakeven.toFixed(2),
-        conviction,
-        isOption: true
-      });
-    }
-  }
-
-  // Fallback: try to extract from any format if sections didn't work
-  if (trades.length === 0) {
-    const anyDir = response.match(/\b(LONG|SHORT)\b/);
-    const anyPrice = response.match(/\$(\d+\.?\d*)/g);
-
-    if (anyDir && anyPrice && anyPrice.length >= 2) {
-      const direction = anyDir[1].toUpperCase();
-      const prices = anyPrice.map(p => parseFloat(p.replace('$', ''))).sort((a, b) => a - b);
-
-      trades.push({
-        type: direction.toLowerCase(),
-        label: direction === 'LONG' ? 'Long Stock' : 'Short Stock',
-        entry: spotPrice.toFixed(2),
-        stop: prices[0].toFixed(2),
-        target: prices[prices.length - 1].toFixed(2),
-        rr: '1:1.5',
-        conviction: 'medium',
-        rationale: 'Extracted from analysis'
-      });
-    }
-  }
-
-  return trades;
-}
 
 // Format price - handles both numbers and strings
 function fmtPrice(val) {
@@ -1137,39 +1026,7 @@ function buildOptionsContext(options, spotPrice) {
   return context || 'Limited options data available';
 }
 
-function formatAIResponse(response) {
-  if (!response) return '<p>No response received</p>';
-
-  // Convert markdown-like formatting to HTML
-  let html = response
-    // Headers
-    .replace(/^### (.*$)/gm, '<h4>$1</h4>')
-    .replace(/^## (.*$)/gm, '<h3>$1</h3>')
-    .replace(/^# (.*$)/gm, '<h3>$1</h3>')
-    // Bold
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    // Italic
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    // Lists
-    .replace(/^\s*-\s+(.*)$/gm, '<li>$1</li>')
-    .replace(/^\s*\d+\.\s+(.*)$/gm, '<li>$1</li>')
-    // Code
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    // Line breaks
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, '<br>');
-
-  // Wrap lists
-  html = html.replace(/(<li>[\s\S]*?<\/li>)+/g, '<ul>$&</ul>');
-
-  // Highlight trade recommendations
-  html = html.replace(/(Primary Trade:|Alternative Trade|LONG|SHORT|BUY CALL|BUY PUT|SELL CALL|SELL PUT)/g, '<strong style="color:#818cf8">$1</strong>');
-
-  // Highlight prices
-  html = html.replace(/\$(\d+\.?\d*)/g, '<code>$$$1</code>');
-
-  return `<p>${html}</p>`;
-}
+// formatAIResponse removed - unused dead code
 
 // ============================================
 // HELPERS

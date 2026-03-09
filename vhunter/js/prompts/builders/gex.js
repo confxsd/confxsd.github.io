@@ -39,7 +39,7 @@ export function buildGEXContext(data) {
   let context = `
 GAMMA EXPOSURE (GEX) - Dealer Positioning:
 - Net GEX: ${typeof netGEX === 'string' ? netGEX : formatGEX(netGEX)} → ${regimeSignal}
-- Zero Gamma: $${zeroGamma?.toFixed(0) || '--'} ${data.price > zeroGamma ? '(SPOT ABOVE - stabilizing zone)' : '(SPOT BELOW - amplifying zone)'}
+- Zero Gamma: $${zeroGamma?.toFixed(0) || '--'} ${zeroGamma != null ? (data.price > zeroGamma ? '(SPOT ABOVE - stabilizing zone)' : '(SPOT BELOW - amplifying zone)') : ''}
 - Call Wall: $${callWall?.toFixed(0) || '--'} (RESISTANCE - 83% hold rate)
 - Put Wall: $${putWall?.toFixed(0) || '--'} (SUPPORT)`;
 

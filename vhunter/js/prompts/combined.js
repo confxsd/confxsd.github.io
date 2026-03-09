@@ -54,14 +54,14 @@ ${macroContext}
 ---
 
 MARKET DATA FOR ${data.ticker}:
-- Price: $${data.price} (${data.change > 0 ? '+' : ''}${data.change.toFixed(2)}%) | Vol: ${data.volume} (${data.rvol.toFixed(1)}x avg)
-- RSI: ${data.rsi.toFixed(1)} | MACD: ${data.macdH.toFixed(2)} | ADX: ${data.adx.toFixed(1)} (+DI:${data.pdi.toFixed(1)}/-DI:${data.mdi.toFixed(1)})
-- BB%: ${data.bbPct}% | MFI: ${data.mfi.toFixed(1)} | ATR: $${data.atr.toFixed(2)} | HV: ${data.vol.toFixed(0)}%
-- SMA20: $${data.sma20.toFixed(2)} | SMA50: $${data.sma50.toFixed(2)}
-- Flow: ${data.buyPct}% buy (${data.buyPct < 45 ? 'DISTRIBUTION' : data.buyPct > 55 ? 'ACCUMULATION' : 'NEUTRAL'}) | A/D: ${data.adlTrend > 0 ? '+' : ''}${data.adlTrend.toFixed(1)}%
+- Price: $${data.price} (${data.change > 0 ? '+' : ''}${data.change?.toFixed(2) || '0.00'}%) | Vol: ${data.volume} (${data.rvol?.toFixed(1) || '--'}x avg)
+- RSI: ${data.rsi?.toFixed(1) || '--'} | MACD: ${data.macdH?.toFixed(2) || '--'} | ADX: ${data.adx?.toFixed(1) || '--'} (+DI:${data.pdi?.toFixed(1) || '--'}/-DI:${data.mdi?.toFixed(1) || '--'})
+- BB%: ${data.bbPct ?? '--'}% | MFI: ${data.mfi?.toFixed(1) || '--'} | ATR: $${data.atr?.toFixed(2) || '--'} | HV: ${data.vol?.toFixed(0) || '--'}%
+- SMA20: $${data.sma20?.toFixed(2) || '--'} | SMA50: $${data.sma50?.toFixed(2) || '--'}
+- Flow: ${data.buyPct ?? '--'}% buy (${data.buyPct == null ? '--' : data.buyPct < 45 ? 'DISTRIBUTION' : data.buyPct > 55 ? 'ACCUMULATION' : 'NEUTRAL'}) | A/D: ${data.adlTrend != null ? (data.adlTrend > 0 ? '+' : '') + data.adlTrend.toFixed(1) : '--'}%
 
 OPTIONS FLOW:
-- Call Vol: ${data.callVol} | Put Vol: ${data.putVol} | P/C: ${data.pcRatio.toFixed(2)}
+- Call Vol: ${data.callVol} | Put Vol: ${data.putVol} | P/C: ${data.pcRatio?.toFixed(2) || '--'}
 - Active Strikes - Calls: ${data.topCalls} | Puts: ${data.topPuts}
 - Max Pain: $${data.maxPain} ${data.maxPainMonthly ? `| Monthly MP: $${data.maxPainMonthly}` : ''}
 

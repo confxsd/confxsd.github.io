@@ -203,36 +203,27 @@ window.validateOpportunity = async function(id) {
 async function fetchOpportunities(status = 'active') {
   const response = await fetch(
     `${CONFIG.PROXY_URL}/api/opportunities?status=${status}&limit=50`,
-    {
-      headers: {
-        'X-User-Id': getUserId()
-      }
-    }
+    { headers: { 'X-User-Id': getUserId() } }
   );
+  if (!response.ok) throw new Error(`Fetch opportunities failed: ${response.status}`);
   return response.json();
 }
 
 async function fetchDashboard() {
   const response = await fetch(
     `${CONFIG.PROXY_URL}/api/opportunities/dashboard`,
-    {
-      headers: {
-        'X-User-Id': getUserId()
-      }
-    }
+    { headers: { 'X-User-Id': getUserId() } }
   );
+  if (!response.ok) throw new Error(`Fetch dashboard failed: ${response.status}`);
   return response.json();
 }
 
 async function fetchAlerts() {
   const response = await fetch(
     `${CONFIG.PROXY_URL}/api/opportunities/alerts?unread=true`,
-    {
-      headers: {
-        'X-User-Id': getUserId()
-      }
-    }
+    { headers: { 'X-User-Id': getUserId() } }
   );
+  if (!response.ok) throw new Error(`Fetch alerts failed: ${response.status}`);
   return response.json();
 }
 
@@ -241,9 +232,10 @@ async function fetchAlerts() {
 function renderDashboard(dashboard) {
   const { scoreBuckets = {}, statusBreakdown = {} } = dashboard;
 
-  document.getElementById('oppHot').textContent = scoreBuckets.hot || 0;
-  document.getElementById('oppWarm').textContent = scoreBuckets.warm || 0;
-  document.getElementById('oppWatch').textContent = scoreBuckets.watch || 0;
+  const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setEl('oppHot', scoreBuckets.hot || 0);
+  setEl('oppWarm', scoreBuckets.warm || 0);
+  setEl('oppWatch', scoreBuckets.watch || 0);
   document.getElementById('oppTotal').textContent = statusBreakdown.active || 0;
 }
 
@@ -256,10 +248,11 @@ function renderTopTickers(tickers) {
     return;
   }
 
+  const sanitize = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   container.innerHTML = tickers.map(t => `
-    <span class="opp-ticker-chip" onclick="filterByTicker('${t.ticker}')">
-      ${t.ticker}
-      <span class="opp-ticker-count">${t.count}</span>
+    <span class="opp-ticker-chip" onclick="filterByTicker('${sanitize(t.ticker)}')">
+      ${sanitize(t.ticker)}
+      <span class="opp-ticker-count">${sanitize(t.count)}</span>
       <span class="opp-ticker-score">${Math.round(t.max_score)}</span>
     </span>
   `).join('');
@@ -684,5 +677,16 @@ async function updateAlertBadge() {
   }
 }
 
-// Periodically update alert badge
-setInterval(updateAlertBadge, 60000); // Every minute
+// Periodically update alert badge (managed lifecycle)
+let alertBadgeInterval = null;
+export function startAlertBadgeUpdates() {
+  if (alertBadgeInterval) clearInterval(alertBadgeInterval);
+  alertBadgeInterval = setInterval(updateAlertBadge, 60000);
+}
+export function stopAlertBadgeUpdates() {
+  if (alertBadgeInterval) {
+    clearInterval(alertBadgeInterval);
+    alertBadgeInterval = null;
+  }
+}
+startAlertBadgeUpdates();

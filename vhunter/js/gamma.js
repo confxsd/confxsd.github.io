@@ -8,7 +8,7 @@
 
 // Current Fed Funds rate - update quarterly or fetch dynamically
 // As of Jan 2026: ~4.25-4.50% (should be updated based on Fed decisions)
-let RISK_FREE_RATE = 0.0425;
+let RISK_FREE_RATE = 0.04;
 
 // Set risk-free rate dynamically (can be called from API)
 export function setRiskFreeRate(rate) {
@@ -75,7 +75,7 @@ export function estimateGamma(spot, strike, dte, iv) {
 function validateGamma(gamma, spot, strike, dte, iv) {
   if (gamma === null || gamma === undefined) return false;
   if (gamma < 0) return false; // Gamma is always positive
-  if (gamma > 1) return false; // Gamma can't exceed 1 per share
+  if (gamma > 5) return false; // Sanity check: reject extreme gamma values
 
   // Cross-check with estimated gamma (allow 50% tolerance)
   const estimated = estimateGamma(spot, strike, dte, iv);
@@ -127,6 +127,9 @@ export function calcContractGEX(option, spotPrice) {
 
   const expDate = details.expiration_date;
   const dte = Math.ceil((new Date(expDate) - new Date()) / (1000 * 60 * 60 * 24));
+
+  // Filter out expired options - they shouldn't contribute to GEX
+  if (dte < 0) return 0;
 
   // Get gamma from API or estimate
   let gamma = option.greeks?.gamma;
@@ -202,8 +205,8 @@ export function findZeroGamma(gexByStrike, spotPrice) {
     prevCumGex = cumGex;
     cumGex += gexByStrike[strike];
 
-    // Find where cumulative GEX crosses zero
-    if (prevCumGex <= 0 && cumGex > 0) {
+    // Find where cumulative GEX crosses zero (either direction)
+    if ((prevCumGex <= 0 && cumGex > 0) || (prevCumGex >= 0 && cumGex < 0)) {
       // Interpolate the exact crossing point
       const ratio = Math.abs(prevCumGex) / (Math.abs(prevCumGex) + cumGex);
       const prevStrike = strikes[strikes.indexOf(strike) - 1] || strike;

@@ -411,7 +411,8 @@ function getUserId() {
 // Fetch AI tooltip from DB
 async function fetchAiTooltipFromDb(section) {
   try {
-    const response = await fetch(`https://vhunter-proxy.vhunter.workers.dev/api/macro-tooltips/${section}`, {
+    const proxyUrl = window.CONFIG?.PROXY_URL || 'https://vhunter-proxy.vhunter.workers.dev';
+    const response = await fetch(`${proxyUrl}/api/macro-tooltips/${section}`, {
       headers: { 'X-User-Id': getUserId() }
     });
     if (response.ok) {
@@ -428,7 +429,8 @@ async function fetchAiTooltipFromDb(section) {
 // Save AI tooltip to DB
 async function saveAiTooltipToDb(section, content) {
   try {
-    await fetch(`https://vhunter-proxy.vhunter.workers.dev/api/macro-tooltips`, {
+    const proxyUrl = window.CONFIG?.PROXY_URL || 'https://vhunter-proxy.vhunter.workers.dev';
+    await fetch(`${proxyUrl}/api/macro-tooltips`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -978,13 +980,15 @@ function calculateMetrics() {
   else if (riskAppetite < -0.5) riskSignal = 'RISK-OFF';
 
   // Volatility Regime
+  // Note: UVXY is 1.5x leveraged VIX ETF, not VIX itself
+  // Thresholds calibrated for UVXY price levels (typically $10-80 range)
   const vixPrice = uvxy?.price || 20;
   const vixChange = uvxy?.changePercent || 0;
   let volSignal = 'NORMAL';
-  if (vixPrice > 50) volSignal = 'EXTREME';
-  else if (vixPrice > 30) volSignal = 'FEAR';
-  else if (vixPrice > 20) volSignal = 'ELEVATED';
-  else if (vixPrice < 12) volSignal = 'COMPLACENT';
+  if (vixPrice > 80) volSignal = 'EXTREME';
+  else if (vixPrice > 50) volSignal = 'FEAR';
+  else if (vixPrice > 30) volSignal = 'ELEVATED';
+  else if (vixPrice < 15) volSignal = 'COMPLACENT';
 
   // Tech vs Value: QQQ - IWM
   const techValue = (qqq?.changePercent || 0) - (iwm?.changePercent || 0);
@@ -1800,7 +1804,7 @@ export function openMacroSettings() {
   if (modal) {
     modal.classList.add('active');
     document.getElementById('macroRefreshInterval').value = settings.refreshInterval || 60000;
-    document.getElementById('customMag7').value = settings.mag7?.join(',') || '';
+    document.getElementById('customMag7').value = settings.mag7?.map(i => typeof i === 'string' ? i : i.ticker).join(',') || '';
     document.getElementById('customIndices').value = settings.customIndices || '';
   }
 }

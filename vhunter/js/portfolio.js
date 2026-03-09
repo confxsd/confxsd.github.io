@@ -164,11 +164,16 @@ function parsePortfolioResponse(response) {
 
   if (signalsMatch) {
     let signalsHtml = signalsMatch[1].trim();
-    signalsHtml = signalsHtml.replace(/TAKE_PROFIT/g, '<span class="signal-take">TAKE PROFIT</span>');
-    signalsHtml = signalsHtml.replace(/HOLD/g, '<span class="signal-hold">HOLD</span>');
-    signalsHtml = signalsHtml.replace(/CUT_LOSS/g, '<span class="signal-cut">CUT LOSS</span>');
-    signalsHtml = signalsHtml.replace(/ADD/g, '<span class="signal-add">ADD</span>');
-    document.getElementById('positionSignals').innerHTML = signalsHtml;
+    // Sanitize AI response before inserting into DOM
+    const sanitized = signalsHtml
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const formatted = sanitized
+      .replace(/TAKE_PROFIT/g, '<span class="signal-take">TAKE PROFIT</span>')
+      .replace(/\bHOLD\b/g, '<span class="signal-hold">HOLD</span>')
+      .replace(/CUT_LOSS/g, '<span class="signal-cut">CUT LOSS</span>')
+      .replace(/\bADD\b/g, '<span class="signal-add">ADD</span>')
+      .replace(/\n/g, '<br>');
+    document.getElementById('positionSignals').innerHTML = formatted;
   }
 
   if (recsMatch) {

@@ -52,9 +52,9 @@ ${OUTPUT_FORMAT}`;
  */
 function buildPositionSummary(positions, marketData) {
   return positions.map(p => {
-    const pnlPct = p.costBasis > 0 ? ((p.unrealizedPnL / p.costBasis) * 100).toFixed(1) : 0;
+    const pnlPct = p.costBasis > 0 ? ((p.unrealizedPnL / p.costBasis) * 100).toFixed(1) : '0.0';
     const mktData = marketData[p.underlyingTicker] || {};
-    const daysToExpiry = p.daysToExpiry !== null ? `${p.daysToExpiry}d to exp` : '';
+    const daysToExpiry = p.daysToExpiry != null ? `${p.daysToExpiry}d to exp` : '';
 
     return `- ${p.ticker} ${p.type.toUpperCase()} ${p.quantity}x @ $${p.entry_price.toFixed(2)}
   Current: $${(p.displayPrice || 0).toFixed(2)} | P&L: ${p.unrealizedPnL >= 0 ? '+' : ''}$${p.unrealizedPnL.toFixed(0)} (${pnlPct}%)

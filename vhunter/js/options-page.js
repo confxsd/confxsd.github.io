@@ -265,8 +265,8 @@ function calculateSkewData(strikeData, spotPrice, avgIV) {
   const strikes = Object.keys(strikeData).map(Number).sort((a, b) => a - b);
   const atmStrike = strikes.reduce((prev, curr) =>
     Math.abs(curr - spotPrice) < Math.abs(prev - spotPrice) ? curr : prev, strikes[0]);
-  const otmPutStrike = strikes.filter(s => s < atmStrike * 0.92)[0] || atmStrike;
-  const otmCallStrike = strikes.filter(s => s > atmStrike * 1.08).pop() || atmStrike;
+  const otmPutStrike = strikes.filter(s => s < atmStrike * 0.92).pop() || atmStrike;
+  const otmCallStrike = strikes.filter(s => s > atmStrike * 1.08)[0] || atmStrike;
 
   const atmIV = strikeData[atmStrike] ?
     avg([...strikeData[atmStrike].callIV, ...strikeData[atmStrike].putIV]) * 100 : avgIV;
@@ -281,7 +281,7 @@ function calculateSkewData(strikeData, spotPrice, avgIV) {
     putIV,
     atmIV,
     callIV,
-    pcSkew: putIV - callIV,
+    pcSkew: callIV - putIV, // Match delta-normalized convention: call IV - put IV
     method: 'spot-percent' // Flag that this is fallback
   };
 }
@@ -312,12 +312,12 @@ function updateQuickStats(avgIV, hv30, spotPrice, pcRatio, termStructure) {
   optionsData.vrpMetrics = { iv: avgIV, rv30: hv30, vrp, termSteepness };
 
   // IV Rank display (from actual history if available, otherwise use current IV as estimate)
-  const ivRank = ivAnalysis.ivRank != null ? ivAnalysis.ivRank : Math.min(100, Math.max(0, avgIV));
-  const ivRankClass = ivRank > 60 ? 'high' : ivRank < 30 ? 'low' : 'neutral';
-  document.getElementById('optIvRank').textContent = ivRank.toFixed(0) + '%';
+  const ivRank = ivAnalysis.ivRank != null ? ivAnalysis.ivRank : null;
+  const ivRankClass = ivRank != null ? (ivRank > 60 ? 'high' : ivRank < 30 ? 'low' : 'neutral') : '';
+  document.getElementById('optIvRank').textContent = ivRank != null ? ivRank.toFixed(0) + '%' : '--';
   document.getElementById('optIvRank').className = 'opt-stat-value ' + ivRankClass;
   document.getElementById('optIvRank').title = ivAnalysis.historyDays > 0 ?
-    `Based on ${ivAnalysis.historyDays} days of history` : 'Limited history - building baseline';
+    `Based on ${ivAnalysis.historyDays} days of history` : 'Building history - check back tomorrow';
 
   // IV Percentile
   const ivPct = ivAnalysis.ivPercentile != null ? ivAnalysis.ivPercentile : ivRank;
@@ -392,20 +392,20 @@ function updateVolatilitySection(expiryIV, avgIV, spotPrice, strikeData) {
   if (skewItems[0]) {
     const label = skewData.method === 'delta-normalized' ? '25Δ Put' : 'OTM Put';
     skewItems[0].querySelector('.skew-label').textContent = label;
-    skewItems[0].querySelector('.skew-value').textContent = skewData.putIV?.toFixed(0) + '%' || '--';
+    skewItems[0].querySelector('.skew-value').textContent = skewData.putIV != null ? skewData.putIV.toFixed(0) + '%' : '--';
   }
   if (skewItems[1]) {
-    skewItems[1].querySelector('.skew-value').textContent = skewData.atmIV?.toFixed(0) + '%' || '--';
+    skewItems[1].querySelector('.skew-value').textContent = skewData.atmIV != null ? skewData.atmIV.toFixed(0) + '%' : '--';
   }
   if (skewItems[2]) {
     const label = skewData.method === 'delta-normalized' ? '25Δ Call' : 'OTM Call';
     skewItems[2].querySelector('.skew-label').textContent = label;
-    skewItems[2].querySelector('.skew-value').textContent = skewData.callIV?.toFixed(0) + '%' || '--';
+    skewItems[2].querySelector('.skew-value').textContent = skewData.callIV != null ? skewData.callIV.toFixed(0) + '%' : '--';
   }
 
   // Show risk reversal (call IV - put IV) for professional display
-  const rr = skewData.riskReversal || (skewData.putIV - skewData.callIV);
-  document.getElementById('optPcSkew').textContent = (rr >= 0 ? '+' : '') + rr?.toFixed(1) + '%' || '--';
+  const rr = skewData.riskReversal || (skewData.callIV != null && skewData.putIV != null ? skewData.callIV - skewData.putIV : null);
+  document.getElementById('optPcSkew').textContent = rr != null ? (rr >= 0 ? '+' : '') + rr.toFixed(1) + '%' : '--';
 
   // Use standardized expected move calculations for consistency
   const daily = finMath.calcExpectedMove(spotPrice, avgIV, 1);
@@ -449,7 +449,7 @@ function updateFlowSection(callVol, putVol, callOI, putOI, pcRatioVol, pcRatioOI
 function updateStrikesSection(options, spotPrice, strikeData) {
   const weeklyMaxPain = calculateMaxPain(options.weekly);
   const monthlyMaxPain = calculateMaxPain(options.monthly);
-  const quarterlyMaxPain = calculateMaxPain(options.sixMonth);
+  const quarterlyMaxPain = calculateMaxPain(options.quarterly || options.sixMonth);
 
   updateMaxPainDisplay('optMpWeekly', 'optMpWeeklyDist', weeklyMaxPain, spotPrice);
   updateMaxPainDisplay('optMpMonthly', 'optMpMonthlyDist', monthlyMaxPain, spotPrice);
@@ -705,9 +705,15 @@ function formatChainOption(o, type, spotPrice) {
     const iv = o.implied_volatility || 0;
     const dte = Math.max(1, Math.ceil((new Date(o.details.expiration_date) - new Date()) / (1000 * 60 * 60 * 24)));
     const t = dte / 365;
-    const moneyness = Math.log(spotPrice / strike) / (iv * Math.sqrt(t) + 0.001);
-    delta = 0.5 * (1 + erf(moneyness / Math.sqrt(2)));
-    if (type === 'put') delta = delta - 1;
+    // Use proper Black-Scholes delta estimation from financial-math module
+    const ivPct = iv * 100; // estimateDelta expects IV as percentage
+    delta = finMath.estimateDelta(type, spotPrice, strike, ivPct, dte);
+    if (delta == null || isNaN(delta)) {
+      // Final fallback: simple moneyness approximation
+      const moneyness = Math.log(spotPrice / strike) / (iv * Math.sqrt(t) + 0.001);
+      delta = 0.5 * (1 + erf(moneyness / Math.sqrt(2)));
+      if (type === 'put') delta = delta - 1;
+    }
   }
 
   const iv = o.implied_volatility || 0;

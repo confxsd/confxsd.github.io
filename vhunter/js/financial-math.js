@@ -53,7 +53,7 @@ export function sqrt(value) {
  * Calculate mean of an array
  */
 export function mean(arr) {
-  if (!arr || arr.length === 0) return 0;
+  if (!arr || arr.length === 0) return NaN;
 
   if (D) {
     const sum = arr.reduce((acc, val) => acc.plus(toDecimal(val)), new D(0));
@@ -68,7 +68,7 @@ export function mean(arr) {
  * Uses N in denominator (population SD), not N-1 (sample SD)
  */
 export function stdDev(arr, useSample = false) {
-  if (!arr || arr.length < 2) return 0;
+  if (!arr || arr.length < 2) return NaN;
 
   const avg = mean(arr);
   const n = useSample ? arr.length - 1 : arr.length;
@@ -391,7 +391,7 @@ export function calcCloseToCloseVolatility(prices, window = 30) {
     return null;
   }
 
-  const volatility = stdDev(returns);
+  const volatility = stdDev(returns, true);
 
   if (D) {
     const annualized = new D(volatility).times(sqrt(TRADING_DAYS_PER_YEAR)).times(100);
@@ -479,7 +479,7 @@ export function calcVRPRatio(impliedVol, realizedVol) {
 // ============================================
 
 // Current risk-free rate (update from market data)
-let RISK_FREE_RATE = 0.0425; // ~4.25% as of Jan 2026
+let RISK_FREE_RATE = 0.04; // ~4.0% - update via setRiskFreeRate()
 
 export function setRiskFreeRate(rate) {
   RISK_FREE_RATE = rate;
@@ -765,8 +765,8 @@ export function calcIVRank(currentIV, ivHistory) {
   const validHistory = ivHistory.filter(v => v != null && !isNaN(v));
   if (validHistory.length === 0) return null;
 
-  const min = Math.min(...validHistory);
-  const max = Math.max(...validHistory);
+  const min = validHistory.reduce((a, b) => Math.min(a, b), Infinity);
+  const max = validHistory.reduce((a, b) => Math.max(a, b), -Infinity);
 
   if (max === min) return 50; // No range
 
@@ -897,7 +897,7 @@ export function erf(x) {
  * @returns {number} d1 value
  */
 export function calcD1(spot, strike, iv, t, r = 0.05) {
-  if (spot <= 0 || strike <= 0 || t <= 0 || iv <= 0) return 0;
+  if (spot <= 0 || strike <= 0 || t <= 0 || iv <= 0) return NaN;
 
   const sqrtT = Math.sqrt(t);
   const d1 = (Math.log(spot / strike) + (r + (iv * iv) / 2) * t) / (iv * sqrtT);
