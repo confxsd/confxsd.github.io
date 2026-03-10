@@ -66,6 +66,53 @@
   border-radius: 10px;
   overflow: hidden;
   transition: border-color 0.15s, box-shadow 0.15s;
+  position: relative;
+}
+
+.dc-card-top-actions {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+  z-index: 2;
+}
+
+.dc-top-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: 1px solid var(--tv-border);
+  background: var(--tv-bg);
+  color: var(--tv-text-secondary);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.15s;
+}
+
+.dc-top-btn.dc-top-run {
+  color: var(--tv-accent, #6366f1);
+  border-color: var(--tv-accent, #6366f1);
+}
+
+.dc-top-btn.dc-top-run:hover {
+  background: var(--tv-accent, #6366f1);
+  color: #fff;
+}
+
+.dc-top-btn.dc-top-del {
+  color: var(--tv-text-tertiary);
+}
+
+.dc-top-btn.dc-top-del:hover {
+  border-color: var(--tv-red);
+  color: #fff;
+  background: var(--tv-red);
 }
 
 .dc-card:hover {
@@ -80,6 +127,7 @@
   padding: 12px 14px;
   cursor: pointer;
   user-select: none;
+  flex-wrap: wrap;
 }
 
 .dc-card-header:hover { background: var(--tv-bg-secondary); }
@@ -127,7 +175,7 @@
 }
 
 /* Ticker + direction */
-.dc-ticker-info { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.dc-ticker-info { display: flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: wrap; }
 
 .dc-ticker {
   font-size: 1rem;
@@ -622,6 +670,20 @@
 }
 .dc-sort-select:focus { border-color: var(--tv-accent); }
 
+.dc-search-input {
+  padding: 5px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--tv-border);
+  background: var(--tv-bg-secondary);
+  color: var(--tv-text-primary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  outline: none;
+  width: 120px;
+}
+.dc-search-input::placeholder { color: var(--tv-text-tertiary); }
+.dc-search-input:focus { border-color: var(--tv-accent); }
+
 /* ── AVOID signal ── */
 .dc-signal.avoid { background: var(--tv-red-bg-solid); color: #991b1b; border: 1px solid #fca5a5; font-style: italic; }
 
@@ -1023,11 +1085,11 @@
 }
 
 /* Inactive card */
-.dc-card.dc-inactive {
+.dc-card.dc-paused {
   opacity: 0.45;
 }
 
-.dc-card.dc-inactive:hover {
+.dc-card.dc-paused:hover {
   opacity: 0.7;
 }
 
@@ -1076,5 +1138,23 @@
     padding: 5px 10px;
     font-size: 0.7rem;
     white-space: nowrap;
+  }
+
+  .dc-card-header {
+    gap: 6px 10px;
+    padding: 10px 12px;
+  }
+
+  .dc-ticker-info {
+    width: 100%;
+  }
+
+  .dc-metrics-row {
+    width: 100%;
+    gap: 10px;
+  }
+
+  .dc-score-wrap {
+    margin-left: auto;
   }
 }

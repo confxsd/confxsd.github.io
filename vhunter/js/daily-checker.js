@@ -9,6 +9,7 @@ let checksCache = [];
 let isRunning = false;
 let activeFilter = 'all';
 let activeSort = 'priority'; // priority | score | freshness
+let searchQuery = '';
 
 // ── Render helpers ────────────────────────────────────────────
 
@@ -317,10 +318,14 @@ function renderCard(check) {
       </div>
     </div>` : '';
 
-  const isInactive = check.status === 'inactive';
+  const isInactive = check.status === 'paused';
 
   return `
-    <div class="dc-card ${stale && r ? 'dc-stale' : ''} ${isInactive ? 'dc-inactive' : ''}" id="dc-card-${check.id}">
+    <div class="dc-card ${stale && r ? 'dc-stale' : ''} ${isInactive ? 'dc-paused' : ''}" id="dc-card-${check.id}">
+      <div class="dc-card-top-actions">
+        <button class="dc-top-btn dc-top-run" id="dc-run-btn-${check.id}" onclick="window.dcRunOne('${check.id}')" title="Run Now">↻</button>
+        <button class="dc-top-btn dc-top-del" onclick="window.dcDelete('${check.id}', '${check.ticker}')" title="Delete">✕</button>
+      </div>
       <div class="dc-card-header" onclick="window.dcToggleExpand('${check.id}')">
         <div class="dc-ticker-info">
           <button class="dc-toggle-btn ${isInactive ? 'off' : 'on'}" onclick="event.stopPropagation(); window.dcToggleActive('${check.id}')" title="${isInactive ? 'Activate' : 'Deactivate'}">
@@ -350,11 +355,9 @@ function renderCard(check) {
       ${r?.ai_summary ? `<div class="dc-summary">"${r.ai_summary}"</div>` : ''}
       <div class="dc-expanded" id="dc-exp-${check.id}">
         <div class="dc-exp-actions">
-          <button class="btn btn-sm dc-run-one-btn" id="dc-run-btn-${check.id}" onclick="window.dcRunOne('${check.id}')">↻ Run Now</button>
           <button class="btn btn-sm" onclick="window.dcGoAnalyze('${check.ticker}')">📊 Analyze</button>
           <button class="btn btn-sm" onclick="window.dcGoOptions('${check.ticker}')">📈 Options</button>
           <button class="btn btn-sm" onclick="window.dcOpenModal('${check.id}')">✎ Edit</button>
-          <button class="btn btn-sm btn-danger" onclick="window.dcDelete('${check.id}', '${check.ticker}')">✕ Delete</button>
         </div>
         <div class="dc-expanded-grid">
           <div class="dc-exp-block">
@@ -401,8 +404,12 @@ function filterChecks(checks) {
   else if (activeFilter === 'watch') filtered = checks.filter(c => c.latest_result?.signal === 'WATCH');
   else if (activeFilter === 'wait')  filtered = checks.filter(c => !c.latest_result || c.latest_result?.signal === 'WAIT');
   else if (activeFilter === 'exit')  filtered = checks.filter(c => ['EXIT', 'AVOID'].includes(c.latest_result?.signal));
-  else if (activeFilter === 'inactive') filtered = checks.filter(c => c.status === 'inactive');
+  else if (activeFilter === 'paused') filtered = checks.filter(c => c.status === 'paused');
   else filtered = checks;
+  if (searchQuery) {
+    const q = searchQuery.toUpperCase();
+    filtered = filtered.filter(c => c.ticker.includes(q));
+  }
   return sortChecks(filtered);
 }
 
@@ -419,7 +426,7 @@ export function renderDailyChecker() {
   const forceBtn = document.getElementById('dcForceRunBtn');
   runBtn.disabled = isRunning;
   if (forceBtn) forceBtn.disabled = isRunning;
-  const activeCnt = checksCache.filter(c => c.status !== 'inactive').length;
+  const activeCnt = checksCache.filter(c => c.status !== 'paused').length;
   const allOn = checksCache.length > 0 && activeCnt === checksCache.length;
   runBtn.innerHTML = isRunning
     ? '<span class="dc-run-spinner"></span>Running...'
@@ -441,16 +448,16 @@ export function renderDailyChecker() {
 
   // dcMeta removed
 
-  const inactiveCnt = allChecks.filter(c => c.status === 'inactive').length;
-  const activeChecks = allChecks.filter(c => c.status !== 'inactive');
+  const pausedCnt = allChecks.filter(c => c.status === 'paused').length;
+  const activeChecks = allChecks.filter(c => c.status !== 'paused');
 
   document.getElementById('dcTabAll').textContent   = `All (${allChecks.length})`;
   document.getElementById('dcTabEntry').textContent = `Entry (${entryCnt})`;
   document.getElementById('dcTabWatch').textContent = `Watch (${activeChecks.filter(c => c.latest_result?.signal === 'WATCH').length})`;
   document.getElementById('dcTabWait').textContent  = `Wait (${activeChecks.filter(c => !c.latest_result || c.latest_result?.signal === 'WAIT').length})`;
   document.getElementById('dcTabExit').textContent  = `Exit (${exitCnt})`;
-  const inactiveTab = document.getElementById('dcTabInactive');
-  if (inactiveTab) inactiveTab.textContent = `Inactive (${inactiveCnt})`;
+  const pausedTab = document.getElementById('dcTabPaused');
+  if (pausedTab) pausedTab.textContent = `Inactive (${pausedCnt})`;
 
   // Dashboard + Sort
   const sortEl = document.getElementById('dcSortSelect');
@@ -521,6 +528,11 @@ window.dcSetSort = function(sort) {
   renderDailyChecker();
 };
 
+window.dcSetSearch = function(query) {
+  searchQuery = query.trim();
+  renderDailyChecker();
+};
+
 window.dcGoAnalyze = function(ticker) {
   document.getElementById('tk').value = ticker;
   window.switchPage('analyze');
@@ -571,7 +583,7 @@ window.dcRunOne = async function(id) {
   if (signalEl) { signalEl.textContent = '...'; signalEl.className = 'dc-signal running'; }
   if (runBtn) {
     runBtn.disabled = true;
-    runBtn.innerHTML = '<span class="dc-run-spinner"></span>Running...';
+    runBtn.innerHTML = '<span class="dc-run-spinner"></span>';
   }
 
   try {
@@ -584,7 +596,7 @@ window.dcRunOne = async function(id) {
   } catch (e) {
     console.error('[DAILY_CHECKER] Run one failed:', e);
     if (signalEl) { signalEl.textContent = origText; signalEl.className = origCls; }
-    if (runBtn) { runBtn.disabled = false; runBtn.innerHTML = '↻ Run Now'; }
+    if (runBtn) { runBtn.disabled = false; runBtn.innerHTML = '↻'; }
   }
 };
 
@@ -633,35 +645,14 @@ window.dcSave = async function() {
 
 window.dcToggleAll = async function() {
   if (!checksCache.length) return;
-  const allOn = checksCache.every(c => c.status !== 'inactive');
+  const allOn = checksCache.every(c => c.status !== 'paused');
+  const newStatus = allOn ? 'paused' : 'active';
   try {
-    if (allOn) {
-      // Save current status to prev_status, then deactivate
-      await Promise.all(checksCache.map(c => {
-        if (c.status === 'inactive') return;
-        return updateDailyCheck(c.id, { prev_status: c.status, status: 'inactive' });
-      }));
-      checksCache.forEach(c => {
-        if (c.status !== 'inactive') {
-          c.prev_status = c.status;
-          c.status = 'inactive';
-        }
-      });
-    } else {
-      // Restore from prev_status stored in DB, fallback to 'watch'
-      await Promise.all(checksCache.map(c => {
-        if (c.status !== 'inactive') return;
-        const restored = c.prev_status || 'watch';
-        return updateDailyCheck(c.id, { status: restored, prev_status: null });
-      }));
-      checksCache.forEach(c => {
-        if (c.status === 'inactive') {
-          c.status = c.prev_status || 'watch';
-          c.prev_status = null;
-        }
-      });
-    }
-    renderDailyChecker();
+    await Promise.all(checksCache.map(c => {
+      if (c.status === newStatus) return;
+      return updateDailyCheck(c.id, { status: newStatus });
+    }));
+    await loadDailyChecker();
   } catch (e) {
     console.error('[DAILY_CHECKER] Toggle all failed:', e);
   }
@@ -670,11 +661,12 @@ window.dcToggleAll = async function() {
 window.dcToggleActive = async function(id) {
   const check = checksCache.find(c => c.id === id);
   if (!check) return;
-  const newStatus = check.status === 'inactive' ? 'active' : 'inactive';
+  const newStatus = check.status === 'paused' ? 'active' : 'paused';
   try {
     await updateDailyCheck(id, { status: newStatus });
     check.status = newStatus;
     renderDailyChecker();
+    updateDailyBadge();
   } catch (e) {
     console.error('[DAILY_CHECKER] Toggle failed:', e);
   }

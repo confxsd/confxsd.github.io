@@ -2687,13 +2687,20 @@
               </button>
               <button
                 class="dc-filter-tab"
-                data-filter="inactive"
-                onclick="window.dcSetFilter('inactive')"
-                id="dcTabInactive"
+                data-filter="paused"
+                onclick="window.dcSetFilter('paused')"
+                id="dcTabPaused"
               >
-                Inactive
+                Paused
               </button>
             </div>
+            <input
+              type="text"
+              class="dc-search-input"
+              id="dcSearchInput"
+              placeholder="Filter ticker..."
+              oninput="window.dcSetSearch(this.value)"
+            />
             <select
               class="dc-sort-select"
               id="dcSortSelect"
