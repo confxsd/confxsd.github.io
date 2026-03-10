@@ -111,13 +111,22 @@ export function toggleSidebar() {
     closeSidebar();
   } else {
     sidebar.classList.add('open');
-    overlay.classList.add('active');
+    overlay.style.display = 'block';
+    requestAnimationFrame(() => {
+      overlay.classList.add('active');
+    });
   }
 }
 
 export function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebarOverlay').classList.remove('active');
+  const overlay = document.getElementById('sidebarOverlay');
+  overlay.classList.remove('active');
+  overlay.addEventListener('transitionend', () => {
+    if (!overlay.classList.contains('active')) {
+      overlay.style.display = 'none';
+    }
+  }, { once: true });
 }
 
 // UI helper functions

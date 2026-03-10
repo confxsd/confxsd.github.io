@@ -120,26 +120,22 @@
 }
 
 .sidebar-overlay {
+  display: none;
   position: fixed;
   top: 0;
-  left: 200px;
+  left: 0;
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 150;
   opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  -webkit-transition: opacity 0.2s ease-out, visibility 0s 0.2s;
-  transition: opacity 0.2s ease-out, visibility 0s 0.2s;
+  -webkit-transition: opacity 0.2s ease-out;
+  transition: opacity 0.2s ease-out;
 }
 
 .sidebar-overlay.active {
+  display: block;
   opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  -webkit-transition: opacity 0.15s ease-out 0.05s, visibility 0s;
-  transition: opacity 0.15s ease-out 0.05s, visibility 0s;
 }
 
 /* Main Content */

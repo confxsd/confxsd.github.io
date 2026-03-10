@@ -87,9 +87,7 @@
     max-width: 320px;
   }
 
-  .sidebar-overlay {
-    left: 0;
-  }
+
 
   /* Prevent overflow */
   .main-content,
