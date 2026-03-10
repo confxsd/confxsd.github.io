@@ -115,9 +115,11 @@ export async function loadOptionsData(skipAI = false) {
     }
 
     updateSpotDisplay();
-    processOptionsPageData(options, optionsData.spotPrice);
-    populateExpiryDropdown(options);
-    autoPopulateEarningsVol(options);
+
+    // Process options data - wrap individually so partial failures don't kill the page
+    try { processOptionsPageData(options, optionsData.spotPrice); } catch (e) { console.warn('Options processing error:', e); }
+    try { populateExpiryDropdown(options); } catch (e) { console.warn('Expiry dropdown error:', e); }
+    try { autoPopulateEarningsVol(options); } catch (e) { console.warn('Earnings vol error:', e); }
 
     // Skip AI analysis during live mode to avoid rate limits
     if (!skipAI) {
@@ -129,7 +131,10 @@ export async function loadOptionsData(skipAI = false) {
 
   } catch (e) {
     console.error('Options load error:', e);
-    document.querySelector('.spot-price').textContent = 'Error';
+    // Only show Error if spot price wasn't already loaded
+    if (!optionsData.spotPrice) {
+      document.querySelector('.spot-price').textContent = 'Error';
+    }
     document.getElementById('optChainBody').innerHTML = `<div class="chain-loading" style="color:#ef4444">Failed to load: ${e.message}</div>`;
   }
 }
