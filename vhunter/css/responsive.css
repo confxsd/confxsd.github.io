@@ -699,64 +699,86 @@
     font-size: var(--t-base);
   }
 
-  .chain-controls {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    width: 100%;
+  /* Chain modal - mobile responsive */
+  .chain-modal-header {
+    padding: 8px 12px;
   }
 
-  /* Modal chain controls - stack vertically */
-  .modal-header .chain-controls {
-    flex-direction: column;
-    align-items: stretch;
-    min-width: unset;
-    gap: 8px;
-    width: 100%;
-    margin-left: 0;
+  .chain-ticker-name {
+    font-size: var(--t-xl);
   }
 
-  .modal-header .chain-controls select {
-    width: 100%;
-    padding: 10px;
+  .chain-ticker-price {
     font-size: var(--t-lg);
   }
 
-  .modal-header .chain-filters {
-    display: flex;
+  .chain-view-controls {
+    flex-wrap: wrap;
     gap: 6px;
-    width: 100%;
+    padding: 6px 10px;
   }
 
-  .modal-header .chain-filters .chain-toggle {
-    flex: 1;
-    padding: 8px;
+  .chain-filters {
+    gap: 2px;
   }
 
-  .chain-header {
+  .chain-toggle {
+    padding: 4px 8px;
+    font-size: var(--t-2xs);
+  }
+
+  /* On mobile, default to single-side view */
+  .chain-table.chain-view-both .chain-header-row {
     font-size: var(--t-3xs);
   }
 
-  .chain-side {
-    grid-template-columns: repeat(4, 1fr);
+  .chain-table.chain-view-both .chain-side-header {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  /* Hide Sprd and Vol columns on mobile both-view */
+  .chain-table.chain-view-both .chain-side-header span:nth-child(1),
+  .chain-table.chain-view-both .chain-side-header span:nth-child(3) {
+    display: none;
+  }
+
+  .chain-calls, .chain-puts {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  /* Hide Vol and Sprd columns in chain rows on mobile */
+  .chain-calls span:nth-child(1),
+  .chain-calls span:nth-child(3),
+  .chain-puts span:nth-child(5),
+  .chain-puts span:nth-child(7) {
+    display: none;
+  }
+
+  .chain-row {
+    font-size: var(--t-2xs);
+  }
+
+  .chain-single-header {
+    grid-template-columns: 60px repeat(7, 1fr);
+    font-size: var(--t-3xs);
     padding: 6px 4px;
   }
 
-  .chain-side span:nth-child(2),
-  .chain-side span:nth-child(6) {
-    display: none;
+  .chain-single-row {
+    grid-template-columns: 60px repeat(7, 1fr);
+    font-size: var(--t-xs);
+    padding: 5px 4px;
   }
 
-  .chain-calls,
-  .chain-puts {
-    grid-template-columns: repeat(4, 1fr);
-    padding: 4px;
+  /* Hide Sprd% on very small screens - keep essential cols */
+  .chain-footer {
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px 10px;
   }
 
-  .chain-calls span:nth-child(2),
-  .chain-puts span:nth-child(6),
-  .chain-calls span:nth-child(7),
-  .chain-puts span:nth-child(1) {
-    display: none;
+  .chain-legend-inline {
+    gap: 4px;
   }
 
   .scanner-filters {
@@ -983,8 +1005,27 @@
     font-size: var(--t-xs);
   }
 
-  .chain-body {
-    max-height: 200px;
+  /* Chain: force single-side view on small screens */
+  .chain-view-controls .chain-filters {
+    display: none;
+  }
+
+  .chain-single-header {
+    grid-template-columns: 56px repeat(5, 1fr);
+    font-size: var(--t-3xs);
+  }
+
+  .chain-single-row {
+    grid-template-columns: 56px repeat(5, 1fr);
+    font-size: var(--t-2xs);
+  }
+
+  /* Hide Sprd% and OI on very small screens */
+  .chain-single-header span:nth-child(6),
+  .chain-single-row span:nth-child(6),
+  .chain-single-header span:nth-child(8),
+  .chain-single-row span:nth-child(8) {
+    display: none;
   }
 
   .oi-walls {

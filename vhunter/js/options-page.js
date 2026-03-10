@@ -603,22 +603,53 @@ function updateMaxPainDisplay(priceId, distId, maxPain, spotPrice) {
   }
 }
 
+// Chain view mode state
+let chainViewMode = 'both'; // 'both', 'calls', 'puts'
+
 function populateExpiryDropdown(options) {
   const select = document.getElementById('optExpSelect');
   select.innerHTML = '<option value="">Select Expiry</option>';
+
+  const tabsContainer = document.getElementById('chainExpiryTabs');
 
   const expirations = new Set();
   options.all.forEach(o => {
     if (o.details?.expiration_date) expirations.add(o.details.expiration_date);
   });
 
-  [...expirations].sort().forEach(exp => {
+  const sortedExps = [...expirations].sort();
+
+  // Populate select (fallback)
+  sortedExps.forEach(exp => {
     const d = new Date(exp);
     const dte = Math.ceil((d - new Date()) / (1000 * 60 * 60 * 24));
     const opt = document.createElement('option');
     opt.value = exp;
     opt.textContent = `${exp} (${dte}d)`;
     select.appendChild(opt);
+  });
+
+  // Build expiry tabs (show first 12 expiries as tabs)
+  const existingTabs = tabsContainer.querySelectorAll('.chain-expiry-tab');
+  existingTabs.forEach(t => t.remove());
+
+  sortedExps.slice(0, 12).forEach((exp, i) => {
+    const d = new Date(exp);
+    const dte = Math.ceil((d - new Date()) / (1000 * 60 * 60 * 24));
+    const month = d.toLocaleString('en', { month: 'short' });
+    const day = d.getDate();
+
+    const tab = document.createElement('button');
+    tab.className = 'chain-expiry-tab' + (i === 0 ? ' active' : '');
+    tab.dataset.exp = exp;
+    tab.innerHTML = `${month} ${day} <span class="dte">${dte}d</span>`;
+    tab.onclick = () => {
+      tabsContainer.querySelectorAll('.chain-expiry-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      select.value = exp;
+      loadChainForExpiry();
+    };
+    tabsContainer.appendChild(tab);
   });
 
   // Auto-select first expiry and load chain
@@ -653,7 +684,20 @@ export function loadChainForExpiry() {
   const strikes = Object.keys(chainData).map(Number).sort((a, b) => a - b);
   const spotPrice = optionsData.spotPrice;
 
-  let html = '';
+  // Calculate avg volume for unusual activity highlighting
+  const allVols = filtered.map(o => o.day?.volume || 0).filter(v => v > 0);
+  const avgVol = allVols.length ? allVols.reduce((a, b) => a + b, 0) / allVols.length : 0;
+  const hotThreshold = avgVol * 3;
+
+  // Count totals for footer summary
+  let totalCallVol = 0, totalPutVol = 0, totalCallOI = 0, totalPutOI = 0;
+
+  // Build both-view HTML
+  let bothHtml = '';
+  // Build single-view HTML
+  let callsHtml = '';
+  let putsHtml = '';
+
   strikes.forEach(strike => {
     const call = chainData[strike].call;
     const put = chainData[strike].put;
@@ -667,35 +711,133 @@ export function loadChainForExpiry() {
     else if (itmCall) rowClass = 'itm-call';
     else if (itmPut) rowClass = 'itm-put';
 
-    const callData = formatChainOption(call, 'call', spotPrice);
-    const putData = formatChainOption(put, 'put', spotPrice);
+    const callData = formatChainOptionEx(call, 'call', spotPrice, hotThreshold);
+    const putData = formatChainOptionEx(put, 'put', spotPrice, hotThreshold);
 
-    html += `
-      <div class="chain-row ${rowClass}">
+    // Accumulate totals
+    totalCallVol += call?.day?.volume || 0;
+    totalPutVol += put?.day?.volume || 0;
+    totalCallOI += call?.open_interest || 0;
+    totalPutOI += put?.open_interest || 0;
+
+    const strikeStr = strike.toFixed(strike % 1 === 0 ? 0 : 2);
+    const atmId = isATM ? ' data-atm="1"' : '';
+
+    // Both view: Vol | OI | Sprd | Bid | Ask | IV | Delta | STRIKE | Delta | IV | Bid | Ask | Sprd | OI | Vol
+    bothHtml += `
+      <div class="chain-row ${rowClass}"${atmId}>
         <div class="chain-calls">
+          <span class="${callData.volClass}">${callData.vol}</span>
+          <span>${callData.oi}</span>
+          <span class="${callData.spreadClass}">${callData.spread}</span>
           <span>${callData.bid}</span>
           <span>${callData.ask}</span>
-          <span>${callData.last}</span>
-          <span>${callData.vol}</span>
-          <span>${callData.oi}</span>
           <span class="p">${callData.iv}</span>
           <span class="g">${callData.delta}</span>
         </div>
-        <div class="chain-strike">${strike.toFixed(strike % 1 === 0 ? 0 : 2)}</div>
+        <div class="chain-strike">${strikeStr}</div>
         <div class="chain-puts">
           <span class="r">${putData.delta}</span>
           <span class="p">${putData.iv}</span>
-          <span>${putData.oi}</span>
-          <span>${putData.vol}</span>
-          <span>${putData.last}</span>
           <span>${putData.bid}</span>
           <span>${putData.ask}</span>
+          <span class="${putData.spreadClass}">${putData.spread}</span>
+          <span>${putData.oi}</span>
+          <span class="${putData.volClass}">${putData.vol}</span>
         </div>
-      </div>
-    `;
+      </div>`;
+
+    // Single calls view
+    const callRowClass = isATM ? 'atm' : itmCall ? 'itm' : '';
+    callsHtml += `
+      <div class="chain-single-row ${callRowClass}"${atmId}>
+        <span class="strike-cell">${strikeStr}</span>
+        <span class="g">${callData.delta}</span>
+        <span class="p">${callData.iv}</span>
+        <span>${callData.bid}</span>
+        <span>${callData.ask}</span>
+        <span class="${callData.spreadClass}">${callData.spreadPct}</span>
+        <span class="${callData.volClass}">${callData.vol}</span>
+        <span>${callData.oi}</span>
+      </div>`;
+
+    // Single puts view
+    const putRowClass = isATM ? 'atm' : itmPut ? 'itm' : '';
+    putsHtml += `
+      <div class="chain-single-row ${putRowClass}"${atmId}>
+        <span class="strike-cell">${strikeStr}</span>
+        <span class="r">${putData.delta}</span>
+        <span class="p">${putData.iv}</span>
+        <span>${putData.bid}</span>
+        <span>${putData.ask}</span>
+        <span class="${putData.spreadClass}">${putData.spreadPct}</span>
+        <span class="${putData.volClass}">${putData.vol}</span>
+        <span>${putData.oi}</span>
+      </div>`;
   });
 
-  document.getElementById('optChainBody').innerHTML = html;
+  document.getElementById('optChainBody').innerHTML = bothHtml;
+  document.getElementById('optChainBodyCalls').innerHTML = callsHtml;
+  document.getElementById('optChainBodyPuts').innerHTML = putsHtml;
+
+  // Update footer summary
+  const summaryEl = document.getElementById('chainSummary');
+  if (summaryEl) {
+    const pcRatio = totalCallVol ? (totalPutVol / totalCallVol).toFixed(2) : '--';
+    summaryEl.textContent = `C:${formatNum(totalCallVol)} P:${formatNum(totalPutVol)} P/C:${pcRatio} | OI C:${formatNum(totalCallOI)} P:${formatNum(totalPutOI)}`;
+  }
+
+  // Auto-scroll to ATM after render
+  requestAnimationFrame(() => scrollToATM());
+}
+
+// Extended option formatter with spread and hotness
+function formatChainOptionEx(o, type, spotPrice, hotThreshold) {
+  const base = formatChainOption(o, type, spotPrice);
+  if (!o) return { ...base, spread: '--', spreadPct: '--', spreadClass: '', volClass: '' };
+
+  const q = o.last_quote || {};
+  const bid = q.bid || 0;
+  const ask = q.ask || 0;
+  const mid = (bid + ask) / 2;
+  const spreadAbs = ask - bid;
+  const spreadPctVal = mid > 0 ? (spreadAbs / mid * 100) : 0;
+
+  const vol = o.day?.volume || 0;
+  const isHot = vol >= hotThreshold && hotThreshold > 0;
+  const isWideSpread = spreadPctVal > 15;
+
+  return {
+    ...base,
+    spread: mid > 0 ? spreadAbs.toFixed(2) : '--',
+    spreadPct: mid > 0 ? spreadPctVal.toFixed(0) + '%' : '--',
+    spreadClass: isWideSpread ? 'chain-wide-spread' : '',
+    volClass: isHot ? 'chain-hot' : ''
+  };
+}
+
+// Switch between Both/Calls/Puts view
+function switchChainViewMode(mode) {
+  chainViewMode = mode;
+  document.querySelectorAll('.chain-view-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.view === mode);
+  });
+  document.getElementById('chainTableBoth').style.display = mode === 'both' ? '' : 'none';
+  document.getElementById('chainTableCalls').style.display = mode === 'calls' ? '' : 'none';
+  document.getElementById('chainTablePuts').style.display = mode === 'puts' ? '' : 'none';
+}
+
+// Scroll to ATM strike
+function scrollToATM() {
+  const activeTable = chainViewMode === 'both' ? 'optChainBody' :
+    chainViewMode === 'calls' ? 'optChainBodyCalls' : 'optChainBodyPuts';
+  const container = document.getElementById(activeTable);
+  if (!container) return;
+
+  const atmRow = container.querySelector('[data-atm="1"]');
+  if (atmRow) {
+    atmRow.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
 }
 
 function formatChainOption(o, type, spotPrice) {
@@ -744,16 +886,37 @@ export function toggleChainView(view) {
     btn.classList.toggle('active', btn.dataset.show === view);
   });
 
-  const rows = document.querySelectorAll('.chain-row');
-  rows.forEach(row => {
+  // Apply filter to all chain views (both, calls, puts)
+  const allRows = document.querySelectorAll('.chain-row, .chain-single-row');
+  allRows.forEach(row => {
     if (view === 'all') {
       row.style.display = '';
+    } else if (view === 'near') {
+      // Near ATM: show ATM and adjacent strikes (ITM calls near spot + OTM near spot)
+      const isATM = row.classList.contains('atm');
+      const isITMCall = row.classList.contains('itm-call') || row.classList.contains('itm');
+      const isITMPut = row.classList.contains('itm-put');
+      // Show ATM + nearby (we'll show all since filtering by index is complex in DOM)
+      // Simple: just show everything within ~10 strikes of ATM
+      row.style.display = '';
+      if (!isATM && !isITMCall && !isITMPut) {
+        // OTM - show
+        row.style.display = '';
+      }
+      // Actually, let's count distance from ATM
+      const parent = row.parentElement;
+      if (parent) {
+        const atmIdx = Array.from(parent.children).findIndex(r => r.classList.contains('atm') || r.dataset.atm === '1');
+        const myIdx = Array.from(parent.children).indexOf(row);
+        if (atmIdx >= 0 && Math.abs(myIdx - atmIdx) > 8) {
+          row.style.display = 'none';
+        }
+      }
     } else if (view === 'itm') {
-      // ITM: strikes at or below spot (ITM calls, includes ATM as reference)
-      row.style.display = (row.classList.contains('itm-call') || row.classList.contains('atm')) ? '' : 'none';
+      row.style.display = (row.classList.contains('itm-call') || row.classList.contains('itm') || row.classList.contains('atm')) ? '' : 'none';
     } else if (view === 'otm') {
-      // OTM: strikes at or above spot (OTM calls, includes ATM as reference)
-      row.style.display = (row.classList.contains('itm-put') || row.classList.contains('atm')) ? '' : 'none';
+      row.style.display = (row.classList.contains('itm-put') || row.classList.contains('atm') ||
+        (!row.classList.contains('itm-call') && !row.classList.contains('itm') && !row.classList.contains('atm'))) ? '' : 'none';
     }
   });
 }
@@ -1314,7 +1477,21 @@ ${(t.risks || []).map(r => `- ${r}`).join('\n') || '- None identified'}`;
 
 // Chain Modal functions
 export function openChainModal() {
-  document.getElementById('chainModal').classList.add('active');
+  const modal = document.getElementById('chainModal');
+  modal.classList.add('active');
+
+  // Update ticker info in chain header
+  if (optionsData.ticker) {
+    document.getElementById('chainTickerName').textContent = optionsData.ticker;
+    document.getElementById('chainTickerPrice').textContent = '$' + optionsData.spotPrice.toFixed(2);
+    const changeEl = document.getElementById('chainTickerChange');
+    const sign = optionsData.change >= 0 ? '+' : '';
+    changeEl.textContent = `${sign}${optionsData.change.toFixed(2)} (${sign}${optionsData.changePct.toFixed(2)}%)`;
+    changeEl.className = 'chain-ticker-change ' + (optionsData.change >= 0 ? 'positive' : 'negative');
+  }
+
+  // Auto-scroll to ATM
+  requestAnimationFrame(() => scrollToATM());
 }
 
 export function closeChainModal() {
@@ -1391,8 +1568,22 @@ function resetOptionsDisplay() {
 
   // Reset chain
   document.getElementById('optChainBody').innerHTML = '<div class="chain-loading">Enter a ticker to analyze options</div>';
+  const callsBody = document.getElementById('optChainBodyCalls');
+  if (callsBody) callsBody.innerHTML = '';
+  const putsBody = document.getElementById('optChainBodyPuts');
+  if (putsBody) putsBody.innerHTML = '';
   const expSelect = document.getElementById('optExpSelect');
   if (expSelect) expSelect.innerHTML = '<option value="">Select Expiry</option>';
+  // Clear expiry tabs
+  const tabsContainer = document.getElementById('chainExpiryTabs');
+  if (tabsContainer) tabsContainer.querySelectorAll('.chain-expiry-tab').forEach(t => t.remove());
+  // Reset chain header
+  const chainTickerName = document.getElementById('chainTickerName');
+  if (chainTickerName) chainTickerName.textContent = '--';
+  const chainTickerPrice = document.getElementById('chainTickerPrice');
+  if (chainTickerPrice) chainTickerPrice.textContent = '--';
+  const chainSummary = document.getElementById('chainSummary');
+  if (chainSummary) chainSummary.textContent = '';
 
   // Reset AI sections
   document.getElementById('optAiInsight').innerHTML = '<div class="ai-loading" style="color:#94a3b8">Enter a ticker to get AI analysis</div>';
@@ -1604,3 +1795,5 @@ window.calcEarningsMove = calcEarningsMove;
 window.openChainModal = openChainModal;
 window.closeChainModal = closeChainModal;
 window.copyOptionsData = copyOptionsData;
+window.switchChainViewMode = switchChainViewMode;
+window.scrollToATM = scrollToATM;

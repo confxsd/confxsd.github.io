@@ -265,12 +265,6 @@
   flex-shrink: 0;
 }
 
-.modal-header .chain-controls {
-  flex: 1;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  min-width: 200px;
-}
 
 .modal-close {
   position: absolute;

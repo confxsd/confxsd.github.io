@@ -1559,9 +1559,6 @@
               <button onclick="loadOptionsData()" class="btn btn-primary">
                 Analyze
               </button>
-              <button id="btnLive" onclick="toggleLiveMode()" class="btn-live">
-                Live
-              </button>
               <button
                 onclick="generateSummary()"
                 title="AI Summary"
@@ -1576,14 +1573,6 @@
                 class="btn-chain"
               >
                 Options
-              </button>
-              <button
-                onclick="copyOptionsData()"
-                title="Copy data for AI prompt"
-                class="btn-copy"
-                id="btnCopyData"
-              >
-                📋
               </button>
             </div>
             <div class="options-history" id="optionsHistoryStrip"></div>
@@ -2868,73 +2857,86 @@
       onclick="toggleSidebar()"
     ></div>
 
-    <!-- Options Chain Modal -->
-    <div
-      class="modal"
-      id="chainModal"
-      onclick="if (event.target === this) closeChainModal();"
-    >
-      <div class="modal-content modal-wide">
-        <div class="modal-header">
-          <div class="chain-controls">
-            <select id="optExpSelect" onchange="loadChainForExpiry()">
-              <option value="">Select Expiry</option>
-            </select>
-            <div class="chain-filters">
-              <button
-                class="chain-toggle active"
-                data-show="all"
-                onclick="toggleChainView('all')"
-              >
-                All
-              </button>
-              <button
-                class="chain-toggle"
-                data-show="itm"
-                onclick="toggleChainView('itm')"
-              >
-                ITM
-              </button>
-              <button
-                class="chain-toggle"
-                data-show="otm"
-                onclick="toggleChainView('otm')"
-              >
-                OTM
-              </button>
-            </div>
+    <!-- Options Chain Modal (Fullscreen) -->
+    <div class="chain-modal" id="chainModal" onclick="if (event.target === this) closeChainModal();">
+      <div class="chain-modal-content">
+        <!-- Chain Header -->
+        <div class="chain-modal-header">
+          <div class="chain-ticker-info">
+            <span class="chain-ticker-name" id="chainTickerName">--</span>
+            <span class="chain-ticker-price" id="chainTickerPrice">--</span>
+            <span class="chain-ticker-change" id="chainTickerChange"></span>
           </div>
+          <button class="chain-modal-close" onclick="closeChainModal()">&times;</button>
         </div>
-        <div class="modal-body">
-          <div class="chain-wrapper">
-            <div class="chain-header">
-              <div class="chain-side calls">
-                <span>Bid</span><span>Ask</span><span>Last</span><span>Vol</span
-                ><span>OI</span><span>IV</span><span>Delta</span>
+
+        <!-- Expiry Tabs (horizontal scroll) -->
+        <div class="chain-expiry-tabs" id="chainExpiryTabs">
+          <select id="optExpSelect" onchange="loadChainForExpiry()" class="chain-expiry-select">
+            <option value="">Select Expiry</option>
+          </select>
+        </div>
+
+        <!-- View Controls -->
+        <div class="chain-view-controls">
+          <div class="chain-view-tabs">
+            <button class="chain-view-tab active" data-view="both" onclick="switchChainViewMode('both')">Both</button>
+            <button class="chain-view-tab" data-view="calls" onclick="switchChainViewMode('calls')">Calls</button>
+            <button class="chain-view-tab" data-view="puts" onclick="switchChainViewMode('puts')">Puts</button>
+          </div>
+          <div class="chain-filters">
+            <button class="chain-toggle active" data-show="all" onclick="toggleChainView('all')">All</button>
+            <button class="chain-toggle" data-show="near" onclick="toggleChainView('near')">Near ATM</button>
+            <button class="chain-toggle" data-show="itm" onclick="toggleChainView('itm')">ITM</button>
+            <button class="chain-toggle" data-show="otm" onclick="toggleChainView('otm')">OTM</button>
+          </div>
+          <button class="chain-atm-btn" onclick="scrollToATM()" title="Scroll to ATM">ATM</button>
+        </div>
+
+        <!-- Chain Table -->
+        <div class="chain-table-wrapper">
+          <!-- Both view (desktop default) -->
+          <div class="chain-table chain-view-both" id="chainTableBoth">
+            <div class="chain-header-row">
+              <div class="chain-side-header calls-header">
+                <span>Vol</span><span>OI</span><span>Sprd</span><span>Bid</span><span>Ask</span><span>IV</span><span>&Delta;</span>
               </div>
-              <div class="chain-strike-header">Strike</div>
-              <div class="chain-side puts">
-                <span>Delta</span><span>IV</span><span>OI</span><span>Vol</span
-                ><span>Last</span><span>Bid</span><span>Ask</span>
+              <div class="chain-strike-col-header">Strike</div>
+              <div class="chain-side-header puts-header">
+                <span>&Delta;</span><span>IV</span><span>Bid</span><span>Ask</span><span>Sprd</span><span>OI</span><span>Vol</span>
               </div>
             </div>
             <div class="chain-body" id="optChainBody">
-              <div class="chain-loading">
-                Analyze a ticker to load options chain
-              </div>
+              <div class="chain-loading">Analyze a ticker to load options chain</div>
             </div>
           </div>
-          <div class="chain-legend">
-            <span class="legend-item"
-              ><span class="legend-dot itm"></span>ITM</span
-            >
-            <span class="legend-item"
-              ><span class="legend-dot atm"></span>ATM</span
-            >
-            <span class="legend-item"
-              ><span class="legend-dot otm"></span>OTM</span
-            >
+
+          <!-- Calls-only view (mobile friendly) -->
+          <div class="chain-table chain-view-calls" id="chainTableCalls" style="display:none">
+            <div class="chain-single-header">
+              <span>Strike</span><span>&Delta;</span><span>IV</span><span>Bid</span><span>Ask</span><span>Sprd%</span><span>Vol</span><span>OI</span>
+            </div>
+            <div class="chain-body" id="optChainBodyCalls"></div>
           </div>
+
+          <!-- Puts-only view (mobile friendly) -->
+          <div class="chain-table chain-view-puts" id="chainTablePuts" style="display:none">
+            <div class="chain-single-header">
+              <span>Strike</span><span>&Delta;</span><span>IV</span><span>Bid</span><span>Ask</span><span>Sprd%</span><span>Vol</span><span>OI</span>
+            </div>
+            <div class="chain-body" id="optChainBodyPuts"></div>
+          </div>
+        </div>
+
+        <!-- Chain Footer -->
+        <div class="chain-footer">
+          <div class="chain-legend-inline">
+            <span class="chain-legend-tag itm">ITM</span>
+            <span class="chain-legend-tag atm">ATM</span>
+            <span class="chain-legend-tag otm">OTM</span>
+            <span class="chain-legend-tag hot">High Vol</span>
+          </div>
+          <div class="chain-summary" id="chainSummary"></div>
         </div>
       </div>
     </div>

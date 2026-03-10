@@ -543,38 +543,187 @@
   display: none;
 }
 
-/* Options Chain */
-.chain-controls {
-  display: flex;
-  gap: 6px;
-  margin-left: auto;
-  align-items: center;
+/* ========================================
+   Options Chain Modal - Fullscreen Trading View
+   ======================================== */
+
+/* Fullscreen overlay */
+.chain-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--tv-bg);
+  flex-direction: column;
 }
+
+.chain-modal.active { display: flex; }
+
+.chain-modal-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Header with ticker info */
+.chain-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--tv-bg-secondary);
+  border-bottom: 1px solid var(--tv-border);
+  flex-shrink: 0;
+}
+
+.chain-ticker-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chain-ticker-name {
+  font-size: var(--t-2xl);
+  font-weight: 800;
+  color: var(--tv-text-primary);
+}
+
+.chain-ticker-price {
+  font-size: var(--t-xl);
+  font-weight: 700;
+  color: var(--tv-text-primary);
+}
+
+.chain-ticker-change {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.chain-ticker-change.positive { background: var(--tv-green-bg-solid); color: var(--tv-green); }
+.chain-ticker-change.negative { background: var(--tv-red-bg-solid); color: var(--tv-red); }
+
+.chain-modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: var(--tv-text-secondary);
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  border-radius: 4px;
+}
+
+.chain-modal-close:hover {
+  background: var(--tv-bg-tertiary);
+  color: var(--tv-text-primary);
+}
+
+/* Expiry tabs */
+.chain-expiry-tabs {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: var(--tv-bg);
+  border-bottom: 1px solid var(--tv-border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.chain-expiry-select {
+  display: none; /* Hidden on desktop, shown on very small screens */
+}
+
+.chain-expiry-tab {
+  padding: 6px 14px;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  font-family: inherit;
+  border: 1px solid var(--tv-border);
+  background: var(--tv-bg);
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  color: var(--tv-text-secondary);
+}
+
+.chain-expiry-tab:hover { background: var(--tv-bg-tertiary); color: var(--tv-text-primary); }
+.chain-expiry-tab.active {
+  background: var(--tv-accent);
+  color: #fff;
+  border-color: var(--tv-accent);
+}
+
+.chain-expiry-tab .dte {
+  font-size: var(--t-3xs);
+  opacity: 0.8;
+  margin-left: 2px;
+}
+
+/* View Controls */
+.chain-view-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--tv-bg-secondary);
+  border-bottom: 1px solid var(--tv-border);
+  flex-shrink: 0;
+}
+
+.chain-view-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--tv-bg-tertiary);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.chain-view-tab {
+  padding: 5px 14px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  font-family: inherit;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--tv-text-secondary);
+  transition: all 0.15s;
+}
+
+.chain-view-tab:hover { color: var(--tv-text-primary); }
+.chain-view-tab.active {
+  background: var(--tv-bg);
+  color: var(--tv-text-primary);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.chain-view-tab[data-view="calls"].active { color: var(--tv-green); }
+.chain-view-tab[data-view="puts"].active { color: var(--tv-red); }
 
 .chain-filters {
   display: flex;
-  gap: 6px;
-}
-
-.chain-controls select {
-  padding: 6px 10px;
-  font-size: var(--t-sm);
-  border: 1px solid var(--tv-border);
-  border-radius: 4px;
-  background: var(--tv-bg);
-  cursor: pointer;
-  font-family: inherit;
+  gap: 4px;
+  margin-left: auto;
 }
 
 .chain-toggle {
   padding: 4px 10px;
   font-size: var(--t-xs);
   font-weight: 600;
+  font-family: inherit;
   border: 1px solid var(--tv-border);
   background: var(--tv-bg);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.15s;
+  color: var(--tv-text-secondary);
 }
 
 .chain-toggle:hover { background: var(--tv-bg-tertiary); }
@@ -584,76 +733,130 @@
   border-color: var(--tv-accent);
 }
 
-.chain-wrapper {
-  background: var(--tv-bg);
-  border: 1px solid var(--tv-border);
-  border-radius: 6px;
+.chain-atm-btn {
+  padding: 4px 10px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  font-family: inherit;
+  border: 1px solid var(--tv-orange);
+  background: var(--tv-orange-bg);
+  color: var(--tv-orange);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.chain-atm-btn:hover {
+  background: var(--tv-orange);
+  color: #fff;
+}
+
+/* Chain Table */
+.chain-table-wrapper {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.chain-table {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
-.chain-header {
+/* Both-side header */
+.chain-header-row {
   display: grid;
-  grid-template-columns: 1fr 60px 1fr;
+  grid-template-columns: 1fr 64px 1fr;
   background: var(--tv-bg-secondary);
-  border-bottom: 1px solid var(--tv-border);
+  border-bottom: 2px solid var(--tv-border);
   font-size: var(--t-2xs);
-  font-weight: 600;
-  color: var(--tv-text-secondary);
+  font-weight: 700;
+  color: var(--tv-text-tertiary);
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
 }
 
-.chain-side {
+.chain-side-header {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-  padding: 8px 6px;
-}
-
-.chain-side.calls { background: rgba(16, 185, 129, 0.05); }
-.chain-side.puts { background: rgba(239, 68, 68, 0.05); }
-
-.chain-side span {
+  gap: 1px;
+  padding: 8px 4px;
   text-align: center;
 }
 
-.chain-strike-header {
+.chain-side-header.calls-header { background: rgba(16, 185, 129, 0.04); }
+.chain-side-header.puts-header { background: rgba(239, 68, 68, 0.04); }
+
+.chain-strike-col-header {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--tv-text-primary);
   background: var(--tv-bg-tertiary);
 }
 
-.chain-body {
-  max-height: 300px;
-  overflow-y: auto;
+/* Single-side header (calls/puts only view) */
+.chain-single-header {
+  display: grid;
+  grid-template-columns: 70px repeat(7, 1fr);
+  gap: 1px;
+  padding: 8px 6px;
+  background: var(--tv-bg-secondary);
+  border-bottom: 2px solid var(--tv-border);
+  font-size: var(--t-2xs);
+  font-weight: 700;
+  color: var(--tv-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+  flex-shrink: 0;
 }
 
+/* Chain body - scrollable */
+.chain-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Chain rows - both view */
 .chain-row {
   display: grid;
-  grid-template-columns: 1fr 60px 1fr;
+  grid-template-columns: 1fr 64px 1fr;
   border-bottom: 1px solid var(--tv-bg-tertiary);
   font-size: var(--t-xs);
-  transition: background 0.15s;
+  transition: background 0.1s;
 }
 
-.chain-row:hover { background: #fafafa; }
+.chain-row:hover { background: var(--tv-bg-secondary); }
 
-.chain-row.atm { background: var(--tv-orange-bg); }
-.chain-row.itm-call .chain-calls { background: rgba(16, 185, 129, 0.1); }
-.chain-row.itm-put .chain-puts { background: rgba(239, 68, 68, 0.1); }
+.chain-row.atm {
+  background: var(--tv-orange-bg);
+  border-bottom: 1px solid var(--tv-orange);
+  border-top: 1px solid var(--tv-orange);
+  position: relative;
+}
+
+.chain-row.itm-call .chain-calls { background: rgba(16, 185, 129, 0.06); }
+.chain-row.itm-put .chain-puts { background: rgba(239, 68, 68, 0.06); }
 
 .chain-calls, .chain-puts {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-  padding: 6px;
+  gap: 1px;
+  padding: 5px 4px;
+  align-items: center;
 }
 
 .chain-calls span, .chain-puts span {
   text-align: center;
   font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 .chain-strike {
@@ -666,37 +869,73 @@
   background: var(--tv-bg-secondary);
 }
 
+/* Chain rows - single view */
+.chain-single-row {
+  display: grid;
+  grid-template-columns: 70px repeat(7, 1fr);
+  gap: 1px;
+  padding: 6px;
+  border-bottom: 1px solid var(--tv-bg-tertiary);
+  font-size: var(--t-sm);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  transition: background 0.1s;
+}
+
+.chain-single-row:hover { background: var(--tv-bg-secondary); }
+.chain-single-row.atm { background: var(--tv-orange-bg); border-bottom: 1px solid var(--tv-orange); }
+.chain-single-row.itm { background: rgba(16, 185, 129, 0.06); }
+
+.chain-single-row .strike-cell {
+  font-weight: 800;
+  color: var(--tv-text-primary);
+}
+
+/* Unusual volume highlight */
+.chain-hot { color: var(--tv-orange); font-weight: 700 !important; }
+.chain-wide-spread { color: var(--tv-red); opacity: 0.7; }
+
+/* Loading */
 .chain-loading {
-  padding: 20px;
+  padding: 40px 20px;
   text-align: center;
   color: var(--tv-text-tertiary);
   font-size: var(--t-base);
 }
 
-.chain-legend {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  padding: 6px;
-  font-size: var(--t-xs);
-  color: var(--tv-text-secondary);
-}
-
-.legend-item {
+/* Footer */
+.chain-footer {
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: var(--tv-bg-secondary);
+  border-top: 1px solid var(--tv-border);
+  font-size: var(--t-xs);
+  flex-shrink: 0;
 }
 
-.legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
+.chain-legend-inline {
+  display: flex;
+  gap: 8px;
 }
 
-.legend-dot.itm { background: var(--tv-green); }
-.legend-dot.atm { background: var(--tv-orange); }
-.legend-dot.otm { background: var(--tv-border); }
+.chain-legend-tag {
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-weight: 600;
+  font-size: var(--t-2xs);
+}
+
+.chain-legend-tag.itm { background: rgba(16, 185, 129, 0.15); color: var(--tv-green); }
+.chain-legend-tag.atm { background: var(--tv-orange-bg); color: var(--tv-orange); }
+.chain-legend-tag.otm { background: var(--tv-bg-tertiary); color: var(--tv-text-secondary); }
+.chain-legend-tag.hot { background: rgba(251, 191, 36, 0.15); color: var(--tv-orange); }
+
+.chain-summary {
+  color: var(--tv-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
 
 /* Scanner Filters */
 .scanner-filters {
