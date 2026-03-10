@@ -178,7 +178,7 @@
   top: -3px;
   width: 3px;
   height: 12px;
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   border-radius: 2px;
 }
 
@@ -582,7 +582,7 @@
    ============================================ */
 
 .summary-section {
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   border-radius: 8px;
   margin: 12px;
   overflow: hidden;

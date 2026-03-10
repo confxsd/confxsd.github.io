@@ -355,7 +355,7 @@
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   border-radius: 8px 8px 0 0;
   cursor: pointer;
   transition: background 0.15s;
@@ -366,7 +366,7 @@
 }
 
 .thesis-section-header:hover {
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
 }
 
 .thesis-section-label {
@@ -395,7 +395,7 @@
 
 /* Thesis Card */
 .thesis-card {
-  background: linear-gradient(135deg, var(--tv-text-primary) 0%, var(--tv-text-primary) 100%);
+  background: linear-gradient(135deg, var(--tv-surface-inverted) 0%, var(--tv-surface-inverted) 100%);
   border-radius: 0 0 10px 10px;
   padding: 16px;
   color: #fff;
@@ -1316,7 +1316,7 @@
 }
 
 .news-report-header:hover {
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
 }
 
 .news-report-label {
@@ -1335,7 +1335,7 @@
 }
 
 .news-period-select {
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   color: var(--tv-border);
   border: 1px solid var(--tv-text-primary);
   border-radius: 4px;
@@ -1373,7 +1373,7 @@
 
 /* News Report Card */
 .news-report-card {
-  background: linear-gradient(135deg, #0f172a 0%, var(--tv-text-primary) 100%);
+  background: linear-gradient(135deg, #0f172a 0%, var(--tv-surface-inverted) 100%);
   border-radius: 0 0 10px 10px;
   padding: 16px;
   color: #fff;

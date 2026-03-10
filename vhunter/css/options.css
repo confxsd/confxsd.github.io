@@ -51,7 +51,7 @@
 }
 
 .btn-chain {
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   color: #fff;
   font-weight: 600;
   font-size: var(--t-md);
@@ -63,7 +63,7 @@
 }
 
 .btn-chain:hover {
-  background: var(--tv-text-secondary);
+  background: var(--tv-surface-inverted-hover);
 }
 
 .btn-copy {
@@ -413,7 +413,7 @@
   transform: translate(-50%, -50%);
   width: 8px;
   height: 24px;
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   border: 2px solid #fff;
   border-radius: 4px;
   transition: left 0.3s ease;
@@ -844,7 +844,7 @@
 
 /* Live Mode Button */
 .btn-live {
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   color: var(--tv-text-tertiary);
   font-weight: 700;
   font-size: var(--t-sm);
@@ -858,7 +858,7 @@
 }
 
 .btn-live:hover {
-  background: var(--tv-text-secondary);
+  background: var(--tv-surface-inverted-hover);
   color: #fff;
 }
 

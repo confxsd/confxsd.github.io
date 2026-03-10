@@ -18,7 +18,7 @@
   width: max-content;
   max-width: 280px;
   padding: 8px 12px;
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   color: var(--tv-text-tertiary);
   font-size: var(--t-sm);
   line-height: 1.5;
@@ -310,7 +310,7 @@
 
 .tooltip-divider {
   height: 1px;
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   margin: 8px 0;
 }
 
@@ -579,7 +579,7 @@
 #tooltip-portal .tip-popup,
 #tooltip-portal .tooltip-content,
 #tooltip-portal .tooltip {
-  background: var(--tv-text-primary) !important;
+  background: var(--tv-surface-inverted) !important;
   color: var(--tv-text-tertiary) !important;
   padding: 10px 12px !important;
   border-radius: 6px !important;
@@ -621,7 +621,7 @@
   left: var(--arrow-left, 50%) !important;
   right: auto !important;
   transform: translateX(-50%) !important;
-  border-bottom-color: var(--tv-text-primary) !important;
+  border-bottom-color: var(--tv-surface-inverted) !important;
   border-top-color: transparent !important;
   border-left-color: transparent !important;
   border-right-color: transparent !important;
@@ -637,7 +637,7 @@
   left: var(--arrow-left, 50%) !important;
   right: auto !important;
   transform: translateX(-50%) !important;
-  border-top-color: var(--tv-text-primary) !important;
+  border-top-color: var(--tv-surface-inverted) !important;
   border-bottom-color: transparent !important;
   border-left-color: transparent !important;
   border-right-color: transparent !important;

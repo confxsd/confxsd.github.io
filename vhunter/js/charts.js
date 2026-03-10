@@ -1,5 +1,10 @@
 // Charts Module - Chart.js initialization and updates with reference lines
 
+// Read resolved CSS variable — works for both light/dark since vars change with theme
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
 const lineStyle = {
   borderWidth: 1,
   borderDash: [3, 3],
@@ -33,7 +38,7 @@ const chartOptions = {
     legend: { display: false },
     tooltip: {
       enabled: true,
-      backgroundColor: '#131722',
+      backgroundColor: () => cssVar('--tv-tooltip-bg'),
       titleFont: { size: 11, family: 'Plus Jakarta Sans', weight: '600' },
       bodyFont: { size: 11, family: 'Plus Jakarta Sans' },
       padding: 10,
@@ -50,18 +55,18 @@ const chartOptions = {
       border: { display: false },
       ticks: {
         font: { size: 9, family: 'Plus Jakarta Sans' },
-        color: '#b2b5be',
+        color: () => cssVar('--tv-text-tertiary'),
         maxTicksLimit: 8,
         maxRotation: 0
       }
     },
     y: {
       position: 'right',
-      grid: { color: '#f0f3fa', drawBorder: false },
+      grid: { color: () => cssVar('--tv-border-light'), drawBorder: false },
       border: { display: false },
       ticks: {
         font: { size: 9, family: 'Plus Jakarta Sans' },
-        color: '#b2b5be',
+        color: () => cssVar('--tv-text-tertiary'),
         maxTicksLimit: 5,
         padding: 8
       }
@@ -535,4 +540,10 @@ function formatVol(vol) {
   if (vol >= 1e6) return (vol / 1e6).toFixed(1) + 'M';
   if (vol >= 1e3) return (vol / 1e3).toFixed(1) + 'K';
   return vol.toFixed(0);
+}
+
+export function updateChartsTheme() {
+  Object.values(charts).forEach(chart => {
+    if (chart) chart.update();
+  });
 }

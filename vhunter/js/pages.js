@@ -2,6 +2,7 @@
 import * as ui from './ui.js';
 import { updateRoute } from './router.js';
 import { stopPolling } from './terminal.js';
+import { updateChartsTheme } from './charts.js';
 
 let currentPage = 'analyze';
 let pageLoaders = {};
@@ -156,6 +157,7 @@ export function toggleTheme() {
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('vhunter_theme', next);
   updateThemeUI(next);
+  updateChartsTheme();
 }
 
 function updateThemeUI(theme) {

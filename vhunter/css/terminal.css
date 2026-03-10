@@ -166,7 +166,7 @@
 }
 
 .tf-btn.active {
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   color: #fff;
 }
 

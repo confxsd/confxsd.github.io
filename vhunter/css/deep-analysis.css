@@ -30,7 +30,7 @@
   font-size: var(--t-xs);
 }
 .da-error-hint code {
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   padding: 2px 6px;
   border-radius: 3px;
   color: var(--tv-accent);
@@ -82,7 +82,7 @@
   gap: 8px;
 }
 .da-count {
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   color: var(--tv-accent);
   padding: 1px 6px;
   border-radius: 10px;
@@ -159,15 +159,15 @@
 .da-badge-critical { background: #7f1d1d; color: #fca5a5; }
 .da-badge-high { background: #78350f; color: #fcd34d; }
 .da-badge-medium { background: #1e3a5f; color: #93c5fd; }
-.da-badge-low { background: var(--tv-text-primary); color: var(--tv-text-tertiary); }
-.da-badge-type { background: var(--tv-text-primary); color: #a5b4fc; }
+.da-badge-low { background: var(--tv-surface-inverted); color: var(--tv-text-tertiary); }
+.da-badge-type { background: var(--tv-surface-inverted); color: #a5b4fc; }
 .da-badge-pattern { background: #312e81; color: #c4b5fd; }
 .da-badge-expired { background: #7f1d1d; color: #fca5a5; }
 .da-badge-stale { background: #78350f; color: #fcd34d; }
 .da-badge-aging { background: #713f12; color: #fde68a; }
 .da-badge-fresh { background: #064e3b; color: #6ee7b7; }
 .da-badge-trend-accelerating { background: #7f1d1d; color: #fca5a5; }
-.da-badge-trend-stable { background: var(--tv-text-primary); color: var(--tv-text-tertiary); }
+.da-badge-trend-stable { background: var(--tv-surface-inverted); color: var(--tv-text-tertiary); }
 .da-badge-trend-decelerating { background: #064e3b; color: #6ee7b7; }
 
 /* Direction badges — long/short */
@@ -176,7 +176,7 @@
 
 /* Opportunity status badges */
 .da-badge-opp-actionable { background: #064e3b; color: #6ee7b7; }
-.da-badge-opp-moved { background: var(--tv-text-primary); color: var(--tv-text-secondary); }
+.da-badge-opp-moved { background: var(--tv-surface-inverted); color: var(--tv-text-secondary); }
 .da-badge-opp-broken { background: #451a03; color: #fb923c; }
 .da-badge-opp-distributing { background: #4c0519; color: #fda4af; }
 
@@ -209,7 +209,7 @@
 }
 .da-smf-bar-wrap {
   height: 3px;
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -222,7 +222,7 @@
 /* Confidence bar */
 .da-conf-bar {
   height: 6px;
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   border-radius: 3px;
   position: relative;
   margin: 4px 0;
@@ -244,7 +244,7 @@
 /* Stage/completeness bar */
 .da-stage-bar {
   height: 4px;
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   border-radius: 2px;
   margin: 4px 0;
   overflow: hidden;
@@ -266,7 +266,7 @@
 .da-vel-bar-wrap {
   flex: 1;
   height: 4px;
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   border-radius: 2px;
   overflow: hidden;
 }

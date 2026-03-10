@@ -37,7 +37,7 @@
   width: 240px;
   max-height: 320px;
   overflow-y: auto;
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   color: var(--tv-text-tertiary);
   padding: 10px 12px;
   border-radius: 6px;

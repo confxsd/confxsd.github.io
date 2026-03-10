@@ -42,6 +42,9 @@
   --tv-orange-bg: rgba(255, 152, 0, 0.1);
   --tv-purple: #7c4dff;
   --tv-cyan: #00bcd4;
+  --tv-tooltip-bg: #131722;
+  --tv-surface-inverted: #131722;
+  --tv-surface-inverted-hover: #2a2e39;
 
   /* Scrollbar */
   --tv-scrollbar-track: #f0f0f0;
@@ -56,8 +59,8 @@
   --tv-border: #363a45;
   --tv-border-light: #2a2e39;
   --tv-text-primary: #d1d4dc;
-  --tv-text-secondary: #787b86;
-  --tv-text-tertiary: #4c525e;
+  --tv-text-secondary: #8b8e99;
+  --tv-text-tertiary: #5d6473;
   --tv-accent: #2962ff;
   --tv-accent-hover: #1e53e5;
   --tv-green: #26a69a;
@@ -70,6 +73,9 @@
   --tv-orange-bg: rgba(255, 152, 0, 0.15);
   --tv-purple: #7c4dff;
   --tv-cyan: #00bcd4;
+  --tv-tooltip-bg: #1e222d;
+  --tv-surface-inverted: #2a2e39;
+  --tv-surface-inverted-hover: #363a45;
   --tv-scrollbar-track: #1e222d;
   --tv-scrollbar-thumb: #363a45;
 
@@ -142,19 +148,250 @@ body {
   opacity: 0.92;
 }
 
-/* Dark overrides for hardcoded backgrounds */
+/* ═══════════════════════════════════════════════════
+   Dark theme overrides for hardcoded colors
+   Grouped by color family for maintainability
+   ═══════════════════════════════════════════════════ */
+
+/* ── Green pastels (#dcfce7, #f0fdf4, #ecfdf5) → dark green ── */
+[data-theme="dark"] .dc-fund-chip.dc-fund-up,
+[data-theme="dark"] .dc-confirm-met,
+[data-theme="dark"] .dc-entry-zone,
+[data-theme="dark"] .feed-sentiment.g,
+[data-theme="dark"] .feed-status.processed,
+[data-theme="dark"] .insight-conviction.high,
+[data-theme="dark"] .memory-card-category.sector,
+[data-theme="dark"] .memory-timeline-delta.positive,
+[data-theme="dark"] .perf-icon.win-icon,
+[data-theme="dark"] .sl-dir.long,
+[data-theme="dark"] .sl-win,
+[data-theme="dark"] .at-dir.long,
+[data-theme="dark"] .at-eval-signal.hold,
+[data-theme="dark"] .at-eval-signal.add,
+[data-theme="dark"] .regime-value.risk-on,
+[data-theme="dark"] .rotation-arrow.up,
+[data-theme="dark"] .calendar-impact.low,
+[data-theme="dark"] .insight-direction-long {
+  background: #132917 !important;
+  color: #4ade80 !important;
+  border-color: #1a3d22 !important;
+}
+
+/* ── Blue pastels (#dbeafe, #f0f9ff, #eef2ff, #e0e7ff) → dark blue ── */
+[data-theme="dark"] .dc-signal.running,
+[data-theme="dark"] .dc-fund-chip,
+[data-theme="dark"] .memory-card-category.macro,
+[data-theme="dark"] .memory-card-category.theme,
+[data-theme="dark"] .perf-icon.best-icon,
+[data-theme="dark"] .position-type.call,
+[data-theme="dark"] .position-signal.add,
+[data-theme="dark"] .fila-badge--increase,
+[data-theme="dark"] .fila-badge--watch,
+[data-theme="dark"] .tp-status.running,
+[data-theme="dark"] .edge-badge.surface,
+[data-theme="dark"] .insight-direction-neutral,
+[data-theme="dark"] .ticker-bias-neutral {
+  background: #151c2e !important;
+  color: #60a5fa !important;
+  border-color: #1e2d4a !important;
+}
+
+/* ── Yellow pastels (#fef9c3, #fef3c7) → dark amber ── */
+[data-theme="dark"] .dc-signal.watch,
+[data-theme="dark"] .dc-conv-badge.conv-med,
+[data-theme="dark"] .dc-badge.align-moderate,
+[data-theme="dark"] .dc-size-badge.size-half,
+[data-theme="dark"] .dc-review-grade.dc-review-b,
 [data-theme="dark"] .at-conviction.medium,
 [data-theme="dark"] .at-eval-signal.trim,
 [data-theme="dark"] .sl-sig.sl-sig-soon,
+[data-theme="dark"] .tp-score-badge.medium,
+[data-theme="dark"] .tp-conviction.medium,
+[data-theme="dark"] .tp-flag.yellow {
+  background: #2a2312 !important;
+  color: #fbbf24 !important;
+  border-color: #3d3318 !important;
+}
+
+/* ── Orange pastels (#ffedd5, #fff7ed) → dark orange ── */
+[data-theme="dark"] .dc-signal.entry-soon,
+[data-theme="dark"] .dc-badge.risk,
+[data-theme="dark"] .dc-badge.align-weak,
+[data-theme="dark"] .dc-size-badge.size-quarter,
 [data-theme="dark"] .dc-earnings-soon,
-[data-theme="dark"] .dc-fund-chip.dc-fund-down { background: #332b1a; }
-
-[data-theme="dark"] .dc-fund-chip.dc-fund-up { background: #1a332f; }
-
+[data-theme="dark"] .dc-fund-chip.dc-fund-down,
 [data-theme="dark"] .fila-anomaly-card {
-  background: #332b1a;
-  border-color: #5c4b1f;
-  color: var(--tv-orange);
+  background: #2a1d0e !important;
+  color: #fb923c !important;
+  border-color: #3d2a14 !important;
+}
+
+/* ── Purple pastels (#f3e8ff, #ede9fe, #fce7f3) → dark purple ── */
+[data-theme="dark"] .dc-signal.exit,
+[data-theme="dark"] .dc-tag,
+[data-theme="dark"] .memory-card-category.ticker,
+[data-theme="dark"] .memory-card-category.relationship,
+[data-theme="dark"] .regime-value.divergence {
+  background: #1e1529 !important;
+  color: #c084fc !important;
+  border-color: #2d1f3d !important;
+}
+
+/* ── Red pastels (#fee2e2, #fef2f2) → dark red ── */
+[data-theme="dark"] .dc-signal.stop,
+[data-theme="dark"] .feed-sentiment.r,
+[data-theme="dark"] .at-dir.short,
+[data-theme="dark"] .sl-dir.short {
+  background: #2a1215 !important;
+  color: #f87171 !important;
+  border-color: #3d1a1e !important;
+}
+
+/* ── Daily checker specific ── */
+[data-theme="dark"] .dc-run-one-btn {
+  border-color: #363a45 !important;
+}
+[data-theme="dark"] .dc-run-one-btn:hover {
+  background: var(--tv-bg-tertiary) !important;
+}
+[data-theme="dark"] .dc-exp-actions .btn-danger {
+  border-color: #5c2a2a !important;
+}
+
+/* ── Ticker bias badges in feed ── */
+[data-theme="dark"] .ticker-bias-bullish {
+  background: #132917 !important;
+  color: #4ade80 !important;
+}
+[data-theme="dark"] .ticker-bias-bearish {
+  background: #2a1215 !important;
+  color: #f87171 !important;
+}
+
+/* ── Terminal widget badge ── */
+[data-theme="dark"] .tw-badge-running {
+  background: #151c2e !important;
+  color: #60a5fa !important;
+}
+
+/* ── Macro dashboard ── */
+[data-theme="dark"] .macro-regime-card,
+[data-theme="dark"] .macro-calendar-row {
+  border-color: var(--tv-border) !important;
+}
+
+/* ── Text contrast improvements ── */
+[data-theme="dark"] .dc-conv-badge,
+[data-theme="dark"] .dc-badge,
+[data-theme="dark"] .dc-size-badge {
+  border-color: transparent !important;
+}
+
+/* Hardcoded dark text colors that need lightening */
+[data-theme="dark"] [style*="color: #131722"],
+[data-theme="dark"] [style*="color: #1e1e1e"],
+[data-theme="dark"] [style*="color: #333"] {
+  color: var(--tv-text-primary) !important;
+}
+
+/* ── Feed badges ── */
+[data-theme="dark"] .feed-sentiment.n,
+[data-theme="dark"] .feed-status.pending,
+[data-theme="dark"] .insight-conviction.medium,
+[data-theme="dark"] .evolving-factor-trend.volatile,
+[data-theme="dark"] .news-urgency-badge.today {
+  background: #2a1d0e !important;
+  color: #fb923c !important;
+}
+[data-theme="dark"] .insight-direction.bullish,
+[data-theme="dark"] .ticker-bias.bullish,
+[data-theme="dark"] .evolving-factor-trend.improving {
+  background: #132917 !important;
+  color: #4ade80 !important;
+}
+[data-theme="dark"] .insight-direction.bearish,
+[data-theme="dark"] .ticker-bias.bearish {
+  background: #2a1215 !important;
+  color: #f87171 !important;
+}
+[data-theme="dark"] .insight-direction.informational,
+[data-theme="dark"] .ticker-bias.informational {
+  background: #151c2e !important;
+  color: #60a5fa !important;
+}
+
+/* ── Review badges in daily checker ── */
+[data-theme="dark"] .dc-review-badge.dc-review-flag,
+[data-theme="dark"] .dc-review-grade.dc-review-flag,
+[data-theme="dark"] .dc-review-action.dc-review-flag {
+  background: #2a2312 !important;
+  color: #fbbf24 !important;
+  border-color: #3d3318 !important;
+}
+
+/* ── Macro dashboard text colors ── */
+[data-theme="dark"] .data-item-change.up,
+[data-theme="dark"] .metric-signal.bullish,
+[data-theme="dark"] .rotation-signal-text.bullish,
+[data-theme="dark"] .rotation-value-num.positive,
+[data-theme="dark"] .macro-section-summary .positive,
+[data-theme="dark"] .rate-change.down,
+[data-theme="dark"] .asset-change.positive,
+[data-theme="dark"] .perf-up,
+[data-theme="dark"] .macro-ai-section-content .bullish,
+[data-theme="dark"] .memory-stat.bullish .memory-stat-value {
+  color: #4ade80 !important;
+}
+
+/* ── Teaching/sizing tooltip ── */
+[data-theme="dark"] .sizing-title {
+  color: #fb923c !important;
+}
+
+/* ── Sidebar text brightness ── */
+[data-theme="dark"] .nav-item {
+  color: #9ca3af;
+}
+[data-theme="dark"] .nav-item:hover {
+  color: #e5e7eb;
+}
+[data-theme="dark"] .nav-item.active {
+  color: #5b8def;
+}
+
+/* ── Insight form background ── */
+[data-theme="dark"] .insight-form {
+  background: var(--tv-bg-secondary) !important;
+}
+
+/* ── Teaching gradients ── */
+[data-theme="dark"] .edge-badge.surface,
+[data-theme="dark"] .edge-shimmer,
+[data-theme="dark"] .edge-content {
+  background: #151c2e !important;
+}
+
+/* ── Memory map geopolitical ── */
+[data-theme="dark"] .memory-card-category.geopolitical {
+  background: #2a1d0e !important;
+  color: #fb923c !important;
+}
+
+/* ── Filings analytics ── */
+[data-theme="dark"] .fila-badge--decrease {
+  background: #2a1d0e !important;
+  color: #fb923c !important;
+}
+[data-theme="dark"] .fila-anomaly-card {
+  background: #2a1d0e !important;
+  border-color: #3d2a14 !important;
+  color: #fb923c !important;
+}
+
+/* ── Financials ── */
+[data-theme="dark"] .fin-badge.elite {
+  background: rgba(34, 197, 94, 0.15) !important;
+  color: #4ade80 !important;
 }
 
 /* Theme toggle */

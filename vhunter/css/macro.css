@@ -61,7 +61,7 @@
 
 .data-strip-label {
   display: table-cell;
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   color: var(--tv-border);
   font-size: var(--t-2xs);
   font-weight: 600;
@@ -113,7 +113,7 @@
   left: 0;
   width: 300px;
   max-width: calc(100vw - 20px);
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   color: var(--tv-text-tertiary);
   padding: 12px 14px;
   border-radius: 6px;
@@ -162,7 +162,7 @@
   font-size: var(--t-sm);
   margin-bottom: 10px;
   padding: 6px 8px;
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   border-radius: 4px;
 }
 
@@ -399,7 +399,7 @@
   transform: translate(-50%, -50%);
   width: 2px;
   height: 8px;
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   border-radius: 1px;
 }
 
@@ -1163,7 +1163,7 @@
   max-width: calc(100vw - 20px);
   max-height: 300px;
   overflow-y: auto;
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   color: var(--tv-text-tertiary);
   padding: 10px 12px;
   border-radius: 6px;
@@ -1251,7 +1251,7 @@
   position: absolute;
   bottom: calc(100% + 8px);
   left: 0;
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   color: var(--tv-border);
   padding: 8px 12px;
   border-radius: 4px;
@@ -1284,7 +1284,7 @@
   position: absolute;
   bottom: calc(100% + 6px);
   left: 0;
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   color: var(--tv-border);
   padding: 8px 12px;
   border-radius: 4px;
@@ -1319,7 +1319,7 @@
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
-  background: var(--tv-text-primary);
+  background: var(--tv-surface-inverted);
   color: var(--tv-border);
   padding: 10px 14px;
   border-radius: 4px;
