@@ -64,7 +64,6 @@ export async function loadFilings() {
     renderPipeTable();
     renderFundsGrid();
     renderHoldingsStats();
-    renderTopHeld();
     renderHoldingsTable();
     updateLastScan();
 
@@ -649,40 +648,6 @@ function renderHoldingsStats() {
     const val = holdingsSummary.summary?.totalValue || 0;
     valueEl.textContent = val > 1e9 ? `$${(val / 1e9).toFixed(1)}B` : val > 1e6 ? `$${(val / 1e6).toFixed(0)}M` : '$0';
   }
-}
-
-function renderTopHeld() {
-  const container = document.getElementById('filTopHeld');
-  if (!container) return;
-
-  if (!holdings || holdings.length === 0) {
-    container.innerHTML = '';
-    return;
-  }
-
-  // Top 5 by fund count
-  const topByFunds = [...holdings]
-    .sort((a, b) => (b.fund_count || 0) - (a.fund_count || 0))
-    .slice(0, 5);
-
-  const period = holdingsSummary?.period ? formatQuarter(holdingsSummary.period) : '';
-  const totalFunds = holdingsSummary?.summary?.totalFunds || 0;
-  const totalVal = holdingsSummary?.summary?.totalValue || 0;
-
-  container.innerHTML = `
-    <div class="fil-top-held-row">
-      <div class="fil-top-held-label">Top Held</div>
-      <div class="fil-top-held-pills">
-        ${topByFunds.map(h => `
-          <span class="fil-top-pill" onclick="showTickerHoldings('${h.ticker}')" title="${h.issuer_name || h.ticker}">
-            <strong>${h.ticker}</strong>
-            <span class="fil-top-pill-count">${h.fund_count} funds</span>
-          </span>
-        `).join('')}
-      </div>
-      <div class="fil-top-held-coverage">${totalFunds} funds · ${period} · ${formatValue(totalVal)} total</div>
-    </div>
-  `;
 }
 
 function renderHoldingsTable() {
