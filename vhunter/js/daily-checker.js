@@ -634,13 +634,33 @@ window.dcSave = async function() {
 window.dcToggleAll = async function() {
   if (!checksCache.length) return;
   const allOn = checksCache.every(c => c.status !== 'inactive');
-  const newStatus = allOn ? 'inactive' : 'active';
   try {
-    await Promise.all(checksCache.map(c => {
-      if (c.status === newStatus) return;
-      return updateDailyCheck(c.id, { status: newStatus });
-    }));
-    checksCache.forEach(c => c.status = newStatus);
+    if (allOn) {
+      // Save current status to prev_status, then deactivate
+      await Promise.all(checksCache.map(c => {
+        if (c.status === 'inactive') return;
+        return updateDailyCheck(c.id, { prev_status: c.status, status: 'inactive' });
+      }));
+      checksCache.forEach(c => {
+        if (c.status !== 'inactive') {
+          c.prev_status = c.status;
+          c.status = 'inactive';
+        }
+      });
+    } else {
+      // Restore from prev_status stored in DB, fallback to 'watch'
+      await Promise.all(checksCache.map(c => {
+        if (c.status !== 'inactive') return;
+        const restored = c.prev_status || 'watch';
+        return updateDailyCheck(c.id, { status: restored, prev_status: null });
+      }));
+      checksCache.forEach(c => {
+        if (c.status === 'inactive') {
+          c.status = c.prev_status || 'watch';
+          c.prev_status = null;
+        }
+      });
+    }
     renderDailyChecker();
   } catch (e) {
     console.error('[DAILY_CHECKER] Toggle all failed:', e);
