@@ -2,7 +2,7 @@
 import * as ui from './ui.js';
 import { initCharts } from './charts.js';
 import { parseRoute, initRouter } from './router.js';
-import { renderHistory, setSearchCallback } from './history.js';
+import { registerStrip, renderAll as renderHistory } from './history.js';
 import { switchPage, registerPageLoaders, restoreCollapsedSections, getCurrentPage } from './pages.js';
 import { loadPositions, setRunCallback as setPositionsRunCallback } from './positions.js';
 
@@ -24,8 +24,20 @@ import { initTooltipPositioning } from './tooltip-position.js';
 import './portfolio.js';
 import './llm-export.js';
 
-// Initialize callbacks to avoid circular dependencies
-setSearchCallback(() => run());
+// Register history strips
+registerStrip('historyStrip', (ticker) => {
+  ui.$('tk').value = ticker;
+  run();
+}, () => ui.$('tk')?.value?.toUpperCase().trim());
+
+registerStrip('historyStripMobile', (ticker) => {
+  ui.$('tk').value = ticker;
+  run();
+}, () => ui.$('tk')?.value?.toUpperCase().trim());
+
+registerStrip('holdingsHistoryStrip', (ticker) => {
+  window.showTickerHoldings(ticker);
+});
 setPositionsRunCallback(() => run());
 
 setFeedRunCallback(() => run());

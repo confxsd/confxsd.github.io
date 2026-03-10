@@ -4,6 +4,7 @@
  */
 
 import { CONFIG } from './config.js';
+import { addToHistory } from './history.js';
 
 // State
 let filings = [];
@@ -548,6 +549,9 @@ function getFilteredFilings() {
     );
   }
 
+  // Filter out convertible bonds
+  filtered = filtered.filter(f => !isConvertible(f.subject_ticker));
+
   // Mega cap filter
   if (hideMegaCap) {
     filtered = filtered.filter(f => !isMegaCap(f.subject_ticker));
@@ -717,6 +721,7 @@ function renderHoldingsTable() {
       </tbody>
     </table>
     ${hasMore ? `<div class="fil-load-more"><button class="fil-btn fil-btn-ghost" onclick="loadMoreHoldings()">Show more (${filtered.length - holdingsPage} remaining)</button></div>` : ''}
+    ${holdingsFilters._convertibleCount > 0 ? `<div class="fil-convert-notice"><i class="fa-solid fa-info-circle"></i> ${holdingsFilters._convertibleCount} convertible bonds hidden — mostly arb desk positions, not directional equity conviction</div>` : ''}
   `;
 }
 
@@ -752,8 +757,17 @@ function renderHoldingRow(holding) {
   `;
 }
 
+function isConvertible(ticker) {
+  return ticker && /\s/.test(ticker.trim());
+}
+
 function getFilteredHoldings() {
   let filtered = [...holdings];
+
+  // Filter out convertible bonds/notes
+  const convertibleCount = filtered.filter(h => isConvertible(h.ticker)).length;
+  filtered = filtered.filter(h => !isConvertible(h.ticker));
+  holdingsFilters._convertibleCount = convertibleCount;
 
   // Search filter
   if (holdingsFilters.search) {
@@ -935,6 +949,7 @@ window.toggleMegaCap = function() {
 
 window.showTickerHoldings = async function(ticker) {
   try {
+    addToHistory(ticker.toUpperCase());
     const data = await fetchHoldingsByTicker(ticker);
     showModal(`${ticker} - Institutional Ownership`, buildTickerHoldingsModal(ticker, data));
   } catch (e) {
@@ -986,6 +1001,9 @@ function renderChangesTable() {
   if (!container) return;
 
   let items = changesData?.changes || [];
+
+  // Filter out convertible bonds
+  items = items.filter(c => !isConvertible(c.ticker));
 
   // Mega cap filter
   if (hideMegaCap) {
@@ -1139,12 +1157,13 @@ function buildTickerHoldingsModal(ticker, data) {
     `;
   }
 
-  // Merge 13F changes with Form 4 / 13D/G filing changes
+  // Merge 13F changes with Form 4 / 13D/G filing changes, sorted by date desc
   const filingChanges = data.filingChanges || [];
+  const pc0 = data.periodComparison || {};
   const allChanges = [
-    ...changes.map(c => ({ ...c, source: '13F' })),
+    ...changes.map(c => ({ ...c, source: '13F', filed_date: pc0.current || '2000-01-01' })),
     ...filingChanges.map(c => ({ ...c, source: c.filing_type }))
-  ];
+  ].sort((a, b) => (b.filed_date || '').localeCompare(a.filed_date || ''));
 
   if (allChanges.length > 0) {
     const pc = data.periodComparison || {};
@@ -1185,10 +1204,12 @@ function buildTickerHoldingsModal(ticker, data) {
         const parts = [];
         if (c.shares) parts.push(formatNumber(c.shares) + ' sh');
         if (c.price) parts.push('@$' + Number(c.price).toFixed(2));
-        return parts.length ? `<span style="color:${actionColor(c)};font-weight:600">${parts.join(' ')}</span>` : '';
+        const dateStr = c.filed_date ? `<div style="color:#94a3b8;font-size:10px">${c.filed_date}</div>` : '';
+        return (parts.length ? `<span style="color:${actionColor(c)};font-weight:600">${parts.join(' ')}</span>` : '') + dateStr;
       }
       if (c.source === '13D' || c.source === '13G') {
-        return c.pctOwned ? `<span style="font-weight:600">${c.pctOwned}%</span>` : '';
+        const dateStr = c.filed_date ? `<div style="color:#94a3b8;font-size:10px">${c.filed_date}</div>` : '';
+        return (c.pctOwned ? `<span style="font-weight:600">${c.pctOwned}%</span>` : '') + dateStr;
       }
       return '';
     };
@@ -1225,15 +1246,17 @@ function buildTickerHoldingsModal(ticker, data) {
             <div><strong>13G</strong><span>Passive >5%. ~10 day delay.</span></div>
           </div>
         </div>
-        <div class="fil-changes-list">
-          ${allChanges.slice(0, 15).map(c => `
-            <div class="fil-change-row ${changeRowClass(c)}">
+        <div class="fil-changes-list fil-changes-scroll">
+          ${allChanges.map((c, i) => `
+            <div class="fil-change-row ${changeRowClass(c)}"${i >= 10 ? ' style="display:none"' : ''} data-change-idx="${i}">
+              <span class="fil-change-source" title="${c.source}">${sourceIcon(c.source)}</span>
               <span class="fil-change-fund ${c.fund_id ? 'fil-clickable' : ''}" ${c.fund_id ? `onclick="event.stopPropagation(); showFundDetails('${c.fund_id}')"` : ''}>${c.fund}</span>
-              <span class="fil-change-type" style="color:${actionColor(c)}" title="${(c.type || '').replace(/_/g, ' ')}">${sourceIcon(c.source)} ${actionIcon(c)}</span>
+              <span class="fil-change-type" style="color:${actionColor(c)}" title="${(c.type || '').replace(/_/g, ' ')}">${actionIcon(c)}</span>
               <span class="fil-change-pct">${changeDetail(c)}</span>
             </div>
           `).join('')}
         </div>
+        ${allChanges.length > 10 ? `<div class="fil-more fil-more-toggle" onclick="window._loadMoreChanges(this, ${allChanges.length})">+${allChanges.length - 10} more changes</div>` : ''}
       </div>
     `;
   }
@@ -1333,6 +1356,24 @@ window._toggleHoldings = function(btn, moreCount) {
     rows[i].style.display = isHidden ? '' : 'none';
   }
   btn.textContent = isHidden ? 'Show less' : `+${moreCount} more positions`;
+};
+
+window._loadMoreChanges = function(btn, total) {
+  const list = btn.closest('.fil-modal-section').querySelector('.fil-changes-list');
+  const hidden = list.querySelectorAll('.fil-change-row[style*="display:none"]');
+  const batch = 10;
+  let shown = 0;
+  for (const row of hidden) {
+    if (shown >= batch) break;
+    row.style.display = '';
+    shown++;
+  }
+  const remaining = hidden.length - shown;
+  if (remaining > 0) {
+    btn.textContent = `+${remaining} more changes`;
+  } else {
+    btn.remove();
+  }
 };
 
 // ============== SCAN ACTIONS ==============

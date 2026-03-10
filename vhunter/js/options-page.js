@@ -11,7 +11,7 @@ import { getCurrentThesis } from './feed.js';
 import { updateDynamicTooltips, updateSectionTooltips } from './teaching-tips.js';
 // Advanced gamma analytics (SIG-level dealer positioning)
 import * as gammaTools from './gamma.js';
-import { addToHistory, setOptionsSearchCallback, renderOptionsHistory } from './history.js';
+import { addToHistory, registerStrip } from './history.js';
 // Standardized financial calculations for consistency
 import * as finMath from './financial-math.js';
 
@@ -1538,8 +1538,11 @@ Analyze this options data and provide insights on positioning, potential moves, 
 
 // Initialize options page history
 export function initOptionsPage() {
-  setOptionsSearchCallback(loadOptionsData);
-  renderOptionsHistory();
+  registerStrip('optionsHistoryStrip', (ticker) => {
+    const input = document.getElementById('optTicker');
+    if (input) input.value = ticker;
+    loadOptionsData();
+  }, () => document.getElementById('optTicker')?.value?.toUpperCase().trim());
 }
 
 // Live mode functions

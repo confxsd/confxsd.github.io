@@ -1171,6 +1171,7 @@
                     id="holdSearchInput"
                     placeholder="Search by ticker..."
                     onkeyup="searchHoldings(this.value)"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();const t=this.value.trim().toUpperCase();if(t)showTickerHoldings(t);}"
                   />
                 </div>
                 <div class="fil-filter-group">
@@ -1195,6 +1196,7 @@
                   </select>
                 </div>
               </div>
+              <div class="fil-holdings-history" id="holdingsHistoryStrip"></div>
 
               <!-- Holdings Table -->
               <div class="fil-section">
