@@ -149,8 +149,30 @@ export function restoreCollapsedSections() {
   });
 }
 
+// Theme toggle
+export function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next = isDark ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('vhunter_theme', next);
+  updateThemeUI(next);
+}
+
+function updateThemeUI(theme) {
+  const icon = document.getElementById('themeIcon');
+  const label = document.getElementById('themeLabel');
+  if (icon) icon.innerHTML = theme === 'dark' ? '&#9788;' : '&#9790;';
+  if (label) label.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+}
+
+// Init theme UI on load
+document.addEventListener('DOMContentLoaded', () => {
+  updateThemeUI(localStorage.getItem('vhunter_theme') || 'light');
+});
+
 // Expose to window for onclick handlers
 window.switchPage = switchPage;
 window.toggleSidebar = toggleSidebar;
 window.toggleSection = toggleSection;
 window.toggleMobileMenu = toggleMobileMenu;
+window.toggleTheme = toggleTheme;

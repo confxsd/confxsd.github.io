@@ -327,7 +327,7 @@
 .dc-exp-actions .btn-danger {
   color: var(--tv-red) !important;
   border-color: #fca5a5 !important;
-  background: #fff !important;
+  background: var(--tv-bg) !important;
 }
 
 .dc-exp-actions .btn-danger:hover {

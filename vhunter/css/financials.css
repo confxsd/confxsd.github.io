@@ -3,7 +3,7 @@
 /* Override section-content grid for financials section */
 #sec-financials .section-content {
   display: block !important;
-  background: #fff !important;
+  background: var(--tv-bg) !important;
   grid-template-columns: none !important;
 }
 

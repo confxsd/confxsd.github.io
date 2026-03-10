@@ -42,6 +42,38 @@
   --tv-orange-bg: rgba(255, 152, 0, 0.1);
   --tv-purple: #7c4dff;
   --tv-cyan: #00bcd4;
+
+  /* Scrollbar */
+  --tv-scrollbar-track: #f0f0f0;
+  --tv-scrollbar-thumb: #ccc;
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  --tv-bg: #131722;
+  --tv-bg-secondary: #1e222d;
+  --tv-bg-tertiary: #2a2e39;
+  --tv-border: #363a45;
+  --tv-border-light: #2a2e39;
+  --tv-text-primary: #d1d4dc;
+  --tv-text-secondary: #787b86;
+  --tv-text-tertiary: #4c525e;
+  --tv-accent: #2962ff;
+  --tv-accent-hover: #1e53e5;
+  --tv-green: #26a69a;
+  --tv-green-bg: rgba(38, 166, 154, 0.15);
+  --tv-green-bg-solid: #1a332f;
+  --tv-red: #ef5350;
+  --tv-red-bg: rgba(239, 83, 80, 0.15);
+  --tv-red-bg-solid: #351a1a;
+  --tv-orange: #ff9800;
+  --tv-orange-bg: rgba(255, 152, 0, 0.15);
+  --tv-purple: #7c4dff;
+  --tv-cyan: #00bcd4;
+  --tv-scrollbar-track: #1e222d;
+  --tv-scrollbar-thumb: #363a45;
+
+  color-scheme: dark;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -89,3 +121,64 @@ body {
 
 /* Utility */
 .hidden { display: none !important; }
+
+/* Dark theme form/input overrides */
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group select,
+[data-theme="dark"] .form-group textarea {
+  color: var(--tv-text-primary);
+}
+
+[data-theme="dark"] .form-group select option {
+  background: var(--tv-bg-secondary);
+  color: var(--tv-text-primary);
+}
+
+[data-theme="dark"] .header-search input {
+  color: var(--tv-text-primary);
+}
+
+[data-theme="dark"] img {
+  opacity: 0.92;
+}
+
+/* Dark overrides for hardcoded backgrounds */
+[data-theme="dark"] .at-conviction.medium,
+[data-theme="dark"] .at-eval-signal.trim,
+[data-theme="dark"] .sl-sig.sl-sig-soon,
+[data-theme="dark"] .dc-earnings-soon,
+[data-theme="dark"] .dc-fund-chip.dc-fund-down { background: #332b1a; }
+
+[data-theme="dark"] .dc-fund-chip.dc-fund-up { background: #1a332f; }
+
+[data-theme="dark"] .fila-anomaly-card {
+  background: #332b1a;
+  border-color: #5c4b1f;
+  color: var(--tv-orange);
+}
+
+/* Theme toggle */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--tv-text-secondary);
+  font-size: var(--t-sm);
+  font-family: inherit;
+  width: 100%;
+  transition: color 0.15s;
+}
+
+.theme-toggle:hover {
+  color: var(--tv-text-primary);
+}
+
+.theme-toggle-icon {
+  font-size: 16px;
+  width: 18px;
+  text-align: center;
+}

@@ -86,6 +86,83 @@ const DEFAULT_SECTORS = [
   { ticker: 'XLB', name: 'Materials', weight: 2 }
 ];
 
+// ============================================
+// MULTI-TIMEFRAME & QUANT CONFIG
+// ============================================
+
+// Tickers to fetch historical daily bars for (multi-timeframe analysis)
+const HISTORICAL_TICKERS = [
+  'SPY', 'QQQ', 'IWM', 'DIA',           // US Indices
+  'TLT', 'SHY', 'IEF',                   // Rates
+  'GLD', 'SLV', 'USO', 'CPER', 'BITO',   // Commodities
+  'UVXY', 'UUP',                           // Vol & Dollar
+  'HYG', 'LQD',                           // Credit
+  'VGK', 'FXI', 'EEM',                    // Global
+  'IWF', 'IWD', 'XLP', 'XLY'             // Factors
+];
+
+// Correlation pairs with expected ranges for anomaly detection
+const CORRELATION_PAIRS = [
+  { a: 'SPY', b: 'QQQ', label: 'SPY/QQQ', expectedRange: [0.80, 0.99], desc: 'Equity cohesion' },
+  { a: 'SPY', b: 'TLT', label: 'SPY/TLT', expectedRange: [-0.65, -0.05], desc: 'Stock-bond' },
+  { a: 'SPY', b: 'GLD', label: 'SPY/GLD', expectedRange: [-0.35, 0.35], desc: 'Risk vs haven' },
+  { a: 'SPY', b: 'UVXY', label: 'SPY/VIX', expectedRange: [-0.97, -0.65], desc: 'Fear gauge' },
+  { a: 'SPY', b: 'UUP', label: 'SPY/USD', expectedRange: [-0.55, 0.15], desc: 'Dollar drag' },
+  { a: 'TLT', b: 'GLD', label: 'TLT/GLD', expectedRange: [0.05, 0.60], desc: 'Safe havens' },
+  { a: 'HYG', b: 'SPY', label: 'HYG/SPY', expectedRange: [0.55, 0.92], desc: 'Credit risk' },
+  { a: 'EEM', b: 'UUP', label: 'EM/USD', expectedRange: [-0.75, -0.15], desc: 'EM sensitivity' }
+];
+
+// Performance matrix categories for the multi-timeframe table
+const PERF_CATEGORIES = [
+  {
+    label: 'US EQUITY',
+    items: [
+      { ticker: 'SPY', name: 'S&P 500' },
+      { ticker: 'QQQ', name: 'Nasdaq' },
+      { ticker: 'IWM', name: 'Russell' },
+      { ticker: 'DIA', name: 'Dow' }
+    ]
+  },
+  {
+    label: 'RATES',
+    items: [
+      { ticker: 'TLT', name: '20Y+ Bond' },
+      { ticker: 'IEF', name: '7-10Y Bond' },
+      { ticker: 'SHY', name: '1-3Y Bond' }
+    ]
+  },
+  {
+    label: 'COMMODITIES',
+    items: [
+      { ticker: 'GLD', name: 'Gold' },
+      { ticker: 'SLV', name: 'Silver' },
+      { ticker: 'USO', name: 'Crude Oil' },
+      { ticker: 'CPER', name: 'Copper' },
+      { ticker: 'BITO', name: 'Bitcoin' }
+    ]
+  },
+  {
+    label: 'GLOBAL',
+    items: [
+      { ticker: 'VGK', name: 'Europe' },
+      { ticker: 'FXI', name: 'China' },
+      { ticker: 'EEM', name: 'EM' }
+    ]
+  },
+  {
+    label: 'FACTORS',
+    items: [
+      { ticker: 'UVXY', name: 'Volatility' },
+      { ticker: 'UUP', name: 'US Dollar' },
+      { ticker: 'HYG', name: 'HY Credit' },
+      { ticker: 'LQD', name: 'IG Credit' },
+      { ticker: 'IWF', name: 'Growth' },
+      { ticker: 'IWD', name: 'Value' }
+    ]
+  }
+];
+
 // Tooltip definitions
 const TOOLTIPS = {
   regime: {
@@ -443,51 +520,59 @@ async function saveAiTooltipToDb(section, content) {
   }
 }
 
+// Format ticker with multi-timeframe context for AI prompts
+function fmtTickerForAi(ticker) {
+  const d = macroData[ticker];
+  if (!d) return `${ticker}: N/A`;
+  const tf = timeframeChanges[ticker];
+  let line = `${ticker}: $${d.price?.toFixed(2)} (1D: ${d.changePercent >= 0 ? '+' : ''}${d.changePercent?.toFixed(2)}%)`;
+  if (tf?.w1 != null) line += ` 1W: ${tf.w1 >= 0 ? '+' : ''}${tf.w1.toFixed(1)}%`;
+  if (tf?.m1 != null) line += ` 1M: ${tf.m1 >= 0 ? '+' : ''}${tf.m1.toFixed(1)}%`;
+  if (tf?.m3 != null) line += ` 3M: ${tf.m3 >= 0 ? '+' : ''}${tf.m3.toFixed(1)}%`;
+  return line;
+}
+
 // Build market context for AI prompts
 function buildMarketContext(section) {
   const lines = [];
 
   switch (section) {
     case 'IDX':
-      lines.push('US INDICES TODAY:');
+      lines.push('US INDICES (multi-timeframe):');
       DEFAULT_INDICES.forEach(idx => {
-        const d = macroData[idx.ticker];
-        if (d) lines.push(`${idx.ticker}: $${d.price?.toFixed(2)} (${d.changePercent >= 0 ? '+' : ''}${d.changePercent?.toFixed(2)}%)`);
+        lines.push(fmtTickerForAi(idx.ticker));
       });
-      const vix = macroData[DEFAULT_VIX.ticker];
-      if (vix) lines.push(`VIX (UVXY): $${vix.price?.toFixed(2)} (${vix.changePercent >= 0 ? '+' : ''}${vix.changePercent?.toFixed(2)}%)`);
+      lines.push(fmtTickerForAi(DEFAULT_VIX.ticker));
       break;
 
     case 'RATE':
-      lines.push('TREASURY BOND ETFS TODAY (inverse to yields):');
+      lines.push('TREASURY BOND ETFS (multi-timeframe, inverse to yields):');
       DEFAULT_RATES.forEach(rate => {
-        const d = macroData[rate.ticker];
-        if (d) lines.push(`${rate.label} (${rate.ticker}): $${d.price?.toFixed(2)} (${d.changePercent >= 0 ? '+' : ''}${d.changePercent?.toFixed(2)}%)`);
+        lines.push(fmtTickerForAi(rate.ticker));
       });
-      const tlt = macroData['TLT'];
-      const shy = macroData['SHY'];
-      if (tlt && shy) {
-        const spread = (tlt.changePercent - shy.changePercent).toFixed(2);
-        lines.push(`Curve spread (TLT-SHY): ${spread}%`);
+      {
+        const tlt = macroData['TLT'];
+        const shy = macroData['SHY'];
+        if (tlt && shy) {
+          const spread = (tlt.changePercent - shy.changePercent).toFixed(2);
+          lines.push(`Curve spread (TLT-SHY): ${spread}%`);
+        }
       }
       break;
 
     case 'CMDY':
-      lines.push('COMMODITIES TODAY:');
+      lines.push('COMMODITIES (multi-timeframe):');
       DEFAULT_COMMODITIES.forEach(comm => {
-        const d = macroData[comm.ticker];
-        if (d) lines.push(`${comm.name} (${comm.ticker}): $${d.price?.toFixed(2)} (${d.changePercent >= 0 ? '+' : ''}${d.changePercent?.toFixed(2)}%)`);
+        lines.push(fmtTickerForAi(comm.ticker));
       });
       break;
 
     case 'GLBL':
-      lines.push('GLOBAL INDICES TODAY:');
+      lines.push('GLOBAL INDICES (multi-timeframe):');
       GLOBAL_INDICES.forEach(idx => {
-        const d = macroData[idx.ticker];
-        if (d) lines.push(`${idx.name} (${idx.ticker}): $${d.price?.toFixed(2)} (${d.changePercent >= 0 ? '+' : ''}${d.changePercent?.toFixed(2)}%)`);
+        lines.push(fmtTickerForAi(idx.ticker));
       });
-      const spy = macroData['SPY'];
-      if (spy) lines.push(`US (SPY): $${spy.price?.toFixed(2)} (${spy.changePercent >= 0 ? '+' : ''}${spy.changePercent?.toFixed(2)}%)`);
+      lines.push(fmtTickerForAi('SPY'));
       break;
 
     case 'SECTOR':
@@ -736,6 +821,9 @@ let refreshInterval = null;
 let macroData = {};
 let metrics = {};
 let sparklineData = {}; // Store historical data for sparklines
+let historicalBars = {};     // ticker -> [{c, h, l, o, v, t}, ...]
+let timeframeChanges = {};   // ticker -> {d1, w1, m1, m3, ytd}
+let correlationData = {};    // 'SPY/TLT' -> { value: -0.42, status: 'normal', expected: [-0.6, -0.1] }
 
 // Load settings from localStorage
 function loadSettings() {
@@ -842,6 +930,145 @@ async function fetchRotationSparklines() {
   });
 }
 
+// ============================================
+// MULTI-TIMEFRAME HISTORICAL DATA
+// ============================================
+
+// Fetch daily bars for a single ticker (past ~200 calendar days for 3M + YTD coverage)
+async function fetchDailyBars(ticker) {
+  try {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 200);
+    const from = start.toISOString().split('T')[0];
+    const to = end.toISOString().split('T')[0];
+    const data = await fetchPolygon(`/v2/aggs/ticker/${ticker}/range/1/day/${from}/${to}?adjusted=true&sort=asc&limit=250`);
+    return data?.results || [];
+  } catch (e) {
+    console.warn(`Failed to fetch daily bars for ${ticker}:`, e.message);
+    return [];
+  }
+}
+
+// Fetch historical bars for all key tickers (parallel)
+async function fetchAllHistoricalBars() {
+  const results = await Promise.allSettled(
+    HISTORICAL_TICKERS.map(ticker => fetchDailyBars(ticker))
+  );
+  HISTORICAL_TICKERS.forEach((ticker, i) => {
+    if (results[i].status === 'fulfilled' && results[i].value?.length > 0) {
+      historicalBars[ticker] = results[i].value;
+    }
+  });
+}
+
+// Compute multi-timeframe changes for a single ticker
+function computeTickerTimeframes(ticker) {
+  const bars = historicalBars[ticker];
+  const current = macroData[ticker];
+  if (!bars?.length || !current?.price) return null;
+
+  const currentPrice = current.price;
+  const now = new Date();
+  const jan1 = new Date(now.getFullYear(), 0, 1).getTime();
+
+  // Get closing price N trading days back from end of bars
+  const priceNBack = (n) => {
+    const idx = bars.length - 1 - n;
+    return idx >= 0 ? bars[idx].c : null;
+  };
+
+  // YTD: find first bar on or after Jan 1
+  let ytdPrice = null;
+  for (const bar of bars) {
+    if (bar.t >= jan1) {
+      ytdPrice = bar.c;
+      break;
+    }
+  }
+  if (!ytdPrice && bars.length > 0) ytdPrice = bars[0].c;
+
+  const pctChange = (fromPrice) => fromPrice ? ((currentPrice - fromPrice) / fromPrice) * 100 : null;
+
+  return {
+    d1: current.changePercent,
+    w1: pctChange(priceNBack(5)),
+    m1: pctChange(priceNBack(21)),
+    m3: pctChange(priceNBack(63)),
+    ytd: pctChange(ytdPrice)
+  };
+}
+
+// Compute all timeframe changes
+function computeAllTimeframeChanges() {
+  HISTORICAL_TICKERS.forEach(ticker => {
+    const changes = computeTickerTimeframes(ticker);
+    if (changes) timeframeChanges[ticker] = changes;
+  });
+}
+
+// ============================================
+// ROLLING CORRELATIONS (Pearson)
+// ============================================
+
+// Compute daily log returns from bars
+function computeDailyReturns(bars, window = 20) {
+  if (!bars?.length || bars.length < 2) return [];
+  const recent = bars.slice(-(window + 1));
+  const returns = [];
+  for (let i = 1; i < recent.length; i++) {
+    returns.push((recent[i].c - recent[i - 1].c) / recent[i - 1].c);
+  }
+  return returns;
+}
+
+// Pearson correlation coefficient
+function pearsonCorrelation(r1, r2) {
+  const n = Math.min(r1.length, r2.length);
+  if (n < 5) return null;
+
+  const a = r1.slice(-n);
+  const b = r2.slice(-n);
+
+  const meanA = a.reduce((s, v) => s + v, 0) / n;
+  const meanB = b.reduce((s, v) => s + v, 0) / n;
+
+  let cov = 0, varA = 0, varB = 0;
+  for (let i = 0; i < n; i++) {
+    const da = a[i] - meanA;
+    const db = b[i] - meanB;
+    cov += da * db;
+    varA += da * da;
+    varB += db * db;
+  }
+
+  const denom = Math.sqrt(varA * varB);
+  return denom === 0 ? 0 : cov / denom;
+}
+
+// Compute all correlation pairs
+function computeAllCorrelations() {
+  CORRELATION_PAIRS.forEach(pair => {
+    const returns1 = computeDailyReturns(historicalBars[pair.a], 20);
+    const returns2 = computeDailyReturns(historicalBars[pair.b], 20);
+    const value = pearsonCorrelation(returns1, returns2);
+
+    if (value !== null) {
+      const [lo, hi] = pair.expectedRange;
+      let status = 'normal';
+      if (value < lo - 0.15 || value > hi + 0.15) status = 'unusual';
+      else if (value < lo || value > hi) status = 'shifting';
+
+      correlationData[pair.label] = {
+        value,
+        status,
+        expected: pair.expectedRange,
+        desc: pair.desc
+      };
+    }
+  });
+}
+
 // Generate SVG sparkline path - returns object with SVG and colors for legend
 function generateSparklineSVG(ticker1, ticker2, width = 100, height = 32) {
   const data1 = sparklineData[ticker1];
@@ -929,16 +1156,17 @@ function processSnapshot(data) {
 // Fetch all macro data
 async function fetchAllMacroData() {
   const allTickers = getAllTickers();
-  console.log('Fetching macro data for:', allTickers);
 
-  // Fetch snapshots and sparklines in parallel
-  const [results] = await Promise.all([
+  // Fetch snapshots, sparklines, and historical bars in parallel
+  const [snapshotResults] = await Promise.all([
     Promise.allSettled(allTickers.map(ticker => fetchSnapshot(ticker))),
-    fetchRotationSparklines()
+    fetchRotationSparklines(),
+    fetchAllHistoricalBars()
   ]);
 
+  // Process snapshots first (historical computations depend on current prices)
   allTickers.forEach((ticker, i) => {
-    const result = results[i];
+    const result = snapshotResults[i];
     if (result.status === 'fulfilled' && result.value) {
       const processed = processSnapshot(result.value);
       if (processed) {
@@ -948,7 +1176,9 @@ async function fetchAllMacroData() {
     }
   });
 
-  // Calculate derived metrics
+  // Compute derived data (needs macroData populated)
+  computeAllTimeframeChanges();
+  computeAllCorrelations();
   metrics = calculateMetrics();
   updateLastUpdate();
 }
@@ -1474,6 +1704,135 @@ function renderGlobalIndices() {
   `;
 }
 
+// ============================================
+// PERFORMANCE MATRIX RENDERING
+// ============================================
+
+// Color intensity for performance cells
+function getPerfCellBg(val) {
+  if (val == null) return 'transparent';
+  const absVal = Math.abs(val);
+  const maxAlpha = 0.30;
+  const alpha = Math.min(absVal / 8, maxAlpha); // 8% = full intensity
+  if (val > 0.05) return `rgba(22, 163, 74, ${alpha})`;
+  if (val < -0.05) return `rgba(239, 68, 68, ${alpha})`;
+  return 'transparent';
+}
+
+function renderPerformanceMatrix() {
+  const container = document.getElementById('perfMatrix');
+  if (!container) return;
+
+  const hasHistorical = Object.keys(timeframeChanges).length > 0;
+
+  const fmtPct = (val) => {
+    if (val == null) return '<span class="perf-na">--</span>';
+    const cls = val > 0.05 ? 'perf-up' : val < -0.05 ? 'perf-down' : 'perf-flat';
+    return `<span class="${cls}" style="background:${getPerfCellBg(val)}">${val >= 0 ? '+' : ''}${val.toFixed(2)}%</span>`;
+  };
+
+  const fmtPrice = (p) => {
+    if (!p) return '--';
+    return p >= 1000 ? p.toFixed(0) : p >= 100 ? p.toFixed(1) : p.toFixed(2);
+  };
+
+  let html = `<div class="perf-matrix ${hasHistorical ? 'perf-full' : 'perf-compact'}">`;
+
+  // Header
+  html += `
+    <div class="perf-row perf-header-row">
+      <span class="perf-cell perf-asset-cell">ASSET</span>
+      <span class="perf-cell perf-price-cell">PRICE</span>
+      <span class="perf-cell perf-chg-cell">1D</span>
+      ${hasHistorical ? `
+        <span class="perf-cell perf-chg-cell">1W</span>
+        <span class="perf-cell perf-chg-cell">1M</span>
+        <span class="perf-cell perf-chg-cell">3M</span>
+        <span class="perf-cell perf-chg-cell">YTD</span>
+      ` : ''}
+    </div>
+  `;
+
+  PERF_CATEGORIES.forEach(cat => {
+    html += `<div class="perf-category-label">${cat.label}</div>`;
+
+    cat.items.forEach(({ ticker, name }) => {
+      const data = macroData[ticker];
+      const tf = timeframeChanges[ticker];
+      const price = data?.price;
+
+      html += `
+        <div class="perf-row" onclick="window.macroAnalyzeTicker && macroAnalyzeTicker('${ticker}')">
+          <span class="perf-cell perf-asset-cell">
+            <span class="perf-ticker">${ticker}</span>
+            <span class="perf-name">${name}</span>
+          </span>
+          <span class="perf-cell perf-price-cell">${fmtPrice(price)}</span>
+          <span class="perf-cell perf-chg-cell">${fmtPct(data?.changePercent)}</span>
+          ${hasHistorical ? `
+            <span class="perf-cell perf-chg-cell">${fmtPct(tf?.w1)}</span>
+            <span class="perf-cell perf-chg-cell">${fmtPct(tf?.m1)}</span>
+            <span class="perf-cell perf-chg-cell">${fmtPct(tf?.m3)}</span>
+            <span class="perf-cell perf-chg-cell">${fmtPct(tf?.ytd)}</span>
+          ` : ''}
+        </div>
+      `;
+    });
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ============================================
+// ENHANCED CORRELATIONS RENDERING
+// ============================================
+
+function renderCorrelationsEnhanced() {
+  const container = document.getElementById('correlationsGrid');
+  if (!container) return;
+
+  const hasReal = Object.keys(correlationData).length > 0;
+
+  if (!hasReal) {
+    // Fallback to simple same-direction check
+    renderCorrelations();
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="corr-header-row">
+      <span class="corr-h-pair">PAIR</span>
+      <span class="corr-h-val">20D</span>
+      <span class="corr-h-bar"></span>
+      <span class="corr-h-status">STATUS</span>
+    </div>
+  ` + CORRELATION_PAIRS.map(pair => {
+    const data = correlationData[pair.label];
+    if (!data) return '';
+
+    const { value, status, desc } = data;
+    const absVal = Math.abs(value);
+    const barWidth = absVal * 100;
+    const isPositive = value >= 0;
+    const barColor = isPositive ? 'var(--tv-green, #16a34a)' : 'var(--tv-red, #ef4444)';
+    const statusClass = status === 'unusual' ? 'corr-unusual' : status === 'shifting' ? 'corr-shifting' : 'corr-normal';
+    const statusText = status === 'unusual' ? 'UNUSUAL' : status === 'shifting' ? 'SHIFTING' : 'NORMAL';
+
+    return `
+      <div class="corr-row ${statusClass}" title="${desc}">
+        <span class="corr-r-pair">${pair.label}</span>
+        <span class="corr-r-val">${value >= 0 ? '+' : ''}${value.toFixed(2)}</span>
+        <div class="corr-bar-wrap">
+          <div class="corr-bar-center"></div>
+          <div class="corr-bar-fill" style="width:${barWidth}%;background:${barColor};${isPositive ? 'left:50%' : `right:50%`}"></div>
+        </div>
+        <span class="corr-r-status ${statusClass}">${statusText}</span>
+      </div>
+    `;
+  }).join('');
+}
+
 // Format volume for display (e.g., 1.2M, 450K)
 function formatVolume(vol) {
   if (!vol || vol === 0) return '--';
@@ -1729,8 +2088,9 @@ function renderAll() {
   renderGlobalIndices();
   renderBonds();
   renderCommodities();
+  renderPerformanceMatrix();
   renderMag7();
-  renderCorrelations();
+  renderCorrelationsEnhanced();
   renderCalendarDate();
   loadCachedAiAnalysis();
   loadCachedAiTooltips();
@@ -1739,7 +2099,7 @@ function renderAll() {
 // Show loading state
 function showLoading() {
   const loadingHtml = '<div class="macro-loading">Loading...</div>';
-  ['sectorHeatmap', 'indicesCards', 'globalIndicesCards', 'bondsCards', 'commoditiesCards', 'mag7Cards'].forEach(id => {
+  ['sectorHeatmap', 'indicesCards', 'globalIndicesCards', 'bondsCards', 'commoditiesCards', 'perfMatrix', 'mag7Cards'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = loadingHtml;
   });
@@ -1930,6 +2290,19 @@ async function generateMacroAnalysis() {
   const buildMarketSnapshot = () => {
     const m = metrics;
     const lines = [];
+    const hasHist = Object.keys(timeframeChanges).length > 0;
+
+    // Helper for multi-timeframe formatting
+    const fmtTf = (ticker, label) => {
+      const d = macroData[ticker];
+      if (!d) return '';
+      const tf = timeframeChanges[ticker];
+      let line = `- ${label} (${ticker}): $${d.price?.toFixed(2)} (1D: ${d.changePercent >= 0 ? '+' : ''}${d.changePercent?.toFixed(2)}%)`;
+      if (tf?.w1 != null) line += ` 1W: ${tf.w1 >= 0 ? '+' : ''}${tf.w1.toFixed(1)}%`;
+      if (tf?.m1 != null) line += ` 1M: ${tf.m1 >= 0 ? '+' : ''}${tf.m1.toFixed(1)}%`;
+      if (tf?.m3 != null) line += ` 3M: ${tf.m3 >= 0 ? '+' : ''}${tf.m3.toFixed(1)}%`;
+      return line;
+    };
 
     // Market regime
     lines.push(`MARKET REGIME: ${m.regime?.regime || 'N/A'} (Score: ${m.regime?.score || 0})`);
@@ -1956,18 +2329,25 @@ async function generateMacroAnalysis() {
     lines.push(`- Large/Small Cap (SPY-IWM): ${m.qualitySpread?.signal} (${m.qualitySpread?.value?.toFixed(2)}%)`);
     lines.push('');
 
-    // Indices
-    lines.push('INDICES:');
+    // Cross-asset correlations
+    if (Object.keys(correlationData).length > 0) {
+      lines.push('CROSS-ASSET CORRELATIONS (20D rolling):');
+      Object.entries(correlationData).forEach(([label, data]) => {
+        lines.push(`- ${label}: ${data.value >= 0 ? '+' : ''}${data.value.toFixed(2)} (${data.status}${data.status !== 'normal' ? ' - WATCH' : ''})`);
+      });
+      lines.push('');
+    }
+
+    // Indices with multi-timeframe
+    lines.push('INDICES (multi-timeframe):');
     DEFAULT_INDICES.forEach(idx => {
-      const d = macroData[idx.ticker];
-      if (d) lines.push(`- ${idx.name} (${idx.ticker}): $${d.price?.toFixed(2)} (${d.changePercent >= 0 ? '+' : ''}${d.changePercent?.toFixed(2)}%)`);
+      lines.push(fmtTf(idx.ticker, idx.name));
     });
-    const vix = macroData[DEFAULT_VIX.ticker];
-    if (vix) lines.push(`- VIX (UVXY): $${vix.price?.toFixed(2)} (${vix.changePercent >= 0 ? '+' : ''}${vix.changePercent?.toFixed(2)}%)`);
+    lines.push(fmtTf(DEFAULT_VIX.ticker, 'VIX'));
     lines.push('');
 
     // Sectors
-    lines.push('SECTOR PERFORMANCE (sorted by change):');
+    lines.push('SECTOR PERFORMANCE (sorted by 1D change):');
     const sectors = DEFAULT_SECTORS.map(s => ({
       ...s,
       changePercent: macroData[s.ticker]?.changePercent || 0
@@ -1977,19 +2357,17 @@ async function generateMacroAnalysis() {
     });
     lines.push('');
 
-    // Bonds
-    lines.push('BONDS:');
+    // Bonds with multi-timeframe
+    lines.push('BONDS (multi-timeframe):');
     DEFAULT_BONDS.forEach(b => {
-      const d = macroData[b.ticker];
-      if (d) lines.push(`- ${b.name} (${b.ticker}): $${d.price?.toFixed(2)} (${d.changePercent >= 0 ? '+' : ''}${d.changePercent?.toFixed(2)}%)`);
+      lines.push(fmtTf(b.ticker, b.name));
     });
     lines.push('');
 
-    // Commodities
-    lines.push('COMMODITIES:');
+    // Commodities with multi-timeframe
+    lines.push('COMMODITIES (multi-timeframe):');
     DEFAULT_COMMODITIES.forEach(c => {
-      const d = macroData[c.ticker];
-      if (d) lines.push(`- ${c.name} (${c.ticker}): $${d.price?.toFixed(2)} (${d.changePercent >= 0 ? '+' : ''}${d.changePercent?.toFixed(2)}%)`);
+      lines.push(fmtTf(c.ticker, c.name));
     });
 
     return lines.join('\n');
@@ -2141,25 +2519,35 @@ function loadCachedAiAnalysis() {
 
 /**
  * Get a compact macro snapshot string for thesis generation.
- * Reuses already-fetched macro data from the dashboard.
+ * Enhanced with multi-timeframe data when available.
  */
 export function getMacroSnapshot() {
   const tickers = ['SPY', 'QQQ', 'IWM', 'DIA', 'TLT', 'SHY', 'UVXY', 'GLD', 'USO', 'HYG', 'UUP', 'XLK', 'XLF', 'XLE', 'XLY'];
   const hasData = tickers.some(t => macroData[t]);
   if (!hasData) return null;
 
+  const hasHistorical = Object.keys(timeframeChanges).length > 0;
+
   const fmt = (ticker) => {
     const d = macroData[ticker];
     if (!d?.price) return `${ticker} N/A`;
     const sign = d.changePercent >= 0 ? '+' : '';
-    return `${ticker} $${d.price.toFixed(2)} (${sign}${d.changePercent.toFixed(2)}%)`;
+    const tf = timeframeChanges[ticker];
+    let extra = '';
+    if (tf?.w1 != null) extra += ` W:${tf.w1 >= 0 ? '+' : ''}${tf.w1.toFixed(1)}%`;
+    if (tf?.m1 != null) extra += ` M:${tf.m1 >= 0 ? '+' : ''}${tf.m1.toFixed(1)}%`;
+    if (tf?.m3 != null) extra += ` 3M:${tf.m3 >= 0 ? '+' : ''}${tf.m3.toFixed(1)}%`;
+    return `${ticker} $${d.price.toFixed(2)} (${sign}${d.changePercent.toFixed(2)}%${extra})`;
   };
 
   const pctOnly = (ticker) => {
     const d = macroData[ticker];
     if (!d) return `${ticker} N/A`;
     const sign = d.changePercent >= 0 ? '+' : '';
-    return `${ticker} ${sign}${d.changePercent.toFixed(2)}%`;
+    const tf = timeframeChanges[ticker];
+    let extra = '';
+    if (tf?.w1 != null) extra += ` W:${tf.w1 >= 0 ? '+' : ''}${tf.w1.toFixed(1)}%`;
+    return `${ticker} ${sign}${d.changePercent.toFixed(2)}%${extra}`;
   };
 
   // Derive signals
@@ -2184,6 +2572,41 @@ export function getMacroSnapshot() {
 
   const curveSignal = tltChg > shyChg ? 'Curve flattening (long end rallying)' : 'Curve steepening';
 
+  // Multi-timeframe trend context
+  let trendContext = '';
+  if (hasHistorical) {
+    const spyTf = timeframeChanges['SPY'];
+    const tltTf = timeframeChanges['TLT'];
+    const gldTf = timeframeChanges['GLD'];
+    const uupTf = timeframeChanges['UUP'];
+
+    const parts = [];
+    if (spyTf?.m1 != null) {
+      const trend = spyTf.m1 > 2 ? 'uptrend' : spyTf.m1 < -2 ? 'downtrend' : 'choppy';
+      parts.push(`SPY ${trend} (1M: ${spyTf.m1 >= 0 ? '+' : ''}${spyTf.m1.toFixed(1)}%, 3M: ${spyTf.m3 >= 0 ? '+' : ''}${spyTf.m3?.toFixed(1)}%)`);
+    }
+    if (tltTf?.m1 != null) {
+      const rateDir = tltTf.m1 > 0 ? 'falling' : 'rising';
+      parts.push(`Rates ${rateDir} (TLT 1M: ${tltTf.m1 >= 0 ? '+' : ''}${tltTf.m1.toFixed(1)}%)`);
+    }
+    if (gldTf?.m1 != null && Math.abs(gldTf.m1) > 2) {
+      parts.push(`Gold ${gldTf.m1 > 0 ? 'rallying' : 'selling'} (1M: ${gldTf.m1 >= 0 ? '+' : ''}${gldTf.m1.toFixed(1)}%)`);
+    }
+    if (uupTf?.m1 != null && Math.abs(uupTf.m1) > 1) {
+      parts.push(`Dollar ${uupTf.m1 > 0 ? 'strengthening' : 'weakening'} (1M: ${uupTf.m1 >= 0 ? '+' : ''}${uupTf.m1.toFixed(1)}%)`);
+    }
+    if (parts.length > 0) trendContext = '\nBROADER TRENDS: ' + parts.join('. ');
+  }
+
+  // Correlation context
+  let corrContext = '';
+  if (Object.keys(correlationData).length > 0) {
+    const unusual = Object.entries(correlationData)
+      .filter(([, d]) => d.status !== 'normal')
+      .map(([label, d]) => `${label} ${d.value >= 0 ? '+' : ''}${d.value.toFixed(2)} (${d.status})`);
+    if (unusual.length > 0) corrContext = '\nCORRELATION ALERTS: ' + unusual.join(', ');
+  }
+
   return `REAL-TIME MARKET DATA:
 Indices: ${fmt('SPY')}, ${fmt('QQQ')}, ${fmt('IWM')}, ${fmt('DIA')}
 Rates: ${fmt('TLT')}, ${fmt('SHY')} → ${curveSignal}
@@ -2192,7 +2615,77 @@ Commodities: ${fmt('GLD')}, ${fmt('USO')}
 Credit: ${fmt('HYG')} → ${(macroData['HYG']?.changePercent || 0) > 0 ? 'Spreads tightening' : 'Spreads widening'}
 Dollar: ${fmt('UUP')}
 Sectors: ${pctOnly('XLK')}, ${pctOnly('XLF')}, ${pctOnly('XLE')}, ${pctOnly('XLY')}
-Signals: ${signals.join(', ')}`;
+Signals: ${signals.join(', ')}${trendContext}${corrContext}`;
+}
+
+/**
+ * Get structured macro state object for programmatic consumption.
+ * Designed for use by agents, thesis generation, and API endpoints.
+ */
+export function getMacroState() {
+  const hasData = ['SPY', 'QQQ', 'TLT'].some(t => macroData[t]);
+  if (!hasData) return null;
+
+  const state = {
+    timestamp: new Date().toISOString(),
+    regime: metrics.regime || { regime: 'UNKNOWN', score: 0, description: '' },
+    signals: {
+      yieldCurve: metrics.yieldCurve,
+      riskAppetite: metrics.riskAppetite,
+      volRegime: metrics.volRegime,
+      techValue: metrics.techValue,
+      goldSignal: metrics.goldSignal,
+      breadth: metrics.breadth,
+      growthValue: metrics.growthValue,
+      creditSpread: metrics.creditSpread,
+      dollarStrength: metrics.dollarStrength,
+      emFlow: metrics.emFlow,
+      defensiveRotation: metrics.defensiveRotation,
+      qualitySpread: metrics.qualitySpread
+    },
+    performance: {},
+    correlations: {},
+    sectors: {}
+  };
+
+  // Multi-timeframe performance for all historical tickers
+  HISTORICAL_TICKERS.forEach(ticker => {
+    const d = macroData[ticker];
+    const tf = timeframeChanges[ticker];
+    if (d) {
+      state.performance[ticker] = {
+        price: d.price,
+        d1: d.changePercent,
+        w1: tf?.w1 ?? null,
+        m1: tf?.m1 ?? null,
+        m3: tf?.m3 ?? null,
+        ytd: tf?.ytd ?? null
+      };
+    }
+  });
+
+  // Correlation data
+  Object.entries(correlationData).forEach(([label, data]) => {
+    state.correlations[label] = {
+      value: data.value,
+      status: data.status,
+      desc: data.desc
+    };
+  });
+
+  // Sector data
+  DEFAULT_SECTORS.forEach(s => {
+    const d = macroData[s.ticker];
+    if (d) {
+      state.sectors[s.ticker] = {
+        name: s.name,
+        weight: s.weight,
+        d1: d.changePercent
+      };
+    }
+  });
+
+  return state;
 }
 
 // Expose functions to window
@@ -2206,3 +2699,4 @@ window.toggleMacroAi = toggleMacroAi;
 window.generateMacroAnalysis = generateMacroAnalysis;
 window.refreshAllAiTooltips = refreshAllAiTooltips;
 window.unloadMacro = unloadMacro;
+window.getMacroState = getMacroState;

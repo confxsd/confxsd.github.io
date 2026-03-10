@@ -326,7 +326,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: white;
+  background: var(--tv-bg);
   border: 1px solid var(--tv-border);
   border-radius: 8px;
   font-size: var(--t-sm);

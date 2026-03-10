@@ -8,6 +8,13 @@
     />
     <title>VHunter - Signal Terminal</title>
     <script>
+      // Theme: apply before render to prevent flash
+      (function() {
+        var t = localStorage.getItem('vhunter_theme') || 'light';
+        if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      })();
+    </script>
+    <script>
       // Debug: Show errors on screen for mobile debugging
       window.onerror = function (msg, url, line) {
         var d = document.getElementById("debug-log");
@@ -232,6 +239,10 @@
           </a>
         </nav>
         <div class="sidebar-footer">
+          <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
+            <span class="theme-toggle-icon" id="themeIcon">&#9790;</span>
+            <span id="themeLabel">Dark Mode</span>
+          </button>
           <div class="time" id="tm"></div>
         </div>
       </aside>
@@ -2502,6 +2513,27 @@
           <div id="globalIndicesCards"></div>
           <div id="bondsCards"></div>
           <div id="commoditiesCards"></div>
+
+          <!-- Performance Matrix (Multi-Timeframe) -->
+          <div class="macro-section macro-section-full">
+            <div class="macro-section-header">
+              <span class="macro-section-title">Performance</span>
+              <span class="macro-section-summary perf-legend">
+                <span class="perf-legend-item">1D</span>
+                <span class="perf-legend-sep">/</span>
+                <span class="perf-legend-item">1W</span>
+                <span class="perf-legend-sep">/</span>
+                <span class="perf-legend-item">1M</span>
+                <span class="perf-legend-sep">/</span>
+                <span class="perf-legend-item">3M</span>
+                <span class="perf-legend-sep">/</span>
+                <span class="perf-legend-item">YTD</span>
+              </span>
+            </div>
+            <div id="perfMatrix">
+              <div class="macro-loading">Loading...</div>
+            </div>
+          </div>
 
           <!-- Sector Weighted Grid -->
           <div class="macro-section macro-section-full">
