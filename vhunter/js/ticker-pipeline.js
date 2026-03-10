@@ -370,9 +370,6 @@ function renderDetail(el, a) {
   if (a.status === 'running' || a.status === 'submitted') {
     actions += `<button class="btn btn-sm" onclick="window.tpCancel('${a.id}')" style="color:#ef4444">Cancel</button>`;
   }
-  if (a.opportunity_id) {
-    actions += `<button class="btn btn-sm" onclick="switchPage('opportunities')">View Opportunity</button>`;
-  }
   actions += '</div>';
 
   el.innerHTML = scoreChart + stageCards + flagsSummary + tradeCard + actions;

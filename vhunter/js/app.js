@@ -6,12 +6,9 @@ import { renderHistory, setSearchCallback } from './history.js';
 import { switchPage, registerPageLoaders, restoreCollapsedSections, getCurrentPage } from './pages.js';
 import { loadPositions, setRunCallback as setPositionsRunCallback } from './positions.js';
 
-import { loadNotes, setRunCallback as setNotesRunCallback } from './notes.js';
 import { loadFeed, setRunCallback as setFeedRunCallback } from './feed.js';
 import { loadMemoryMap, setRunCallback as setMemoryRunCallback, initMemoryAutoSync } from './memory-map.js';
-import { loadOpportunities, setRunCallback as setOpportunitiesRunCallback } from './opportunities.js';
 import { loadFilings } from './filings.js';
-import { loadStrategy, setRunCallback as setStrategyRunCallback } from './strategy.js';
 import { run, initPeriodSwitch } from './analysis.js';
 import { loadOptionsData, initOptionsPage } from './options-page.js';
 import { initTerminal, startPolling, stopPolling } from './terminal.js';
@@ -31,11 +28,8 @@ import './llm-export.js';
 setSearchCallback(() => run());
 setPositionsRunCallback(() => run());
 
-setNotesRunCallback(() => run());
 setFeedRunCallback(() => run());
 setMemoryRunCallback(() => run());
-setOpportunitiesRunCallback(() => run());
-setStrategyRunCallback(() => run());
 
 // Terminal page handler (start/stop polling)
 function loadTerminal() {
@@ -47,15 +41,11 @@ console.log('[APP] About to register page loaders');
 console.log('[APP] loadMacro:', loadMacro);
 registerPageLoaders({
   positions: loadPositions,
-
-  notes: loadNotes,
   options: loadOptionsData,
   feed: loadFeed,
   memory: loadMemoryMap,
-  opportunities: loadOpportunities,
   filings: loadFilings,
   terminal: loadTerminal,
-  strategy: loadStrategy,
   macro: loadMacro,
   daily: loadDailyChecker,
   pipeline: loadPipeline,
