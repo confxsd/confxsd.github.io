@@ -90,9 +90,6 @@ export async function generateMemoryThesis() {
 // MAIN LOAD FUNCTION
 // ============================================================================
 
-let autoSyncInProgress = false;
-let lastAutoSync = 0;
-
 export async function loadMemoryMap() {
   const container = document.getElementById('memoryContainer');
   if (!container) return;
@@ -110,66 +107,6 @@ export async function loadMemoryMap() {
     renderMemoryMap(container);
   } catch (e) {
     container.innerHTML = `<div class="error">Failed to load memories: ${e.message}</div>`;
-  }
-}
-
-async function autoSyncMemoryOps() {
-  autoSyncInProgress = true;
-  const btn = document.getElementById('runAllMemoryBtn');
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = '⚡ Auto-syncing...';
-  }
-
-  try {
-    // Step 1: Extract from thesis
-    const extractResult = await extractMemories();
-    const hasNew = (extractResult.extracted || 0) + (extractResult.updated || 0) > 0;
-
-    // Step 2: Match feed to memories
-    const matchResult = await matchMemories();
-    const feedMatched = matchResult.matched || 0;
-
-    // Step 3: Match news report to memories
-    let newsMatched = 0;
-    try {
-      const newsResult = await matchNewsToMemories();
-      newsMatched = newsResult.matched || 0;
-    } catch (e) {
-      console.error('[MEMORY AUTO-SYNC] News match failed:', e.message);
-    }
-
-    const totalMatched = feedMatched + newsMatched;
-    if (hasNew || totalMatched > 0) {
-      const parts = [];
-      if (extractResult.extracted) parts.push(`${extractResult.extracted} new`);
-      if (feedMatched) parts.push(`${feedMatched} feed`);
-      if (newsMatched) parts.push(`${newsMatched} news`);
-      showToast(`Memory auto-sync: ${parts.join(', ')}`);
-      // Only reload UI if memory page is currently active
-      if (document.getElementById('memoryContainer')?.children.length > 0) {
-        loadMemoryMap();
-      }
-    }
-
-    lastAutoSync = Date.now();
-  } catch (e) {
-    console.error('[MEMORY AUTO-SYNC] Failed:', e.message);
-  } finally {
-    autoSyncInProgress = false;
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = '⚡ Run All';
-    }
-  }
-}
-
-// Background auto-sync: runs on app startup, throttled to once per 4 hours
-export function initMemoryAutoSync() {
-  const now = Date.now();
-  if (!autoSyncInProgress && (now - lastAutoSync) > 4 * 60 * 60 * 1000) {
-    console.log('[MEMORY] Background auto-sync starting...');
-    autoSyncMemoryOps();
   }
 }
 
@@ -598,70 +535,6 @@ async function saveMemory(event) {
 // ACTIONS
 // ============================================================================
 
-// Chained pipeline: Extract from Thesis → Match Feed → Generate Thesis
-async function runAllMemoryOps() {
-  const btn = document.getElementById('runAllMemoryBtn');
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = '⚡ Extracting...';
-  }
-
-  const results = [];
-
-  try {
-    // Step 1: Extract memories from thesis
-    const extractResult = await extractMemories();
-    const extractParts = [];
-    if (extractResult.extracted) extractParts.push(`${extractResult.extracted} new`);
-    if (extractResult.updated) extractParts.push(`${extractResult.updated} updated`);
-    results.push(extractParts.length ? `Extract: ${extractParts.join(', ')}` : 'Extract: no changes');
-
-    if (btn) btn.textContent = '⚡ Matching feed...';
-
-    // Step 2: Match feed signals to memories
-    const matchResult = await matchMemories();
-    if (matchResult.error) {
-      results.push(`Feed: ${matchResult.error}`);
-    } else {
-      results.push(`Feed: ${matchResult.matched || 0} from ${matchResult.processed || 0}`);
-    }
-
-    if (btn) btn.textContent = '⚡ Matching news...';
-
-    // Step 3: Match news report to memories
-    try {
-      const newsResult = await matchNewsToMemories();
-      if (newsResult.matched > 0) {
-        results.push(`News: ${newsResult.matched} matched`);
-      } else {
-        results.push(`News: ${newsResult.message || 'no matches'}`);
-      }
-    } catch (e) {
-      results.push(`News: ${e.message}`);
-    }
-
-    if (btn) btn.textContent = '⚡ Generating...';
-
-    // Step 4: Generate thesis from memories
-    const thesisResult = await generateMemoryThesis();
-    if (thesisResult.success && thesisResult.thesis) {
-      results.push('Thesis: generated');
-      showThesisModal(thesisResult.thesis);
-    } else {
-      results.push('Thesis: skipped');
-    }
-
-    showToast(results.join(' → '));
-    loadMemoryMap();
-  } catch (e) {
-    showToast('Pipeline failed: ' + e.message);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = '⚡ Run All';
-    }
-  }
-}
 
 async function extractMemoriesFromThesis() {
   const btn = document.getElementById('extractMemoriesBtn') || document.querySelector('[onclick="window.extractMemoriesFromThesis()"]');
@@ -861,7 +734,6 @@ window.openMemoryModal = openMemoryModal;
 window.closeMemoryModal = closeMemoryModal;
 window.saveMemory = saveMemory;
 window.deleteMemoryConfirm = deleteMemoryConfirm;
-window.runAllMemoryOps = runAllMemoryOps;
 window.extractMemoriesFromThesis = extractMemoriesFromThesis;
 window.matchMemoriesToFeed = matchMemoriesToFeed;
 window.generateThesisFromMemories = generateThesisFromMemories;

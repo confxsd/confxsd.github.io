@@ -7,7 +7,7 @@ import { switchPage, registerPageLoaders, restoreCollapsedSections, getCurrentPa
 import { loadPositions, setRunCallback as setPositionsRunCallback } from './positions.js';
 
 import { loadFeed, setRunCallback as setFeedRunCallback } from './feed.js';
-import { loadMemoryMap, setRunCallback as setMemoryRunCallback, initMemoryAutoSync } from './memory-map.js';
+import { loadMemoryMap, setRunCallback as setMemoryRunCallback } from './memory-map.js';
 import { loadFilings } from './filings.js';
 import { run, initPeriodSwitch } from './analysis.js';
 import { loadOptionsData, initOptionsPage } from './options-page.js';
@@ -91,9 +91,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   switchPage(page, false);
   run();
-
-  // Background auto-sync: memory extraction + matching (throttled, no page dependency)
-  initMemoryAutoSync();
 });
 
 // Enter key handler for ticker input
