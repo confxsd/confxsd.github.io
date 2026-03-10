@@ -35,7 +35,6 @@
   background: var(--tv-border);
   border-radius: 8px;
   padding: 3px;
-  margin-bottom: 14px;
   width: fit-content;
 }
 
@@ -250,7 +249,7 @@
 .dc-priority-dot.filled { background: var(--tv-accent); }
 
 /* Expanded actions */
-.dc-exp-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+.dc-exp-actions { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0; }
 
 .dc-exp-actions .btn {
   display: inline-flex;

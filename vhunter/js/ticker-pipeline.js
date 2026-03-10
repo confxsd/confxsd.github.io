@@ -220,6 +220,7 @@ function renderCard(a) {
         <span class="tp-source">${a.source || 'manual'}</span>
         <div class="tp-card-meta">
           <span class="tp-time">${timeAgo}</span>
+          ${a.status !== 'running' && a.status !== 'submitted' ? `<button class="tp-rerun-btn" onclick="event.stopPropagation(); window.tpRerun('${a.ticker}')" title="Re-run"><i class="fa-solid fa-rotate-right"></i></button>` : ''}
           <button class="tp-delete-btn" onclick="event.stopPropagation(); window.tpDelete('${a.id}')" title="Delete">✕</button>
           <button class="tp-expand-btn" id="tp-expand-${a.id}">▼</button>
         </div>
@@ -486,4 +487,12 @@ window.tpToggleStage = (headerEl) => {
 window.tpCancel = (id) => cancelAnalysis(id);
 window.tpRetry = (id) => retryAnalysis(id);
 window.tpDelete = (id) => deleteAnalysis(id);
+window.tpRerun = async (ticker) => {
+  const result = await submitTicker(ticker);
+  if (result.error) {
+    alert(result.message || result.error);
+    return;
+  }
+  await Promise.all([fetchAnalyses(), fetchStats()]);
+};
 window.unloadPipeline = unloadPipeline;

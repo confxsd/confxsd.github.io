@@ -402,85 +402,7 @@ function filterChecks(checks) {
 
 // ── Dashboard ─────────────────────────────────────────────────
 
-function renderDashboard(topLevel) {
-  const dashEl = document.getElementById('dcDashboard');
-  if (!dashEl) return;
 
-  if (!topLevel.length) { dashEl.innerHTML = ''; return; }
-
-  const withResult = topLevel.filter(c => c.latest_result);
-
-  // Signal distribution
-  const signals = { 'ENTRY NOW': 0, 'ENTRY SOON': 0, 'WATCH': 0, 'WAIT': 0, 'EXIT': 0, 'AVOID': 0 };
-  const noData = topLevel.length - withResult.length;
-  withResult.forEach(c => {
-    const s = c.latest_result.signal;
-    if (s in signals) signals[s]++;
-    else signals['WAIT']++;
-  });
-  signals['WAIT'] += noData;
-
-  // Avg score
-  const scores = withResult.map(c => c.latest_result.opportunity_score).filter(s => s != null);
-  const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
-  const avgScoreCls = avgScore >= 65 ? 'high' : avgScore >= 35 ? 'medium' : 'low';
-
-  // Conviction breakdown
-  const conv = { high: 0, medium: 0, low: 0 };
-  withResult.forEach(c => {
-    try {
-      const a = c.latest_result.ai_analysis ? JSON.parse(c.latest_result.ai_analysis) : null;
-      if (a?.conviction && a.conviction in conv) conv[a.conviction]++;
-    } catch (_) {}
-  });
-
-  // Stale
-  const staleCnt = withResult.filter(c => isStale(c.latest_result.created_at)).length;
-
-  // Direction
-  const dirs = { long: 0, short: 0, monitor: 0 };
-  topLevel.forEach(c => { if (c.direction in dirs) dirs[c.direction]++; });
-
-  // Signal bar
-  const total = topLevel.length || 1;
-  const barSegments = [
-    { key: 'ENTRY NOW',  cls: 'bar-entry-now',  count: signals['ENTRY NOW'] },
-    { key: 'ENTRY SOON', cls: 'bar-entry-soon', count: signals['ENTRY SOON'] },
-    { key: 'WATCH',      cls: 'bar-watch',      count: signals['WATCH'] },
-    { key: 'WAIT',       cls: 'bar-wait',       count: signals['WAIT'] },
-    { key: 'EXIT',       cls: 'bar-exit',        count: signals['EXIT'] + signals['AVOID'] },
-  ].filter(s => s.count > 0);
-
-  dashEl.innerHTML = `
-    <div class="dc-dash">
-      <div class="dc-dash-bar">
-        ${barSegments.map(s =>
-          `<div class="dc-dash-seg ${s.cls}" style="width:${(s.count / total * 100).toFixed(1)}%" title="${s.key}: ${s.count}"></div>`
-        ).join('')}
-      </div>
-      <div class="dc-dash-legend">
-        ${barSegments.map(s => `<span class="dc-dash-leg-item"><span class="dc-dash-dot ${s.cls}"></span>${s.count} ${s.key.toLowerCase()}</span>`).join('')}
-      </div>
-      <div class="dc-dash-stats">
-        <div class="dc-dash-stat">
-          <span class="dc-dash-stat-val ${avgScoreCls}">${avgScore ?? '--'}</span>
-          <span class="dc-dash-stat-label">Avg Score</span>
-        </div>
-        <div class="dc-dash-stat">
-          <span class="dc-dash-stat-val">${dirs.long}<span class="dc-dash-sub">L</span> ${dirs.short}<span class="dc-dash-sub">S</span> ${dirs.monitor}<span class="dc-dash-sub">M</span></span>
-          <span class="dc-dash-stat-label">Direction</span>
-        </div>
-        <div class="dc-dash-stat">
-          <span class="dc-dash-stat-val">${conv.high}<span class="dc-dash-sub conv-high">H</span> ${conv.medium}<span class="dc-dash-sub conv-med">M</span> ${conv.low}<span class="dc-dash-sub conv-low">L</span></span>
-          <span class="dc-dash-stat-label">Conviction</span>
-        </div>
-        ${staleCnt ? `<div class="dc-dash-stat">
-          <span class="dc-dash-stat-val dc-dash-stale">${staleCnt}</span>
-          <span class="dc-dash-stat-label">Stale (&gt;24h)</span>
-        </div>` : ''}
-      </div>
-    </div>`;
-}
 
 // ── Main render ───────────────────────────────────────────────
 
@@ -512,7 +434,6 @@ export function renderDailyChecker() {
   document.getElementById('dcTabExit').textContent  = `Exit (${exitCnt})`;
 
   // Dashboard + Sort
-  renderDashboard(allChecks);
   const sortEl = document.getElementById('dcSortSelect');
   if (sortEl) sortEl.value = activeSort;
 
@@ -531,11 +452,28 @@ export function renderDailyChecker() {
 
 // ── Load ──────────────────────────────────────────────────────
 
+export function updateDailyBadge() {
+  const badge = document.getElementById('dcNavBadge');
+  if (!badge) return;
+  const count = checksCache.filter(c => ['ENTRY NOW', 'ENTRY SOON'].includes(c.latest_result?.signal)).length;
+  badge.textContent = count;
+  badge.classList.toggle('active', count > 0);
+}
+
+export async function prefetchDailyBadge() {
+  try {
+    const result = await getDailyChecks();
+    checksCache = Array.isArray(result) ? result : (result.data || []);
+    updateDailyBadge();
+  } catch (_) {}
+}
+
 export async function loadDailyChecker() {
   try {
     const result = await getDailyChecks();
     checksCache = Array.isArray(result) ? result : (result.data || []);
     renderDailyChecker();
+    updateDailyBadge();
   } catch (e) {
     console.error('[DAILY_CHECKER] Load failed:', e);
   }

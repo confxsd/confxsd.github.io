@@ -279,6 +279,22 @@
   white-space: nowrap;
 }
 
+.tp-rerun-btn {
+  background: none;
+  border: none;
+  color: var(--tv-text-tertiary);
+  cursor: pointer;
+  font-size: 0.78rem;
+  padding: 4px 6px;
+  flex-shrink: 0;
+  line-height: 1;
+  border-radius: 3px;
+  transition: color 0.15s, background 0.15s, opacity 0.15s;
+  opacity: 0;
+}
+.tp-card-header:hover .tp-rerun-btn { opacity: 1; }
+.tp-rerun-btn:hover { color: var(--tv-accent); background: var(--tv-accent-bg); opacity: 1; }
+
 .tp-delete-btn {
   background: none;
   border: none;

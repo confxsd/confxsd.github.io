@@ -13,7 +13,7 @@ import { run, initPeriodSwitch } from './analysis.js';
 import { loadOptionsData, initOptionsPage } from './options-page.js';
 import { initTerminal, startPolling, stopPolling } from './terminal.js';
 import { loadMacro } from './macro.js';
-import { loadDailyChecker } from './daily-checker.js';
+import { loadDailyChecker, prefetchDailyBadge } from './daily-checker.js';
 import { loadActiveTrades } from './active-trades.js';
 import { loadPipeline, unloadPipeline } from './ticker-pipeline.js';
 import { loadDeepAnalysis } from './deep-analysis.js';
@@ -103,6 +103,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   switchPage(page, false);
   run();
+
+  // Prefetch daily checker badge count
+  prefetchDailyBadge();
 });
 
 // Enter key handler for ticker input
