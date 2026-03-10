@@ -10,7 +10,6 @@
   .sidebar.open {
     -webkit-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
-    z-index: 10000;
   }
 
   .sidebar-close {
@@ -18,8 +17,8 @@
   }
 
   .sidebar-overlay {
-    left: 0;
-    z-index: 9999;
+    left: 200px;
+    cursor: pointer;
   }
 
   .main-content {
@@ -85,6 +84,10 @@
   .sidebar {
     width: 80vw;
     max-width: 320px;
+  }
+
+  .sidebar-overlay {
+    left: 80vw;
   }
 
   /* Prevent overflow */
