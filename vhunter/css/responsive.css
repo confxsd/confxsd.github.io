@@ -17,8 +17,9 @@
   }
 
   .sidebar-overlay {
-    left: 200px;
+    left: 0;
     cursor: pointer;
+    z-index: 150;
   }
 
   .main-content {
@@ -87,7 +88,7 @@
   }
 
   .sidebar-overlay {
-    left: 80vw;
+    left: 0;
   }
 
   /* Prevent overflow */

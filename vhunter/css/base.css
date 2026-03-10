@@ -18,6 +18,9 @@
   --t-4xl: calc(1.5rem * var(--text-scale));    /* 24px */
   --t-5xl: calc(1.75rem * var(--text-scale));   /* 28px */
 
+  /* Layout */
+  --header-height: 64px;
+
   /* TradingView-inspired color tokens */
   --tv-bg: #ffffff;
   --tv-bg-secondary: #f8f9fa;
