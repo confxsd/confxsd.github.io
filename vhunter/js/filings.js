@@ -1520,7 +1520,7 @@ window.runScanWithOptions = function() {
 // ============== DETAIL MODALS ==============
 
 window.showFilingDetails = async function(id) {
-  showModal('Loading...', '<div class="fil-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading filing...</div>');
+  const modal = showModal('Loading...', '<div class="fil-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading filing...</div>');
   try {
     const response = await fetch(`${CONFIG.PROXY_URL}/api/filings/${id}`, {
       headers: { 'X-User-Id': getUserId() }
@@ -1541,12 +1541,11 @@ window.showFilingDetails = async function(id) {
       } catch (_) { /* parsing is best-effort */ }
     }
 
-    showModal(`${filing.filing_type} Filing`, buildFilingModal(filing), 'fil-detail-modal');
+    updateModal(modal, `${filing.filing_type} Filing`, buildFilingModal(filing), 'fil-detail-modal');
   } catch (e) {
     console.error('Failed to load filing:', e);
     showToast('Failed to load filing details', 'error');
-    const existing = document.querySelector('.fil-modal-overlay');
-    if (existing) existing.remove();
+    modal.remove();
   }
 };
 
@@ -1564,18 +1563,17 @@ window.showPipeDetails = async function(ticker) {
 };
 
 window.showFundDetails = async function(id) {
-  showModal('Loading...', '<div class="fil-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading fund...</div>');
+  const modal = showModal('Loading...', '<div class="fil-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading fund...</div>');
   try {
     const response = await fetch(`${CONFIG.PROXY_URL}/api/funds/${id}`, {
       headers: { 'X-User-Id': getUserId() }
     });
     const fund = await response.json();
-    showModal(fund.name, buildFundModal(fund));
+    updateModal(modal, fund.name, buildFundModal(fund));
   } catch (e) {
     console.error('Failed to load fund:', e);
     showToast('Failed to load fund details', 'error');
-    const existing = document.querySelector('.fil-modal-overlay');
-    if (existing) existing.remove();
+    modal.remove();
   }
 };
 
@@ -2391,22 +2389,34 @@ function showError(msg) {
 }
 
 function showModal(title, content, extraClass = '') {
-  const existing = document.querySelector('.fil-modal-overlay');
-  if (existing) existing.remove();
+  const existing = document.querySelectorAll('.fil-modal-overlay');
+  const zBase = 1000 + existing.length;
 
   const modal = document.createElement('div');
   modal.className = 'fil-modal-overlay';
+  modal.style.zIndex = zBase;
   modal.innerHTML = `
     <div class="fil-modal ${extraClass}">
       <div class="fil-modal-header">
         <h3>${title}</h3>
-        <button class="fil-modal-close" onclick="this.closest('.fil-modal-overlay').remove()">&times;</button>
+        <button class="fil-modal-close">&times;</button>
       </div>
       <div class="fil-modal-body">${content}</div>
     </div>
   `;
   document.body.appendChild(modal);
+  modal.querySelector('.fil-modal-close').onclick = () => modal.remove();
   modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  return modal;
+}
+
+function updateModal(modal, title, content, extraClass = '') {
+  const inner = modal.querySelector('.fil-modal');
+  if (inner) inner.className = `fil-modal ${extraClass}`;
+  const h3 = modal.querySelector('.fil-modal-header h3');
+  if (h3) h3.textContent = title;
+  const body = modal.querySelector('.fil-modal-body');
+  if (body) body.innerHTML = content;
 }
 
 function showToast(message, type = 'info') {
