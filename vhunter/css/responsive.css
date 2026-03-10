@@ -16,6 +16,10 @@
     display: block;
   }
 
+  .sidebar-overlay {
+    left: 0;
+  }
+
   .main-content {
     margin-left: 0;
   }
