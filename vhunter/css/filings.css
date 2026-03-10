@@ -159,25 +159,24 @@
 ============================================ */
 
 .fil-holdings-summary {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+  padding: 6px 12px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
 }
 
 .fil-summary-stat {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 16px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  text-align: center;
+  gap: 4px;
 }
 
 .fil-summary-value {
-  font-size: var(--t-2xl);
+  font-size: var(--t-sm);
   font-weight: 700;
   color: #6366f1;
   line-height: 1;
@@ -185,10 +184,9 @@
 
 .fil-summary-label {
   font-size: var(--t-xs);
-  color: #64748b;
-  margin-top: 6px;
+  color: #94a3b8;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
 }
 
 /* ============================================
@@ -996,14 +994,33 @@
 }
 
 .fil-change-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
   align-items: center;
+  gap: 8px;
   padding: 8px 10px;
   background: #f1f5f9;
   border-radius: 4px;
   font-size: var(--t-xs);
   border-left: 3px solid transparent;
+}
+
+.fil-change-row .fil-change-type {
+  width: 24px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.fil-change-row .fil-change-pct {
+  width: 70px;
+  text-align: right;
+}
+
+.fil-change-row .fil-change-fund {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .fil-change-new {
@@ -1480,10 +1497,6 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .fil-holdings-summary {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .fil-toolbar {
     flex-direction: column;
   }
@@ -1540,16 +1553,8 @@
   }
 
   .fil-holdings-summary {
-    grid-template-columns: repeat(2, 1fr);
+    flex-wrap: wrap;
     gap: 8px;
-  }
-
-  .fil-summary-stat {
-    padding: 12px;
-  }
-
-  .fil-summary-value {
-    font-size: var(--t-xl);
   }
 
   .fil-toolbar {

@@ -1105,7 +1105,7 @@ function buildTickerHoldingsModal(ticker, data) {
           ${changes.slice(0, 10).map(c => `
             <div class="fil-change-row ${c.type === 'NEW_POSITION' ? 'fil-change-new' : c.type === 'COMPLETE_EXIT' ? 'fil-change-exit' : c.type === 'INCREASED' ? 'fil-change-up' : 'fil-change-down'}">
               <span class="fil-change-fund fil-clickable" onclick="event.stopPropagation(); showFundDetails('${c.fund_id}')">${c.fund}</span>
-              <span class="fil-change-type" style="color:${c.type === 'INCREASED' ? '#10b981' : c.type === 'DECREASED' || c.type === 'COMPLETE_EXIT' ? '#ef4444' : c.type === 'NEW_POSITION' ? '#6366f1' : '#64748b'};font-weight:600">${c.type.replace(/_/g, ' ')}</span>
+              <span class="fil-change-type" style="color:${c.type === 'INCREASED' ? '#10b981' : c.type === 'DECREASED' || c.type === 'COMPLETE_EXIT' ? '#ef4444' : c.type === 'NEW_POSITION' ? '#6366f1' : '#64748b'}" title="${c.type.replace(/_/g, ' ')}">${c.type === 'INCREASED' ? '<i class="fa-solid fa-arrow-trend-up"></i>' : c.type === 'DECREASED' ? '<i class="fa-solid fa-arrow-trend-down"></i>' : c.type === 'NEW_POSITION' ? '<i class="fa-solid fa-plus"></i>' : c.type === 'COMPLETE_EXIT' ? '<i class="fa-solid fa-xmark"></i>' : c.type.replace(/_/g, ' ')}</span>
               ${c.pctChange ? `<span class="fil-change-pct" style="color:${c.pctChange > 0 ? '#10b981' : '#ef4444'};font-weight:600">${c.pctChange > 0 ? '+' : ''}${c.pctChange}%</span>` : ''}
             </div>
           `).join('')}
