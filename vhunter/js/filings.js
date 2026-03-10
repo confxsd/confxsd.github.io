@@ -13,6 +13,23 @@ let holdings = [];
 let holdingsSummary = null;
 let filingsStats = null;
 let currentTab = 'filings';
+let hideMegaCap = false;
+const MEGA_CAP_TICKERS = new Set([
+  'AAPL','MSFT','GOOGL','GOOG','AMZN','NVDA','META','TSLA','BRK-A','BRK-B',
+  'AVGO','JPM','LLY','V','MA','UNH','XOM','COST','HD','PG',
+  'JNJ','NFLX','ABBV','WMT','BAC','CRM','ORCL','CVX','MRK','KO',
+  'PEP','AMD','ACN','TMO','LIN','MCD','CSCO','ADBE','IBM','GE',
+  'ISRG','INTU','TXN','QCOM','AMGN','PFE','BKNG','NOW','HON','AMAT',
+  // Major index ETFs
+  'SPY','QQQ','IVV','VOO','VTI','IWM','DIA','VEA','VWO','EFA','AGG','BND','TLT','GLD','SLV'
+]);
+
+function isMegaCap(ticker) {
+  if (!ticker) return false;
+  const base = ticker.split(' ')[0].toUpperCase();
+  return MEGA_CAP_TICKERS.has(base);
+}
+
 let currentFilters = {
   type: 'all',
   fund: 'all',
@@ -531,6 +548,11 @@ function getFilteredFilings() {
     );
   }
 
+  // Mega cap filter
+  if (hideMegaCap) {
+    filtered = filtered.filter(f => !isMegaCap(f.subject_ticker));
+  }
+
   return filtered;
 }
 
@@ -742,6 +764,11 @@ function getFilteredHoldings() {
     );
   }
 
+  // Mega cap filter
+  if (hideMegaCap) {
+    filtered = filtered.filter(h => !isMegaCap(h.ticker));
+  }
+
   // Min funds filter
   if (holdingsFilters.minFunds > 1) {
     filtered = filtered.filter(h => h.fund_count >= holdingsFilters.minFunds);
@@ -896,6 +923,16 @@ window.loadMoreHoldings = function() {
   renderHoldingsTable();
 };
 
+window.toggleMegaCap = function() {
+  hideMegaCap = !hideMegaCap;
+  const btn = document.getElementById('filHideMegaCap');
+  if (btn) btn.classList.toggle('active', hideMegaCap);
+  // Re-render current tab
+  if (currentTab === 'filings') renderFilingsTable();
+  else if (currentTab === 'holdings') renderHoldingsTable();
+  else if (currentTab === 'changes') renderChangesTable();
+};
+
 window.showTickerHoldings = async function(ticker) {
   try {
     const data = await fetchHoldingsByTicker(ticker);
@@ -949,6 +986,11 @@ function renderChangesTable() {
   if (!container) return;
 
   let items = changesData?.changes || [];
+
+  // Mega cap filter
+  if (hideMegaCap) {
+    items = items.filter(c => !isMegaCap(c.ticker));
+  }
 
   // Client-side search filter
   if (changesFilters.search) {
@@ -1097,16 +1139,98 @@ function buildTickerHoldingsModal(ticker, data) {
     `;
   }
 
-  if (changes.length > 0) {
+  // Merge 13F changes with Form 4 / 13D/G filing changes
+  const filingChanges = data.filingChanges || [];
+  const allChanges = [
+    ...changes.map(c => ({ ...c, source: '13F' })),
+    ...filingChanges.map(c => ({ ...c, source: c.filing_type }))
+  ];
+
+  if (allChanges.length > 0) {
+    const pc = data.periodComparison || {};
+
+    const sourceIcon = (src) => {
+      if (src === '13F') return '<i class="fa-solid fa-chart-pie" style="color:#6366f1;font-size:10px" title="13F"></i>';
+      if (src === '4') return '<i class="fa-solid fa-user" style="color:#10b981;font-size:10px" title="Form 4"></i>';
+      if (src === '13D') return '<i class="fa-solid fa-crosshairs" style="color:#ef4444;font-size:10px" title="13D"></i>';
+      if (src === '13G') return '<i class="fa-solid fa-chart-line" style="color:#f59e0b;font-size:10px" title="13G"></i>';
+      return '';
+    };
+
+    const actionIcon = (c) => {
+      const t = c.type;
+      if (t === 'INCREASED' || t === 'INSIDER_BUY' || t === 'ACTIVIST_STAKE' || t === 'PASSIVE_STAKE') return '<i class="fa-solid fa-arrow-trend-up"></i>';
+      if (t === 'DECREASED' || t === 'INSIDER_SELL') return '<i class="fa-solid fa-arrow-trend-down"></i>';
+      if (t === 'NEW_POSITION') return '<i class="fa-solid fa-plus"></i>';
+      if (t === 'COMPLETE_EXIT') return '<i class="fa-solid fa-xmark"></i>';
+      return '';
+    };
+
+    const actionColor = (c) => {
+      const t = c.type;
+      if (t === 'INCREASED' || t === 'INSIDER_BUY') return '#10b981';
+      if (t === 'DECREASED' || t === 'INSIDER_SELL' || t === 'COMPLETE_EXIT') return '#ef4444';
+      if (t === 'NEW_POSITION') return '#6366f1';
+      if (t === 'ACTIVIST_STAKE') return '#ef4444';
+      if (t === 'PASSIVE_STAKE') return '#f59e0b';
+      return '#64748b';
+    };
+
+    const changeDetail = (c) => {
+      if (c.source === '13F' && c.pctChange) {
+        const color = c.pctChange > 0 ? '#10b981' : '#ef4444';
+        return `<span style="color:${color};font-weight:600">${c.pctChange > 0 ? '+' : ''}${c.pctChange}%</span>`;
+      }
+      if (c.source === '4') {
+        const parts = [];
+        if (c.shares) parts.push(formatNumber(c.shares) + ' sh');
+        if (c.price) parts.push('@$' + Number(c.price).toFixed(2));
+        return parts.length ? `<span style="color:${actionColor(c)};font-weight:600">${parts.join(' ')}</span>` : '';
+      }
+      if (c.source === '13D' || c.source === '13G') {
+        return c.pctOwned ? `<span style="font-weight:600">${c.pctOwned}%</span>` : '';
+      }
+      return '';
+    };
+
+    const changeRowClass = (c) => {
+      if (c.type === 'NEW_POSITION') return 'fil-change-new';
+      if (c.type === 'COMPLETE_EXIT' || c.type === 'INSIDER_SELL') return 'fil-change-exit';
+      if (c.type === 'INCREASED' || c.type === 'INSIDER_BUY' || c.type === 'ACTIVIST_STAKE' || c.type === 'PASSIVE_STAKE') return 'fil-change-up';
+      return 'fil-change-down';
+    };
+
     html += `
       <div class="fil-modal-section">
         <h4>Recent Changes</h4>
+        ${pc.current ? `<div class="fil-changes-meta">
+          <span class="fil-changes-periods">${pc.previous || '?'} → ${pc.current}</span>
+          <span class="fil-changes-delay">13F ~45d delay</span>
+        </div>` : ''}
+        <div class="fil-types-legend fil-types-legend--modal">
+          <div class="fil-legend-item">
+            <i class="fa-solid fa-chart-pie" style="color:#6366f1"></i>
+            <div><strong>13F</strong><span>Institutional holdings. ~45 day delay.</span></div>
+          </div>
+          <div class="fil-legend-item">
+            <i class="fa-solid fa-user" style="color:#10b981"></i>
+            <div><strong>Form 4</strong><span>Insider trades. 2 day delay.</span></div>
+          </div>
+          <div class="fil-legend-item">
+            <i class="fa-solid fa-crosshairs" style="color:#ef4444"></i>
+            <div><strong>13D</strong><span>Activist >5%. ~10 day delay.</span></div>
+          </div>
+          <div class="fil-legend-item">
+            <i class="fa-solid fa-chart-line" style="color:#f59e0b"></i>
+            <div><strong>13G</strong><span>Passive >5%. ~10 day delay.</span></div>
+          </div>
+        </div>
         <div class="fil-changes-list">
-          ${changes.slice(0, 10).map(c => `
-            <div class="fil-change-row ${c.type === 'NEW_POSITION' ? 'fil-change-new' : c.type === 'COMPLETE_EXIT' ? 'fil-change-exit' : c.type === 'INCREASED' ? 'fil-change-up' : 'fil-change-down'}">
-              <span class="fil-change-fund fil-clickable" onclick="event.stopPropagation(); showFundDetails('${c.fund_id}')">${c.fund}</span>
-              <span class="fil-change-type" style="color:${c.type === 'INCREASED' ? '#10b981' : c.type === 'DECREASED' || c.type === 'COMPLETE_EXIT' ? '#ef4444' : c.type === 'NEW_POSITION' ? '#6366f1' : '#64748b'}" title="${c.type.replace(/_/g, ' ')}">${c.type === 'INCREASED' ? '<i class="fa-solid fa-arrow-trend-up"></i>' : c.type === 'DECREASED' ? '<i class="fa-solid fa-arrow-trend-down"></i>' : c.type === 'NEW_POSITION' ? '<i class="fa-solid fa-plus"></i>' : c.type === 'COMPLETE_EXIT' ? '<i class="fa-solid fa-xmark"></i>' : c.type.replace(/_/g, ' ')}</span>
-              ${c.pctChange ? `<span class="fil-change-pct" style="color:${c.pctChange > 0 ? '#10b981' : '#ef4444'};font-weight:600">${c.pctChange > 0 ? '+' : ''}${c.pctChange}%</span>` : ''}
+          ${allChanges.slice(0, 15).map(c => `
+            <div class="fil-change-row ${changeRowClass(c)}">
+              <span class="fil-change-fund ${c.fund_id ? 'fil-clickable' : ''}" ${c.fund_id ? `onclick="event.stopPropagation(); showFundDetails('${c.fund_id}')"` : ''}>${c.fund}</span>
+              <span class="fil-change-type" style="color:${actionColor(c)}" title="${(c.type || '').replace(/_/g, ' ')}">${sourceIcon(c.source)} ${actionIcon(c)}</span>
+              <span class="fil-change-pct">${changeDetail(c)}</span>
             </div>
           `).join('')}
         </div>

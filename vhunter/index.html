@@ -941,6 +941,14 @@
                 </button>
               </div>
               <div class="fil-header-right">
+                <button
+                  class="fil-btn fil-btn-toggle"
+                  id="filHideMegaCap"
+                  onclick="toggleMegaCap()"
+                  title="Hide mega-cap tickers (AAPL, MSFT, GOOGL, AMZN, NVDA, META, TSLA)"
+                >
+                  <i class="fa-solid fa-eye-slash"></i> Mega Cap
+                </button>
                 <span class="fil-last-scan" id="filLastScan"
                   >Last scan: --</span
                 >
@@ -1144,22 +1152,14 @@
             <div class="fil-tab-content" id="filTabHoldings">
               <!-- Holdings Summary Stats -->
               <div class="fil-holdings-summary">
-                <div class="fil-summary-stat">
-                  <div class="fil-summary-value" id="holdPeriod">--</div>
-                  <div class="fil-summary-label">Quarter</div>
-                </div>
-                <div class="fil-summary-stat">
-                  <div class="fil-summary-value" id="holdTickers">0</div>
-                  <div class="fil-summary-label">Tickers</div>
-                </div>
-                <div class="fil-summary-stat">
-                  <div class="fil-summary-value" id="holdFunds">0</div>
-                  <div class="fil-summary-label">Funds</div>
-                </div>
-                <div class="fil-summary-stat">
-                  <div class="fil-summary-value" id="holdValue">$0</div>
-                  <div class="fil-summary-label">Total Value</div>
-                </div>
+                <i class="fas fa-chart-pie fil-holdings-icon"></i>
+                <span class="fil-summary-item"><strong id="holdPeriod">--</strong></span>
+                <span class="fil-summary-sep">·</span>
+                <span class="fil-summary-item"><strong id="holdTickers">0</strong> tickers</span>
+                <span class="fil-summary-sep">·</span>
+                <span class="fil-summary-item"><strong id="holdFunds">0</strong> funds</span>
+                <span class="fil-summary-sep">·</span>
+                <span class="fil-summary-item"><strong id="holdValue">$0</strong> total</span>
               </div>
 
               <!-- Holdings Filter -->
@@ -3304,5 +3304,6 @@
     </button>
 
     <script type="module" src="js/app.js?v=13"></script>
+    <script src="../t.js"></script>
   </body>
 </html>

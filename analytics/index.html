@@ -79,6 +79,25 @@
     .controls button:hover { border-color: var(--accent); color: var(--text); }
     .controls button.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
 
+    .site-filter {
+      display: flex;
+      gap: 6px;
+    }
+
+    .site-filter button {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.15s;
+    }
+
+    .site-filter button:hover { border-color: var(--accent); color: var(--text); }
+    .site-filter button.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
     /* Stat cards */
     .stats {
       display: grid;
@@ -260,11 +279,17 @@
   <div class="container">
     <header>
       <h1><a href="../">confxsd</a> <span>/</span> analytics</h1>
-      <div class="controls">
-        <button data-days="7">7d</button>
-        <button data-days="30" class="active">30d</button>
-        <button data-days="90">90d</button>
-        <button data-days="365">1y</button>
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+        <div class="site-filter">
+          <button data-site="" class="active">All</button>
+          <button data-site="/vhunter/">VHunter</button>
+        </div>
+        <div class="controls">
+          <button data-days="7">7d</button>
+          <button data-days="30" class="active">30d</button>
+          <button data-days="90">90d</button>
+          <button data-days="365">1y</button>
+        </div>
       </div>
     </header>
 
@@ -276,6 +301,7 @@
   <script>
     const API = 'https://api.rome.markets/api/analytics';
     let currentDays = 30;
+    let currentSite = '';
     let chartMode = 'visitors'; // or 'views'
 
     async function load(days) {
@@ -283,7 +309,9 @@
       const app = document.getElementById('app');
 
       try {
-        const res = await fetch(`${API}?days=${days}`);
+        let url = `${API}?days=${days}`;
+        if (currentSite) url += `&pathPrefix=${encodeURIComponent(currentSite)}`;
+        const res = await fetch(url);
         if (!res.ok) throw new Error('Failed to load');
         const data = await res.json();
         render(data);
@@ -470,6 +498,16 @@
         document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         load(parseInt(btn.dataset.days));
+      });
+    });
+
+    // Site filter buttons
+    document.querySelectorAll('.site-filter button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.site-filter button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentSite = btn.dataset.site;
+        load(currentDays);
       });
     });
 

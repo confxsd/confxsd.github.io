@@ -161,32 +161,66 @@
 .fil-holdings-summary {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 12px;
-  padding: 6px 12px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-}
-
-.fil-summary-stat {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.fil-summary-value {
-  font-size: var(--t-sm);
-  font-weight: 700;
-  color: #6366f1;
-  line-height: 1;
-}
-
-.fil-summary-label {
-  font-size: var(--t-xs);
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 13px;
   color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.fil-holdings-icon {
+  color: #6366f1;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.fil-summary-item strong {
+  color: #6366f1;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.fil-summary-sep {
+  color: #cbd5e1;
+}
+
+/* ============================================
+   Filing Types Legend
+============================================ */
+
+.fil-types-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.fil-legend-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.fil-legend-item > i {
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+.fil-legend-item strong {
+  display: block;
+  color: #1e293b;
+  font-size: 12px;
+}
+
+.fil-legend-item span {
+  color: #64748b;
 }
 
 /* ============================================
@@ -751,6 +785,24 @@
   background: #4f46e5;
 }
 
+.fil-btn-toggle {
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 11px;
+  gap: 4px;
+}
+
+.fil-btn-toggle:hover {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.fil-btn-toggle.active {
+  background: #6366f1;
+  border-color: #6366f1;
+  color: white;
+}
+
 .fil-btn-secondary {
   background: #f1f5f9;
   color: #475569;
@@ -993,6 +1045,25 @@
   gap: 6px;
 }
 
+.fil-changes-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: var(--t-xs);
+}
+
+.fil-changes-periods {
+  font-weight: 600;
+  color: #334155;
+}
+
+.fil-changes-delay {
+  color: #94a3b8;
+  font-style: italic;
+  font-size: 10px;
+}
+
 .fil-change-row {
   display: grid;
   grid-template-columns: 1fr auto auto;
@@ -1006,13 +1077,16 @@
 }
 
 .fil-change-row .fil-change-type {
-  width: 24px;
+  width: 36px;
   text-align: center;
   font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }
 
 .fil-change-row .fil-change-pct {
-  width: 70px;
+  width: 90px;
   text-align: right;
 }
 
