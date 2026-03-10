@@ -1140,8 +1140,8 @@ function buildTickerHoldingsModal(ticker, data) {
           ${changes.slice(0, 10).map(c => `
             <div class="fil-change-row ${c.type === 'NEW_POSITION' ? 'fil-change-new' : c.type === 'COMPLETE_EXIT' ? 'fil-change-exit' : c.type === 'INCREASED' ? 'fil-change-up' : 'fil-change-down'}">
               <span class="fil-change-fund fil-clickable" onclick="event.stopPropagation(); showFundDetails('${c.fund_id}')">${c.fund}</span>
-              <span class="fil-change-type">${c.type.replace(/_/g, ' ')}</span>
-              ${c.pctChange ? `<span class="fil-change-pct">${c.pctChange > 0 ? '+' : ''}${c.pctChange}%</span>` : ''}
+              <span class="fil-change-type" style="color:${c.type === 'INCREASED' ? '#10b981' : c.type === 'DECREASED' || c.type === 'COMPLETE_EXIT' ? '#ef4444' : c.type === 'NEW_POSITION' ? '#6366f1' : '#64748b'};font-weight:600">${c.type.replace(/_/g, ' ')}</span>
+              ${c.pctChange ? `<span class="fil-change-pct" style="color:${c.pctChange > 0 ? '#10b981' : '#ef4444'};font-weight:600">${c.pctChange > 0 ? '+' : ''}${c.pctChange}%</span>` : ''}
             </div>
           `).join('')}
         </div>
@@ -1593,9 +1593,12 @@ function build13FModal(filing) {
     const moreCount = filing.holdings.length - 20;
     const holdingRows = (list, hidden) => list.map(h => {
       const pct = totalVal > 0 ? ((h.value_usd || 0) / totalVal * 100).toFixed(1) : '0.0';
+      const typeLabel = h.put_call === 'Put' ? '<span style="color:#ef4444;font-weight:600;font-size:11px">PUT</span>'
+        : h.put_call === 'Call' ? '<span style="color:#22c55e;font-weight:600;font-size:11px">CALL</span>' : '';
       return `<tr${hidden ? ' style="display:none"' : ''}>
         <td class="fil-td-ticker">${h.ticker || h.cusip || '-'}</td>
         <td class="fil-td-name">${truncate(h.issuer_name || '', 25)}</td>
+        <td style="text-align:center">${typeLabel}</td>
         <td class="fil-td-shares">${formatNumber(h.shares)}</td>
         <td class="fil-td-value">${formatValue(h.value_usd)}</td>
         <td>${pct}%</td>
@@ -1607,7 +1610,7 @@ function build13FModal(filing) {
         <h4>Top Holdings</h4>
         <div class="fil-holdings-wrap">
           <table class="fil-detail-holdings-table">
-            <thead><tr><th>Ticker</th><th>Company</th><th>Shares</th><th>Value</th><th>%</th></tr></thead>
+            <thead><tr><th>Ticker</th><th>Company</th><th>Type</th><th>Shares</th><th>Value</th><th>%</th></tr></thead>
             <tbody>
               ${holdingRows(filing.holdings.slice(0, 20), false)}
               ${hasMore ? holdingRows(filing.holdings.slice(20), true) : ''}
