@@ -128,14 +128,18 @@
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 150;
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
-  -webkit-transition: opacity 0.2s ease-out;
-  transition: opacity 0.2s ease-out;
+  -webkit-transition: opacity 0.2s ease-out, visibility 0s 0.2s;
+  transition: opacity 0.2s ease-out, visibility 0s 0.2s;
 }
 
 .sidebar-overlay.active {
   opacity: 1;
+  visibility: visible;
   pointer-events: auto;
+  -webkit-transition: opacity 0.15s ease-out 0.05s, visibility 0s;
+  transition: opacity 0.15s ease-out 0.05s, visibility 0s;
 }
 
 /* Main Content */
