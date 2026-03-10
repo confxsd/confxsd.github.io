@@ -317,10 +317,15 @@ function renderCard(check) {
       </div>
     </div>` : '';
 
+  const isInactive = check.status === 'inactive';
+
   return `
-    <div class="dc-card ${stale && r ? 'dc-stale' : ''}" id="dc-card-${check.id}">
+    <div class="dc-card ${stale && r ? 'dc-stale' : ''} ${isInactive ? 'dc-inactive' : ''}" id="dc-card-${check.id}">
       <div class="dc-card-header" onclick="window.dcToggleExpand('${check.id}')">
         <div class="dc-ticker-info">
+          <button class="dc-toggle-btn ${isInactive ? 'off' : 'on'}" onclick="event.stopPropagation(); window.dcToggleActive('${check.id}')" title="${isInactive ? 'Activate' : 'Deactivate'}">
+            <span class="dc-toggle-track"><span class="dc-toggle-thumb"></span></span>
+          </button>
           <span class="dc-ticker" onclick="event.stopPropagation(); window.dcGoAnalyze('${check.ticker}')">${check.ticker}</span>
           <span class="dc-dir-badge ${check.direction}">${check.direction}</span>
           ${priorityDots(check.priority)}
@@ -396,6 +401,7 @@ function filterChecks(checks) {
   else if (activeFilter === 'watch') filtered = checks.filter(c => c.latest_result?.signal === 'WATCH');
   else if (activeFilter === 'wait')  filtered = checks.filter(c => !c.latest_result || c.latest_result?.signal === 'WAIT');
   else if (activeFilter === 'exit')  filtered = checks.filter(c => ['EXIT', 'AVOID'].includes(c.latest_result?.signal));
+  else if (activeFilter === 'inactive') filtered = checks.filter(c => c.status === 'inactive');
   else filtered = checks;
   return sortChecks(filtered);
 }
@@ -413,12 +419,20 @@ export function renderDailyChecker() {
   const forceBtn = document.getElementById('dcForceRunBtn');
   runBtn.disabled = isRunning;
   if (forceBtn) forceBtn.disabled = isRunning;
+  const activeCnt = checksCache.filter(c => c.status !== 'inactive').length;
+  const allOn = checksCache.length > 0 && activeCnt === checksCache.length;
   runBtn.innerHTML = isRunning
     ? '<span class="dc-run-spinner"></span>Running...'
-    : '↻ Run All';
+    : `▶ Run (${activeCnt})`;
   if (forceBtn) forceBtn.innerHTML = isRunning
     ? '<span class="dc-run-spinner"></span>Running...'
-    : '↻ Force Run';
+    : `↻ Force (${activeCnt})`;
+  const toggleAllBtn = document.getElementById('dcToggleAllBtn');
+  if (toggleAllBtn) {
+    toggleAllBtn.textContent = allOn ? '⏸ Off All' : '▶ On All';
+    toggleAllBtn.classList.toggle('dc-toggle-all-off', allOn);
+    toggleAllBtn.classList.toggle('dc-toggle-all-on', !allOn);
+  }
 
   const allChecks = checksCache;
   const entryCnt = allChecks.filter(c => ['ENTRY NOW', 'ENTRY SOON'].includes(c.latest_result?.signal)).length;
@@ -427,11 +441,16 @@ export function renderDailyChecker() {
 
   // dcMeta removed
 
+  const inactiveCnt = allChecks.filter(c => c.status === 'inactive').length;
+  const activeChecks = allChecks.filter(c => c.status !== 'inactive');
+
   document.getElementById('dcTabAll').textContent   = `All (${allChecks.length})`;
   document.getElementById('dcTabEntry').textContent = `Entry (${entryCnt})`;
-  document.getElementById('dcTabWatch').textContent = `Watch (${allChecks.filter(c => c.latest_result?.signal === 'WATCH').length})`;
-  document.getElementById('dcTabWait').textContent  = `Wait (${allChecks.filter(c => !c.latest_result || c.latest_result?.signal === 'WAIT').length})`;
+  document.getElementById('dcTabWatch').textContent = `Watch (${activeChecks.filter(c => c.latest_result?.signal === 'WATCH').length})`;
+  document.getElementById('dcTabWait').textContent  = `Wait (${activeChecks.filter(c => !c.latest_result || c.latest_result?.signal === 'WAIT').length})`;
   document.getElementById('dcTabExit').textContent  = `Exit (${exitCnt})`;
+  const inactiveTab = document.getElementById('dcTabInactive');
+  if (inactiveTab) inactiveTab.textContent = `Inactive (${inactiveCnt})`;
 
   // Dashboard + Sort
   const sortEl = document.getElementById('dcSortSelect');
@@ -609,6 +628,35 @@ window.dcSave = async function() {
   } catch (e) {
     console.error('[DAILY_CHECKER] Save failed:', e);
     alert('Failed to save. Please try again.');
+  }
+};
+
+window.dcToggleAll = async function() {
+  if (!checksCache.length) return;
+  const allOn = checksCache.every(c => c.status !== 'inactive');
+  const newStatus = allOn ? 'inactive' : 'active';
+  try {
+    await Promise.all(checksCache.map(c => {
+      if (c.status === newStatus) return;
+      return updateDailyCheck(c.id, { status: newStatus });
+    }));
+    checksCache.forEach(c => c.status = newStatus);
+    renderDailyChecker();
+  } catch (e) {
+    console.error('[DAILY_CHECKER] Toggle all failed:', e);
+  }
+};
+
+window.dcToggleActive = async function(id) {
+  const check = checksCache.find(c => c.id === id);
+  if (!check) return;
+  const newStatus = check.status === 'inactive' ? 'active' : 'inactive';
+  try {
+    await updateDailyCheck(id, { status: newStatus });
+    check.status = newStatus;
+    renderDailyChecker();
+  } catch (e) {
+    console.error('[DAILY_CHECKER] Toggle failed:', e);
   }
 };
 

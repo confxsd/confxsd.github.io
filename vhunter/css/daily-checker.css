@@ -15,7 +15,7 @@
   flex-wrap: wrap;
 }
 
-.dc-header-left { flex: 1; min-width: 0; }
+.dc-header-left { min-width: 0; }
 
 .dc-header h2 {
   font-size: 1.1rem;
@@ -26,7 +26,8 @@
 
 .dc-meta { font-size: 0.75rem; color: var(--tv-text-secondary); }
 
-.dc-header-actions { display: flex; gap: 8px; align-items: center; }
+.dc-header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.dc-header-actions .btn { padding-top: 8px; padding-bottom: 8px; }
 
 /* ── Filter Tabs ── */
 .dc-filter-tabs {
@@ -979,4 +980,101 @@
 .dc-review-flag-detail {
   color: var(--tv-text-secondary);
   line-height: 1.4;
+}
+
+/* ── Active/Inactive Toggle ── */
+.dc-toggle-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.dc-toggle-track {
+  display: inline-block;
+  width: 28px;
+  height: 16px;
+  border-radius: 8px;
+  background: #475569;
+  position: relative;
+  transition: background 0.2s;
+  pointer-events: none;
+}
+
+.dc-toggle-btn.on .dc-toggle-track {
+  background: var(--tv-green, #22c55e);
+}
+
+.dc-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+}
+
+.dc-toggle-btn.on .dc-toggle-thumb {
+  transform: translateX(12px);
+}
+
+/* Inactive card */
+.dc-card.dc-inactive {
+  opacity: 0.45;
+}
+
+.dc-card.dc-inactive:hover {
+  opacity: 0.7;
+}
+
+/* Toggle All button */
+#dcToggleAllBtn {
+  font-size: 0.75rem;
+}
+
+#dcToggleAllBtn.dc-toggle-all-off {
+  color: var(--tv-red, #ef4444);
+  border-color: var(--tv-red, #ef4444);
+}
+
+#dcToggleAllBtn.dc-toggle-all-on {
+  color: var(--tv-green, #22c55e);
+  border-color: var(--tv-green, #22c55e);
+}
+
+/* ── Mobile: daily checker header ── */
+@media (max-width: 600px) {
+  .dc-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dc-header-actions {
+    gap: 6px;
+  }
+
+  .dc-header-actions .btn {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.72rem;
+    padding: 6px 8px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .dc-filter-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+
+  .dc-filter-tab {
+    padding: 5px 10px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+  }
 }

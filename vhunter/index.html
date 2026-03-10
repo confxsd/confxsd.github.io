@@ -2611,24 +2611,33 @@
             <div class="dc-header-actions">
               <button
                 class="btn btn-sm"
+                id="dcToggleAllBtn"
+                onclick="window.dcToggleAll()"
+                title="Toggle all checks active/inactive"
+              >
+              </button>
+              <button
+                class="btn btn-sm"
                 id="dcForceRunBtn"
                 onclick="window.dcRunAll(true)"
                 title="Force re-run all checks"
               >
-                ↻ Force Run
+                ↻ Force
               </button>
               <button
                 class="btn btn-sm"
                 id="dcRunBtn"
                 onclick="window.dcRunAll()"
+                title="Run all checks"
               >
-                ↻ Run All
+                ▶ Run
               </button>
               <button
                 class="btn btn-primary btn-sm"
                 onclick="window.dcOpenModal()"
+                title="Add new check"
               >
-                + Add Check
+                + Add
               </button>
             </div>
           </div>
@@ -2675,6 +2684,14 @@
                 id="dcTabExit"
               >
                 Exit
+              </button>
+              <button
+                class="dc-filter-tab"
+                data-filter="inactive"
+                onclick="window.dcSetFilter('inactive')"
+                id="dcTabInactive"
+              >
+                Inactive
               </button>
             </div>
             <select

@@ -80,6 +80,11 @@
     --text-scale: 1.3;
   } /* Boost readability on mobile */
 
+  .sidebar {
+    width: 80vw;
+    max-width: 320px;
+  }
+
   /* Prevent overflow */
   .main-content,
   .page,
