@@ -17,6 +17,28 @@
   --t-3xl: calc(1.25rem * var(--text-scale));   /* 20px */
   --t-4xl: calc(1.5rem * var(--text-scale));    /* 24px */
   --t-5xl: calc(1.75rem * var(--text-scale));   /* 28px */
+
+  /* TradingView-inspired color tokens */
+  --tv-bg: #ffffff;
+  --tv-bg-secondary: #f8f9fa;
+  --tv-bg-tertiary: #f0f3fa;
+  --tv-border: #e0e3eb;
+  --tv-border-light: #f0f3fa;
+  --tv-text-primary: #131722;
+  --tv-text-secondary: #787b86;
+  --tv-text-tertiary: #b2b5be;
+  --tv-accent: #2962ff;
+  --tv-accent-hover: #1e53e5;
+  --tv-green: #26a69a;
+  --tv-green-bg: rgba(38, 166, 154, 0.1);
+  --tv-green-bg-solid: #e6f4f1;
+  --tv-red: #ef5350;
+  --tv-red-bg: rgba(239, 83, 80, 0.1);
+  --tv-red-bg-solid: #fdecea;
+  --tv-orange: #ff9800;
+  --tv-orange-bg: rgba(255, 152, 0, 0.1);
+  --tv-purple: #7c4dff;
+  --tv-cyan: #00bcd4;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -28,20 +50,22 @@ html {
 }
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
-  background: #f1f5f9;
-  color: #1e293b;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  background: var(--tv-bg);
+  color: var(--tv-text-primary);
   font-size: var(--t-md);
-  font-weight: 500;
+  font-weight: 400;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Typography */
 .t {
   font-size: var(--t-xs);
-  color: #64748b;
+  color: var(--tv-text-secondary);
   text-transform: uppercase;
   letter-spacing: .4px;
   margin-bottom: 6px;
@@ -49,11 +73,11 @@ body {
 }
 
 /* Colors */
-.g { color: #10b981; }
-.r { color: #ef4444; }
-.y { color: #f59e0b; }
-.p { color: #8b5cf6; }
-.c { color: #06b6d4; }
+.g { color: var(--tv-green); }
+.r { color: var(--tv-red); }
+.y { color: var(--tv-orange); }
+.p { color: var(--tv-purple); }
+.c { color: var(--tv-cyan); }
 
 /* Grid Helpers */
 .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }

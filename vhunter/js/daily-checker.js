@@ -503,11 +503,7 @@ export function renderDailyChecker() {
   const exitCnt  = allChecks.filter(c => ['EXIT', 'AVOID'].includes(c.latest_result?.signal)).length;
   const staleCnt = allChecks.filter(c => c.latest_result && isStale(c.latest_result.created_at)).length;
 
-  document.getElementById('dcMeta').textContent =
-    `${allChecks.length} active` +
-    (entryCnt ? ` · ${entryCnt} entry` : '') +
-    (exitCnt  ? ` · ${exitCnt} exit`   : '') +
-    (staleCnt ? ` · ${staleCnt} stale`  : '');
+  // dcMeta removed
 
   document.getElementById('dcTabAll').textContent   = `All (${allChecks.length})`;
   document.getElementById('dcTabEntry').textContent = `Entry (${entryCnt})`;

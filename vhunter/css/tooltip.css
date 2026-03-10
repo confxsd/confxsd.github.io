@@ -18,8 +18,8 @@
   width: max-content;
   max-width: 280px;
   padding: 8px 12px;
-  background: #1e293b;
-  color: #94a3b8;
+  background: var(--tv-text-primary);
+  color: var(--tv-text-tertiary);
   font-size: var(--t-sm);
   line-height: 1.5;
   border-radius: 6px;
@@ -92,7 +92,7 @@
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  border-bottom-color: #1e293b;
+  border-bottom-color: var(--tv-text-primary);
 }
 
 /* ============================================
@@ -113,7 +113,7 @@
   left: 50%;
   transform: translateX(-50%);
   border-bottom-color: transparent;
-  border-top-color: #1e293b;
+  border-top-color: var(--tv-text-primary);
 }
 
 /* ============================================
@@ -135,7 +135,7 @@
   bottom: auto;
   transform: translateY(-50%);
   border-bottom-color: transparent;
-  border-left-color: #1e293b;
+  border-left-color: var(--tv-text-primary);
 }
 
 /* ============================================
@@ -157,7 +157,7 @@
   bottom: auto;
   transform: translateY(-50%);
   border-bottom-color: transparent;
-  border-right-color: #1e293b;
+  border-right-color: var(--tv-text-primary);
 }
 
 /* ============================================
@@ -233,7 +233,7 @@
   bottom: 100%;
   left: 12px;
   transform: none;
-  border-bottom-color: #1e293b;
+  border-bottom-color: var(--tv-text-primary);
 }
 
 /* Bottom-right corner: tooltip goes left */
@@ -249,7 +249,7 @@
   left: auto;
   right: 12px;
   transform: none;
-  border-bottom-color: #1e293b;
+  border-bottom-color: var(--tv-text-primary);
 }
 
 /* Top-left corner */
@@ -265,7 +265,7 @@
   bottom: auto;
   left: 12px;
   transform: none;
-  border-top-color: #1e293b;
+  border-top-color: var(--tv-text-primary);
   border-bottom-color: transparent;
 }
 
@@ -284,7 +284,7 @@
   left: auto;
   right: 12px;
   transform: none;
-  border-top-color: #1e293b;
+  border-top-color: var(--tv-text-primary);
   border-bottom-color: transparent;
 }
 
@@ -294,32 +294,32 @@
 
 .tooltip-title {
   font-weight: 600;
-  color: #e2e8f0;
+  color: var(--tv-border);
   margin-bottom: 4px;
   font-size: 1.1em;
 }
 
 .tooltip-text {
-  color: #94a3b8;
+  color: var(--tv-text-tertiary);
 }
 
 .tooltip-text strong {
-  color: #cbd5e1;
+  color: var(--tv-border);
   font-weight: 600;
 }
 
 .tooltip-divider {
   height: 1px;
-  background: #334155;
+  background: var(--tv-text-primary);
   margin: 8px 0;
 }
 
 .tooltip-footer {
   font-size: 0.9em;
-  color: #64748b;
+  color: var(--tv-text-secondary);
   margin-top: 6px;
   padding-top: 6px;
-  border-top: 1px solid #334155;
+  border-top: 1px solid var(--tv-text-primary);
 }
 
 /* ============================================
@@ -354,7 +354,7 @@
 /* Success - Green */
 .tooltip.tooltip-success {
   background: #14532d;
-  border: 1px solid #10b981;
+  border: 1px solid var(--tv-green);
 }
 
 .tooltip.tooltip-success::before {
@@ -369,7 +369,7 @@
 /* Warning - Yellow */
 .tooltip.tooltip-warning {
   background: #713f12;
-  border: 1px solid #f59e0b;
+  border: 1px solid var(--tv-orange);
 }
 
 .tooltip.tooltip-warning::before {
@@ -384,7 +384,7 @@
 /* Danger - Red */
 .tooltip.tooltip-danger {
   background: #7f1d1d;
-  border: 1px solid #ef4444;
+  border: 1px solid var(--tv-red);
 }
 
 .tooltip.tooltip-danger::before {
@@ -406,7 +406,7 @@
   justify-content: center;
   width: 14px;
   height: 14px;
-  background: #475569;
+  background: var(--tv-text-secondary);
   color: #fff;
   border-radius: 50%;
   font-size: var(--t-2xs);
@@ -510,7 +510,7 @@
   bottom: auto;
   left: 50%;
   transform: translateX(-50%);
-  border-top-color: #1e293b;
+  border-top-color: var(--tv-text-primary);
   border-bottom-color: transparent;
   border-left-color: transparent;
   border-right-color: transparent;
@@ -521,7 +521,7 @@
   top: auto;
   left: 50%;
   transform: translateX(-50%);
-  border-bottom-color: #1e293b;
+  border-bottom-color: var(--tv-text-primary);
   border-top-color: transparent;
   border-left-color: transparent;
   border-right-color: transparent;
@@ -532,7 +532,7 @@
   right: auto;
   top: 50%;
   transform: translateY(-50%);
-  border-left-color: #1e293b;
+  border-left-color: var(--tv-text-primary);
   border-right-color: transparent;
   border-top-color: transparent;
   border-bottom-color: transparent;
@@ -543,7 +543,7 @@
   left: auto;
   top: 50%;
   transform: translateY(-50%);
-  border-right-color: #1e293b;
+  border-right-color: var(--tv-text-primary);
   border-left-color: transparent;
   border-top-color: transparent;
   border-bottom-color: transparent;
@@ -579,8 +579,8 @@
 #tooltip-portal .tip-popup,
 #tooltip-portal .tooltip-content,
 #tooltip-portal .tooltip {
-  background: #1e293b !important;
-  color: #94a3b8 !important;
+  background: var(--tv-text-primary) !important;
+  color: var(--tv-text-tertiary) !important;
   padding: 10px 12px !important;
   border-radius: 6px !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
@@ -591,7 +591,7 @@
 #tooltip-portal .tip-title,
 #tooltip-portal .tooltip-title {
   font-weight: 600 !important;
-  color: #e2e8f0 !important;
+  color: var(--tv-border) !important;
   margin-bottom: 4px !important;
   font-size: var(--t-sm) !important;
 }
@@ -599,7 +599,7 @@
 #tooltip-portal .tip-text,
 #tooltip-portal .tooltip-text,
 #tooltip-portal .tip-detail {
-  color: #94a3b8 !important;
+  color: var(--tv-text-tertiary) !important;
 }
 
 /* Ensure arrow exists on portal tooltips */
@@ -621,7 +621,7 @@
   left: var(--arrow-left, 50%) !important;
   right: auto !important;
   transform: translateX(-50%) !important;
-  border-bottom-color: #1e293b !important;
+  border-bottom-color: var(--tv-text-primary) !important;
   border-top-color: transparent !important;
   border-left-color: transparent !important;
   border-right-color: transparent !important;
@@ -637,7 +637,7 @@
   left: var(--arrow-left, 50%) !important;
   right: auto !important;
   transform: translateX(-50%) !important;
-  border-top-color: #1e293b !important;
+  border-top-color: var(--tv-text-primary) !important;
   border-bottom-color: transparent !important;
   border-left-color: transparent !important;
   border-right-color: transparent !important;

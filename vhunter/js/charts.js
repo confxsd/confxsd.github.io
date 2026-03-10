@@ -2,15 +2,15 @@
 
 const lineStyle = {
   borderWidth: 1,
-  borderDash: [4, 4],
+  borderDash: [3, 3],
   drawTime: 'beforeDatasetsDraw'
 };
 
 const labelStyle = {
   display: true,
   position: 'end',
-  font: { size: 8, family: 'Inter' },
-  padding: 2
+  font: { size: 9, family: 'Plus Jakarta Sans', weight: '500' },
+  padding: 3
 };
 
 // Current period for label formatting
@@ -20,11 +20,11 @@ export function setChartPeriod(period) {
   currentPeriod = period;
 }
 
-// Base chart options - enhanced for better detail
+// Base chart options - TradingView-inspired clean style
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
-  animation: { duration: 300 },
+  animation: { duration: 250 },
   interaction: {
     intersect: false,
     mode: 'index'
@@ -33,33 +33,37 @@ const chartOptions = {
     legend: { display: false },
     tooltip: {
       enabled: true,
-      backgroundColor: 'rgba(30, 41, 59, 0.95)',
-      titleFont: { size: 10, family: 'Inter', weight: '600' },
-      bodyFont: { size: 10, family: 'Inter' },
-      padding: 8,
+      backgroundColor: '#131722',
+      titleFont: { size: 11, family: 'Plus Jakarta Sans', weight: '600' },
+      bodyFont: { size: 11, family: 'Plus Jakarta Sans' },
+      padding: 10,
       cornerRadius: 4,
-      displayColors: false
+      displayColors: false,
+      borderColor: 'rgba(255,255,255,0.1)',
+      borderWidth: 1
     }
   },
   scales: {
     x: {
       display: true,
       grid: { display: false },
+      border: { display: false },
       ticks: {
-        font: { size: 8, family: 'Inter' },
-        color: '#94a3b8',
+        font: { size: 9, family: 'Plus Jakarta Sans' },
+        color: '#b2b5be',
         maxTicksLimit: 8,
         maxRotation: 0
       }
     },
     y: {
       position: 'right',
-      grid: { color: '#f1f5f9', drawBorder: false },
+      grid: { color: '#f0f3fa', drawBorder: false },
+      border: { display: false },
       ticks: {
-        font: { size: 9, family: 'Inter' },
-        color: '#94a3b8',
+        font: { size: 9, family: 'Plus Jakarta Sans' },
+        color: '#b2b5be',
         maxTicksLimit: 5,
-        padding: 4
+        padding: 8
       }
     }
   }
@@ -77,25 +81,25 @@ const oscillatorOptions = {
           type: 'line',
           yMin: 70,
           yMax: 70,
-          borderColor: 'rgba(239, 68, 68, 0.5)',
+          borderColor: 'rgba(239, 83, 80, 0.4)',
           ...lineStyle,
           adjustScaleRange: false,
-          label: { ...labelStyle, content: '70', color: '#ef4444', backgroundColor: 'transparent' }
+          label: { ...labelStyle, content: '70', color: '#ef5350', backgroundColor: 'transparent' }
         },
         oversold: {
           type: 'line',
           yMin: 30,
           yMax: 30,
-          borderColor: 'rgba(16, 185, 129, 0.5)',
+          borderColor: 'rgba(38, 166, 154, 0.4)',
           ...lineStyle,
           adjustScaleRange: false,
-          label: { ...labelStyle, content: '30', color: '#10b981', backgroundColor: 'transparent' }
+          label: { ...labelStyle, content: '30', color: '#26a69a', backgroundColor: 'transparent' }
         },
         midline: {
           type: 'line',
           yMin: 50,
           yMax: 50,
-          borderColor: 'rgba(148, 163, 184, 0.3)',
+          borderColor: 'rgba(178, 181, 190, 0.3)',
           borderWidth: 1,
           borderDash: [2, 2],
           adjustScaleRange: false
@@ -130,8 +134,8 @@ const macdOptions = {
           type: 'line',
           yMin: 0,
           yMax: 0,
-          borderColor: 'rgba(100, 116, 139, 0.5)',
-          borderWidth: 1.5
+          borderColor: 'rgba(178, 181, 190, 0.4)',
+          borderWidth: 1
         }
       }
     }
@@ -142,7 +146,7 @@ export const charts = {};
 let avgVolume = 0;
 
 export function initCharts() {
-  // Price + SMA - enhanced with gradient fill
+  // Price + SMA - TradingView style
   charts.price = new Chart(document.getElementById('pC'), {
     type: 'line',
     data: {
@@ -150,57 +154,57 @@ export function initCharts() {
       datasets: [
         {
           data: [],
-          borderColor: '#475569',
+          borderColor: '#2962ff',
           borderWidth: 2,
           pointRadius: 0,
-          pointHoverRadius: 4,
-          pointHoverBackgroundColor: '#475569',
-          tension: 0.2,
+          pointHoverRadius: 3,
+          pointHoverBackgroundColor: '#2962ff',
+          tension: 0.1,
           fill: true,
           backgroundColor: (ctx) => {
             const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, ctx.chart.height);
-            gradient.addColorStop(0, 'rgba(71, 85, 105, 0.15)');
-            gradient.addColorStop(1, 'rgba(71, 85, 105, 0)');
+            gradient.addColorStop(0, 'rgba(41, 98, 255, 0.08)');
+            gradient.addColorStop(1, 'rgba(41, 98, 255, 0)');
             return gradient;
           }
         },
-        { data: [], borderColor: '#10b981', borderWidth: 1.5, pointRadius: 0, borderDash: [3, 3] },
-        { data: [], borderColor: '#f59e0b', borderWidth: 1.5, pointRadius: 0, borderDash: [3, 3] }
+        { data: [], borderColor: '#26a69a', borderWidth: 1.5, pointRadius: 0, borderDash: [3, 3] },
+        { data: [], borderColor: '#ff9800', borderWidth: 1.5, pointRadius: 0, borderDash: [3, 3] }
       ]
     },
     options: chartOptions
   });
 
-  // Volume with average line - enhanced bar styling
+  // Volume with average line
   charts.volume = new Chart(document.getElementById('vC'), {
     type: 'bar',
     data: {
       labels: [],
       datasets: [
-        { data: [], backgroundColor: '#cbd5e1', borderRadius: 2, barPercentage: 0.8, categoryPercentage: 0.9 },
-        { type: 'line', data: [], borderColor: '#818cf8', borderWidth: 2, pointRadius: 0, borderDash: [4, 4] }
+        { data: [], backgroundColor: '#b2b5be', borderRadius: 1, barPercentage: 0.85, categoryPercentage: 0.9 },
+        { type: 'line', data: [], borderColor: '#2962ff', borderWidth: 1.5, pointRadius: 0, borderDash: [4, 4] }
       ]
     },
     options: chartOptions
   });
 
-  // RSI with overbought/oversold - enhanced gradient
+  // RSI
   charts.rsi = new Chart(document.getElementById('rC'), {
     type: 'line',
     data: {
       labels: [],
       datasets: [{
         data: [],
-        borderColor: '#8b5cf6',
+        borderColor: '#7c4dff',
         borderWidth: 2,
         pointRadius: 0,
-        pointHoverRadius: 4,
-        pointHoverBackgroundColor: '#8b5cf6',
+        pointHoverRadius: 3,
+        pointHoverBackgroundColor: '#7c4dff',
         fill: true,
         backgroundColor: (ctx) => {
           const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, ctx.chart.height);
-          gradient.addColorStop(0, 'rgba(139, 92, 246, 0.2)');
-          gradient.addColorStop(1, 'rgba(139, 92, 246, 0)');
+          gradient.addColorStop(0, 'rgba(124, 77, 255, 0.12)');
+          gradient.addColorStop(1, 'rgba(124, 77, 255, 0)');
           return gradient;
         },
         tension: 0.2
@@ -209,66 +213,66 @@ export function initCharts() {
     options: oscillatorOptions
   });
 
-  // MACD with zero line - enhanced styling
+  // MACD
   charts.macd = new Chart(document.getElementById('mC'), {
     type: 'bar',
     data: {
       labels: [],
       datasets: [
-        { data: [], backgroundColor: '#cbd5e1', borderRadius: 1, barPercentage: 0.7 },
-        { type: 'line', data: [], borderColor: '#ef4444', borderWidth: 1.5, pointRadius: 0, tension: 0.2 },
-        { type: 'line', data: [], borderColor: '#3b82f6', borderWidth: 1.5, pointRadius: 0, tension: 0.2 }
+        { data: [], backgroundColor: '#b2b5be', borderRadius: 1, barPercentage: 0.7 },
+        { type: 'line', data: [], borderColor: '#2962ff', borderWidth: 1.5, pointRadius: 0, tension: 0.2 },
+        { type: 'line', data: [], borderColor: '#ff6d00', borderWidth: 1.5, pointRadius: 0, tension: 0.2 }
       ]
     },
     options: macdOptions
   });
 
-  // ADX with trend threshold - enhanced with fills
+  // ADX
   charts.adx = new Chart(document.getElementById('aC'), {
     type: 'line',
     data: {
       labels: [],
       datasets: [
-        { data: [], borderColor: '#6366f1', borderWidth: 2, pointRadius: 0, tension: 0.3, order: 1 },
-        { data: [], borderColor: 'rgba(16, 185, 129, 0.7)', borderWidth: 1, pointRadius: 0, tension: 0.3, fill: '+1', backgroundColor: 'rgba(16, 185, 129, 0.05)', order: 2 },
-        { data: [], borderColor: 'rgba(239, 68, 68, 0.7)', borderWidth: 1, pointRadius: 0, tension: 0.3, order: 2 }
+        { data: [], borderColor: '#2962ff', borderWidth: 2, pointRadius: 0, tension: 0.3, order: 1 },
+        { data: [], borderColor: 'rgba(38, 166, 154, 0.7)', borderWidth: 1.5, pointRadius: 0, tension: 0.3, fill: '+1', backgroundColor: 'rgba(38, 166, 154, 0.04)', order: 2 },
+        { data: [], borderColor: 'rgba(239, 83, 80, 0.7)', borderWidth: 1.5, pointRadius: 0, tension: 0.3, order: 2 }
       ]
     },
     options: adxOptions
   });
 
-  // Bollinger Bands - enhanced with band fill
+  // Bollinger Bands
   charts.bb = new Chart(document.getElementById('bC'), {
     type: 'line',
     data: {
       labels: [],
       datasets: [
-        { data: [], borderColor: '#475569', borderWidth: 2, pointRadius: 0, tension: 0.2 },
-        { data: [], borderColor: '#94a3b8', borderWidth: 1, pointRadius: 0, borderDash: [3, 3], fill: '+1', backgroundColor: 'rgba(148,163,184,0.08)', tension: 0.2 },
-        { data: [], borderColor: '#94a3b8', borderWidth: 1, pointRadius: 0, borderDash: [3, 3], tension: 0.2 },
-        { data: [], borderColor: '#818cf8', borderWidth: 1.5, pointRadius: 0, borderDash: [5, 5], tension: 0.2 } // Middle band (SMA20)
+        { data: [], borderColor: '#2962ff', borderWidth: 2, pointRadius: 0, tension: 0.2 },
+        { data: [], borderColor: '#b2b5be', borderWidth: 1, pointRadius: 0, borderDash: [3, 3], fill: '+1', backgroundColor: 'rgba(178, 181, 190, 0.06)', tension: 0.2 },
+        { data: [], borderColor: '#b2b5be', borderWidth: 1, pointRadius: 0, borderDash: [3, 3], tension: 0.2 },
+        { data: [], borderColor: '#ff9800', borderWidth: 1.5, pointRadius: 0, borderDash: [5, 5], tension: 0.2 }
       ]
     },
     options: chartOptions
   });
 
-  // MFI with 80/20 thresholds - enhanced gradient
+  // MFI
   charts.mfi = new Chart(document.getElementById('mfC'), {
     type: 'line',
     data: {
       labels: [],
       datasets: [{
         data: [],
-        borderColor: '#8b5cf6',
+        borderColor: '#7c4dff',
         borderWidth: 2,
         pointRadius: 0,
-        pointHoverRadius: 4,
+        pointHoverRadius: 3,
         tension: 0.2,
         fill: true,
         backgroundColor: (ctx) => {
           const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, ctx.chart.height);
-          gradient.addColorStop(0, 'rgba(139, 92, 246, 0.2)');
-          gradient.addColorStop(1, 'rgba(139, 92, 246, 0)');
+          gradient.addColorStop(0, 'rgba(124, 77, 255, 0.12)');
+          gradient.addColorStop(1, 'rgba(124, 77, 255, 0)');
           return gradient;
         }
       }]
@@ -276,23 +280,23 @@ export function initCharts() {
     options: mfiOptions
   });
 
-  // A/D Line - enhanced gradient
+  // A/D Line
   charts.adl = new Chart(document.getElementById('adC'), {
     type: 'line',
     data: {
       labels: [],
       datasets: [{
         data: [],
-        borderColor: '#06b6d4',
+        borderColor: '#00bcd4',
         borderWidth: 2,
         pointRadius: 0,
-        pointHoverRadius: 4,
+        pointHoverRadius: 3,
         tension: 0.2,
         fill: true,
         backgroundColor: (ctx) => {
           const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, ctx.chart.height);
-          gradient.addColorStop(0, 'rgba(6, 182, 212, 0.15)');
-          gradient.addColorStop(1, 'rgba(6, 182, 212, 0)');
+          gradient.addColorStop(0, 'rgba(0, 188, 212, 0.1)');
+          gradient.addColorStop(1, 'rgba(0, 188, 212, 0)');
           return gradient;
         }
       }]
@@ -300,7 +304,7 @@ export function initCharts() {
     options: { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, beginAtZero: false } } }
   });
 
-  // ATR with average line - enhanced gradient
+  // ATR
   charts.atr = new Chart(document.getElementById('atC'), {
     type: 'line',
     data: {
@@ -308,20 +312,20 @@ export function initCharts() {
       datasets: [
         {
           data: [],
-          borderColor: '#f59e0b',
+          borderColor: '#ff9800',
           borderWidth: 2,
           pointRadius: 0,
-          pointHoverRadius: 4,
+          pointHoverRadius: 3,
           tension: 0.2,
           fill: true,
           backgroundColor: (ctx) => {
             const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, ctx.chart.height);
-            gradient.addColorStop(0, 'rgba(245, 158, 11, 0.15)');
-            gradient.addColorStop(1, 'rgba(245, 158, 11, 0)');
+            gradient.addColorStop(0, 'rgba(255, 152, 0, 0.1)');
+            gradient.addColorStop(1, 'rgba(255, 152, 0, 0)');
             return gradient;
           }
         },
-        { data: [], borderColor: '#818cf8', borderWidth: 1.5, pointRadius: 0, borderDash: [4, 4] } // Average ATR line
+        { data: [], borderColor: '#2962ff', borderWidth: 1.5, pointRadius: 0, borderDash: [4, 4] }
       ]
     },
     options: chartOptions
@@ -348,7 +352,7 @@ export function updateCharts(data) {
   // Volume with average line
   charts.volume.data.labels = labels;
   charts.volume.data.datasets[0].data = volumes;
-  charts.volume.data.datasets[0].backgroundColor = bars.map(d => d.c >= d.o ? '#86efac' : '#fca5a5');
+  charts.volume.data.datasets[0].backgroundColor = bars.map(d => d.c >= d.o ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)');
   charts.volume.data.datasets[1].data = avgVolumeArr;
   charts.volume.update();
 
@@ -360,7 +364,7 @@ export function updateCharts(data) {
   // MACD
   charts.macd.data.labels = labels;
   charts.macd.data.datasets[0].data = macd.histogram;
-  charts.macd.data.datasets[0].backgroundColor = macd.histogram.map(v => v >= 0 ? '#86efac' : '#fca5a5');
+  charts.macd.data.datasets[0].backgroundColor = macd.histogram.map(v => v >= 0 ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)');
   charts.macd.data.datasets[1].data = macd.macdLine;
   charts.macd.data.datasets[2].data = macd.signalLine;
   charts.macd.update();
@@ -407,8 +411,8 @@ export function updateCharts(data) {
   const adxVals = adxData.adx.filter(v => v !== null);
   const adxMax = Math.max(...adxVals, 0);
   const adxAnnotations = {};
-  if (adxMax >= 20) adxAnnotations.trend = refLine(25, '#f59e0b', '25 (Trend)');
-  if (adxMax >= 35) adxAnnotations.strong = refLine(40, '#8b5cf6', '40');
+  if (adxMax >= 20) adxAnnotations.trend = refLine(25, '#ff9800', '25 (Trend)');
+  if (adxMax >= 35) adxAnnotations.strong = refLine(40, '#7c4dff', '40');
   charts.adx.options.plugins.annotation = { annotations: adxAnnotations };
   charts.adx.update();
 
@@ -417,8 +421,8 @@ export function updateCharts(data) {
   const mfiMax = Math.max(...mfiVals, 0);
   const mfiMin = Math.min(...mfiVals, 100);
   const mfiAnnotations = {};
-  if (mfiMax >= 70) mfiAnnotations.ob = refLine(80, '#ef4444', '80');
-  if (mfiMin <= 30) mfiAnnotations.os = refLine(20, '#10b981', '20');
+  if (mfiMax >= 70) mfiAnnotations.ob = refLine(80, '#ef5350', '80');
+  if (mfiMin <= 30) mfiAnnotations.os = refLine(20, '#26a69a', '20');
   charts.mfi.options.plugins.annotation = { annotations: mfiAnnotations };
   charts.mfi.update();
 

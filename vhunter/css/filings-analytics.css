@@ -13,8 +13,8 @@
 }
 
 .fila-card {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--tv-bg-secondary);
+  border: 1px solid var(--tv-border);
   border-radius: 10px;
   padding: 16px;
   cursor: pointer;
@@ -22,32 +22,32 @@
 }
 
 .fila-card:hover {
-  border-color: #6366f1;
+  border-color: var(--tv-accent-hover);
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
 }
 
 .fila-card-value {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--tv-text-primary);
   line-height: 1.2;
 }
 
 .fila-card-label {
   font-size: var(--t-xs);
-  color: #64748b;
+  color: var(--tv-text-secondary);
   margin-top: 4px;
 }
 
 .fila-card-sub {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--tv-text-tertiary);
   margin-top: 2px;
 }
 
-.fila-card--positive .fila-card-value { color: #10b981; }
-.fila-card--negative .fila-card-value { color: #ef4444; }
-.fila-card--accent .fila-card-value { color: #6366f1; }
+.fila-card--positive .fila-card-value { color: var(--tv-green); }
+.fila-card--negative .fila-card-value { color: var(--tv-red); }
+.fila-card--accent .fila-card-value { color: var(--tv-accent-hover); }
 
 /* ─── Sub-tabs ─── */
 
@@ -61,10 +61,10 @@
 
 .fila-subtab {
   padding: 6px 14px;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
+  background: var(--tv-bg-tertiary);
+  border: 1px solid var(--tv-border);
   border-radius: 6px;
-  color: #64748b;
+  color: var(--tv-text-secondary);
   font-size: var(--t-xs);
   font-weight: 500;
   cursor: pointer;
@@ -72,11 +72,11 @@
   transition: all 0.2s;
 }
 
-.fila-subtab:hover { background: #f8fafc; color: #1e293b; }
-.fila-subtab.active { background: #6366f1; border-color: #6366f1; color: white; }
+.fila-subtab:hover { background: var(--tv-bg-secondary); color: var(--tv-text-primary); }
+.fila-subtab.active { background: var(--tv-accent-hover); border-color: var(--tv-accent-hover); color: white; }
 
 .fila-subtab--filter { border-style: dashed; }
-.fila-subtab--filter.active { background: #f59e0b; border-color: #f59e0b; border-style: solid; color: white; }
+.fila-subtab--filter.active { background: var(--tv-orange); border-color: var(--tv-orange); border-style: solid; color: white; }
 
 /* ─── Content Sections ─── */
 
@@ -91,7 +91,7 @@
 .fila-section-title {
   font-size: var(--t-base);
   font-weight: 600;
-  color: #1e293b;
+  color: var(--tv-text-primary);
   margin-bottom: 12px;
 }
 
@@ -105,8 +105,8 @@
 }
 
 .fila-chart-box {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--tv-bg-secondary);
+  border: 1px solid var(--tv-border);
   border-radius: 10px;
   padding: 16px;
 }
@@ -114,7 +114,7 @@
 .fila-chart-box h4 {
   font-size: var(--t-sm);
   font-weight: 600;
-  color: #1e293b;
+  color: var(--tv-text-primary);
   margin: 0 0 12px 0;
 }
 
@@ -138,28 +138,28 @@
 .fila-table th {
   text-align: left;
   padding: 8px 10px;
-  color: #64748b;
+  color: var(--tv-text-secondary);
   font-weight: 600;
   font-size: var(--t-xs);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid var(--tv-border);
   white-space: nowrap;
 }
 
 .fila-table td {
   padding: 8px 10px;
-  border-bottom: 1px solid #f1f5f9;
-  color: #334155;
+  border-bottom: 1px solid var(--tv-bg-tertiary);
+  color: var(--tv-text-primary);
 }
 
 .fila-table tr:hover td {
-  background: #f8fafc;
+  background: var(--tv-bg-secondary);
 }
 
 .fila-table .fila-ticker {
   font-weight: 600;
-  color: #6366f1;
+  color: var(--tv-accent-hover);
   cursor: pointer;
 }
 
@@ -167,8 +167,8 @@
   text-decoration: underline;
 }
 
-.fila-trend-up { color: #10b981; }
-.fila-trend-down { color: #ef4444; }
+.fila-trend-up { color: var(--tv-green); }
+.fila-trend-down { color: var(--tv-red); }
 
 .fila-badge {
   display: inline-block;
@@ -178,13 +178,13 @@
   font-weight: 600;
 }
 
-.fila-badge--new { background: #d1fae5; color: #065f46; }
-.fila-badge--exit { background: #fee2e2; color: #991b1b; }
+.fila-badge--new { background: var(--tv-green-bg-solid); color: #065f46; }
+.fila-badge--exit { background: var(--tv-red-bg-solid); color: #991b1b; }
 .fila-badge--increase { background: #dbeafe; color: #1e40af; }
-.fila-badge--decrease { background: #fef3c7; color: #92400e; }
-.fila-badge--hot { background: #fef3c7; color: #b45309; }
-.fila-badge--long { background: #d1fae5; color: #065f46; }
-.fila-badge--short { background: #fee2e2; color: #991b1b; }
+.fila-badge--decrease { background: var(--tv-orange-bg); color: #92400e; }
+.fila-badge--hot { background: var(--tv-orange-bg); color: #b45309; }
+.fila-badge--long { background: var(--tv-green-bg-solid); color: #065f46; }
+.fila-badge--short { background: var(--tv-red-bg-solid); color: #991b1b; }
 .fila-badge--watch { background: #e0e7ff; color: #3730a3; }
 
 /* ─── Heatmap Grid ─── */
@@ -202,7 +202,7 @@
 
 .fila-heatmap-header {
   font-weight: 600;
-  color: #64748b;
+  color: var(--tv-text-secondary);
   padding: 4px 6px;
   text-align: center;
   white-space: nowrap;
@@ -210,7 +210,7 @@
 
 .fila-heatmap-fund {
   font-weight: 600;
-  color: #1e293b;
+  color: var(--tv-text-primary);
   padding: 4px 8px;
   white-space: nowrap;
   display: flex;
@@ -231,11 +231,11 @@
   z-index: 1;
 }
 
-.fila-heatmap-cell--new { background: #10b981; color: white; }
-.fila-heatmap-cell--increase { background: #34d399; color: white; }
-.fila-heatmap-cell--decrease { background: #fbbf24; color: #1e293b; }
-.fila-heatmap-cell--exit { background: #ef4444; color: white; }
-.fila-heatmap-cell--empty { background: #f1f5f9; color: #cbd5e1; }
+.fila-heatmap-cell--new { background: var(--tv-green); color: white; }
+.fila-heatmap-cell--increase { background: var(--tv-green); color: white; }
+.fila-heatmap-cell--decrease { background: #fbbf24; color: var(--tv-text-primary); }
+.fila-heatmap-cell--exit { background: var(--tv-red); color: white; }
+.fila-heatmap-cell--empty { background: var(--tv-bg-tertiary); color: var(--tv-border); }
 
 /* Color intensity modifiers */
 .fila-heatmap-cell--strong { filter: brightness(0.85); }
@@ -261,8 +261,8 @@
 /* ─── AI Synthesis ─── */
 
 .fila-ai-panel {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--tv-bg-secondary);
+  border: 1px solid var(--tv-border);
   border-radius: 10px;
   padding: 20px;
 }
@@ -278,12 +278,12 @@
   margin: 0;
   font-size: var(--t-base);
   font-weight: 600;
-  color: #1e293b;
+  color: var(--tv-text-primary);
 }
 
 .fila-ai-btn {
   padding: 8px 16px;
-  background: #6366f1;
+  background: var(--tv-accent-hover);
   color: white;
   border: none;
   border-radius: 6px;
@@ -298,12 +298,12 @@
 
 .fila-ai-timestamp {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--tv-text-tertiary);
   margin-left: 12px;
 }
 
 .fila-ai-narrative {
-  color: #334155;
+  color: var(--tv-text-primary);
   font-size: var(--t-sm);
   line-height: 1.6;
   margin-bottom: 16px;
@@ -327,7 +327,7 @@
   gap: 6px;
   padding: 6px 12px;
   background: white;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--tv-border);
   border-radius: 8px;
   font-size: var(--t-sm);
   cursor: pointer;
@@ -335,15 +335,15 @@
 }
 
 .fila-watch-pill:hover {
-  border-color: #6366f1;
+  border-color: var(--tv-accent-hover);
 }
 
 .fila-watch-pill strong {
-  color: #1e293b;
+  color: var(--tv-text-primary);
 }
 
 .fila-watch-pill .fila-catalyst {
-  color: #64748b;
+  color: var(--tv-text-secondary);
   font-size: 11px;
 }
 
@@ -379,7 +379,7 @@
 .fila-loading {
   text-align: center;
   padding: 40px;
-  color: #94a3b8;
+  color: var(--tv-text-tertiary);
 }
 
 .fila-loading i {
@@ -395,7 +395,7 @@
 .fila-empty {
   text-align: center;
   padding: 40px;
-  color: #94a3b8;
+  color: var(--tv-text-tertiary);
 }
 
 /* ─── PIPE Gantt ─── */
@@ -415,7 +415,7 @@
   width: 60px;
   font-weight: 600;
   font-size: var(--t-sm);
-  color: #6366f1;
+  color: var(--tv-accent-hover);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -423,7 +423,7 @@
 .fila-gantt-bar-container {
   flex: 1;
   height: 24px;
-  background: #f1f5f9;
+  background: var(--tv-bg-tertiary);
   border-radius: 4px;
   overflow: hidden;
   display: flex;
@@ -440,14 +440,14 @@
   min-width: 20px;
 }
 
-.fila-gantt-segment--pre { background: #94a3b8; }
-.fila-gantt-segment--s1 { background: #f59e0b; }
-.fila-gantt-segment--effective { background: #ef4444; }
-.fila-gantt-segment--completed { background: #10b981; }
+.fila-gantt-segment--pre { background: var(--tv-text-tertiary); }
+.fila-gantt-segment--s1 { background: var(--tv-orange); }
+.fila-gantt-segment--effective { background: var(--tv-red); }
+.fila-gantt-segment--completed { background: var(--tv-green); }
 
 .fila-gantt-status {
   font-size: 11px;
-  color: #64748b;
+  color: var(--tv-text-secondary);
   width: 80px;
   text-align: right;
   flex-shrink: 0;

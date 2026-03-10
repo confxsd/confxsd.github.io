@@ -17,7 +17,7 @@
 .memory-title {
   font-size: var(--t-lg);
   font-weight: 700;
-  color: #1e293b;
+  color: var(--tv-text-primary);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -35,10 +35,10 @@
 
 .memory-filter-btn {
   padding: 5px 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--tv-border);
   border-radius: 16px;
-  background: #fff;
-  color: #64748b;
+  background: var(--tv-bg);
+  color: var(--tv-text-secondary);
   font-size: var(--t-sm);
   font-weight: 500;
   cursor: pointer;
@@ -46,13 +46,13 @@
 }
 
 .memory-filter-btn:hover {
-  border-color: #818cf8;
-  color: #818cf8;
+  border-color: var(--tv-accent);
+  color: var(--tv-accent);
 }
 
 .memory-filter-btn.active {
-  background: #818cf8;
-  border-color: #818cf8;
+  background: var(--tv-accent);
+  border-color: var(--tv-accent);
   color: #fff;
 }
 
@@ -76,21 +76,21 @@
 }
 
 .memory-action-btn.primary {
-  background: #818cf8;
+  background: var(--tv-accent);
   color: #fff;
 }
 
 .memory-action-btn.primary:hover {
-  background: #6366f1;
+  background: var(--tv-accent-hover);
 }
 
 .memory-action-btn.secondary {
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--tv-bg-tertiary);
+  color: var(--tv-text-secondary);
 }
 
 .memory-action-btn.secondary:hover {
-  background: #e2e8f0;
+  background: var(--tv-border);
 }
 
 .memory-action-btn:disabled {
@@ -107,7 +107,7 @@
 }
 
 .memory-stat {
-  background: #fff;
+  background: var(--tv-bg);
   border-radius: 8px;
   padding: 12px 16px;
   min-width: 100px;
@@ -117,17 +117,17 @@
 .memory-stat-value {
   font-size: var(--t-2xl);
   font-weight: 700;
-  color: #1e293b;
+  color: var(--tv-text-primary);
 }
 
 .memory-stat-label {
   font-size: var(--t-xs);
-  color: #64748b;
+  color: var(--tv-text-secondary);
   margin-top: 2px;
 }
 
 .memory-stat.bullish .memory-stat-value { color: #16a34a; }
-.memory-stat.bearish .memory-stat-value { color: #dc2626; }
+.memory-stat.bearish .memory-stat-value { color: var(--tv-red); }
 
 /* Memory Grid */
 .memory-grid {
@@ -138,7 +138,7 @@
 
 /* Memory Card */
 .memory-card {
-  background: #fff;
+  background: var(--tv-bg);
   border-radius: 10px;
   padding: 14px 16px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.08);
@@ -154,7 +154,7 @@
 }
 
 .memory-card.selected {
-  border-color: #818cf8;
+  border-color: var(--tv-accent);
 }
 
 .memory-card.dormant {
@@ -163,7 +163,7 @@
 
 .memory-card.resolved {
   opacity: 0.4;
-  background: #f8fafc;
+  background: var(--tv-bg-secondary);
 }
 
 .memory-card-header {
@@ -176,7 +176,7 @@
 .memory-card-name {
   font-size: var(--t-base);
   font-weight: 600;
-  color: #1e293b;
+  color: var(--tv-text-primary);
   line-height: 1.3;
   flex: 1;
   margin-right: 8px;
@@ -188,18 +188,18 @@
   border-radius: 4px;
   font-weight: 600;
   text-transform: uppercase;
-  background: #f1f5f9;
-  color: #64748b;
+  background: var(--tv-bg-tertiary);
+  color: var(--tv-text-secondary);
   white-space: nowrap;
 }
 
-.memory-card-category.geopolitical { background: #fef3c7; color: #92400e; }
+.memory-card-category.geopolitical { background: var(--tv-orange-bg); color: #92400e; }
 .memory-card-category.macro { background: #dbeafe; color: #1e40af; }
 .memory-card-category.sector { background: #dcfce7; color: #166534; }
-.memory-card-category.ticker { background: #f3e8ff; color: #7c3aed; }
+.memory-card-category.ticker { background: #f3e8ff; color: var(--tv-purple); }
 .memory-card-category.theme { background: #e0e7ff; color: #4338ca; }
 .memory-card-category.relationship { background: #fce7f3; color: #be185d; }
-.memory-card-category.event { background: #fee2e2; color: #991b1b; }
+.memory-card-category.event { background: var(--tv-red-bg-solid); color: #991b1b; }
 
 /* Scores Row */
 .memory-card-scores {
@@ -218,8 +218,8 @@
 }
 
 .memory-sentiment.positive { color: #16a34a; }
-.memory-sentiment.negative { color: #dc2626; }
-.memory-sentiment.neutral { color: #64748b; }
+.memory-sentiment.negative { color: var(--tv-red); }
+.memory-sentiment.neutral { color: var(--tv-text-secondary); }
 
 .memory-sentiment-arrow {
   font-size: var(--t-xs);
@@ -227,14 +227,14 @@
 
 .memory-importance {
   font-size: var(--t-sm);
-  color: #64748b;
+  color: var(--tv-text-secondary);
 }
 
 .memory-importance-bar {
   display: inline-flex;
   height: 6px;
   width: 50px;
-  background: #e2e8f0;
+  background: var(--tv-border);
   border-radius: 3px;
   overflow: hidden;
   margin-left: 4px;
@@ -243,7 +243,7 @@
 
 .memory-importance-fill {
   height: 100%;
-  background: #818cf8;
+  background: var(--tv-accent);
   border-radius: 3px;
   transition: width 0.3s;
 }
@@ -259,8 +259,8 @@
 .memory-asset-tag {
   font-size: var(--t-2xs);
   padding: 2px 6px;
-  background: #f1f5f9;
-  color: #818cf8;
+  background: var(--tv-bg-tertiary);
+  color: var(--tv-accent);
   border-radius: 4px;
   font-weight: 600;
 }
@@ -271,9 +271,9 @@
   align-items: center;
   justify-content: space-between;
   font-size: var(--t-xs);
-  color: #94a3b8;
+  color: var(--tv-text-tertiary);
   padding-top: 8px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--tv-bg-tertiary);
 }
 
 .memory-card-time {
@@ -283,7 +283,7 @@
 }
 
 .memory-card-signals {
-  color: #64748b;
+  color: var(--tv-text-secondary);
 }
 
 /* ============================================ */
@@ -312,7 +312,7 @@
   bottom: 0;
   width: 480px;
   max-width: 100%;
-  background: #fff;
+  background: var(--tv-bg);
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
   z-index: 1001;
   transform: translateX(100%);
@@ -327,7 +327,7 @@
 
 .memory-detail-header {
   padding: 16px 20px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--tv-border);
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -337,14 +337,14 @@
   background: none;
   border: none;
   font-size: var(--t-xl);
-  color: #64748b;
+  color: var(--tv-text-secondary);
   cursor: pointer;
   padding: 4px;
   line-height: 1;
 }
 
 .memory-detail-close:hover {
-  color: #1e293b;
+  color: var(--tv-text-primary);
 }
 
 .memory-detail-title {
@@ -354,7 +354,7 @@
 .memory-detail-name {
   font-size: var(--t-lg);
   font-weight: 700;
-  color: #1e293b;
+  color: var(--tv-text-primary);
   margin-bottom: 4px;
 }
 
@@ -385,13 +385,13 @@
 
 .memory-gauge-label {
   font-size: var(--t-xs);
-  color: #64748b;
+  color: var(--tv-text-secondary);
   margin-bottom: 6px;
 }
 
 .memory-gauge-bar {
   height: 8px;
-  background: #e2e8f0;
+  background: var(--tv-border);
   border-radius: 4px;
   overflow: hidden;
   position: relative;
@@ -410,28 +410,28 @@
 }
 
 .memory-gauge-fill.sentiment.positive {
-  background: linear-gradient(90deg, #a3e635, #22c55e);
+  background: linear-gradient(90deg, #a3e635, var(--tv-green));
 }
 
 .memory-gauge-fill.sentiment.negative {
-  background: linear-gradient(90deg, #f87171, #ef4444);
+  background: linear-gradient(90deg, var(--tv-red), var(--tv-red));
   left: auto;
   right: 50%;
   transform-origin: right center;
 }
 
 .memory-gauge-fill.importance {
-  background: linear-gradient(90deg, #818cf8, #6366f1);
+  background: linear-gradient(90deg, var(--tv-accent), var(--tv-accent-hover));
 }
 
 .memory-gauge-fill.confidence {
-  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+  background: linear-gradient(90deg, #fbbf24, var(--tv-orange));
 }
 
 .memory-gauge-value {
   font-size: var(--t-sm);
   font-weight: 600;
-  color: #1e293b;
+  color: var(--tv-text-primary);
   margin-top: 4px;
 }
 
@@ -443,7 +443,7 @@
 .memory-section-title {
   font-size: var(--t-sm);
   font-weight: 600;
-  color: #64748b;
+  color: var(--tv-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 8px;
@@ -454,7 +454,7 @@
 
 .memory-section-content {
   font-size: var(--t-base);
-  color: #334155;
+  color: var(--tv-text-primary);
   line-height: 1.6;
 }
 
@@ -467,7 +467,7 @@
 
 .memory-detail-asset {
   padding: 4px 10px;
-  background: #818cf8;
+  background: var(--tv-accent);
   color: #fff;
   border-radius: 4px;
   font-size: var(--t-sm);
@@ -477,7 +477,7 @@
 }
 
 .memory-detail-asset:hover {
-  background: #6366f1;
+  background: var(--tv-accent-hover);
 }
 
 /* Trade implications */
@@ -489,12 +489,12 @@
 
 .memory-trade-item {
   padding: 8px 10px;
-  background: #f8fafc;
+  background: var(--tv-bg-secondary);
   border-radius: 6px;
   margin-bottom: 6px;
   font-size: var(--t-sm);
-  color: #334155;
-  border-left: 3px solid #818cf8;
+  color: var(--tv-text-primary);
+  border-left: 3px solid var(--tv-accent);
 }
 
 /* Timeline */
@@ -510,7 +510,7 @@
   top: 0;
   bottom: 0;
   width: 2px;
-  background: #e2e8f0;
+  background: var(--tv-border);
 }
 
 .memory-timeline-item {
@@ -526,13 +526,13 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #818cf8;
+  background: var(--tv-accent);
   border: 2px solid #fff;
-  box-shadow: 0 0 0 2px #e2e8f0;
+  box-shadow: 0 0 0 2px var(--tv-border);
 }
 
-.memory-timeline-item.positive::before { background: #22c55e; }
-.memory-timeline-item.negative::before { background: #ef4444; }
+.memory-timeline-item.positive::before { background: var(--tv-green); }
+.memory-timeline-item.negative::before { background: var(--tv-red); }
 
 .memory-timeline-header {
   display: flex;
@@ -543,7 +543,7 @@
 
 .memory-timeline-date {
   font-size: var(--t-xs);
-  color: #94a3b8;
+  color: var(--tv-text-tertiary);
 }
 
 .memory-timeline-delta {
@@ -554,23 +554,23 @@
 }
 
 .memory-timeline-delta.positive { background: #dcfce7; color: #166534; }
-.memory-timeline-delta.negative { background: #fee2e2; color: #991b1b; }
+.memory-timeline-delta.negative { background: var(--tv-red-bg-solid); color: #991b1b; }
 
 .memory-timeline-source {
   font-size: var(--t-xs);
-  color: #818cf8;
+  color: var(--tv-accent);
   margin-left: auto;
 }
 
 .memory-timeline-summary {
   font-size: var(--t-sm);
-  color: #334155;
+  color: var(--tv-text-primary);
   line-height: 1.5;
 }
 
 .memory-timeline-reasoning {
   font-size: var(--t-xs);
-  color: #64748b;
+  color: var(--tv-text-secondary);
   margin-top: 4px;
   font-style: italic;
 }
@@ -578,7 +578,7 @@
 /* Detail Actions */
 .memory-detail-actions {
   padding: 16px 20px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--tv-border);
   display: flex;
   gap: 8px;
 }
@@ -595,17 +595,17 @@
 }
 
 .memory-detail-actions .btn-edit {
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--tv-bg-tertiary);
+  color: var(--tv-text-secondary);
 }
 
 .memory-detail-actions .btn-edit:hover {
-  background: #e2e8f0;
+  background: var(--tv-border);
 }
 
 .memory-detail-actions .btn-delete {
-  background: #fee2e2;
-  color: #dc2626;
+  background: var(--tv-red-bg-solid);
+  color: var(--tv-red);
 }
 
 .memory-detail-actions .btn-delete:hover {
@@ -632,7 +632,7 @@
 }
 
 .memory-modal {
-  background: #fff;
+  background: var(--tv-bg);
   border-radius: 12px;
   width: 100%;
   max-width: 560px;
@@ -643,7 +643,7 @@
 
 .memory-modal-header {
   padding: 16px 20px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--tv-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -652,14 +652,14 @@
 .memory-modal-title {
   font-size: var(--t-lg);
   font-weight: 700;
-  color: #1e293b;
+  color: var(--tv-text-primary);
 }
 
 .memory-modal-close {
   background: none;
   border: none;
   font-size: var(--t-2xl);
-  color: #64748b;
+  color: var(--tv-text-secondary);
   cursor: pointer;
   line-height: 1;
 }
@@ -676,7 +676,7 @@
   display: block;
   font-size: var(--t-sm);
   font-weight: 600;
-  color: #334155;
+  color: var(--tv-text-primary);
   margin-bottom: 6px;
 }
 
@@ -685,11 +685,11 @@
 .memory-form-select {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--tv-border);
   border-radius: 6px;
   font-size: var(--t-base);
-  color: #1e293b;
-  background: #fff;
+  color: var(--tv-text-primary);
+  background: var(--tv-bg);
   transition: border-color 0.15s;
 }
 
@@ -697,7 +697,7 @@
 .memory-form-textarea:focus,
 .memory-form-select:focus {
   outline: none;
-  border-color: #818cf8;
+  border-color: var(--tv-accent);
 }
 
 .memory-form-textarea {
@@ -713,13 +713,13 @@
 
 .memory-form-hint {
   font-size: var(--t-xs);
-  color: #94a3b8;
+  color: var(--tv-text-tertiary);
   margin-top: 4px;
 }
 
 .memory-modal-footer {
   padding: 16px 20px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--tv-border);
   display: flex;
   gap: 8px;
   justify-content: flex-end;
@@ -736,21 +736,21 @@
 }
 
 .memory-modal-footer .btn-cancel {
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--tv-bg-tertiary);
+  color: var(--tv-text-secondary);
 }
 
 .memory-modal-footer .btn-cancel:hover {
-  background: #e2e8f0;
+  background: var(--tv-border);
 }
 
 .memory-modal-footer .btn-save {
-  background: #818cf8;
+  background: var(--tv-accent);
   color: #fff;
 }
 
 .memory-modal-footer .btn-save:hover {
-  background: #6366f1;
+  background: var(--tv-accent-hover);
 }
 
 /* ============================================ */
@@ -760,7 +760,7 @@
 .memory-empty {
   text-align: center;
   padding: 60px 20px;
-  color: #64748b;
+  color: var(--tv-text-secondary);
 }
 
 .memory-empty-icon {
@@ -771,7 +771,7 @@
 .memory-empty-title {
   font-size: var(--t-lg);
   font-weight: 600;
-  color: #334155;
+  color: var(--tv-text-primary);
   margin-bottom: 8px;
 }
 
@@ -793,14 +793,14 @@
 .memory-loading {
   text-align: center;
   padding: 40px 20px;
-  color: #64748b;
+  color: var(--tv-text-secondary);
 }
 
 .memory-loading-spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid #e2e8f0;
-  border-top-color: #818cf8;
+  border: 3px solid var(--tv-border);
+  border-top-color: var(--tv-accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 0 auto 12px;
@@ -848,7 +848,7 @@
 /* ============================================ */
 
 .memory-sentiment-chart {
-  background: #f8fafc;
+  background: var(--tv-bg-secondary);
   border-radius: 8px;
   padding: 12px;
   display: flex;
@@ -865,7 +865,7 @@
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 4px;
-  background: #f1f5f9;
+  background: var(--tv-bg-tertiary);
 }
 
 .memory-timeline-sentiment.positive {
@@ -874,12 +874,12 @@
 }
 
 .memory-timeline-sentiment.negative {
-  background: #fee2e2;
+  background: var(--tv-red-bg-solid);
   color: #991b1b;
 }
 
 .memory-timeline-delta {
   font-size: var(--t-2xs);
-  color: #94a3b8;
+  color: var(--tv-text-tertiary);
   font-weight: 500;
 }
