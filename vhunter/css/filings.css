@@ -181,7 +181,7 @@
 }
 
 .fil-summary-sep {
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
 }
 
 .fil-convert-notice {
@@ -197,7 +197,7 @@
 }
 
 .fil-convert-notice i {
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   font-size: 10px;
 }
 
@@ -1357,7 +1357,7 @@
 
 .fil-empty-holdings i {
   font-size: 48px;
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
 }
 
 .fil-empty-holdings p {

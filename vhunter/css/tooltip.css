@@ -294,7 +294,7 @@
 
 .tooltip-title {
   font-weight: 600;
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   margin-bottom: 4px;
   font-size: 1.1em;
 }
@@ -304,7 +304,7 @@
 }
 
 .tooltip-text strong {
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   font-weight: 600;
 }
 
@@ -591,7 +591,7 @@
 #tooltip-portal .tip-title,
 #tooltip-portal .tooltip-title {
   font-weight: 600 !important;
-  color: var(--tv-border) !important;
+  color: var(--tv-on-surface-inverted) !important;
   margin-bottom: 4px !important;
   font-size: var(--t-sm) !important;
 }

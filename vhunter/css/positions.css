@@ -28,7 +28,7 @@
 .pnl-hero-value {
   font-size: 36px;
   font-weight: 800;
-  color: var(--tv-bg-secondary);
+  color: var(--tv-on-surface-inverted-bright);
   line-height: 1;
   margin-bottom: 12px;
 }
@@ -62,7 +62,7 @@
 .pnl-breakdown-value {
   font-size: var(--t-xl);
   font-weight: 700;
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
 }
 
 .pnl-breakdown-value.positive { color: #4ade80; }

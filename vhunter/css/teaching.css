@@ -104,7 +104,7 @@
 
 .tip-title {
   font-weight: 500;
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   margin-bottom: 4px;
   text-transform: none;
 }
@@ -120,7 +120,7 @@
 }
 
 .tip-detail strong {
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   display: block;
   margin-top: 8px;
   margin-bottom: 2px;
@@ -229,7 +229,7 @@
 .winrate-insight {
   font-size: var(--t-xs);
   line-height: 1.5;
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   padding: 10px;
   background: rgba(255,255,255,0.05);
   border-radius: 6px;

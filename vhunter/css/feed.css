@@ -372,7 +372,7 @@
 .thesis-section-label {
   font-size: var(--t-sm);
   font-weight: 600;
-  color: var(--tv-bg-tertiary);
+  color: var(--tv-on-surface-inverted-dim);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -521,7 +521,7 @@
   font-size: var(--t-md);
   line-height: 1.5;
   margin-bottom: 12px;
-  color: var(--tv-bg-tertiary);
+  color: var(--tv-on-surface-inverted-dim);
 }
 
 .thesis-row {
@@ -537,7 +537,7 @@
 }
 
 .thesis-value {
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
 }
 
 .thesis-value.ow { color: #4ade80; }
@@ -558,7 +558,7 @@
 .thesis-primary {
   font-size: var(--t-lg);
   font-weight: 600;
-  color: var(--tv-bg-secondary);
+  color: var(--tv-on-surface-inverted-bright);
   margin: 8px 0;
   padding: 8px 12px;
   background: rgba(99, 102, 241, 0.15);
@@ -579,7 +579,7 @@
   margin: 0;
   padding-left: 16px;
   font-size: var(--t-base);
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
 }
 .thesis-trades li {
   margin: 4px 0;
@@ -771,7 +771,7 @@
 }
 
 .thesis-section.collapsible .thesis-section-title:hover {
-  color: var(--tv-bg-tertiary);
+  color: var(--tv-on-surface-inverted-dim);
 }
 
 .collapse-icon {
@@ -789,7 +789,7 @@
 
 .thesis-section-content {
   font-size: var(--t-base);
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   line-height: 1.5;
 }
 
@@ -808,7 +808,7 @@
 
 .theme-name {
   font-weight: 600;
-  color: var(--tv-bg-tertiary);
+  color: var(--tv-on-surface-inverted-bright);
   font-size: var(--t-base);
   display: flex;
   align-items: center;
@@ -828,7 +828,7 @@
 
 .theme-desc {
   font-size: var(--t-sm);
-  color: var(--tv-text-tertiary);
+  color: var(--tv-on-surface-inverted);
   margin-top: 4px;
 }
 
@@ -851,7 +851,7 @@
 
 .sector-item {
   font-size: var(--t-sm);
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   padding: 4px 0;
   border-bottom: 1px solid rgba(255,255,255,0.05);
 }
@@ -912,7 +912,7 @@
 
 .ticker-view {
   font-size: var(--t-sm);
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
 }
 
 .ticker-technicals {
@@ -950,7 +950,7 @@
 
 .catalyst-event {
   font-size: var(--t-sm);
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   flex: 1;
 }
 
@@ -1027,7 +1027,7 @@
 .trade-idea {
   font-size: var(--t-base);
   font-weight: 600;
-  color: var(--tv-bg-tertiary);
+  color: var(--tv-on-surface-inverted-dim);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1066,7 +1066,7 @@
 .thesis-overall {
   font-size: var(--t-lg);
   font-weight: 600;
-  color: var(--tv-bg-secondary);
+  color: var(--tv-on-surface-inverted-bright);
   margin: 8px 0 12px;
   padding: 10px 14px;
   background: rgba(99, 102, 241, 0.15);
@@ -1100,14 +1100,14 @@
 
 .market-state-value {
   font-size: var(--t-sm);
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   line-height: 1.4;
 }
 
 /* Near-Term outlook */
 .thesis-near-term-outlook {
   font-size: var(--t-base);
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   line-height: 1.5;
   margin-bottom: 10px;
 }
@@ -1138,7 +1138,7 @@
 
 .near-term-dev-text {
   font-size: var(--t-sm);
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   flex: 1;
 }
 
@@ -1165,7 +1165,7 @@
 
 .evolving-factor-name {
   font-weight: 600;
-  color: var(--tv-bg-tertiary);
+  color: var(--tv-on-surface-inverted-dim);
   font-size: var(--t-base);
 }
 
@@ -1183,7 +1183,7 @@
 
 .evolving-factor-state {
   font-size: var(--t-sm);
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   line-height: 1.4;
 }
 
@@ -1221,7 +1221,7 @@
 
 .expectation-text {
   font-size: var(--t-sm);
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   flex: 1;
 }
 
@@ -1261,7 +1261,7 @@
 .opportunity-text {
   font-size: var(--t-base);
   font-weight: 600;
-  color: var(--tv-bg-tertiary);
+  color: var(--tv-on-surface-inverted-dim);
   flex: 1;
 }
 
@@ -1336,7 +1336,7 @@
 
 .news-period-select {
   background: var(--tv-surface-inverted);
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   border: 1px solid var(--tv-text-primary);
   border-radius: 4px;
   padding: 3px 8px;
@@ -1449,15 +1449,15 @@
 .news-category-badge.trade { color: #67e8f9; background: rgba(103, 232, 249, 0.15); }
 
 .news-item-title {
-  font-size: var(--t-sm);
+  font-size: var(--t-base);
   font-weight: 600;
-  color: var(--tv-bg-tertiary);
+  color: var(--tv-on-surface-inverted-bright);
   margin-bottom: 4px;
 }
 
 .news-item-detail {
-  font-size: var(--t-xs);
-  color: var(--tv-text-tertiary);
+  font-size: var(--t-sm);
+  color: var(--tv-on-surface-inverted);
   line-height: 1.4;
 }
 
@@ -1469,8 +1469,8 @@
 }
 
 .news-item-source {
-  font-size: var(--t-2xs);
-  color: var(--tv-text-secondary);
+  font-size: var(--t-xs);
+  color: var(--tv-on-surface-inverted-dim);
   margin-top: 4px;
 }
 
@@ -1486,22 +1486,22 @@
 .news-upcoming-event:last-child { border-bottom: none; }
 
 .news-upcoming-date {
-  font-size: var(--t-2xs);
+  font-size: var(--t-xs);
   font-weight: 700;
   color: #93c5fd;
-  min-width: 70px;
+  min-width: 80px;
   flex-shrink: 0;
 }
 
 .news-upcoming-name {
-  font-size: var(--t-sm);
+  font-size: var(--t-base);
   font-weight: 600;
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted-bright);
 }
 
 .news-upcoming-impact {
-  font-size: var(--t-xs);
-  color: var(--tv-text-tertiary);
+  font-size: var(--t-sm);
+  color: var(--tv-on-surface-inverted);
   flex: 1;
 }
 
@@ -1512,8 +1512,8 @@
 }
 
 .news-section-title {
-  font-size: var(--t-xs);
-  font-weight: 600;
+  font-size: var(--t-sm);
+  font-weight: 700;
   color: #93c5fd;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1521,8 +1521,8 @@
 }
 
 .news-report-meta {
-  font-size: var(--t-2xs);
-  color: var(--tv-text-secondary);
+  font-size: var(--t-xs);
+  color: var(--tv-on-surface-inverted-dim);
   margin-top: 12px;
   text-align: right;
 }

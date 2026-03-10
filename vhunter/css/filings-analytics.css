@@ -235,7 +235,7 @@
 .fila-heatmap-cell--increase { background: var(--tv-green); color: white; }
 .fila-heatmap-cell--decrease { background: #fbbf24; color: var(--tv-text-primary); }
 .fila-heatmap-cell--exit { background: var(--tv-red); color: white; }
-.fila-heatmap-cell--empty { background: var(--tv-bg-tertiary); color: var(--tv-border); }
+.fila-heatmap-cell--empty { background: var(--tv-bg-tertiary); color: var(--tv-on-surface-inverted); }
 
 /* Color intensity modifiers */
 .fila-heatmap-cell--strong { filter: brightness(0.85); }

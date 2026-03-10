@@ -127,12 +127,12 @@
 /* Ticker label */
 .da-ticker {
   font-weight: 700;
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   font-size: var(--t-sm);
   min-width: 50px;
 }
 .da-fund-name {
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   font-size: var(--t-xs);
   flex: 1;
   overflow: hidden;
@@ -276,7 +276,7 @@
   border-radius: 2px;
 }
 .da-vel-score {
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   font-weight: 600;
   min-width: 24px;
   text-align: right;
@@ -296,7 +296,7 @@
 .da-ticker-lookup input {
   background: #0f172a;
   border: 1px solid var(--tv-text-primary);
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   padding: 6px 10px;
   border-radius: 4px;
   font-size: var(--t-sm);
@@ -309,7 +309,7 @@
 .da-ticker-header {
   font-size: var(--t-xl);
   font-weight: 700;
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   margin-bottom: 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--tv-text-primary);

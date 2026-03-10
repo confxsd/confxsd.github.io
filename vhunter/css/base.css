@@ -45,6 +45,9 @@
   --tv-tooltip-bg: #131722;
   --tv-surface-inverted: #131722;
   --tv-surface-inverted-hover: #2a2e39;
+  --tv-on-surface-inverted: #c8cad0;
+  --tv-on-surface-inverted-dim: #9ca0ab;
+  --tv-on-surface-inverted-bright: #e8eaed;
 
   /* Scrollbar */
   --tv-scrollbar-track: #f0f0f0;
@@ -76,6 +79,9 @@
   --tv-tooltip-bg: #1e222d;
   --tv-surface-inverted: #2a2e39;
   --tv-surface-inverted-hover: #363a45;
+  --tv-on-surface-inverted: #c8cad0;
+  --tv-on-surface-inverted-dim: #9ca0ab;
+  --tv-on-surface-inverted-bright: #e8eaed;
   --tv-scrollbar-track: #1e222d;
   --tv-scrollbar-thumb: #363a45;
 
@@ -346,6 +352,19 @@ body {
 /* ── Teaching/sizing tooltip ── */
 [data-theme="dark"] .sizing-title {
   color: #fb923c !important;
+}
+
+/* ── Inverted surface card text contrast ── */
+/* Remap text vars inside dark-surface containers so all children inherit */
+[data-theme="dark"] .thesis-section-wrapper,
+[data-theme="dark"] .pnl-dashboard,
+[data-theme="dark"] .feed-item-card,
+[data-theme="dark"] .da-card,
+[data-theme="dark"] .macro-section-header,
+[data-theme="dark"] .macro-ai-card {
+  --tv-text-primary: var(--tv-on-surface-inverted-bright);
+  --tv-text-secondary: var(--tv-on-surface-inverted);
+  --tv-text-tertiary: var(--tv-on-surface-inverted-dim);
 }
 
 /* ── Sidebar text brightness ── */

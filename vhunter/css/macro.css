@@ -62,7 +62,7 @@
 .data-strip-label {
   display: table-cell;
   background: var(--tv-surface-inverted);
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   font-size: var(--t-2xs);
   font-weight: 600;
   text-transform: uppercase;
@@ -88,7 +88,7 @@
   width: 13px;
   height: 13px;
   background: rgba(255,255,255,0.2);
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   border-radius: 50%;
   font-size: var(--t-2xs);
   font-weight: 700;
@@ -148,7 +148,7 @@
 
 .data-strip-label .tooltip-title {
   font-weight: 600;
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   font-size: var(--t-sm);
   margin-bottom: 8px;
   padding-bottom: 6px;
@@ -158,7 +158,7 @@
 /* Dynamic tip status */
 .tip-status {
   font-weight: 600;
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   font-size: var(--t-sm);
   margin-bottom: 10px;
   padding: 6px 8px;
@@ -192,7 +192,7 @@
 .ai-tooltip-content {
   font-size: var(--t-xs);
   line-height: 1.55;
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
 }
 
 .ai-tooltip-content.loaded {
@@ -408,7 +408,7 @@
   justify-content: space-between;
   margin-top: 2px;
   font-size: 7px;
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   text-transform: uppercase;
 }
 
@@ -883,7 +883,7 @@
 
 .corr-note {
   font-size: var(--t-3xs);
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   margin-left: auto;
 }
 
@@ -1119,7 +1119,7 @@
 .macro-loading {
   padding: 10px;
   text-align: center;
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   font-size: var(--t-xs);
 }
 
@@ -1196,7 +1196,7 @@
 
 .macro-tooltip .tooltip-title {
   font-weight: 600;
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   margin-bottom: 4px;
   font-size: var(--t-sm);
 }
@@ -1252,7 +1252,7 @@
   bottom: calc(100% + 8px);
   left: 0;
   background: var(--tv-surface-inverted);
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   padding: 8px 12px;
   border-radius: 4px;
   font-size: var(--t-xs);
@@ -1285,7 +1285,7 @@
   bottom: calc(100% + 6px);
   left: 0;
   background: var(--tv-surface-inverted);
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   padding: 8px 12px;
   border-radius: 4px;
   font-size: var(--t-xs);
@@ -1320,7 +1320,7 @@
   top: calc(100% + 6px);
   left: 0;
   background: var(--tv-surface-inverted);
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
   padding: 10px 14px;
   border-radius: 4px;
   font-size: var(--t-xs);
@@ -1359,7 +1359,7 @@
 
 .perf-legend-sep {
   font-size: var(--t-3xs);
-  color: var(--tv-border);
+  color: var(--tv-on-surface-inverted);
 }
 
 .perf-matrix {
@@ -1453,7 +1453,7 @@
 .perf-up { color: #16a34a; }
 .perf-down { color: var(--tv-red); }
 .perf-flat { color: var(--tv-text-tertiary); }
-.perf-na { color: var(--tv-border); font-size: var(--t-3xs); }
+.perf-na { color: var(--tv-on-surface-inverted); font-size: var(--t-3xs); }
 
 .perf-header-row .perf-cell {
   font-size: 7px;
