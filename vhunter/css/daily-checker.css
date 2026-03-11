@@ -724,6 +724,26 @@
   flex-shrink: 0;
 }
 
+/* ── Catalyst calendar in expanded view ── */
+.dc-cat-calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+.dc-cat-line {
+  font-size: 0.72rem;
+  color: var(--tv-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.dc-cat-icon {
+  font-size: 0.7rem;
+  width: 14px;
+  text-align: center;
+}
+
 /* ── Fund holder chips ── */
 .dc-funds-row {
   display: flex;

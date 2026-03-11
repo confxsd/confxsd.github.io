@@ -113,18 +113,40 @@ function renderCard(check) {
   const stale = isStale(r?.created_at);
   const tags = check.tags ? check.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
 
-  // ── Earnings date badge ──
-  const earningsHtml = (() => {
-    if (!market?.earningsDate) return '';
-    const days = market.daysToEarnings;
-    if (days == null || days < 0) return '';
-    const urgent = days <= 7;
-    const soon = days <= 14;
-    if (!soon) return '';
-    const label = days === 0 ? 'TODAY' : days === 1 ? 'TOMORROW' : `${days}d`;
-    const cls = urgent ? 'dc-earnings-urgent' : 'dc-earnings-soon';
-    return `<span class="${cls}" title="Earnings ${market.earningsDate}">ER ${label}</span>`;
+  // ── Catalyst badges (earnings, ex-div, split) ──
+  const catalystBadges = (() => {
+    const cal = market?.catalystCalendar;
+    const badges = [];
+
+    // Earnings badge
+    const erDate = cal?.earnings?.date || market?.earningsDate;
+    const erDays = cal?.earnings?.days ?? market?.daysToEarnings;
+    if (erDate && erDays != null && erDays >= 0 && erDays <= 14) {
+      const label = erDays === 0 ? 'TODAY' : erDays === 1 ? 'TOMORROW' : `${erDays}d`;
+      const cls = erDays <= 7 ? 'dc-earnings-urgent' : 'dc-earnings-soon';
+      badges.push(`<span class="${cls}" title="Earnings ${erDate}">ER ${label}</span>`);
+    }
+
+    // Ex-dividend badge
+    if (cal?.exDividend && cal.exDividend.days <= 14) {
+      const d = cal.exDividend;
+      const label = d.days === 0 ? 'TODAY' : d.days === 1 ? 'TOMORROW' : `${d.days}d`;
+      const cls = d.days <= 3 ? 'dc-earnings-urgent' : 'dc-earnings-soon';
+      const amt = d.amount ? ` $${d.amount}` : '';
+      badges.push(`<span class="${cls}" title="Ex-Div ${d.date}${amt}">DIV ${label}</span>`);
+    }
+
+    // Stock split badge
+    if (cal?.split && cal.split.days <= 30) {
+      const s = cal.split;
+      const label = s.days <= 1 ? (s.days === 0 ? 'TODAY' : 'TOMORROW') : `${s.days}d`;
+      const ratio = s.ratio ? ` ${s.ratio}` : '';
+      badges.push(`<span class="dc-earnings-soon" title="Split ${s.date}${ratio}">SPLIT ${label}</span>`);
+    }
+
+    return badges.join('');
   })();
+  const earningsHtml = catalystBadges;
 
   // ── Fund holders compact ──
   const fundHolders = market?.fundHolders || [];
@@ -244,13 +266,24 @@ function renderCard(check) {
 
   // ── Expanded: Catalysts ──
   const cat = analysis?.catalysts;
+  const cal = market?.catalystCalendar;
   const riskEvents = cat?.upcoming_risk_events || analysis?.risk_events || [];
   const riskBadges = riskEvents.map(e => `<span class="dc-badge risk">${e}</span>`).join('');
-  const catHtml = cat ? `
+  const calendarLines = (() => {
+    if (!cal) return '';
+    const items = [];
+    if (cal.earnings) items.push(`<div class="dc-cat-line"><span class="dc-cat-icon">📊</span> Earnings: ${cal.earnings.date} (${cal.earnings.days}d)</div>`);
+    if (cal.exDividend) items.push(`<div class="dc-cat-line"><span class="dc-cat-icon">💰</span> Ex-Div: ${cal.exDividend.date} (${cal.exDividend.days}d)${cal.exDividend.amount ? ` — $${cal.exDividend.amount}` : ''}</div>`);
+    if (cal.split) items.push(`<div class="dc-cat-line"><span class="dc-cat-icon">🔀</span> Split: ${cal.split.date} (${cal.split.days}d)${cal.split.ratio ? ` ${cal.split.ratio}` : ''}</div>`);
+    return items.length ? `<div class="dc-cat-calendar">${items.join('')}</div>` : '';
+  })();
+  const catHtml = (cat || calendarLines) ? `
     <div class="dc-exp-block">
       <div class="dc-exp-title">Catalysts & Timing</div>
-      ${cat.timing_edge ? `<div class="dc-exp-text"><strong>Edge:</strong> ${cat.timing_edge}</div>` : ''}
-      ${cat.news_assessment ? `<div class="dc-exp-text" style="margin-top:4px">${cat.news_assessment}</div>` : ''}
+      ${calendarLines}
+      ${cat?.catalyst_impact ? `<div class="dc-exp-text" style="margin-top:4px"><strong>Impact:</strong> ${cat.catalyst_impact}</div>` : ''}
+      ${cat?.timing_edge ? `<div class="dc-exp-text" style="margin-top:4px"><strong>Edge:</strong> ${cat.timing_edge}</div>` : ''}
+      ${cat?.news_assessment ? `<div class="dc-exp-text" style="margin-top:4px">${cat.news_assessment}</div>` : ''}
       ${riskBadges ? `<div class="dc-exp-badges" style="margin-top:6px">${riskBadges}</div>` : ''}
     </div>` : (riskBadges ? `<div class="dc-exp-block">
       <div class="dc-exp-title">Risk Events</div>
