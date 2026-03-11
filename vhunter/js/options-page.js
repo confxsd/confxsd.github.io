@@ -326,7 +326,7 @@ function updateQuickStats(avgIV, hv30, spotPrice, pcRatio, termStructure) {
 
   // IV Percentile
   const ivPct = ivAnalysis.ivPercentile != null ? ivAnalysis.ivPercentile : ivRank;
-  document.getElementById('optIvPct').textContent = ivPct.toFixed(0) + '%';
+  document.getElementById('optIvPct').textContent = ivPct != null ? ivPct.toFixed(0) + '%' : '--';
   document.getElementById('optIvPct').className = 'opt-stat-value ' + ivRankClass;
 
   // HV 30d
