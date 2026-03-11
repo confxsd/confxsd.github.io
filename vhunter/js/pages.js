@@ -105,29 +105,25 @@ export function switchPage(page, shouldUpdateRoute = true) {
 
 export function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
-  const overlay = document.getElementById('sidebarOverlay');
-
   if (sidebar.classList.contains('open')) {
     closeSidebar();
   } else {
     sidebar.classList.add('open');
-    overlay.style.display = 'block';
-    requestAnimationFrame(() => {
-      overlay.classList.add('active');
-    });
   }
 }
 
 export function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
-  const overlay = document.getElementById('sidebarOverlay');
-  overlay.classList.remove('active');
-  overlay.addEventListener('transitionend', () => {
-    if (!overlay.classList.contains('active')) {
-      overlay.style.display = 'none';
-    }
-  }, { once: true });
 }
+
+// Tap outside sidebar to close (mobile)
+document.addEventListener('click', (e) => {
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar && sidebar.classList.contains('open') &&
+      !sidebar.contains(e.target) && !e.target.closest('.menu-btn')) {
+    closeSidebar();
+  }
+});
 
 // UI helper functions
 export function toggleSection(sectionId) {

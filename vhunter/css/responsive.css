@@ -10,16 +10,11 @@
   .sidebar.open {
     -webkit-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
+    box-shadow: 100vw 0 0 100vw rgba(0, 0, 0, 0.45);
   }
 
   .sidebar-close {
     display: block;
-  }
-
-  .sidebar-overlay {
-    left: 0;
-    cursor: pointer;
-    z-index: 150;
   }
 
   .main-content {
