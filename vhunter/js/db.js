@@ -339,6 +339,10 @@ export async function getDailyCheckHistory(id) {
   return dbFetch(`/api/daily-checks/${id}/results`);
 }
 
+export async function toggleDailyCheckStar(id) {
+  return dbFetch(`/api/daily-checks/${id}/star`, { method: 'PUT' });
+}
+
 // ==================== STRATEGIES ====================
 
 export async function getStrategies(status = 'active') {

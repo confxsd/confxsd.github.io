@@ -57,6 +57,9 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
+.dc-filter-tab[data-filter="starred"] { color: #eab308; }
+.dc-filter-tab[data-filter="starred"].active { color: #ca8a04; }
+
 /* ── Check Cards ── */
 .dc-cards { display: flex; flex-direction: column; gap: 10px; }
 
@@ -103,6 +106,22 @@
 .dc-top-btn.dc-top-run:hover {
   background: var(--tv-accent, #6366f1);
   color: #fff;
+}
+
+.dc-top-btn.dc-top-star {
+  color: var(--tv-text-tertiary);
+  border-color: transparent;
+  background: transparent;
+}
+
+.dc-top-btn.dc-top-star:hover {
+  color: #eab308;
+}
+
+.dc-top-btn.dc-top-star.starred {
+  color: #eab308;
+  border-color: transparent;
+  background: transparent;
 }
 
 .dc-top-btn.dc-top-del {

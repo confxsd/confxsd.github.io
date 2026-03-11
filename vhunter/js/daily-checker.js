@@ -1,7 +1,7 @@
 // Daily Checker Page Module
 import {
   getDailyChecks, addDailyCheck, updateDailyCheck, deleteDailyCheck,
-  runDailyChecks, runDailyCheck
+  runDailyChecks, runDailyCheck, toggleDailyCheckStar
 } from './db.js';
 import { formatNum } from './utils.js';
 import { registerStrip } from './history.js';
@@ -79,6 +79,11 @@ function convictionClass(c) {
 
 function sortChecks(checks) {
   return [...checks].sort((a, b) => {
+    // Starred items always pin to top
+    const sa = a.starred ? 1 : 0;
+    const sb = b.starred ? 1 : 0;
+    if (sa !== sb) return sb - sa;
+
     if (activeSort === 'score') {
       return (b.latest_result?.opportunity_score ?? -1) - (a.latest_result?.opportunity_score ?? -1);
     }
@@ -361,10 +366,14 @@ function renderCard(check) {
     </div>` : '';
 
   const isInactive = check.status === 'paused';
+  const starred = check.starred;
 
   return `
     <div class="dc-card ${stale && r ? 'dc-stale' : ''} ${isInactive ? 'dc-paused' : ''}" id="dc-card-${check.id}">
       <div class="dc-card-top-actions">
+        <button class="dc-top-btn dc-top-star ${starred ? 'starred' : ''}" onclick="event.stopPropagation(); window.dcToggleStar('${check.id}')" title="${starred ? 'Unstar' : 'Star'}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="${starred ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </button>
         <button class="dc-top-btn dc-top-run" id="dc-run-btn-${check.id}" onclick="window.dcRunOne('${check.id}')" title="Run Now">↻</button>
         <button class="dc-top-btn dc-top-del" onclick="window.dcDelete('${check.id}', '${check.ticker}')" title="Delete">✕</button>
       </div>
@@ -472,7 +481,8 @@ function renderCard(check) {
 
 function filterChecks(checks) {
   let filtered;
-  if (activeFilter === 'entry') filtered = checks.filter(c => ['ENTRY NOW', 'ENTRY SOON'].includes(c.latest_result?.signal));
+  if (activeFilter === 'starred') { filtered = checks.filter(c => c.starred); }
+  else if (activeFilter === 'entry') filtered = checks.filter(c => ['ENTRY NOW', 'ENTRY SOON'].includes(c.latest_result?.signal));
   else if (activeFilter === 'watch') filtered = checks.filter(c => c.latest_result?.signal === 'WATCH');
   else if (activeFilter === 'wait')  filtered = checks.filter(c => !c.latest_result || c.latest_result?.signal === 'WAIT');
   else if (activeFilter === 'exit')  filtered = checks.filter(c => ['EXIT', 'AVOID'].includes(c.latest_result?.signal));
@@ -522,6 +532,10 @@ export function renderDailyChecker() {
 
   const pausedCnt = allChecks.filter(c => c.status === 'paused').length;
   const activeChecks = allChecks.filter(c => c.status !== 'paused');
+
+  const starredCnt = allChecks.filter(c => c.starred).length;
+  const starredTab = document.getElementById('dcTabStarred');
+  if (starredTab) starredTab.textContent = `★ (${starredCnt})`;
 
   document.getElementById('dcTabAll').textContent   = `All (${allChecks.length})`;
   document.getElementById('dcTabEntry').textContent = `Entry (${entryCnt})`;
@@ -745,6 +759,24 @@ window.dcToggleActive = async function(id) {
     updateDailyBadge();
   } catch (e) {
     console.error('[DAILY_CHECKER] Toggle failed:', e);
+  }
+};
+
+window.dcToggleStar = async function(id) {
+  const check = checksCache.find(c => c.id === id);
+  if (!check) return;
+  // Optimistic update
+  check.starred = !check.starred;
+  renderDailyChecker();
+  try {
+    const res = await toggleDailyCheckStar(id);
+    check.starred = res.starred;
+    renderDailyChecker();
+  } catch (e) {
+    // Revert on failure
+    check.starred = !check.starred;
+    renderDailyChecker();
+    console.error('[DAILY_CHECKER] Star toggle failed:', e);
   }
 };
 
