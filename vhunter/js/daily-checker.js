@@ -4,6 +4,7 @@ import {
   runDailyChecks, runDailyCheck
 } from './db.js';
 import { formatNum } from './utils.js';
+import { registerStrip } from './history.js';
 
 let checksCache = [];
 let isRunning = false;
@@ -571,6 +572,10 @@ export async function loadDailyChecker() {
     checksCache = Array.isArray(result) ? result : (result.data || []);
     renderDailyChecker();
     updateDailyBadge();
+    registerStrip('dcHistoryStrip', (ticker) => {
+      const input = document.getElementById('dcSearchInput');
+      if (input) { input.value = ticker; window.dcSetSearch(ticker); }
+    });
   } catch (e) {
     console.error('[DAILY_CHECKER] Load failed:', e);
   }

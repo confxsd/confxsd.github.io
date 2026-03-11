@@ -57,6 +57,18 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
+/* ── Recent Tickers Strip ── */
+.dc-history-strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+  scrollbar-width: none;
+}
+.dc-history-strip::-webkit-scrollbar { display: none; }
+.dc-history-strip:empty { display: none; }
+
 /* ── Check Cards ── */
 .dc-cards { display: flex; flex-direction: column; gap: 10px; }
 
