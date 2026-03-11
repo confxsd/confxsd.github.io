@@ -493,6 +493,172 @@
   gap: 4px;
 }
 
+/* ── Not Priced In Card ── */
+
+.pb-card-npi {
+  border-color: #a16207;
+  background: linear-gradient(135deg, var(--tv-bg-secondary) 0%, rgba(161, 98, 7, 0.06) 100%);
+}
+
+.pb-card-npi:hover {
+  border-color: #ca8a04;
+}
+
+.pb-npi-header-card {
+  border-left: 3px solid #a16207;
+}
+
+.npi-filter-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.npi-tag {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: #a16207;
+  background: #fef9c3;
+  letter-spacing: 0.02em;
+}
+
+.npi-loading {
+  padding: 40px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+
+.npi-loading i {
+  margin-right: 6px;
+}
+
+.npi-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  margin-bottom: 8px;
+  font-size: 0.76rem;
+  color: var(--tv-text-secondary);
+  border-bottom: 1px solid var(--tv-border);
+}
+
+.npi-period {
+  font-weight: 600;
+  color: var(--tv-text-tertiary);
+}
+
+.npi-ticker-card {
+  background: var(--tv-bg-secondary);
+  border: 1px solid var(--tv-border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.npi-ticker-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--tv-border);
+}
+
+.npi-ticker {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--tv-text-primary);
+}
+
+.npi-dir-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.npi-dir-bull { color: var(--tv-green); background: var(--tv-green-bg-solid); }
+.npi-dir-bear { color: var(--tv-red); background: var(--tv-red-bg-solid); }
+.npi-dir-mixed { color: #a16207; background: #fef9c3; }
+
+.npi-fund-count {
+  font-size: 0.72rem;
+  color: var(--tv-text-tertiary);
+}
+
+.npi-price {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--tv-text-primary);
+  margin-left: auto;
+}
+
+.npi-perf {
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.npi-price-up { color: var(--tv-green); }
+.npi-price-down { color: var(--tv-red); }
+
+.npi-funds {
+  padding: 6px 14px 8px;
+}
+
+.npi-fund-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 0.74rem;
+}
+
+.npi-type-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  min-width: 32px;
+  text-align: center;
+}
+
+.npi-type-new { color: var(--tv-green); background: var(--tv-green-bg-solid); }
+.npi-type-exit { color: var(--tv-red); background: var(--tv-red-bg-solid); }
+.npi-type-inc { color: #0369a1; background: #e0f2fe; }
+.npi-type-dec { color: #c2410c; background: #ffedd5; }
+
+.npi-fund-name {
+  color: var(--tv-text-secondary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.npi-fund-val {
+  font-weight: 600;
+  color: var(--tv-text-primary);
+  min-width: 60px;
+  text-align: right;
+}
+
+.npi-fund-chg {
+  font-size: 0.68rem;
+  color: var(--tv-text-tertiary);
+  min-width: 40px;
+  text-align: right;
+}
+
+.npi-results {
+  margin-top: 12px;
+}
+
 @media (max-width: 768px) {
   .pb-cards {
     grid-template-columns: 1fr;
@@ -505,5 +671,9 @@
   .pb-field-row,
   .pb-field-row-3 {
     grid-template-columns: 1fr;
+  }
+
+  .npi-ticker-header {
+    flex-wrap: wrap;
   }
 }

@@ -3,12 +3,32 @@ import {
   getStrategies, createStrategy, getStrategy, updateStrategy, deleteStrategy,
   linkStrategyCheck, unlinkStrategyCheck, getStrategyChecks, getDailyChecks
 } from './db.js';
+import { CONFIG } from './config.js';
 
 let strategiesCache = [];
-let currentView = 'list'; // 'list' | 'detail'
+let currentView = 'list'; // 'list' | 'detail' | 'npi'
 let currentStrategyId = null;
 let linkedChecks = [];
 let editEntryConditions = [''];
+
+// ── Not Priced In state ──
+let npiData = null; // { changes, period, summary }
+let npiPipeDeals = [];
+let npiPriceCache = {}; // { ticker: { periodClose, currentClose, pctChange } }
+let npiLoading = false;
+
+const MEGA_CAP_TICKERS = new Set([
+  'AAPL','MSFT','GOOGL','GOOG','AMZN','NVDA','META','TSLA','BRK-A','BRK-B',
+  'AVGO','JPM','LLY','V','MA','UNH','XOM','COST','HD','PG',
+  'JNJ','NFLX','ABBV','WMT','BAC','CRM','ORCL','CVX','MRK','KO',
+  'PEP','AMD','ACN','TMO','LIN','MCD','CSCO','ADBE','IBM','GE',
+  'ISRG','INTU','TXN','QCOM','AMGN','PFE','BKNG','NOW','HON','AMAT',
+  'SPY','QQQ','IVV','VOO','VTI','IWM','DIA','VEA','VWO','EFA','AGG','BND','TLT','GLD','SLV'
+]);
+
+const NPI_PRICE_THRESHOLD = 3; // % — moves under this are "not priced in"
+const NPI_MAX_PCT_CHANGE = 50; // % — filter out large position swings
+const NPI_MAX_VALUE_CHANGE = 50_000_000; // $50M — keep it to small/mid changes
 
 const CATEGORIES = [
   { value: 'mean_reversion', label: 'Mean Reversion' },
@@ -53,39 +73,53 @@ function parseJSON(str) {
 
 // ── List View ──────────────────────────────────────────────────
 
+function renderNpiCard() {
+  return `
+    <div class="pb-card pb-card-npi" onclick="window.pbOpenNpi()">
+      <div class="pb-card-header">
+        <span class="pb-name">Not Priced In</span>
+        <span class="pb-cat-badge institutional">Institutional</span>
+        <span class="pb-dir-badge both">both</span>
+        <div class="pb-priority">${priorityDots(4)}</div>
+      </div>
+      <div class="pb-desc">Institutional changes where price hasn't moved in the expected direction. Small, quiet moves only — no mega caps, no PIPE distributions.</div>
+      <div class="pb-stats">
+        <span>Source: <span class="pb-stat-val">13F Holdings</span></span>
+        <span>Filter: <span class="pb-stat-val">Small changes</span></span>
+        <span>Exclude: <span class="pb-stat-val">Mega cap, distributing</span></span>
+      </div>
+    </div>
+  `;
+}
+
 function renderList() {
   const container = document.getElementById('pbPage');
   if (!container) return;
 
-  const cards = strategiesCache.length > 0
-    ? strategiesCache.map(s => {
-        const rules = parseJSON(s.rules);
-        const exitRules = rules.exit_rules || {};
-        return `
-          <div class="pb-card" onclick="window.pbOpenDetail('${s.id}')">
-            <div class="pb-card-header">
-              <span class="pb-name">${s.name}</span>
-              <span class="pb-cat-badge ${s.category}">${catLabel(s.category)}</span>
-              <span class="pb-dir-badge ${s.direction}">${s.direction}</span>
-              <div class="pb-priority">${priorityDots(s.priority)}</div>
-            </div>
-            ${s.description ? `<div class="pb-desc">${s.description}</div>` : ''}
-            <div class="pb-stats">
-              <span><span class="pb-stat-val">${s.linked_checks || 0}</span> checks</span>
-              <span>Instrument: <span class="pb-stat-val">${rules.preferred_instrument || 'any'}</span></span>
-              ${exitRules.profit_target_atr ? `<span>TP: <span class="pb-stat-val">${exitRules.profit_target_atr}x ATR</span></span>` : ''}
-            </div>
-            <div class="pb-card-actions">
-              <button class="btn btn-sm" onclick="event.stopPropagation(); window.pbOpenModal('${s.id}')">Edit</button>
-              <button class="btn btn-sm" onclick="event.stopPropagation(); window.pbArchive('${s.id}', '${s.name}')">Archive</button>
-            </div>
-          </div>
-        `;
-      }).join('')
-    : `<div class="pb-empty">
-        <div class="pb-empty-icon">♟</div>
-        <div class="pb-empty-text">No strategy playbooks yet. Create one to get started.</div>
-      </div>`;
+  const userCards = strategiesCache.map(s => {
+    const rules = parseJSON(s.rules);
+    const exitRules = rules.exit_rules || {};
+    return `
+      <div class="pb-card" onclick="window.pbOpenDetail('${s.id}')">
+        <div class="pb-card-header">
+          <span class="pb-name">${s.name}</span>
+          <span class="pb-cat-badge ${s.category}">${catLabel(s.category)}</span>
+          <span class="pb-dir-badge ${s.direction}">${s.direction}</span>
+          <div class="pb-priority">${priorityDots(s.priority)}</div>
+        </div>
+        ${s.description ? `<div class="pb-desc">${s.description}</div>` : ''}
+        <div class="pb-stats">
+          <span><span class="pb-stat-val">${s.linked_checks || 0}</span> checks</span>
+          <span>Instrument: <span class="pb-stat-val">${rules.preferred_instrument || 'any'}</span></span>
+          ${exitRules.profit_target_atr ? `<span>TP: <span class="pb-stat-val">${exitRules.profit_target_atr}x ATR</span></span>` : ''}
+        </div>
+        <div class="pb-card-actions">
+          <button class="btn btn-sm" onclick="event.stopPropagation(); window.pbOpenModal('${s.id}')">Edit</button>
+          <button class="btn btn-sm" onclick="event.stopPropagation(); window.pbArchive('${s.id}', '${s.name}')">Archive</button>
+        </div>
+      </div>
+    `;
+  }).join('');
 
   container.innerHTML = `
     <div class="pb-header">
@@ -94,7 +128,13 @@ function renderList() {
         <button class="btn btn-primary btn-sm" onclick="window.pbOpenModal()">+ New Strategy</button>
       </div>
     </div>
-    <div class="pb-cards">${cards}</div>
+    <div class="pb-cards">
+      ${renderNpiCard()}
+      ${userCards || `<div class="pb-empty" style="grid-column:1/-1">
+        <div class="pb-empty-icon">♟</div>
+        <div class="pb-empty-text">No custom strategy playbooks yet. Create one to get started.</div>
+      </div>`}
+    </div>
   `;
 }
 
@@ -362,6 +402,286 @@ function closeLinkModal() {
   document.getElementById('pbLinkModal').classList.remove('open');
 }
 
+// ── Not Priced In Scanner ──────────────────────────────────────
+
+const getUserId = () => localStorage.getItem('vhunter_user_id') || 'vhunter-serhat';
+
+function npiFormatNumber(n) {
+  if (!n) return '0';
+  if (n >= 1e9) return `${(n / 1e9).toFixed(2)}B`;
+  if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
+  return n.toLocaleString();
+}
+
+function npiFormatValue(v) {
+  if (!v) return '$0';
+  if (v >= 1e9) return `$${(v / 1e9).toFixed(2)}B`;
+  if (v >= 1e6) return `$${(v / 1e6).toFixed(1)}M`;
+  if (v >= 1e3) return `$${(v / 1e3).toFixed(0)}K`;
+  return `$${v.toFixed(0)}`;
+}
+
+function isMegaCap(ticker) {
+  if (!ticker) return false;
+  return MEGA_CAP_TICKERS.has(ticker.split(' ')[0].toUpperCase());
+}
+
+function isConvertible(ticker) {
+  return ticker && /\s/.test(ticker.trim());
+}
+
+function isDistributing(ticker, pipeDeals) {
+  return pipeDeals.some(d =>
+    d.ticker === ticker &&
+    ['s1_effective', 'distributing', 's1_filed'].includes(d.distribution_status)
+  );
+}
+
+function isSmallChange(c) {
+  const absPct = Math.abs(c.pct_change || 0);
+  const absValue = Math.abs(c.value_change || c.current_value || 0);
+  // NEW/EXIT are full position moves — only include if small value
+  if (c.change_type === 'NEW' || c.change_type === 'EXIT') {
+    return absValue < NPI_MAX_VALUE_CHANGE;
+  }
+  // INCREASE/DECREASE: filter out huge % swings and large value moves
+  return absPct < NPI_MAX_PCT_CHANGE && absValue < NPI_MAX_VALUE_CHANGE;
+}
+
+function npiIsNotPricedIn(change) {
+  const perf = npiPriceCache[change.ticker];
+  if (!perf) return false;
+  switch (change.change_type) {
+    case 'NEW':
+    case 'INCREASE':
+      return perf.pctChange < NPI_PRICE_THRESHOLD;
+    case 'EXIT':
+    case 'DECREASE':
+      return perf.pctChange > -NPI_PRICE_THRESHOLD;
+    default:
+      return false;
+  }
+}
+
+async function fetchNpiData() {
+  const params = new URLSearchParams({ limit: '500', sort: 'value_change' });
+  const response = await fetch(`${CONFIG.PROXY_URL}/api/holdings/changes?${params}`, {
+    headers: { 'X-User-Id': getUserId() }
+  });
+  return response.json();
+}
+
+async function fetchNpiPipeDeals() {
+  const response = await fetch(`${CONFIG.PROXY_URL}/api/pipe?status=active`, {
+    headers: { 'X-User-Id': getUserId() }
+  });
+  const data = await response.json();
+  return Array.isArray(data) ? data : (data.data || []);
+}
+
+async function fetchNpiPricePerformance(tickers, periodDate) {
+  const today = new Date().toISOString().split('T')[0];
+  const toFetch = tickers.filter(t => !npiPriceCache[t]);
+  if (!toFetch.length) return;
+
+  const batchSize = 10;
+  for (let i = 0; i < toFetch.length; i += batchSize) {
+    const batch = toFetch.slice(i, i + batchSize);
+    await Promise.all(batch.map(async (ticker) => {
+      try {
+        const r = await fetch(
+          `${CONFIG.PROXY_URL}/polygon/v2/aggs/ticker/${ticker}/range/1/day/${periodDate}/${today}?adjusted=true&sort=asc&limit=250`
+        );
+        if (!r.ok) return;
+        const data = await r.json();
+        const bars = data?.results;
+        if (!bars?.length) return;
+        const periodClose = bars[0].c;
+        const currentClose = bars[bars.length - 1].c;
+        const pctChange = ((currentClose - periodClose) / periodClose) * 100;
+        npiPriceCache[ticker] = { periodClose, currentClose, pctChange };
+      } catch { /* skip */ }
+    }));
+  }
+}
+
+async function loadNpiView() {
+  const container = document.getElementById('pbPage');
+  if (!container) return;
+
+  currentView = 'npi';
+  container.innerHTML = `
+    <div class="pb-detail">
+      <span class="pb-detail-back" onclick="window.pbBackToList()"><i class="fa-solid fa-arrow-left"></i> All Playbooks</span>
+      <div class="pb-detail-card pb-npi-header-card">
+        <div class="pb-detail-title">Not Priced In</div>
+        <div class="pb-detail-desc">Institutional changes where price hasn't moved in the expected direction. Funds bought/increased but stock hasn't risen, or funds sold/exited but stock hasn't fallen since the filing period.</div>
+        <div class="npi-filter-tags">
+          <span class="npi-tag">No mega cap</span>
+          <span class="npi-tag">Small changes only</span>
+          <span class="npi-tag">No PIPE distributions</span>
+          <span class="npi-tag">Price &lt;${NPI_PRICE_THRESHOLD}% move</span>
+        </div>
+      </div>
+      <div id="npiResults" class="npi-results">
+        <div class="npi-loading">
+          <i class="fa-solid fa-spinner fa-spin"></i> Loading holdings changes & price data...
+        </div>
+      </div>
+    </div>
+  `;
+
+  if (npiLoading) return;
+  npiLoading = true;
+
+  try {
+    const [changesResult, pipes] = await Promise.all([
+      fetchNpiData(),
+      fetchNpiPipeDeals()
+    ]);
+
+    npiData = changesResult;
+    npiPipeDeals = pipes;
+
+    if (!npiData?.changes?.length) {
+      renderNpiEmpty('No holdings changes data available. Parse 13F filings first.');
+      npiLoading = false;
+      return;
+    }
+
+    // Filter: no UNCHANGED, no mega cap, no convertibles, no distributing, small changes only
+    let filtered = npiData.changes.filter(c =>
+      c.change_type !== 'UNCHANGED' &&
+      c.ticker &&
+      !isMegaCap(c.ticker) &&
+      !isConvertible(c.ticker) &&
+      !isDistributing(c.ticker, npiPipeDeals) &&
+      isSmallChange(c)
+    );
+
+    if (!filtered.length) {
+      renderNpiEmpty('No qualifying small institutional changes found after filtering.');
+      npiLoading = false;
+      return;
+    }
+
+    // Update loading message
+    const resultsEl = document.getElementById('npiResults');
+    if (resultsEl) {
+      resultsEl.innerHTML = `<div class="npi-loading"><i class="fa-solid fa-spinner fa-spin"></i> Fetching price data for ${[...new Set(filtered.map(c => c.ticker))].length} tickers...</div>`;
+    }
+
+    // Fetch price performance for all filtered tickers
+    const tickers = [...new Set(filtered.map(c => c.ticker))];
+    await fetchNpiPricePerformance(tickers, npiData.period);
+
+    // Final filter: only keep "not priced in" items
+    const npiItems = filtered.filter(c => npiIsNotPricedIn(c));
+
+    // Group by ticker for cleaner display
+    const byTicker = {};
+    for (const item of npiItems) {
+      if (!byTicker[item.ticker]) byTicker[item.ticker] = [];
+      byTicker[item.ticker].push(item);
+    }
+
+    renderNpiResults(byTicker, npiData.period);
+  } catch (e) {
+    console.error('[PLAYBOOKS] NPI load failed:', e);
+    renderNpiEmpty('Failed to load data. Check console for details.');
+  }
+
+  npiLoading = false;
+}
+
+function renderNpiEmpty(msg) {
+  const el = document.getElementById('npiResults');
+  if (el) el.innerHTML = `<div class="pb-empty"><div class="pb-empty-text">${msg}</div></div>`;
+}
+
+function renderNpiResults(byTicker, period) {
+  const el = document.getElementById('npiResults');
+  if (!el) return;
+
+  const tickers = Object.keys(byTicker);
+
+  if (!tickers.length) {
+    el.innerHTML = `<div class="pb-empty"><div class="pb-empty-text">No "not priced in" opportunities found for this period.</div></div>`;
+    return;
+  }
+
+  // Sort by number of fund actions (convergence), then by absolute price stagnation
+  tickers.sort((a, b) => {
+    const countDiff = byTicker[b].length - byTicker[a].length;
+    if (countDiff !== 0) return countDiff;
+    const aPerf = Math.abs(npiPriceCache[a]?.pctChange || 0);
+    const bPerf = Math.abs(npiPriceCache[b]?.pctChange || 0);
+    return aPerf - bPerf; // less movement = more interesting
+  });
+
+  const formatQuarter = (p) => {
+    if (!p) return '--';
+    const [y, m] = p.split('-');
+    const q = Math.ceil(parseInt(m) / 3);
+    return `Q${q} ${y}`;
+  };
+
+  const rows = tickers.map(ticker => {
+    const changes = byTicker[ticker];
+    const perf = npiPriceCache[ticker];
+    const pctStr = perf ? `${perf.pctChange >= 0 ? '+' : ''}${perf.pctChange.toFixed(1)}%` : '--';
+    const pctCls = perf ? (perf.pctChange >= 0 ? 'npi-price-up' : 'npi-price-down') : '';
+    const priceStr = perf ? `$${perf.currentClose.toFixed(2)}` : '--';
+
+    // Determine net direction from fund actions
+    const bullish = changes.filter(c => c.change_type === 'NEW' || c.change_type === 'INCREASE').length;
+    const bearish = changes.filter(c => c.change_type === 'EXIT' || c.change_type === 'DECREASE').length;
+    const direction = bullish > bearish ? 'bullish' : bullish < bearish ? 'bearish' : 'mixed';
+    const dirCls = direction === 'bullish' ? 'npi-dir-bull' : direction === 'bearish' ? 'npi-dir-bear' : 'npi-dir-mixed';
+    const dirLabel = direction === 'bullish' ? 'BULL' : direction === 'bearish' ? 'BEAR' : 'MIXED';
+
+    const fundsHtml = changes.map(c => {
+      const typeMap = {
+        NEW: { label: 'NEW', cls: 'npi-type-new' },
+        EXIT: { label: 'EXIT', cls: 'npi-type-exit' },
+        INCREASE: { label: 'INC', cls: 'npi-type-inc' },
+        DECREASE: { label: 'DEC', cls: 'npi-type-dec' }
+      };
+      const t = typeMap[c.change_type] || { label: c.change_type, cls: '' };
+      const val = c.change_type === 'EXIT' ? npiFormatValue(c.prior_value) : npiFormatValue(c.current_value);
+      const chgStr = c.pct_change ? `${c.pct_change > 0 ? '+' : ''}${c.pct_change.toFixed(0)}%` : '';
+      return `<div class="npi-fund-row">
+        <span class="npi-type-badge ${t.cls}">${t.label}</span>
+        <span class="npi-fund-name" title="${c.fund_name || ''}">${(c.fund_name || '').slice(0, 30)}</span>
+        <span class="npi-fund-val">${val}</span>
+        ${chgStr ? `<span class="npi-fund-chg">${chgStr}</span>` : ''}
+      </div>`;
+    }).join('');
+
+    return `
+      <div class="npi-ticker-card">
+        <div class="npi-ticker-header">
+          <span class="npi-ticker">${ticker}</span>
+          <span class="npi-dir-badge ${dirCls}">${dirLabel}</span>
+          <span class="npi-fund-count">${changes.length} fund${changes.length > 1 ? 's' : ''}</span>
+          <span class="npi-price">${priceStr}</span>
+          <span class="npi-perf ${pctCls}">${pctStr} since ${formatQuarter(period)}</span>
+        </div>
+        <div class="npi-funds">${fundsHtml}</div>
+      </div>
+    `;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="npi-summary">
+      <span>${tickers.length} ticker${tickers.length !== 1 ? 's' : ''} with institutional action but no price follow-through</span>
+      <span class="npi-period">Period: ${formatQuarter(period)}</span>
+    </div>
+    ${rows}
+  `;
+}
+
 // ── Actions ──────────────────────────────────────────────────
 
 async function archiveStrategy(id, name) {
@@ -433,3 +753,5 @@ window.pbUnlink = (sid, cid) => unlinkCheck(sid, cid);
 window.pbUpdateEntry = (i, val) => { editEntryConditions[i] = val; };
 window.pbRemoveEntry = (i) => { editEntryConditions.splice(i, 1); renderEntryConditions(); };
 window.pbAddEntry = () => { editEntryConditions.push(''); renderEntryConditions(); };
+
+window.pbOpenNpi = () => loadNpiView();
