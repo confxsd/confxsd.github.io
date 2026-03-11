@@ -43,7 +43,7 @@ async function apiCall(path, opts = {}) {
 async function submitTicker(ticker, context) {
   return apiCall('/api/ticker-pipeline/submit', {
     method: 'POST',
-    body: JSON.stringify({ ticker, source: 'manual', context: context || undefined })
+    body: JSON.stringify({ ticker, source: 'manual', context: context || undefined, force: true })
   });
 }
 
@@ -453,11 +453,7 @@ window.tpSubmit = async () => {
   if (btn) { btn.disabled = false; btn.textContent = 'Analyze'; }
 
   if (result.error) {
-    if (result.error === 'duplicate' || result.error === 'active') {
-      alert(result.message);
-    } else {
-      alert('Error: ' + (result.error || 'Unknown'));
-    }
+    alert(result.error === 'active' ? result.message : 'Error: ' + (result.error || 'Unknown'));
     return;
   }
 
