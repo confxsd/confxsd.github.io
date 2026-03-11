@@ -190,6 +190,14 @@ function renderCard(check) {
       <span class="dc-metric-label">VRP</span>
       <span class="dc-metric-value ${opts.vrp > 0 ? 'warn' : ''}">${opts.vrp > 0 ? '+' : ''}${opts.vrp}%</span>
     </div>` : ''}
+    ${market?.shortInterest?.shortFloatPct != null ? `<div class="dc-metric">
+      <span class="dc-metric-label">SI</span>
+      <span class="dc-metric-value ${market.shortInterest.shortFloatPct >= 20 ? 'negative' : market.shortInterest.shortFloatPct >= 10 ? 'warn' : ''}">${parseFloat(market.shortInterest.shortFloatPct).toFixed(1)}%</span>
+    </div>` : ''}
+    ${market?.shortInterest?.shortRatio != null ? `<div class="dc-metric">
+      <span class="dc-metric-label">DTC</span>
+      <span class="dc-metric-value ${market.shortInterest.shortRatio >= 5 ? 'negative' : market.shortInterest.shortRatio >= 3 ? 'warn' : ''}">${parseFloat(market.shortInterest.shortRatio).toFixed(1)}d</span>
+    </div>` : ''}
   ` : '<span style="color:#94a3b8;font-size:0.74rem">Run analysis to see data</span>';
 
   // ── Timeframe alignment compact indicator ──
@@ -370,6 +378,7 @@ function renderCard(check) {
           ${conviction ? `<span class="dc-conv-badge ${convictionClass(conviction)}">${conviction}</span>` : ''}
           ${earningsHtml}
           ${review ? `<span class="dc-review-badge dc-review-${review.action?.toLowerCase() || 'flag'}" title="${review.key_concern || ''}">${review.grade}</span>` : ''}
+          ${(check.strategies || []).map(s => `<span class="dc-strategy-badge" title="${s.name}">${s.category.replace(/_/g, ' ')}</span>`).join('')}
           ${stale && r ? '<span class="dc-stale-dot" title="Data >24h old"></span>' : ''}
         </div>
         <span class="dc-signal ${sigCls}">${signal || 'NO DATA'}</span>
@@ -413,9 +422,38 @@ function renderCard(check) {
             <div class="dc-exp-title">Options</div>
             <div class="dc-exp-text">${analysis?.options_summary || '--'}</div>
           </div>
+          ${market?.shortInterest?.shortFloatPct != null ? (() => {
+            const si = market.shortInterest;
+            const sqRisk = si.shortFloatPct >= 20 ? 'HIGH' : si.shortFloatPct >= 10 ? 'MODERATE' : 'LOW';
+            const sqCls = sqRisk === 'HIGH' ? 'negative' : sqRisk === 'MODERATE' ? 'warn' : '';
+            const fmtShr = v => v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(0) + 'K' : v;
+            return `<div class="dc-exp-block">
+            <div class="dc-exp-title">Short Interest</div>
+            <div class="dc-levels">
+              <div class="dc-level"><span class="dc-level-label">Short Float</span><span class="dc-level-value ${sqCls}">${si.shortFloatPct.toFixed(1)}%</span></div>
+              <div class="dc-level"><span class="dc-level-label">Days to Cover</span><span class="dc-level-value ${si.shortRatio >= 5 ? 'negative' : si.shortRatio >= 3 ? 'warn' : ''}">${si.shortRatio?.toFixed(1) || '--'}d</span></div>
+              <div class="dc-level"><span class="dc-level-label">Shares Short</span><span class="dc-level-value">${si.sharesShort ? fmtShr(si.sharesShort) : '--'}</span></div>
+              <div class="dc-level"><span class="dc-level-label">Float</span><span class="dc-level-value">${si.sharesFloat ? fmtShr(si.sharesFloat) : '--'}</span></div>
+              <div class="dc-level"><span class="dc-level-label">Squeeze Risk</span><span class="dc-level-value ${sqCls}">${sqRisk}</span></div>
+            </div>
+            <div class="dc-levels" style="margin-top:4px">
+              <div class="dc-level"><span class="dc-level-label">Insider</span><span class="dc-level-value">${si.insiderOwnPct != null ? si.insiderOwnPct.toFixed(1) + '%' : '--'}</span></div>
+              <div class="dc-level"><span class="dc-level-label">Inst Own</span><span class="dc-level-value">${si.instOwnPct != null ? si.instOwnPct.toFixed(1) + '%' : '--'}</span></div>
+            </div>
+          </div>`;
+          })() : ''}
           ${analysis?.institutional_summary ? `<div class="dc-exp-block">
             <div class="dc-exp-title">Institutional Filings</div>
             <div class="dc-exp-text" style="color:#f59e0b">${analysis.institutional_summary}</div>
+          </div>` : ''}
+          ${analysis?.strategy_fit ? `<div class="dc-exp-block">
+            <div class="dc-exp-title">Strategy Fit</div>
+            <div class="dc-exp-badges" style="margin-bottom:6px">
+              <span class="dc-badge ${analysis.strategy_fit.still_fits ? 'valid' : 'invalid'}">${analysis.strategy_fit.still_fits ? 'FITS' : 'DRIFTED'}</span>
+              ${analysis.strategy_fit.strategy_entry_met ? '<span class="dc-badge valid">ENTRY MET</span>' : ''}
+              ${analysis.strategy_fit.strategy_exit_triggered ? '<span class="dc-badge invalid">EXIT TRIGGERED</span>' : ''}
+            </div>
+            <div class="dc-exp-text">${analysis.strategy_fit.fit_notes || '--'}</div>
           </div>` : ''}
           ${tradeHtml}
           ${catHtml}

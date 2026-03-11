@@ -339,6 +339,43 @@ export async function getDailyCheckHistory(id) {
   return dbFetch(`/api/daily-checks/${id}/results`);
 }
 
+// ==================== STRATEGIES ====================
+
+export async function getStrategies(status = 'active') {
+  return dbFetch(`/api/strategies?status=${status}`);
+}
+
+export async function createStrategy(data) {
+  return dbFetch('/api/strategies', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function getStrategy(id) {
+  return dbFetch(`/api/strategies/${id}`);
+}
+
+export async function updateStrategy(id, data) {
+  return dbFetch(`/api/strategies/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export async function deleteStrategy(id) {
+  return dbFetch(`/api/strategies/${id}`, { method: 'DELETE' });
+}
+
+export async function linkStrategyCheck(strategyId, checkId, notes) {
+  return dbFetch(`/api/strategies/${strategyId}/link`, {
+    method: 'POST',
+    body: JSON.stringify({ daily_check_id: checkId, notes })
+  });
+}
+
+export async function unlinkStrategyCheck(strategyId, checkId) {
+  return dbFetch(`/api/strategies/${strategyId}/link/${checkId}`, { method: 'DELETE' });
+}
+
+export async function getStrategyChecks(strategyId) {
+  return dbFetch(`/api/strategies/${strategyId}/checks`);
+}
+
 // ==================== HELPERS ====================
 
 // Calculate total P&L from closed positions

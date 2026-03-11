@@ -76,6 +76,7 @@
     <link rel="stylesheet" href="css/filings-analytics.css" />
     <link rel="stylesheet" href="css/ticker-pipeline.css" />
     <link rel="stylesheet" href="css/deep-analysis.css" />
+    <link rel="stylesheet" href="css/playbooks.css" />
     <link rel="stylesheet" href="css/responsive.css?v=2" />
   </head>
   <body>
@@ -200,6 +201,18 @@
           >
             <span class="nav-icon"><i class="fa-solid fa-crosshairs"></i></span>
             <span class="nav-label">Active Trades</span>
+          </a>
+          <a
+            href="#"
+            class="nav-item"
+            data-page="playbooks"
+            onclick="
+              event.preventDefault();
+              switchPage('playbooks');
+            "
+          >
+            <span class="nav-icon"><i class="fa-solid fa-chess"></i></span>
+            <span class="nav-label">Playbooks</span>
           </a>
           <a
             href="#"
@@ -2766,6 +2779,15 @@
             </div>
           </div>
         </div>
+
+        <!-- Page: Playbooks -->
+        <div class="page" id="page-playbooks">
+          <div id="pbPage">
+            <div style="padding: 40px; text-align: center; color: #64748b">
+              Loading...
+            </div>
+          </div>
+        </div>
       </main>
     </div>
 
@@ -3359,6 +3381,153 @@
         ></path>
       </svg>
     </button>
+
+    <!-- Playbooks Strategy Modal -->
+    <div id="pbModal" class="pb-overlay" onclick="if (event.target === this) window.pbCloseModal();">
+      <div class="pb-dialog">
+        <div class="pb-dialog-header">
+          <span id="pbModalTitle">New Strategy</span>
+          <button class="pb-dialog-close" onclick="window.pbCloseModal()">×</button>
+        </div>
+        <form id="pbForm" data-edit-id="" onsubmit="event.preventDefault(); window.pbSave();">
+          <div class="pb-field-row">
+            <div class="pb-field">
+              <label>Name</label>
+              <input type="text" id="pbNameInput" placeholder="e.g. Fade Rallies" required>
+            </div>
+            <div class="pb-field">
+              <label>Category</label>
+              <select id="pbCategorySelect">
+                <option value="mean_reversion">Mean Reversion</option>
+                <option value="momentum">Momentum</option>
+                <option value="event_driven">Event Driven</option>
+                <option value="institutional">Institutional</option>
+                <option value="macro_rotation">Macro Rotation</option>
+                <option value="volatility">Volatility</option>
+                <option value="contrarian">Contrarian</option>
+                <option value="custom" selected>Custom</option>
+              </select>
+            </div>
+          </div>
+          <div class="pb-field-row">
+            <div class="pb-field">
+              <label>Direction</label>
+              <select id="pbDirectionSelect">
+                <option value="long">Long</option>
+                <option value="short">Short</option>
+                <option value="both" selected>Both</option>
+              </select>
+            </div>
+            <div class="pb-field">
+              <label>Priority (1-5)</label>
+              <input type="number" id="pbPriorityInput" min="1" max="5" value="3">
+            </div>
+          </div>
+          <div class="pb-field">
+            <label>Description</label>
+            <textarea id="pbDescInput" placeholder="2-3 sentence playbook description"></textarea>
+          </div>
+          <div class="pb-field">
+            <label>Entry Conditions</label>
+            <div class="pb-entry-list" id="pbEntryList"></div>
+            <button type="button" class="pb-add-entry" onclick="window.pbAddEntry()">+ Add condition</button>
+          </div>
+          <div class="pb-field-row-3">
+            <div class="pb-field">
+              <label>Profit Target (ATR x)</label>
+              <input type="number" id="pbProfitAtr" step="0.1" placeholder="2.0">
+            </div>
+            <div class="pb-field">
+              <label>Stop Loss (ATR x)</label>
+              <input type="number" id="pbStopAtr" step="0.1" placeholder="1.5">
+            </div>
+            <div class="pb-field">
+              <label>Time Stop (days)</label>
+              <input type="number" id="pbTimeStop" placeholder="15">
+            </div>
+          </div>
+          <div class="pb-field-row">
+            <div class="pb-field">
+              <label>Base Size</label>
+              <select id="pbBaseSize">
+                <option value="">--</option>
+                <option value="full">Full</option>
+                <option value="half">Half</option>
+                <option value="quarter">Quarter</option>
+                <option value="starter">Starter</option>
+              </select>
+            </div>
+            <div class="pb-field">
+              <label>Scale Condition</label>
+              <input type="text" id="pbScaleCondition" placeholder="e.g. half on confirm">
+            </div>
+          </div>
+          <div class="pb-field">
+            <label>Preferred Instrument</label>
+            <select id="pbInstrumentSelect">
+              <option value="">Any</option>
+              <option value="stock">Stock</option>
+              <option value="long_call">Long Call</option>
+              <option value="long_put">Long Put</option>
+              <option value="call_spread">Call Spread</option>
+              <option value="put_spread">Put Spread</option>
+              <option value="covered_call">Covered Call</option>
+              <option value="cash_secured_put">Cash Secured Put</option>
+              <option value="iron_condor">Iron Condor</option>
+              <option value="straddle">Straddle</option>
+              <option value="strangle">Strangle</option>
+            </select>
+          </div>
+          <div class="pb-field-row-3">
+            <div class="pb-field">
+              <label>IV Low Strategy</label>
+              <select id="pbIvLow">
+                <option value="">--</option>
+                <option value="buy_options">Buy Options</option>
+                <option value="spreads">Spreads</option>
+                <option value="sell_premium">Sell Premium</option>
+                <option value="avoid">Avoid</option>
+              </select>
+            </div>
+            <div class="pb-field">
+              <label>IV Mid Strategy</label>
+              <select id="pbIvMid">
+                <option value="">--</option>
+                <option value="buy_options">Buy Options</option>
+                <option value="spreads">Spreads</option>
+                <option value="sell_premium">Sell Premium</option>
+                <option value="avoid">Avoid</option>
+              </select>
+            </div>
+            <div class="pb-field">
+              <label>IV High Strategy</label>
+              <select id="pbIvHigh">
+                <option value="">--</option>
+                <option value="buy_options">Buy Options</option>
+                <option value="spreads">Spreads</option>
+                <option value="sell_premium">Sell Premium</option>
+                <option value="avoid">Avoid</option>
+              </select>
+            </div>
+          </div>
+          <div class="pb-form-actions">
+            <button type="button" class="btn btn-sm" onclick="window.pbCloseModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary btn-sm">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Playbooks Link Modal -->
+    <div id="pbLinkModal" class="pb-overlay" onclick="if (event.target === this) window.pbCloseLinkModal();">
+      <div class="pb-dialog" style="width:440px">
+        <div class="pb-dialog-header">
+          <span>Link Daily Check</span>
+          <button class="pb-dialog-close" onclick="window.pbCloseLinkModal()">×</button>
+        </div>
+        <div class="pb-link-list" id="pbLinkList"></div>
+      </div>
+    </div>
 
     <script type="module" src="js/app.js?v=13"></script>
     <script src="../t.js"></script>

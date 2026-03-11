@@ -19,7 +19,8 @@ const pageTitles = {
   daily: 'Daily Checker',
   pipeline: 'Deep Research',
   'active-trades': 'Active Trades',
-  'deep-analysis': 'Filings Research'
+  'deep-analysis': 'Filings Research',
+  playbooks: 'Strategy Playbooks'
 };
 
 export function getCurrentPage() {

@@ -17,6 +17,7 @@ import { loadDailyChecker, prefetchDailyBadge } from './daily-checker.js';
 import { loadActiveTrades } from './active-trades.js';
 import { loadPipeline, unloadPipeline } from './ticker-pipeline.js';
 import { loadDeepAnalysis } from './deep-analysis.js';
+import { loadPlaybooks } from './playbooks.js';
 import { initTooltips } from './tooltip.js';
 import { initTooltipPositioning } from './tooltip-position.js';
 
@@ -62,7 +63,8 @@ registerPageLoaders({
   daily: loadDailyChecker,
   pipeline: loadPipeline,
   'active-trades': loadActiveTrades,
-  'deep-analysis': loadDeepAnalysis
+  'deep-analysis': loadDeepAnalysis,
+  playbooks: loadPlaybooks
 });
 console.log('[APP] Page loaders registered');
 
