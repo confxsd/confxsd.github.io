@@ -4,10 +4,12 @@ const API_BASE = (() => { try { return window.__PROXY_URL__ || 'https://api.rome
 const USER_ID  = () => localStorage.getItem('vhunter_user_id') || 'vhunter-serhat';
 
 let cache = { trades: [], stats: null };
+let exposureData = null;
 let activeTab = 'active';
 let showAddForm = false;
 let isEvaluating = false;
 let isAutoAdding = false;
+let isLoadingExposure = false;
 
 // ── API ───────────────────────────────────────────────────────────────────────
 
@@ -24,13 +26,89 @@ async function loadData() {
   cache = { trades: data.trades || [], stats: data.stats || null };
 }
 
+async function loadExposure() {
+  try {
+    isLoadingExposure = true;
+    exposureData = await apiFetch('/api/active-trades/exposure');
+  } catch (e) {
+    console.error('[ACTIVE_TRADES] Exposure load failed:', e);
+    exposureData = null;
+  } finally {
+    isLoadingExposure = false;
+  }
+}
+
+// ── Position sizing ──────────────────────────────────────────────────────────
+
+function getAccountSize() {
+  return parseFloat(localStorage.getItem('vhunter_account_size')) || 0;
+}
+
+function setAccountSize(val) {
+  localStorage.setItem('vhunter_account_size', val);
+}
+
+function calcSizing(entry, stop, account, riskPct = 0.02) {
+  if (!entry || !stop || !account) return null;
+  const riskPerShare = Math.abs(entry - stop);
+  if (riskPerShare <= 0) return null;
+
+  const riskAmount = account * riskPct;
+  let shares = Math.floor(riskAmount / riskPerShare);
+  let notional = shares * entry;
+  let positionPct = (notional / account) * 100;
+
+  if (positionPct > 10) {
+    shares = Math.floor((account * 0.10) / entry);
+    notional = shares * entry;
+    positionPct = (notional / account) * 100;
+  }
+
+  return {
+    shares,
+    notional: notional.toFixed(0),
+    riskAmount: (shares * riskPerShare).toFixed(0),
+    riskPct: ((shares * riskPerShare / account) * 100).toFixed(1),
+    positionPct: positionPct.toFixed(1),
+    capped: positionPct >= 10
+  };
+}
+
+function renderSizingPreview() {
+  const entry = parseFloat(document.getElementById('atEntry')?.value);
+  const stop = parseFloat(document.getElementById('atStop')?.value);
+  const account = getAccountSize();
+  const el = document.getElementById('atSizingPreview');
+  if (!el) return;
+
+  if (!account) {
+    el.innerHTML = '<span style="color:#64748b;font-size:0.7rem">Set account size for sizing recommendations</span>';
+    return;
+  }
+
+  const sizing = calcSizing(entry, stop, account);
+  if (!sizing) {
+    el.innerHTML = '';
+    return;
+  }
+
+  const cappedWarn = sizing.capped ? ' <span style="color:#f59e0b">(capped at 10%)</span>' : '';
+  el.innerHTML = `
+    <span style="color:#10b981;font-size:0.72rem;font-weight:500">
+      ${sizing.shares} shares ($${sizing.notional} = ${sizing.positionPct}% of portfolio)${cappedWarn}
+    </span>
+    <span style="color:#94a3b8;font-size:0.68rem;margin-left:8px">
+      Risk: $${sizing.riskAmount} (${sizing.riskPct}%)
+    </span>`;
+}
+
 // ── Format helpers ────────────────────────────────────────────────────────────
 
-function fmtP(v)   { if (v == null) return '—'; const n = parseFloat(v); return isNaN(n) ? '—' : '$' + n.toFixed(2); }
-function fmtPct(v) { if (v == null) return '—'; const n = parseFloat(v); return isNaN(n) ? '—' : (n >= 0 ? '+' : '') + n.toFixed(1) + '%'; }
+function fmtP(v)   { if (v == null) return '\u2014'; const n = parseFloat(v); return isNaN(n) ? '\u2014' : '$' + n.toFixed(2); }
+function fmtPct(v) { if (v == null) return '\u2014'; const n = parseFloat(v); return isNaN(n) ? '\u2014' : (n >= 0 ? '+' : '') + n.toFixed(1) + '%'; }
 
 function dateShort(d) {
-  if (!d) return '—';
+  if (!d) return '\u2014';
   const dt = new Date(d + 'T00:00:00');
   return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
@@ -76,9 +154,58 @@ function renderDashboard(stats) {
     </div>`;
 }
 
+// ── Exposure panel ──────────────────────────────────────────────────────────
+
+function renderExposure() {
+  if (!exposureData || !exposureData.trades) return '';
+
+  const e = exposureData;
+  const dirColor = e.net_direction === 'net_long' ? '#10b981' : e.net_direction === 'net_short' ? '#ef4444' : '#94a3b8';
+  const dirLabel = e.net_direction === 'net_long' ? 'Net Long' : e.net_direction === 'net_short' ? 'Net Short' : 'Flat';
+
+  // Sector bars
+  const sectors = Object.entries(e.sector_breakdown);
+  const maxSector = sectors.reduce((m, [, d]) => Math.max(m, d.long + d.short), 1);
+  const sectorBars = sectors.map(([name, d]) => {
+    const longW = (d.long / maxSector) * 100;
+    const shortW = (d.short / maxSector) * 100;
+    const shortName = name.length > 25 ? name.slice(0, 22) + '...' : name;
+    return `
+      <div class="at-sector-row">
+        <span class="at-sector-name" title="${name}">${shortName}</span>
+        <div class="at-sector-bar-container">
+          ${longW > 0 ? `<div class="at-sector-bar long" style="width:${longW}%"></div>` : ''}
+          ${shortW > 0 ? `<div class="at-sector-bar short" style="width:${shortW}%"></div>` : ''}
+        </div>
+        <span class="at-sector-tickers">${d.tickers.join(', ')}</span>
+      </div>`;
+  }).join('');
+
+  // Warnings
+  const warnHtml = e.warnings.length
+    ? e.warnings.map(w => `<span class="at-warning-badge">${w.message}</span>`).join('')
+    : '';
+
+  return `
+    <div class="at-exposure-panel">
+      <div class="at-exposure-header">
+        <span class="at-exposure-title">Portfolio Exposure</span>
+        <span class="at-exposure-dir" style="color:${dirColor}">${dirLabel}</span>
+      </div>
+      <div class="at-exposure-metrics">
+        <span class="at-exp-metric"><span class="at-exp-lbl">Long</span> ${e.long_count} pos</span>
+        <span class="at-exp-metric"><span class="at-exp-lbl">Short</span> ${e.short_count} pos</span>
+        ${e.largest_position ? `<span class="at-exp-metric"><span class="at-exp-lbl">Largest</span> ${e.largest_position.ticker}</span>` : ''}
+      </div>
+      ${sectorBars ? `<div class="at-sector-breakdown">${sectorBars}</div>` : ''}
+      ${warnHtml ? `<div class="at-warnings">${warnHtml}</div>` : ''}
+    </div>`;
+}
+
 // ── Add form ──────────────────────────────────────────────────────────────────
 
 function renderAddForm() {
+  const accountSize = getAccountSize();
   return `
     <div class="at-add-form ${showAddForm ? 'visible' : ''}" id="atAddForm">
       <div class="at-form-row">
@@ -91,14 +218,19 @@ function renderAddForm() {
           <option value="high">High</option>
           <option value="medium">Medium</option>
         </select>
-        <input class="at-input" id="atEntry" placeholder="Entry $" type="number" step="0.01">
-        <input class="at-input" id="atStop" placeholder="Stop $" type="number" step="0.01">
+        <input class="at-input" id="atEntry" placeholder="Entry $" type="number" step="0.01" oninput="window.atUpdateSizing()">
+        <input class="at-input" id="atStop" placeholder="Stop $" type="number" step="0.01" oninput="window.atUpdateSizing()">
         <input class="at-input" id="atTarget" placeholder="Target $" type="number" step="0.01">
       </div>
       <div class="at-form-row">
         <input class="at-input" id="atThesis" placeholder="Thesis / reason" style="flex:3">
+        <input class="at-input" id="atAccountSize" placeholder="Account $" type="number" step="1000"
+               value="${accountSize || ''}" style="max-width:110px"
+               oninput="window.atSetAccount(this.value)"
+               title="Your total portfolio size for position sizing">
         <button class="btn btn-sm" onclick="window.atAddTrade()">Add Trade</button>
       </div>
+      <div class="at-form-row" id="atSizingPreview" style="padding:0 4px"></div>
     </div>`;
 }
 
@@ -171,7 +303,7 @@ function renderPage() {
     <div class="at-header">
       <div class="at-header-left">
         <h2>Active Trades</h2>
-        <span class="at-meta-line">${s ? `${s.active_count} active · ${s.wins}W / ${s.losses}L closed` : 'No trades'}</span>
+        <span class="at-meta-line">${s ? `${s.active_count} active \u00b7 ${s.wins}W / ${s.losses}L closed` : 'No trades'}</span>
       </div>
       <div class="at-header-actions">
         <button class="btn btn-sm" onclick="window.atToggleForm()">+ Add</button>
@@ -185,6 +317,7 @@ function renderPage() {
     </div>
 
     ${renderDashboard(s)}
+    ${renderExposure()}
     ${renderAddForm()}
 
     <div class="at-controls">
@@ -201,7 +334,7 @@ function renderPage() {
         ? entries.map(renderEntry).join('')
         : `<div class="at-empty">
              <div class="at-empty-icon">&#x1f3af;</div>
-             <div>${all.length === 0 ? 'No active trades yet — add manually or click Auto-Add to import high-conviction entries from Daily Checker' : 'No trades match this filter'}</div>
+             <div>${all.length === 0 ? 'No active trades yet \u2014 add manually or click Auto-Add to import high-conviction entries from Daily Checker' : 'No trades match this filter'}</div>
            </div>`
       }
     </div>`;
@@ -213,6 +346,8 @@ export async function loadActiveTrades() {
   try {
     await loadData();
     renderPage();
+    // Load exposure in background after initial render
+    loadExposure().then(() => renderPage());
   } catch (e) {
     console.error('[ACTIVE_TRADES] Load failed:', e);
   }
@@ -224,6 +359,16 @@ window.atToggleForm = function() {
   showAddForm = !showAddForm;
   renderPage();
   if (showAddForm) document.getElementById('atTicker')?.focus();
+};
+
+window.atUpdateSizing = function() {
+  renderSizingPreview();
+};
+
+window.atSetAccount = function(val) {
+  const n = parseFloat(val);
+  if (!isNaN(n) && n > 0) setAccountSize(n);
+  renderSizingPreview();
 };
 
 window.atAddTrade = async function() {
@@ -247,6 +392,7 @@ window.atAddTrade = async function() {
     });
     showAddForm = false;
     await loadData();
+    loadExposure().then(() => renderPage());
     renderPage();
   } catch (e) { console.error('[ACTIVE_TRADES] Add failed:', e); }
 };
@@ -259,6 +405,7 @@ window.atAutoAdd = async function() {
     const r = await apiFetch('/api/active-trades/auto-add', { method: 'POST' });
     console.log('[ACTIVE_TRADES] Auto-add result:', r);
     await loadData();
+    loadExposure().then(() => renderPage());
   } catch (e) { console.error('[ACTIVE_TRADES] Auto-add failed:', e); }
   finally { isAutoAdding = false; renderPage(); }
 };
@@ -285,6 +432,7 @@ window.atRemove = async function(id, ticker) {
   try {
     await apiFetch(`/api/active-trades/${id}`, { method: 'DELETE' });
     await loadData();
+    loadExposure().then(() => renderPage());
     renderPage();
   } catch (e) { console.error('[ACTIVE_TRADES] Remove failed:', e); }
 };
@@ -294,6 +442,7 @@ window.atDelete = async function(id, ticker) {
   try {
     await apiFetch(`/api/active-trades/${id}?hard=true`, { method: 'DELETE' });
     await loadData();
+    loadExposure().then(() => renderPage());
     renderPage();
   } catch (e) { console.error('[ACTIVE_TRADES] Delete failed:', e); }
 };
