@@ -680,7 +680,10 @@ window.dcRunOne = async function(id) {
     const res = await runDailyCheck(id);
     if (res.success && res.result) {
       const idx = checksCache.findIndex(c => c.id === id);
-      if (idx >= 0) checksCache[idx].latest_result = res.result;
+      if (idx >= 0) {
+        checksCache[idx].latest_result = res.result;
+        if (res.autoDeactivated) checksCache[idx].status = 'paused';
+      }
       renderDailyChecker();
     }
   } catch (e) {
