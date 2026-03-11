@@ -1732,8 +1732,7 @@
   .fil-th-shares { width: 30%; }
   .fil-th-value  { width: 35%; }
 
-  /* Changes table: hide type badge, fund, shares — show Ticker | Value | Change | Weight */
-  .fil-ch-type,
+  /* Changes table: hide fund, shares columns — keep type badge inline with ticker */
   .fil-ch-fund,
   .fil-ch-shares {
     display: none;
@@ -1741,6 +1740,18 @@
 
   .fil-changes-table {
     table-layout: auto;
+  }
+
+  .fil-changes-table .fil-ch-type {
+    display: table-cell;
+    width: 70px;
+    min-width: 70px;
+    padding-right: 4px;
+  }
+
+  .fil-changes-table .fil-change-badge {
+    font-size: 10px;
+    padding: 2px 5px;
   }
 
   .fil-modal {
