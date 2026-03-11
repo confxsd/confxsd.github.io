@@ -2261,3 +2261,83 @@
   color: var(--tv-text-tertiary);
   font-size: 14px;
 }
+
+/* ============================================
+   Not Priced In Feature
+============================================ */
+
+.fil-npi-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--tv-text-secondary);
+  line-height: 1.5;
+}
+
+.fil-npi-banner > i {
+  color: #fbbf24;
+  font-size: 16px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.fil-npi-banner strong {
+  color: #fbbf24;
+}
+
+.fil-npi-badge-sample {
+  display: inline-flex;
+  align-items: center;
+  color: #fbbf24;
+  font-size: 11px;
+}
+
+.fil-price-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.fil-price-up {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--tv-green);
+}
+
+.fil-price-down {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--tv-red);
+}
+
+.fil-price-badge.fil-not-priced {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.fil-price-badge.fil-not-priced i {
+  font-size: 10px;
+}
+
+.fil-row-flagged {
+  background: rgba(251, 191, 36, 0.04);
+}
+
+.fil-row-flagged:hover {
+  background: rgba(251, 191, 36, 0.08) !important;
+}
+
+#changesNotPricedInBtn.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}

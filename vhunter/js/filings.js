@@ -50,6 +50,8 @@ let changesFilters = {
   sortBy: 'value_change',
   minValue: 0
 };
+let notPricedInMode = false;
+let pricePerformanceCache = {}; // { ticker: { periodClose, currentClose, pctChange } }
 let currentView = 'feed';
 
 const getUserId = () => localStorage.getItem('vhunter_user_id') || 'vhunter-serhat';
@@ -1000,6 +1002,10 @@ function renderChangesTable() {
   const container = document.getElementById('filChangesTable');
   if (!container) return;
 
+  // Toggle info banner
+  const banner = document.getElementById('changesNpiBanner');
+  if (banner) banner.style.display = notPricedInMode ? 'flex' : 'none';
+
   let items = changesData?.changes || [];
 
   // Filter out convertible bonds
@@ -1020,6 +1026,11 @@ function renderChangesTable() {
     );
   }
 
+  // Not priced in filter
+  if (notPricedInMode) {
+    items = items.filter(c => c.change_type !== 'UNCHANGED' && isNotPricedIn(c));
+  }
+
   const countEl = document.getElementById('changesDisplayCount');
   if (countEl) countEl.textContent = items.length;
 
@@ -1033,6 +1044,8 @@ function renderChangesTable() {
     return;
   }
 
+  const showPriceCol = notPricedInMode || Object.keys(pricePerformanceCache).length > 0;
+
   container.innerHTML = `
     <table class="fil-table fil-holdings-table fil-changes-table">
       <thead>
@@ -1043,17 +1056,18 @@ function renderChangesTable() {
           <th class="fil-th-value fil-ch-shares">Shares</th>
           <th class="fil-th-value">Value</th>
           <th class="fil-th-value">Change</th>
+          ${showPriceCol ? '<th class="fil-th-value">Price</th>' : ''}
           <th class="fil-th-value">Weight</th>
         </tr>
       </thead>
       <tbody>
-        ${items.map(c => renderChangeRow(c)).join('')}
+        ${items.map(c => renderChangeRow(c, showPriceCol)).join('')}
       </tbody>
     </table>
   `;
 }
 
-function renderChangeRow(c) {
+function renderChangeRow(c, showPriceCol = false) {
   const typeConfig = {
     NEW: { label: 'NEW', cls: 'fil-change-new', icon: 'fa-plus' },
     EXIT: { label: 'EXIT', cls: 'fil-change-exit', icon: 'fa-xmark' },
@@ -1088,14 +1102,18 @@ function renderChangeRow(c) {
 
   const weight = c.weight_current_pct != null ? `${c.weight_current_pct.toFixed(1)}%` : '--';
 
+  const priceBadge = showPriceCol ? `<td class="fil-td-value">${getPricePerformanceBadge(c)}</td>` : '';
+  const notPricedCls = notPricedInMode && isNotPricedIn(c) ? 'fil-row-flagged' : '';
+
   return `
-    <tr class="fil-holding-row" onclick="showTickerHoldings('${c.ticker || ''}')">
+    <tr class="fil-holding-row ${notPricedCls}" onclick="showTickerHoldings('${c.ticker || ''}')">
       <td class="fil-ch-type"><span class="fil-change-badge ${t.cls}"><i class="fa-solid ${t.icon}"></i> ${t.label}</span></td>
       <td class="fil-td-ticker"><strong>${c.ticker || c.cusip}</strong></td>
       <td class="fil-td-name fil-ch-fund" title="${c.fund_name}">${truncate(c.fund_name || '', 25)}</td>
       <td class="fil-td-value fil-ch-shares">${shareStr}</td>
       <td class="fil-td-value">${valueStr}</td>
       <td class="fil-td-value">${changeStr}</td>
+      ${priceBadge}
       <td class="fil-td-value">${weight}</td>
     </tr>
   `;
@@ -1113,6 +1131,111 @@ window.filterChanges = function() {
   changesData = null; // Force reload with new server-side filters
   loadChanges();
 };
+
+// ============== NOT PRICED IN FEATURE ==============
+
+window.toggleNotPricedIn = async function() {
+  notPricedInMode = !notPricedInMode;
+  const btn = document.getElementById('changesNotPricedInBtn');
+  if (btn) btn.classList.toggle('active', notPricedInMode);
+
+  if (notPricedInMode && changesData?.changes?.length) {
+    btn?.classList.add('loading');
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loading...';
+    try {
+      await fetchPricePerformance();
+    } catch (e) {
+      console.error('Failed to fetch price performance:', e);
+    }
+    btn.innerHTML = '<i class="fa-solid fa-eye"></i> Not Priced In';
+    btn?.classList.remove('loading');
+  }
+  renderChangesTable();
+};
+
+async function fetchPricePerformance() {
+  if (!changesData?.changes?.length || !changesData?.period) return;
+
+  const tickers = [...new Set(
+    changesData.changes
+      .filter(c => c.ticker && c.change_type !== 'UNCHANGED')
+      .map(c => c.ticker)
+  )];
+
+  // Only fetch tickers we haven't cached yet
+  const toFetch = tickers.filter(t => !pricePerformanceCache[t]);
+  if (!toFetch.length) return;
+
+  const periodDate = changesData.period; // e.g. "2025-12-31"
+  const today = new Date().toISOString().split('T')[0];
+
+  // Batch fetch in groups of 10 to avoid overwhelming the API
+  const batchSize = 10;
+  for (let i = 0; i < toFetch.length; i += batchSize) {
+    const batch = toFetch.slice(i, i + batchSize);
+    await Promise.all(batch.map(async (ticker) => {
+      try {
+        const r = await fetch(
+          `${CONFIG.PROXY_URL}/polygon/v2/aggs/ticker/${ticker}/range/1/day/${periodDate}/${today}?adjusted=true&sort=asc&limit=250`
+        );
+        if (!r.ok) return;
+        const data = await r.json();
+        const bars = data?.results;
+        if (!bars?.length) return;
+
+        const periodClose = bars[0].c;
+        const currentClose = bars[bars.length - 1].c;
+        const pctChange = ((currentClose - periodClose) / periodClose) * 100;
+
+        pricePerformanceCache[ticker] = { periodClose, currentClose, pctChange };
+      } catch {
+        // Skip failed tickers
+      }
+    }));
+  }
+}
+
+function isNotPricedIn(change) {
+  const perf = pricePerformanceCache[change.ticker];
+  if (!perf) return false;
+
+  const threshold = 3; // % threshold - moves under this are considered "not priced in"
+
+  switch (change.change_type) {
+    case 'NEW':
+    case 'INCREASE':
+      // Fund is bullish but price hasn't moved up meaningfully
+      return perf.pctChange < threshold;
+    case 'EXIT':
+    case 'DECREASE':
+      // Fund is bearish but price hasn't dropped meaningfully
+      return perf.pctChange > -threshold;
+    default:
+      return false;
+  }
+}
+
+function getPricePerformanceBadge(change) {
+  const perf = pricePerformanceCache[change.ticker];
+  if (!perf) return '';
+
+  const pct = perf.pctChange;
+  const sign = pct >= 0 ? '+' : '';
+  const cls = pct >= 0 ? 'fil-price-up' : 'fil-price-down';
+  const notPriced = isNotPricedIn(change);
+  const flagCls = notPriced ? 'fil-not-priced' : '';
+
+  const direction = (change.change_type === 'NEW' || change.change_type === 'INCREASE') ? 'bullish' : 'bearish';
+  const expected = direction === 'bullish' ? 'rise' : 'fall';
+  const tooltip = notPriced
+    ? `Fund is ${direction} but price hasn't ${expected} yet (${sign}${pct.toFixed(1)}% since ${changesData?.period || 'filing'})`
+    : `Price ${sign}${pct.toFixed(1)}% since ${changesData?.period || 'filing'}`;
+
+  return `<span class="fil-price-badge ${cls} ${flagCls}" title="${tooltip}">
+    ${sign}${pct.toFixed(1)}%
+    ${notPriced ? '<i class="fa-solid fa-circle-exclamation"></i>' : ''}
+  </span>`;
+}
 
 function buildTickerHoldingsModal(ticker, data) {
   const latest = data.latestOwnership || [];

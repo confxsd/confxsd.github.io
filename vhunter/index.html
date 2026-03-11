@@ -1294,6 +1294,14 @@
                   />
                 </div>
                 <div class="fil-filter-group">
+                  <button
+                    class="fil-btn fil-btn-toggle"
+                    id="changesNotPricedInBtn"
+                    onclick="toggleNotPricedIn()"
+                    title="Show institutional changes where price hasn't moved in the expected direction yet"
+                  >
+                    <i class="fa-solid fa-eye"></i> Not Priced In
+                  </button>
                   <select
                     class="fil-select"
                     id="changesTypeFilter"
@@ -1325,6 +1333,16 @@
                     <option value="10000000">Min $10M</option>
                     <option value="100000000">Min $100M</option>
                   </select>
+                </div>
+              </div>
+
+              <!-- Not Priced In Info Banner -->
+              <div class="fil-npi-banner" id="changesNpiBanner" style="display:none">
+                <i class="fa-solid fa-circle-info"></i>
+                <div>
+                  <strong>Not Priced In</strong> - Showing institutional changes where price hasn't moved in the expected direction.
+                  Funds bought/increased but stock hasn't risen, or funds sold/exited but stock hasn't fallen since the filing period.
+                  <span class="fil-npi-badge-sample"><i class="fa-solid fa-circle-exclamation"></i></span> marks potential opportunities.
                 </div>
               </div>
 
