@@ -62,6 +62,23 @@
 .tp-submit-context:focus { border-color: var(--tv-accent); }
 .tp-submit-context::placeholder { color: var(--tv-border); }
 
+.tp-submit-direction {
+  padding: 8px 10px;
+  border: 1px solid var(--tv-border);
+  border-radius: 6px;
+  background: var(--tv-bg-secondary);
+  color: var(--tv-text-primary);
+  font-size: 0.82rem;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 100px;
+}
+.tp-submit-direction:focus { border-color: var(--tv-accent); }
+
 .tp-submit-btn {
   padding: 8px 20px;
   border-radius: 6px;
@@ -333,6 +350,19 @@
   background: var(--tv-bg-tertiary);
   flex-shrink: 0;
 }
+
+/* Direction badge */
+.tp-direction {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+.tp-direction.long  { color: var(--tv-green); background: var(--tv-green-bg-solid); }
+.tp-direction.short { color: var(--tv-red); background: var(--tv-red-bg-solid); }
 
 /* ── Expanded Detail Panel ── */
 .tp-detail {

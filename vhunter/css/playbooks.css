@@ -250,6 +250,20 @@
   border-bottom: 1px solid var(--tv-border);
 }
 
+.pb-checks-table th.sortable-th {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s;
+}
+
+.pb-checks-table th.sortable-th:hover {
+  color: var(--tv-text-secondary);
+}
+
+.pb-checks-table th.sorted {
+  color: var(--tv-accent);
+}
+
 .pb-checks-table td {
   padding: 8px;
   border-bottom: 1px solid var(--tv-border);

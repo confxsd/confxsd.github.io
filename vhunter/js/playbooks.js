@@ -4,12 +4,28 @@ import {
   linkStrategyCheck, unlinkStrategyCheck, getStrategyChecks, getDailyChecks
 } from './db.js';
 import { CONFIG } from './config.js';
+import { createSortableTable } from './sortable-table.js';
 
 let strategiesCache = [];
 let currentView = 'list'; // 'list' | 'detail' | 'npi'
 let currentStrategyId = null;
 let linkedChecks = [];
 let editEntryConditions = [''];
+
+const checksSorter = createSortableTable({
+  columns: [
+    { key: 'ticker', label: 'Ticker', sortable: true, sortValue: r => r.ticker?.toLowerCase() },
+    { key: 'direction', label: 'Dir', sortable: true },
+    { key: 'signal', label: 'Signal', sortable: true, sortValue: r => r.signal?.toLowerCase() || '' },
+    { key: 'score', label: 'Score', sortable: true, sortValue: r => r.opportunity_score ?? -1 },
+    { key: 'thesis', label: 'Thesis', sortable: true, sortValue: r => r.thesis_valid == null ? -1 : (r.thesis_valid ? 1 : 0) },
+    { key: 'fit', label: 'Fit', sortable: true, sortValue: r => r.strategy_fit?.still_fits == null ? -1 : (r.strategy_fit.still_fits ? 1 : 0) },
+    { key: 'notes', label: 'Notes', sortable: false },
+    { key: 'actions', label: '', sortable: false }
+  ],
+  defaultSort: 'score',
+  defaultDir: 'desc'
+});
 
 // ── Not Priced In state ──
 let npiData = null; // { changes, period, summary }
@@ -162,8 +178,11 @@ async function renderDetail(strategyId) {
     const sizing = rules.position_sizing || {};
     const iv = rules.iv_strategy || {};
 
-    const checksRows = linkedChecks.length > 0
-      ? linkedChecks.map(c => {
+    checksSorter.setData(linkedChecks);
+    const sortedChecks = checksSorter.getSorted();
+
+    const checksRows = sortedChecks.length > 0
+      ? sortedChecks.map(c => {
           const fit = c.strategy_fit;
           const fitBadge = fit
             ? `<span class="pb-fit-badge ${fit.still_fits ? 'fits' : 'drifted'}">${fit.still_fits ? 'FITS' : 'DRIFTED'}</span>`
@@ -238,16 +257,7 @@ async function renderDetail(strategyId) {
 
         <table class="pb-checks-table">
           <thead>
-            <tr>
-              <th>Ticker</th>
-              <th>Dir</th>
-              <th>Signal</th>
-              <th>Score</th>
-              <th>Thesis</th>
-              <th>Fit</th>
-              <th>Notes</th>
-              <th></th>
-            </tr>
+            <tr>${checksSorter.renderHead('window.pbSortChecks')}</tr>
           </thead>
           <tbody>${checksRows}</tbody>
         </table>
@@ -257,6 +267,38 @@ async function renderDetail(strategyId) {
     console.error('[PLAYBOOKS] Detail load failed:', e);
     container.innerHTML = '<div style="padding:40px;text-align:center;color:#ef4444">Failed to load strategy</div>';
   }
+}
+
+function rerenderChecksTable() {
+  const table = document.querySelector('.pb-checks-table');
+  if (!table || !currentStrategyId) return;
+
+  const sorted = checksSorter.getSorted();
+
+  table.querySelector('thead tr').innerHTML = checksSorter.renderHead('window.pbSortChecks');
+
+  table.querySelector('tbody').innerHTML = sorted.length > 0
+    ? sorted.map(c => {
+        const fit = c.strategy_fit;
+        const fitBadge = fit
+          ? `<span class="pb-fit-badge ${fit.still_fits ? 'fits' : 'drifted'}">${fit.still_fits ? 'FITS' : 'DRIFTED'}</span>`
+          : '<span style="color:#94a3b8;font-size:0.68rem">--</span>';
+        return `
+          <tr>
+            <td><strong>${c.ticker}</strong></td>
+            <td><span class="dc-dir-badge ${c.direction}">${c.direction}</span></td>
+            <td><span class="dc-signal ${signalClass(c.signal)}">${c.signal || '--'}</span></td>
+            <td>${c.opportunity_score ?? '--'}</td>
+            <td>${c.thesis_valid != null ? (c.thesis_valid ? '✓' : '✗') : '--'}</td>
+            <td>${fitBadge}</td>
+            <td style="font-size:0.7rem;color:#94a3b8">${c.strategy_notes || ''}</td>
+            <td>
+              <button class="pb-unlink-btn" onclick="window.pbUnlink('${currentStrategyId}', '${c.id}')">Unlink</button>
+            </td>
+          </tr>
+        `;
+      }).join('')
+    : `<tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:20px">No checks linked yet</td></tr>`;
 }
 
 // ── Strategy Modal (Create/Edit) ──────────────────────────────
@@ -753,5 +795,10 @@ window.pbUnlink = (sid, cid) => unlinkCheck(sid, cid);
 window.pbUpdateEntry = (i, val) => { editEntryConditions[i] = val; };
 window.pbRemoveEntry = (i) => { editEntryConditions.splice(i, 1); renderEntryConditions(); };
 window.pbAddEntry = () => { editEntryConditions.push(''); renderEntryConditions(); };
+
+window.pbSortChecks = (key) => {
+  checksSorter.sort(key);
+  rerenderChecksTable();
+};
 
 window.pbOpenNpi = () => loadNpiView();

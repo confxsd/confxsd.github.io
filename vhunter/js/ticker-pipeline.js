@@ -40,10 +40,10 @@ async function apiCall(path, opts = {}) {
   return r.json();
 }
 
-async function submitTicker(ticker, context) {
+async function submitTicker(ticker, context, direction) {
   return apiCall('/api/ticker-pipeline/submit', {
     method: 'POST',
-    body: JSON.stringify({ ticker, source: 'manual', context: context || undefined, force: true })
+    body: JSON.stringify({ ticker, source: 'manual', context: context || undefined, direction: direction || 'monitor', force: true })
   });
 }
 
@@ -91,6 +91,14 @@ function renderPage() {
       <div class="tp-submit-field">
         <label>Ticker</label>
         <input class="tp-submit-ticker" id="tpTicker" placeholder="AAPL" maxlength="6" />
+      </div>
+      <div class="tp-submit-field">
+        <label>Direction</label>
+        <select class="tp-submit-direction" id="tpDirection">
+          <option value="monitor">Monitor</option>
+          <option value="long">Long</option>
+          <option value="short">Short</option>
+        </select>
       </div>
       <div class="tp-submit-field" style="flex:1;min-width:200px">
         <label>Context (optional)</label>
@@ -217,10 +225,11 @@ function renderCard(a) {
         ${a.conviction ? `<span class="tp-conviction ${a.conviction}">${a.conviction}</span>` : ''}
         <div class="tp-dots">${dots}</div>
         ${runningLabel}
+        ${a.direction && a.direction !== 'monitor' ? `<span class="tp-direction ${a.direction}">${a.direction}</span>` : ''}
         <span class="tp-source">${a.source || 'manual'}</span>
         <div class="tp-card-meta">
           <span class="tp-time">${timeAgo}</span>
-          ${a.status !== 'running' && a.status !== 'submitted' ? `<button class="tp-rerun-btn" onclick="event.stopPropagation(); window.tpRerun('${a.ticker}')" title="Re-run"><i class="fa-solid fa-rotate-right"></i></button>` : ''}
+          ${a.status !== 'running' && a.status !== 'submitted' ? `<button class="tp-rerun-btn" onclick="event.stopPropagation(); window.tpRerun('${a.ticker}', '${a.direction || 'monitor'}')" title="Re-run"><i class="fa-solid fa-rotate-right"></i></button>` : ''}
           <button class="tp-delete-btn" onclick="event.stopPropagation(); window.tpDelete('${a.id}')" title="Delete">✕</button>
           <button class="tp-expand-btn" id="tp-expand-${a.id}">▼</button>
         </div>
@@ -443,12 +452,13 @@ function esc(s) {
 window.tpSubmit = async () => {
   const ticker = document.getElementById('tpTicker')?.value?.trim();
   const context = document.getElementById('tpContext')?.value?.trim();
+  const direction = document.getElementById('tpDirection')?.value || 'monitor';
   if (!ticker) return;
 
   const btn = document.getElementById('tpSubmitBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
 
-  const result = await submitTicker(ticker, context);
+  const result = await submitTicker(ticker, context, direction);
 
   if (btn) { btn.disabled = false; btn.textContent = 'Analyze'; }
 
@@ -459,6 +469,7 @@ window.tpSubmit = async () => {
 
   document.getElementById('tpTicker').value = '';
   document.getElementById('tpContext').value = '';
+  document.getElementById('tpDirection').value = 'monitor';
   await fetchAnalyses();
   await fetchStats();
 };
@@ -483,8 +494,8 @@ window.tpToggleStage = (headerEl) => {
 window.tpCancel = (id) => cancelAnalysis(id);
 window.tpRetry = (id) => retryAnalysis(id);
 window.tpDelete = (id) => deleteAnalysis(id);
-window.tpRerun = async (ticker) => {
-  const result = await submitTicker(ticker);
+window.tpRerun = async (ticker, direction) => {
+  const result = await submitTicker(ticker, null, direction);
   if (result.error) {
     alert(result.message || result.error);
     return;
