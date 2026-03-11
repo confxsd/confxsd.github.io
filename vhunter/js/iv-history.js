@@ -113,12 +113,65 @@ export function getIVStats(ticker) {
   };
 }
 
+// Compute rolling HV series from OHLC bars for IV rank estimation
+// When we don't have enough IV history, we rank current IV against
+// the distribution of historical realized volatility as an approximation
+function computeHVBasedRank(bars, currentIV) {
+  if (!bars || bars.length < 60 || currentIV == null) return null;
+
+  const TRADING_DAYS = 252;
+  const window = 30;
+  const hvSeries = [];
+
+  // Compute 30-day HV at each point in the bar history
+  for (let i = window; i < bars.length; i++) {
+    const slice = bars.slice(i - window, i);
+    const returns = [];
+    for (let j = 1; j < slice.length; j++) {
+      if (slice[j - 1].c > 0) {
+        returns.push(Math.log(slice[j].c / slice[j - 1].c));
+      }
+    }
+    if (returns.length < 10) continue;
+    const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+    const variance = returns.reduce((a, r) => a + (r - mean) ** 2, 0) / (returns.length - 1);
+    const hv = Math.sqrt(variance * TRADING_DAYS) * 100;
+    if (hv > 0) hvSeries.push(hv);
+  }
+
+  if (hvSeries.length < 10) return null;
+
+  const min = Math.min(...hvSeries);
+  const max = Math.max(...hvSeries);
+  if (max === min) return { ivRank: 50, ivPercentile: 50, hvDays: hvSeries.length };
+
+  const ivRank = Math.max(0, Math.min(100, ((currentIV - min) / (max - min)) * 100));
+  const below = hvSeries.filter(hv => hv < currentIV).length;
+  const ivPercentile = (below / hvSeries.length) * 100;
+
+  return { ivRank, ivPercentile, hvDays: hvSeries.length };
+}
+
 // Get full IV analysis for a ticker
-export function getFullIVAnalysis(ticker, currentIV) {
+// bars: optional OHLC bars (1Y) for HV-based fallback when IV history is insufficient
+export function getFullIVAnalysis(ticker, currentIV, bars) {
   const history = getIVHistory(ticker);
   const stats = getIVStats(ticker);
-  const ivRank = getIVRank(ticker, currentIV);
-  const ivPct = getIVPercentile(ticker, currentIV);
+  let ivRank = getIVRank(ticker, currentIV);
+  let ivPct = getIVPercentile(ticker, currentIV);
+  let historyDays = history.length;
+  let estimated = false;
+
+  // Fallback: use HV-based rank when IV history is insufficient
+  if (ivRank == null && bars) {
+    const hvEstimate = computeHVBasedRank(bars, currentIV);
+    if (hvEstimate) {
+      ivRank = hvEstimate.ivRank;
+      ivPct = hvEstimate.ivPercentile;
+      historyDays = hvEstimate.hvDays;
+      estimated = true;
+    }
+  }
 
   // Record current IV for future reference
   if (currentIV != null) {
@@ -130,7 +183,8 @@ export function getFullIVAnalysis(ticker, currentIV) {
     ivRank,
     ivPercentile: ivPct,
     ...stats,
-    historyDays: history.length,
+    historyDays,
+    estimated,
     isHighIV: ivRank != null && ivRank > 70,
     isLowIV: ivRank != null && ivRank < 30,
     rankLabel: ivRank == null ? '--' :

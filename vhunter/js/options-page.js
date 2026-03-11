@@ -1,7 +1,7 @@
 // VHunter Options Page Module
-import { fetchTickerData, fetchClaude, fetchTickerDetails } from './api.js';
+import { fetchTickerData, fetchPolygon, fetchClaude, fetchTickerDetails } from './api.js';
 import { formatNum, avg, erf, calculateMaxPain, calculateHistoricalVolatility } from './utils.js';
-import { getFullIVAnalysis, recordIV } from './iv-history.js';
+import { getFullIVAnalysis, getIVHistory, recordIV } from './iv-history.js';
 import {
   calcVRP, calcVolatilityMetrics, classifyVolSetup, calcTermSteepness,
   calcGEX, calcDEX, calcGammaRatio, calcOptionsExposure, calcPriceTrend, calcVolTrend, calcPVGD
@@ -112,6 +112,30 @@ export async function loadOptionsData(skipAI = false) {
       optionsData.prices = prices; // Keep for backwards compatibility
       // Use Yang-Zhang volatility (professional grade) when OHLC available
       optionsData.hv30 = finMath.calcRealizedVolatility(bars, 30) || 0;
+    }
+
+    // When IV history is insufficient, use price bars for HV-based IV rank estimation
+    // Start with the ~105 bars we already have, then upgrade to 1Y if available
+    const ivHistory = getIVHistory(ticker);
+    if (ivHistory.length < 5) {
+      // Use default bars immediately for instant estimate
+      if (optionsData.bars?.length > 60) {
+        optionsData.yearBars = optionsData.bars;
+      }
+      // Fetch 1Y bars in background for more accurate estimate
+      const to = new Date();
+      const fr = new Date(to - 380 * 24 * 60 * 60 * 1000);
+      fetchPolygon(`/v2/aggs/ticker/${ticker}/range/1/day/${fr.toISOString().split('T')[0]}/${to.toISOString().split('T')[0]}?adjusted=true&sort=asc&limit=5000`)
+        .then(yearAggs => {
+          if (yearAggs?.results?.length > 60) {
+            optionsData.yearBars = yearAggs.results;
+            // Re-run quick stats with the 1Y bars for better HV-based IV rank
+            if (optionsData.options) {
+              try { processOptionsPageData(optionsData.options, optionsData.spotPrice); } catch (_) {}
+            }
+          }
+        })
+        .catch(() => {});
     }
 
     updateSpotDisplay();
@@ -293,7 +317,8 @@ function calculateSkewData(strikeData, spotPrice, avgIV) {
 
 function updateQuickStats(avgIV, hv30, spotPrice, pcRatio, termStructure) {
   // Get IV analysis from history (includes IV Rank and Percentile)
-  const ivAnalysis = getFullIVAnalysis(optionsData.ticker, avgIV);
+  // Pass 1Y bars for HV-based fallback when IV history is insufficient
+  const ivAnalysis = getFullIVAnalysis(optionsData.ticker, avgIV, optionsData.yearBars);
   optionsData.ivAnalysis = ivAnalysis;
 
   // Calculate VRP (IV - RV)
@@ -319,14 +344,15 @@ function updateQuickStats(avgIV, hv30, spotPrice, pcRatio, termStructure) {
   // IV Rank display (from actual history if available, otherwise use current IV as estimate)
   const ivRank = ivAnalysis.ivRank != null ? ivAnalysis.ivRank : null;
   const ivRankClass = ivRank != null ? (ivRank > 60 ? 'high' : ivRank < 30 ? 'low' : 'neutral') : '';
-  document.getElementById('optIvRank').textContent = ivRank != null ? ivRank.toFixed(0) + '%' : '--';
+  const estPrefix = ivAnalysis.estimated ? '~' : '';
+  document.getElementById('optIvRank').textContent = ivRank != null ? estPrefix + ivRank.toFixed(0) + '%' : '--';
   document.getElementById('optIvRank').className = 'opt-stat-value ' + ivRankClass;
   document.getElementById('optIvRank').title = ivAnalysis.historyDays > 0 ?
-    `Based on ${ivAnalysis.historyDays} days of history` : 'Building history - check back tomorrow';
+    `Based on ${ivAnalysis.historyDays} days of ${ivAnalysis.estimated ? 'HV' : 'IV'} history${ivAnalysis.estimated ? ' (est.)' : ''}` : 'Building history - check back tomorrow';
 
   // IV Percentile
   const ivPct = ivAnalysis.ivPercentile != null ? ivAnalysis.ivPercentile : ivRank;
-  document.getElementById('optIvPct').textContent = ivPct != null ? ivPct.toFixed(0) + '%' : '--';
+  document.getElementById('optIvPct').textContent = ivPct != null ? estPrefix + ivPct.toFixed(0) + '%' : '--';
   document.getElementById('optIvPct').className = 'opt-stat-value ' + ivRankClass;
 
   // HV 30d

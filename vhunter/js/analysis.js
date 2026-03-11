@@ -390,7 +390,7 @@ function processOptionsData(options, spotPrice) {
   const volData = mktData.bars?.length > 0 ? mktData.bars : mktData.prices;
   if (volData && avgIV > 0) {
     vrpMetrics = indicators.calcVolatilityMetrics(volData, avgIV, termStructure);
-    ivAnalysis = getFullIVAnalysis(mktData.ticker, avgIV);
+    ivAnalysis = getFullIVAnalysis(mktData.ticker, avgIV, mktData.bars);
 
     // Classify the volatility setup
     volSetup = indicators.classifyVolSetup({
