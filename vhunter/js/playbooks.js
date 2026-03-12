@@ -574,7 +574,13 @@ function npiIsNotPricedIn(change) {
 }
 
 async function fetchNpiData() {
-  const params = new URLSearchParams({ limit: '500', sort: 'value_change' });
+  const params = new URLSearchParams({
+    limit: '500',
+    sort: 'fund_priority',
+    change_type: 'NEW,EXIT,INCREASE,DECREASE',
+    max_value: String(NPI_MAX_VALUE_CHANGE),
+    max_pct: String(NPI_MAX_PCT_CHANGE)
+  });
   const response = await fetch(`${CONFIG.PROXY_URL}/api/holdings/changes?${params}`, {
     headers: { 'X-User-Id': getUserId() }
   });
