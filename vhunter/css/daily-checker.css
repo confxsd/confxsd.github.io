@@ -1197,3 +1197,105 @@
     margin-left: auto;
   }
 }
+
+/* ── Options Recommendation Block ── */
+.dc-optrec-container { width: 100%; }
+.dc-optrec-loading {
+  padding: 16px; text-align: center;
+  color: #94a3b8; font-size: 0.8rem;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.dc-optrec-error {
+  padding: 12px; color: #ef4444; font-size: 0.78rem;
+  background: rgba(239,68,68,0.08); border-radius: 6px;
+}
+.dc-optrec-block {
+  border: 1px solid rgba(59,130,246,0.25);
+  background: rgba(59,130,246,0.04);
+  border-radius: 8px; padding: 12px;
+}
+.dc-optrec-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+}
+.dc-optrec-strategy {
+  font-weight: 700; font-size: 0.82rem; color: #60a5fa;
+  letter-spacing: 0.5px;
+}
+.dc-optrec-rr {
+  font-weight: 700; font-size: 0.82rem; color: #34d399;
+  margin-left: auto;
+}
+.dc-optrec-legs {
+  background: rgba(15,23,42,0.5); border-radius: 6px;
+  padding: 8px; margin-bottom: 8px; font-family: monospace; font-size: 0.75rem;
+}
+.dc-optrec-leg {
+  display: flex; align-items: center; gap: 8px;
+  padding: 3px 0; border-bottom: 1px solid rgba(148,163,184,0.08);
+}
+.dc-optrec-leg:last-child { border-bottom: none; }
+.dc-optrec-leg-action {
+  font-weight: 700; width: 36px; text-align: center;
+  padding: 1px 4px; border-radius: 3px; font-size: 0.7rem;
+}
+.dc-optrec-leg-action.buy { color: #34d399; background: rgba(52,211,153,0.1); }
+.dc-optrec-leg-action.sell { color: #f87171; background: rgba(248,113,113,0.1); }
+.dc-optrec-leg-desc { color: #e2e8f0; flex: 1; }
+.dc-optrec-leg-price { color: #94a3b8; }
+.dc-optrec-leg-delta { color: #60a5fa; min-width: 36px; }
+.dc-optrec-leg-oi { color: #64748b; font-size: 0.68rem; }
+.dc-optrec-metrics {
+  display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 8px;
+  font-size: 0.75rem;
+}
+.dc-optrec-metric { display: flex; flex-direction: column; }
+.dc-optrec-metric-label { color: #64748b; font-size: 0.65rem; text-transform: uppercase; }
+.dc-optrec-metric span:last-child { color: #e2e8f0; font-weight: 600; }
+.dc-optrec-greeks {
+  display: flex; gap: 12px; margin-bottom: 8px;
+  font-family: monospace; font-size: 0.75rem;
+}
+.dc-optrec-greek { color: #60a5fa; }
+.dc-optrec-greek.neg { color: #f87171; }
+.dc-optrec-entry, .dc-optrec-timestop, .dc-optrec-sizing, .dc-optrec-avoid {
+  font-size: 0.75rem; color: #cbd5e1; margin-bottom: 4px;
+}
+.dc-optrec-entry-label { color: #94a3b8; font-weight: 600; }
+.dc-optrec-sizing { color: #94a3b8; font-size: 0.72rem; }
+.dc-optrec-avoid { color: #fbbf24; font-size: 0.72rem; margin-top: 6px; }
+.dc-optrec-rationale {
+  font-size: 0.73rem; color: #94a3b8; margin: 6px 0;
+  line-height: 1.4;
+}
+.dc-optrec-badges {
+  display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0;
+}
+.dc-optrec-badge {
+  font-size: 0.65rem; padding: 2px 6px; border-radius: 4px;
+  background: rgba(148,163,184,0.1); color: #94a3b8;
+  text-transform: uppercase; font-weight: 600;
+}
+.dc-optrec-badge.liq-A { color: #34d399; background: rgba(52,211,153,0.1); }
+.dc-optrec-badge.liq-B { color: #fbbf24; background: rgba(251,191,36,0.1); }
+.dc-optrec-badge.liq-C { color: #f87171; background: rgba(248,113,113,0.1); }
+.dc-optrec-badge.iv-cheap { color: #34d399; }
+.dc-optrec-badge.iv-fair { color: #60a5fa; }
+.dc-optrec-badge.iv-expensive { color: #f87171; }
+.dc-optrec-adjust {
+  font-size: 0.72rem; color: #94a3b8; margin: 4px 0;
+}
+.dc-optrec-adjust summary {
+  cursor: pointer; color: #60a5fa; font-weight: 600;
+}
+.dc-optrec-adjust ul { margin: 4px 0 0 16px; padding: 0; }
+.dc-optrec-adjust li { margin-bottom: 2px; }
+.dc-optrec-alt {
+  border-top: 1px solid rgba(148,163,184,0.1);
+  margin-top: 8px; padding-top: 8px;
+}
+.dc-optrec-alt-title { font-size: 0.72rem; color: #60a5fa; font-weight: 600; }
+.dc-optrec-alt-legs { font-size: 0.72rem; color: #cbd5e1; font-family: monospace; }
+.dc-optrec-alt-rationale { font-size: 0.7rem; color: #94a3b8; margin-top: 2px; }
+.dc-optrec-meta {
+  font-size: 0.65rem; color: #475569; margin-top: 6px; text-align: right;
+}

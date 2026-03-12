@@ -380,6 +380,19 @@ export async function getStrategyChecks(strategyId) {
   return dbFetch(`/api/strategies/${strategyId}/checks`);
 }
 
+// ==================== OPTIONS RECOMMENDATIONS ====================
+
+export async function runOptionsRec(checkId) {
+  return dbFetch('/api/options-rec/run', {
+    method: 'POST',
+    body: JSON.stringify({ checkId })
+  });
+}
+
+export async function getOptionsRec(checkId) {
+  return dbFetch(`/api/options-rec?checkId=${checkId}`);
+}
+
 // ==================== HELPERS ====================
 
 // Calculate total P&L from closed positions

@@ -154,6 +154,71 @@ function renderList() {
   `;
 }
 
+// ── Strategy Tickers ─────────────────────────────────────────────
+
+const TIER_ORDER = { major: 0, midcap: 1, junior: 2, explorer: 3 };
+const TIER_LABELS = { major: 'Major', midcap: 'Mid-Cap', junior: 'Junior', explorer: 'Explorer' };
+
+function renderTickersSection(tickers, checks, strategyId) {
+  if (!tickers || !tickers.length) return '';
+
+  const checksByTicker = {};
+  for (const c of checks) {
+    checksByTicker[c.ticker?.toUpperCase()] = c;
+  }
+
+  const sorted = [...tickers].sort((a, b) => (TIER_ORDER[a.tier] ?? 9) - (TIER_ORDER[b.tier] ?? 9));
+
+  const cards = sorted.map(t => {
+    const sym = t.symbol?.toUpperCase();
+    const linked = checksByTicker[sym];
+    const tierClass = t.tier || 'unknown';
+    const tierLabel = TIER_LABELS[t.tier] || t.tier || '';
+
+    if (linked) {
+      const fit = linked.strategy_fit;
+      const fitBadge = fit
+        ? `<span class="pb-fit-badge ${fit.still_fits ? 'fits' : 'drifted'}">${fit.still_fits ? 'FITS' : 'DRIFTED'}</span>`
+        : '';
+      return `
+        <div class="pb-ticker-card pb-ticker-linked" onclick="window.switchPage('analyze', '${sym}')">
+          <div class="pb-ticker-head">
+            <span class="pb-ticker-sym">${sym}</span>
+            <span class="pb-ticker-tier ${tierClass}">${tierLabel}</span>
+            <span class="pb-dir-badge ${t.direction || 'long'}">${t.direction || ''}</span>
+            ${fitBadge}
+            <span class="pb-ticker-linked-badge">TRACKING</span>
+          </div>
+          <div class="pb-ticker-note">${t.note || ''}</div>
+          <div class="pb-ticker-live">
+            <span>Signal: <strong>${linked.signal || '--'}</strong></span>
+            <span>Score: <strong>${linked.opportunity_score ?? '--'}</strong></span>
+            <span>Thesis: <strong>${linked.thesis_valid != null ? (linked.thesis_valid ? 'Valid' : 'Invalid') : '--'}</strong></span>
+          </div>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="pb-ticker-card" onclick="window.switchPage('analyze', '${sym}')">
+        <div class="pb-ticker-head">
+          <span class="pb-ticker-sym">${sym}</span>
+          <span class="pb-ticker-tier ${tierClass}">${tierLabel}</span>
+          <span class="pb-dir-badge ${t.direction || 'long'}">${t.direction || ''}</span>
+        </div>
+        <div class="pb-ticker-note">${t.note || ''}</div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="pb-tickers-header">
+      <span class="pb-checks-title">Strategy Tickers (${tickers.length})</span>
+    </div>
+    <div class="pb-tickers-grid">${cards}</div>
+  `;
+}
+
 // ── Detail View ──────────────────────────────────────────────────
 
 async function renderDetail(strategyId) {
@@ -249,6 +314,8 @@ async function renderDetail(strategyId) {
             </div>
           </div>
         </div>
+
+        ${renderTickersSection(rules.tickers, linkedChecks, strategyId)}
 
         <div class="pb-checks-header">
           <span class="pb-checks-title">Linked Daily Checks (${linkedChecks.length})</span>

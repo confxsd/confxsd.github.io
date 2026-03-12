@@ -1,7 +1,8 @@
 // Daily Checker Page Module
 import {
   getDailyChecks, addDailyCheck, updateDailyCheck, deleteDailyCheck,
-  runDailyChecks, runDailyCheck, toggleDailyCheckStar
+  runDailyChecks, runDailyCheck, toggleDailyCheckStar,
+  runOptionsRec, getOptionsRec
 } from './db.js';
 import { formatNum } from './utils.js';
 import { registerStrip } from './history.js';
@@ -409,6 +410,7 @@ function renderCard(check) {
         <div class="dc-exp-actions">
           <button class="btn btn-sm" onclick="window.dcGoAnalyze('${check.ticker}')">📊 Analyze</button>
           <button class="btn btn-sm" onclick="window.dcGoOptions('${check.ticker}')">📈 Options</button>
+          <button class="btn btn-sm" onclick="window.dcRunOptionsRec('${check.id}')" id="dc-optrec-btn-${check.id}">🎯 Options Rec</button>
           <button class="btn btn-sm" onclick="window.dcOpenModal('${check.id}')">✎ Edit</button>
         </div>
         <div class="dc-expanded-grid">
@@ -466,6 +468,7 @@ function renderCard(check) {
             <div class="dc-exp-text">${analysis.strategy_fit.fit_notes || '--'}</div>
           </div>` : ''}
           ${tradeHtml}
+          <div id="dc-optrec-${check.id}" class="dc-optrec-container"></div>
           ${catHtml}
           ${macroHtml}
           ${memHtml}
@@ -792,3 +795,131 @@ window.dcDelete = async function(id, ticker) {
     console.error('[DAILY_CHECKER] Delete failed:', e);
   }
 };
+
+// ── Options Rec ──────────────────────────────────────────────
+
+window.dcRunOptionsRec = async function(checkId) {
+  const container = document.getElementById(`dc-optrec-${checkId}`);
+  const btn = document.getElementById(`dc-optrec-btn-${checkId}`);
+  if (!container) return;
+
+  // Expand card if not open
+  const exp = document.getElementById(`dc-exp-${checkId}`);
+  if (exp && !exp.classList.contains('open')) {
+    exp.classList.add('open');
+    const expandBtn = document.getElementById(`dc-expand-${checkId}`);
+    expandBtn?.classList.add('open');
+  }
+
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Running...'; }
+  container.innerHTML = '<div class="dc-optrec-loading"><span class="dc-run-spinner"></span> Running 3-stage options analysis...</div>';
+
+  try {
+    const result = await runOptionsRec(checkId);
+    if (result.success) {
+      container.innerHTML = renderOptionsRec(result);
+    } else {
+      container.innerHTML = `<div class="dc-optrec-error">Options Rec failed: ${result.error || 'Unknown error'}${result.stage ? ` (stage: ${result.stage})` : ''}</div>`;
+    }
+  } catch (e) {
+    console.error('[OPTIONS_REC] Failed:', e);
+    container.innerHTML = `<div class="dc-optrec-error">Options Rec error: ${e.message}</div>`;
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🎯 Options Rec'; }
+  }
+};
+
+window.dcLoadOptionsRec = async function(checkId) {
+  const container = document.getElementById(`dc-optrec-${checkId}`);
+  if (!container) return;
+  try {
+    const recs = await getOptionsRec(checkId);
+    if (recs?.length) {
+      const latest = recs[0];
+      container.innerHTML = renderOptionsRec({
+        recommendation: latest.recommendation_json,
+        chainAnalysis: latest.chain_analysis_json,
+        evaluations: latest.evaluations_json,
+        metrics: { totalTime: latest.processing_time, totalCost: latest.total_cost }
+      });
+    }
+  } catch {}
+};
+
+function renderOptionsRec(data) {
+  const rec = data.recommendation;
+  if (!rec?.primary) return '';
+
+  const p = rec.primary;
+  const stratLabel = (p.strategy || '').replace(/_/g, ' ').toUpperCase();
+  const rr = p.risk_reward?.toFixed(1) || '--';
+
+  const legsHtml = (p.legs || []).map(leg => {
+    const action = (leg.action || '').toUpperCase();
+    const type = (leg.type || '').toUpperCase();
+    const mid = leg.mid?.toFixed(2) || ((leg.bid + leg.ask) / 2).toFixed(2);
+    const delta = leg.delta ? `.${Math.abs(leg.delta * 100).toFixed(0).padStart(2, '0')}d` : '';
+    return `<div class="dc-optrec-leg">
+      <span class="dc-optrec-leg-action ${action === 'BUY' ? 'buy' : 'sell'}">${action}</span>
+      <span class="dc-optrec-leg-desc">${type} $${leg.strike} ${leg.expiry}</span>
+      <span class="dc-optrec-leg-price">$${leg.bid}/$${leg.ask}</span>
+      <span class="dc-optrec-leg-delta">${delta}</span>
+      ${leg.oi ? `<span class="dc-optrec-leg-oi">OI:${leg.oi >= 1000 ? (leg.oi / 1000).toFixed(1) + 'K' : leg.oi}</span>` : ''}
+    </div>`;
+  }).join('');
+
+  const greeks = p.greeks_summary || {};
+  const greeksHtml = `<span class="dc-optrec-greek">δ ${greeks.net_delta?.toFixed(2) || '--'}</span>
+    <span class="dc-optrec-greek neg">θ ${greeks.net_theta?.toFixed(3) || '--'}</span>
+    <span class="dc-optrec-greek">ν ${greeks.net_vega?.toFixed(3) || '--'}</span>`;
+
+  const chain = data.chainAnalysis || {};
+  const ivEnv = chain.iv_environment || {};
+
+  const adjustHtml = (p.adjustment_triggers || []).map(t => `<li>${t}</li>`).join('');
+
+  const altHtml = rec.alternative ? (() => {
+    const a = rec.alternative;
+    const aStrat = (a.strategy || '').replace(/_/g, ' ').toUpperCase();
+    const aLegs = (a.legs || []).map(l => `${l.action?.toUpperCase()} ${l.type?.toUpperCase()} $${l.strike} ${l.expiry}`).join(' / ');
+    return `<div class="dc-optrec-alt">
+      <div class="dc-optrec-alt-title">Alternative: ${aStrat}</div>
+      <div class="dc-optrec-alt-legs">${aLegs}</div>
+      ${a.rationale ? `<div class="dc-optrec-alt-rationale">${a.rationale}</div>` : ''}
+    </div>`;
+  })() : '';
+
+  const costStr = data.metrics?.totalCost ? `$${data.metrics.totalCost.toFixed(3)}` : '';
+  const timeStr = data.metrics?.totalTime ? `${(data.metrics.totalTime / 1000).toFixed(1)}s` : '';
+
+  return `<div class="dc-exp-block dc-optrec-block">
+    <div class="dc-exp-title">Options Recommendation</div>
+    <div class="dc-optrec-header">
+      <span class="dc-optrec-strategy">${stratLabel}</span>
+      <span class="dc-optrec-rr">R:R ${rr}x</span>
+    </div>
+    <div class="dc-optrec-legs">${legsHtml}</div>
+    <div class="dc-optrec-metrics">
+      <div class="dc-optrec-metric"><span class="dc-optrec-metric-label">Debit</span><span>$${p.max_risk ? (p.max_risk / 100).toFixed(2) : '--'}</span></div>
+      <div class="dc-optrec-metric"><span class="dc-optrec-metric-label">Risk</span><span>$${p.max_risk || '--'}</span></div>
+      <div class="dc-optrec-metric"><span class="dc-optrec-metric-label">Reward</span><span>$${p.max_reward || '--'}</span></div>
+      <div class="dc-optrec-metric"><span class="dc-optrec-metric-label">Breakeven</span><span>$${p.breakeven?.toFixed(2) || '--'}</span></div>
+      ${p.probability_of_profit ? `<div class="dc-optrec-metric"><span class="dc-optrec-metric-label">PoP</span><span>${p.probability_of_profit}%</span></div>` : ''}
+    </div>
+    <div class="dc-optrec-greeks">${greeksHtml}</div>
+    ${p.entry_instruction ? `<div class="dc-optrec-entry"><span class="dc-optrec-entry-label">Entry:</span> ${p.entry_instruction}</div>` : ''}
+    ${p.position_size_note ? `<div class="dc-optrec-sizing">${p.position_size_note}</div>` : ''}
+    ${adjustHtml ? `<details class="dc-optrec-adjust"><summary>Adjustments</summary><ul>${adjustHtml}</ul></details>` : ''}
+    ${p.time_stop ? `<div class="dc-optrec-timestop"><span class="dc-optrec-entry-label">Time stop:</span> ${p.time_stop}</div>` : ''}
+    <div class="dc-optrec-rationale">${p.rationale || ''}</div>
+    <div class="dc-optrec-badges">
+      ${chain.liquidity_grade ? `<span class="dc-optrec-badge liq-${chain.liquidity_grade}">Liq ${chain.liquidity_grade}</span>` : ''}
+      ${ivEnv.regime ? `<span class="dc-optrec-badge iv-${ivEnv.regime}">IV ${ivEnv.regime}</span>` : ''}
+      ${ivEnv.skew_bias ? `<span class="dc-optrec-badge">Skew ${ivEnv.skew_bias}</span>` : ''}
+      ${chain.contracts_scanned ? `<span class="dc-optrec-badge">${chain.contracts_scanned} contracts</span>` : ''}
+    </div>
+    ${altHtml}
+    ${rec.avoid ? `<div class="dc-optrec-avoid"><span class="dc-optrec-entry-label">Avoid:</span> ${rec.avoid}</div>` : ''}
+    ${costStr || timeStr ? `<div class="dc-optrec-meta">${timeStr ? `${timeStr}` : ''}${costStr ? ` · ${costStr}` : ''}</div>` : ''}
+  </div>`;
+}
