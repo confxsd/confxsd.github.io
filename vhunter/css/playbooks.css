@@ -551,6 +551,62 @@
   margin-right: 6px;
 }
 
+.npi-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--tv-border);
+}
+
+.npi-ctrl-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.npi-ctrl-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--tv-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  min-width: 62px;
+}
+
+.npi-ctrl-group {
+  display: flex;
+  gap: 4px;
+}
+
+.npi-ctrl-btn {
+  font-size: 0.68rem;
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--tv-border);
+  background: transparent;
+  color: var(--tv-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.npi-ctrl-btn:hover {
+  border-color: var(--tv-text-tertiary);
+  color: var(--tv-text-primary);
+}
+
+.npi-ctrl-btn.active {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+}
+
+.npi-total-val {
+  font-size: 0.72rem;
+  color: var(--tv-text-tertiary);
+  font-weight: 500;
+}
+
 .npi-summary {
   display: flex;
   justify-content: space-between;

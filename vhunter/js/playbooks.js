@@ -515,6 +515,10 @@ function closeLinkModal() {
 
 const getUserId = () => localStorage.getItem('vhunter_user_id') || 'vhunter-serhat';
 
+let npiSortBy = 'funds';       // funds | value | price_move | convergence
+let npiFilterDir = 'all';      // all | bullish | bearish
+let npiMinFunds = 1;           // minimum fund count
+
 function npiFormatNumber(n) {
   if (!n) return '0';
   if (n >= 1e9) return `${(n / 1e9).toFixed(2)}B`;
@@ -715,25 +719,66 @@ function renderNpiEmpty(msg) {
   if (el) el.innerHTML = `<div class="pb-empty"><div class="pb-empty-text">${msg}</div></div>`;
 }
 
+function npiGetTickerMeta(ticker, changes) {
+  const perf = npiPriceCache[ticker];
+  const bullish = changes.filter(c => c.change_type === 'NEW' || c.change_type === 'INCREASE').length;
+  const bearish = changes.filter(c => c.change_type === 'EXIT' || c.change_type === 'DECREASE').length;
+  const direction = bullish > bearish ? 'bullish' : bullish < bearish ? 'bearish' : 'mixed';
+  const totalValue = changes.reduce((sum, c) => sum + Math.abs(c.current_value || c.prior_value || 0), 0);
+  return { perf, bullish, bearish, direction, totalValue };
+}
+
+function npiSortTickers(tickers, byTicker) {
+  return tickers.sort((a, b) => {
+    const metaA = npiGetTickerMeta(a, byTicker[a]);
+    const metaB = npiGetTickerMeta(b, byTicker[b]);
+    switch (npiSortBy) {
+      case 'funds':
+        return byTicker[b].length - byTicker[a].length || metaB.totalValue - metaA.totalValue;
+      case 'value':
+        return metaB.totalValue - metaA.totalValue;
+      case 'price_move':
+        return Math.abs(metaA.perf?.pctChange || 0) - Math.abs(metaB.perf?.pctChange || 0);
+      case 'convergence': {
+        // Convergence = all funds agree on direction, weighted by count
+        const convA = Math.abs(metaA.bullish - metaA.bearish) / byTicker[a].length;
+        const convB = Math.abs(metaB.bullish - metaB.bearish) / byTicker[b].length;
+        return (convB * byTicker[b].length) - (convA * byTicker[a].length);
+      }
+      default:
+        return byTicker[b].length - byTicker[a].length;
+    }
+  });
+}
+
+// Store last render data for re-sorting without refetching
+let npiLastByTicker = null;
+let npiLastPeriod = null;
+
 function renderNpiResults(byTicker, period) {
   const el = document.getElementById('npiResults');
   if (!el) return;
 
-  const tickers = Object.keys(byTicker);
+  npiLastByTicker = byTicker;
+  npiLastPeriod = period;
+
+  // Apply direction filter
+  let tickers = Object.keys(byTicker).filter(ticker => {
+    const meta = npiGetTickerMeta(ticker, byTicker[ticker]);
+    if (npiFilterDir !== 'all' && meta.direction !== npiFilterDir) return false;
+    if (byTicker[ticker].length < npiMinFunds) return false;
+    return true;
+  });
 
   if (!tickers.length) {
-    el.innerHTML = `<div class="pb-empty"><div class="pb-empty-text">No "not priced in" opportunities found for this period.</div></div>`;
+    el.innerHTML = `
+      ${renderNpiControls(Object.keys(byTicker).length, 0, period)}
+      <div class="pb-empty"><div class="pb-empty-text">No results match current filters.</div></div>
+    `;
     return;
   }
 
-  // Sort by number of fund actions (convergence), then by absolute price stagnation
-  tickers.sort((a, b) => {
-    const countDiff = byTicker[b].length - byTicker[a].length;
-    if (countDiff !== 0) return countDiff;
-    const aPerf = Math.abs(npiPriceCache[a]?.pctChange || 0);
-    const bPerf = Math.abs(npiPriceCache[b]?.pctChange || 0);
-    return aPerf - bPerf; // less movement = more interesting
-  });
+  npiSortTickers(tickers, byTicker);
 
   const formatQuarter = (p) => {
     if (!p) return '--';
@@ -744,17 +789,14 @@ function renderNpiResults(byTicker, period) {
 
   const rows = tickers.map(ticker => {
     const changes = byTicker[ticker];
-    const perf = npiPriceCache[ticker];
+    const meta = npiGetTickerMeta(ticker, changes);
+    const perf = meta.perf;
     const pctStr = perf ? `${perf.pctChange >= 0 ? '+' : ''}${perf.pctChange.toFixed(1)}%` : '--';
     const pctCls = perf ? (perf.pctChange >= 0 ? 'npi-price-up' : 'npi-price-down') : '';
     const priceStr = perf ? `$${perf.currentClose.toFixed(2)}` : '--';
 
-    // Determine net direction from fund actions
-    const bullish = changes.filter(c => c.change_type === 'NEW' || c.change_type === 'INCREASE').length;
-    const bearish = changes.filter(c => c.change_type === 'EXIT' || c.change_type === 'DECREASE').length;
-    const direction = bullish > bearish ? 'bullish' : bullish < bearish ? 'bearish' : 'mixed';
-    const dirCls = direction === 'bullish' ? 'npi-dir-bull' : direction === 'bearish' ? 'npi-dir-bear' : 'npi-dir-mixed';
-    const dirLabel = direction === 'bullish' ? 'BULL' : direction === 'bearish' ? 'BEAR' : 'MIXED';
+    const dirCls = meta.direction === 'bullish' ? 'npi-dir-bull' : meta.direction === 'bearish' ? 'npi-dir-bear' : 'npi-dir-mixed';
+    const dirLabel = meta.direction === 'bullish' ? 'BULL' : meta.direction === 'bearish' ? 'BEAR' : 'MIXED';
 
     const fundsHtml = changes.map(c => {
       const typeMap = {
@@ -780,6 +822,7 @@ function renderNpiResults(byTicker, period) {
           <span class="npi-ticker">${ticker}</span>
           <span class="npi-dir-badge ${dirCls}">${dirLabel}</span>
           <span class="npi-fund-count">${changes.length} fund${changes.length > 1 ? 's' : ''}</span>
+          <span class="npi-total-val">${npiFormatValue(meta.totalValue)}</span>
           <span class="npi-price">${priceStr}</span>
           <span class="npi-perf ${pctCls}">${pctStr} since ${formatQuarter(period)}</span>
         </div>
@@ -789,13 +832,72 @@ function renderNpiResults(byTicker, period) {
   }).join('');
 
   el.innerHTML = `
-    <div class="npi-summary">
-      <span>${tickers.length} ticker${tickers.length !== 1 ? 's' : ''} with institutional action but no price follow-through</span>
-      <span class="npi-period">Period: ${formatQuarter(period)}</span>
-    </div>
+    ${renderNpiControls(Object.keys(byTicker).length, tickers.length, period)}
     ${rows}
   `;
 }
+
+function renderNpiControls(totalCount, filteredCount, period) {
+  const formatQuarter = (p) => {
+    if (!p) return '--';
+    const [y, m] = p.split('-');
+    const q = Math.ceil(parseInt(m) / 3);
+    return `Q${q} ${y}`;
+  };
+
+  const sortBtn = (value, label) => {
+    const active = npiSortBy === value ? 'active' : '';
+    return `<button class="npi-ctrl-btn ${active}" onclick="window._npiSetSort('${value}')">${label}</button>`;
+  };
+
+  const dirBtn = (value, label) => {
+    const active = npiFilterDir === value ? 'active' : '';
+    return `<button class="npi-ctrl-btn ${active}" onclick="window._npiSetDir('${value}')">${label}</button>`;
+  };
+
+  const fundsBtn = (value, label) => {
+    const active = npiMinFunds === value ? 'active' : '';
+    return `<button class="npi-ctrl-btn ${active}" onclick="window._npiSetMinFunds(${value})">${label}</button>`;
+  };
+
+  return `
+    <div class="npi-controls">
+      <div class="npi-ctrl-row">
+        <span class="npi-ctrl-label">Sort</span>
+        <div class="npi-ctrl-group">
+          ${sortBtn('funds', 'Fund count')}
+          ${sortBtn('value', 'Total value')}
+          ${sortBtn('price_move', 'Least moved')}
+          ${sortBtn('convergence', 'Convergence')}
+        </div>
+      </div>
+      <div class="npi-ctrl-row">
+        <span class="npi-ctrl-label">Direction</span>
+        <div class="npi-ctrl-group">
+          ${dirBtn('all', 'All')}
+          ${dirBtn('bullish', 'Bullish')}
+          ${dirBtn('bearish', 'Bearish')}
+        </div>
+      </div>
+      <div class="npi-ctrl-row">
+        <span class="npi-ctrl-label">Min funds</span>
+        <div class="npi-ctrl-group">
+          ${fundsBtn(1, '1+')}
+          ${fundsBtn(2, '2+')}
+          ${fundsBtn(3, '3+')}
+        </div>
+      </div>
+    </div>
+    <div class="npi-summary">
+      <span>${filteredCount} of ${totalCount} ticker${totalCount !== 1 ? 's' : ''} with institutional action but no price follow-through</span>
+      <span class="npi-period">Period: ${formatQuarter(period)}</span>
+    </div>
+  `;
+}
+
+window._npiSetSort = (v) => { npiSortBy = v; if (npiLastByTicker) renderNpiResults(npiLastByTicker, npiLastPeriod); };
+window._npiSetDir = (v) => { npiFilterDir = v; if (npiLastByTicker) renderNpiResults(npiLastByTicker, npiLastPeriod); };
+window._npiSetMinFunds = (v) => { npiMinFunds = v; if (npiLastByTicker) renderNpiResults(npiLastByTicker, npiLastPeriod); };
 
 // ── Actions ──────────────────────────────────────────────────
 
