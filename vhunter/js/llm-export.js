@@ -7,6 +7,8 @@ import * as indicators from './indicators.js';
 import * as gammaTools from './gamma.js';
 import { getFullIVAnalysis } from './iv-history.js';
 import { calculateMaxPain } from './utils.js';
+import { getDailyChecks } from './db.js';
+import { getMemories } from './memory-map.js';
 
 let llmData = null;
 let llmFormattedOutput = '';
@@ -78,6 +80,24 @@ export async function fetchLLMData() {
     // Calculate options metrics
     const optionsMetrics = calculateOptionsMetrics(options, spotPrice, bars, prices, ticker);
 
+    // Fetch daily checker results and memory map for this ticker (parallel, non-blocking)
+    let dailyChecks = [];
+    let memories = [];
+    try {
+      const [dcResult, memResult] = await Promise.allSettled([
+        getDailyChecks(),
+        getMemories('active')
+      ]);
+      if (dcResult.status === 'fulfilled') {
+        const all = Array.isArray(dcResult.value) ? dcResult.value : (dcResult.value?.data || []);
+        dailyChecks = all.filter(c => c.ticker === ticker);
+      }
+      if (memResult.status === 'fulfilled') {
+        const all = Array.isArray(memResult.value) ? memResult.value : (memResult.value?.data || []);
+        memories = all.filter(m => (m.affected_assets || []).includes(ticker));
+      }
+    } catch (_) {}
+
     // Store data
     llmData = {
       ticker,
@@ -89,7 +109,9 @@ export async function fetchLLMData() {
         volume: spot.v || bars[bars.length - 1]?.v || 0
       },
       technicals,
-      options: optionsMetrics
+      options: optionsMetrics,
+      dailyChecks,
+      memories
     };
 
     // Format output
@@ -478,6 +500,225 @@ function formatForLLM(data) {
         lines.push(`Charm: ${gamma.charm.signal}`);
       }
     }
+  }
+
+  // Daily Checker Results
+  if (d.dailyChecks?.length) {
+    lines.push('');
+    lines.push('DAILY CHECKER ANALYSIS');
+    lines.push('='.repeat(40));
+
+    d.dailyChecks.forEach(check => {
+      const r = check.latest_result;
+      let market = null, opts2 = null, analysis = null;
+      try {
+        const raw = r?.market_snapshot ? JSON.parse(r.market_snapshot) : null;
+        market = raw?.price != null ? raw : (raw?.daily ?? null);
+      } catch (_) {}
+      try { opts2 = r?.options_snapshot ? JSON.parse(r.options_snapshot) : null; } catch (_) {}
+      try { analysis = r?.ai_analysis ? JSON.parse(r.ai_analysis) : null; } catch (_) {}
+
+      lines.push(`Direction: ${(check.direction || '').toUpperCase()} | Priority: ${check.priority}/5 | Status: ${check.status}`);
+      if (check.tags) lines.push(`Tags: ${check.tags}`);
+      lines.push('');
+
+      // Thesis
+      lines.push('Thesis:');
+      lines.push(check.thesis);
+      if (analysis?.thesis_notes && analysis.thesis_notes !== check.thesis) {
+        lines.push(`AI Thesis Notes: ${analysis.thesis_notes}`);
+      }
+      if (r) {
+        lines.push(`Thesis Valid: ${r.thesis_valid ? 'YES' : 'NO'} | Macro Alignment: ${(r.macro_alignment || '--').toUpperCase()}`);
+      }
+      lines.push('');
+
+      // Signal & Score
+      if (r) {
+        lines.push(`Signal: ${r.signal || 'NO DATA'} | Score: ${r.opportunity_score ?? '--'}/100`);
+        if (analysis?.conviction) lines.push(`Conviction: ${analysis.conviction.toUpperCase()}`);
+        if (r.ai_summary) lines.push(`Summary: ${r.ai_summary}`);
+        if (analysis?.signal_reason) lines.push(`Signal Reason: ${analysis.signal_reason}`);
+        lines.push('');
+      }
+
+      // Key Levels
+      const levels = analysis?.key_levels;
+      if (levels) {
+        const parts = [];
+        if (levels.entry != null) parts.push(`Entry: $${levels.entry}`);
+        const tgt = levels.target ?? levels.target_1;
+        if (tgt != null) parts.push(`Target: $${tgt}`);
+        if (levels.stop != null) parts.push(`Stop: $${levels.stop}`);
+        if (levels.risk_reward != null) parts.push(`R:R: ${parseFloat(levels.risk_reward).toFixed(1)}x`);
+        if (levels.expected_hold_days != null) parts.push(`Hold: ${levels.expected_hold_days}d`);
+        if (parts.length) lines.push(`Key Levels: ${parts.join(' | ')}`);
+        if (levels.entry_zone) lines.push(`Entry Zone: ${levels.entry_zone}`);
+        if (levels.stop_basis) lines.push(`Stop Basis: ${levels.stop_basis}`);
+        lines.push('');
+      }
+
+      // Timeframe Alignment
+      const tfa = analysis?.timeframe_alignment;
+      if (tfa) {
+        lines.push(`Timeframe: M:${tfa.monthly || '-'} W:${tfa.weekly || '-'} D:${tfa.daily || '-'} | Quality: ${tfa.alignment_quality || '-'}`);
+        if (tfa.notes) lines.push(`TF Notes: ${tfa.notes}`);
+      }
+
+      // Position Sizing
+      const ps = analysis?.position_sizing;
+      if (ps) {
+        const psParts = [];
+        if (ps.suggested_size) psParts.push(`Size: ${ps.suggested_size.toUpperCase()}`);
+        if (ps.max_risk_pct) psParts.push(`Max Risk: ${ps.max_risk_pct}`);
+        if (psParts.length) lines.push(`Position: ${psParts.join(' | ')}`);
+        if (ps.size_rationale) lines.push(`Sizing Rationale: ${ps.size_rationale}`);
+        if (ps.scale_in_plan) lines.push(`Scale-in: ${ps.scale_in_plan}`);
+      }
+
+      // Technical & Options AI Summaries
+      if (analysis?.technical_summary) {
+        lines.push('');
+        lines.push(`Technical Summary: ${analysis.technical_summary}`);
+      }
+      if (analysis?.options_summary) {
+        lines.push(`Options Summary: ${analysis.options_summary}`);
+      }
+
+      // Short Interest
+      const si = market?.shortInterest;
+      if (si?.shortFloatPct != null) {
+        const sqRisk = si.shortFloatPct >= 20 ? 'HIGH' : si.shortFloatPct >= 10 ? 'MODERATE' : 'LOW';
+        lines.push(`Short Interest: ${si.shortFloatPct.toFixed(1)}% float | DTC: ${si.shortRatio?.toFixed(1) || '-'}d | Squeeze: ${sqRisk}`);
+        if (si.insiderOwnPct != null || si.instOwnPct != null) {
+          lines.push(`Ownership: Insider ${si.insiderOwnPct != null ? si.insiderOwnPct.toFixed(1) + '%' : '-'} | Institutional ${si.instOwnPct != null ? si.instOwnPct.toFixed(1) + '%' : '-'}`);
+        }
+      }
+
+      // Trade Structure
+      const ts = analysis?.trade_structure;
+      if (ts) {
+        lines.push('');
+        lines.push('Trade Structure:');
+        if (ts.instrument) lines.push(`  Instrument: ${ts.instrument}${ts.specific_structure ? ' — ' + ts.specific_structure : ''}`);
+        if (ts.entry_condition) lines.push(`  Entry Trigger: ${ts.entry_condition}`);
+        if (ts.exit_rules) lines.push(`  Exit Rules: ${ts.exit_rules}`);
+        if (ts.avoid_if) lines.push(`  Avoid If: ${ts.avoid_if}`);
+      }
+
+      // Strategy Fit
+      const sf = analysis?.strategy_fit;
+      if (sf) {
+        lines.push(`Strategy Fit: ${sf.still_fits ? 'FITS' : 'DRIFTED'}${sf.strategy_entry_met ? ' | ENTRY MET' : ''}${sf.strategy_exit_triggered ? ' | EXIT TRIGGERED' : ''}`);
+        if (sf.fit_notes) lines.push(`  ${sf.fit_notes}`);
+      }
+
+      // Catalysts
+      const cat = analysis?.catalysts;
+      const cal = market?.catalystCalendar;
+      if (cat || cal) {
+        lines.push('');
+        lines.push('Catalysts:');
+        if (cal?.earnings) lines.push(`  Earnings: ${cal.earnings.date} (${cal.earnings.days}d)`);
+        if (cal?.exDividend) lines.push(`  Ex-Div: ${cal.exDividend.date} (${cal.exDividend.days}d)${cal.exDividend.amount ? ' $' + cal.exDividend.amount : ''}`);
+        if (cal?.split) lines.push(`  Split: ${cal.split.date} (${cal.split.days}d)${cal.split.ratio ? ' ' + cal.split.ratio : ''}`);
+        if (cat?.catalyst_impact) lines.push(`  Impact: ${cat.catalyst_impact}`);
+        if (cat?.timing_edge) lines.push(`  Edge: ${cat.timing_edge}`);
+        if (cat?.news_assessment) lines.push(`  News: ${cat.news_assessment}`);
+        const riskEvents = cat?.upcoming_risk_events || analysis?.risk_events || [];
+        if (riskEvents.length) lines.push(`  Risk Events: ${riskEvents.join(', ')}`);
+      }
+
+      // Institutional
+      if (analysis?.institutional_summary) {
+        lines.push(`Institutional: ${analysis.institutional_summary}`);
+      }
+
+      // Fund Holders
+      const fh = market?.fundHolders;
+      if (fh?.length) {
+        lines.push('Fund Holders:');
+        fh.forEach(f => {
+          const tag = f.isNew ? ' [NEW]' : f.isExit ? ' [EXIT]' : (f.pctChange ? ` [${f.pctChange > 0 ? '+' : ''}${f.pctChange}%]` : '');
+          lines.push(`  ${f.name} — ${((f.shares || 0) / 1e3).toFixed(0)}K shares${tag}`);
+        });
+      }
+
+      // Macro
+      if (analysis?.macro_notes) {
+        lines.push(`Macro Context: ${analysis.macro_notes}`);
+      }
+
+      // Counter-Check Review
+      const review = analysis?._review;
+      if (review) {
+        lines.push('');
+        lines.push(`Counter-Check: ${review.grade} — ${review.action}${review.adjusted_confidence != null ? ` (adj. confidence: ${(review.adjusted_confidence * 100).toFixed(0)}%)` : ''}`);
+        if (review.key_concern) lines.push(`  Concern: ${review.key_concern}`);
+        if (review.counter_thesis) lines.push(`  Counter-Thesis: ${review.counter_thesis}`);
+        if (review.flags) {
+          Object.entries(review.flags).filter(([, v]) => v?.found).forEach(([k, v]) => {
+            lines.push(`  Flag — ${k.replace(/_/g, ' ')}: ${v.detail}`);
+          });
+        }
+      }
+
+      // Validation Override
+      if (analysis?._validation) {
+        lines.push(`VALIDATION: Signal demoted ${analysis._validation.original_signal} → ${analysis._validation.demoted_to}`);
+      }
+
+      // Confirmation Conditions
+      const cc = analysis?.confirmation_conditions || [];
+      const ce = analysis?.confirmation_evaluation || {};
+      if (cc.length) {
+        lines.push('Confirmation Conditions:');
+        cc.forEach(cond => {
+          const st = ce[cond] || 'pending';
+          const icon = st === 'met' ? '[MET]' : st === 'invalidated' ? '[INVALIDATED]' : '[PENDING]';
+          lines.push(`  ${icon} ${cond}`);
+        });
+      }
+
+      // Memory context from checker
+      if (analysis?.memory_relevance) {
+        lines.push(`Memory Context: ${analysis.memory_relevance}`);
+      }
+
+      if (r?.created_at) lines.push(`Last Run: ${r.created_at}`);
+    });
+  }
+
+  // Memory Map - Semantic Memories
+  if (d.memories?.length) {
+    lines.push('');
+    lines.push('SEMANTIC MEMORY MAP');
+    lines.push('='.repeat(40));
+
+    d.memories.forEach(m => {
+      lines.push('');
+      lines.push(`[${m.category || 'general'}] ${m.name} (importance: ${m.importance_score}/10, sentiment: ${m.sentiment_score >= 0 ? '+' : ''}${m.sentiment_score}, confidence: ${m.confidence}/10)`);
+      if (m.description) lines.push(`  ${m.description}`);
+      if (m.market_relevance) lines.push(`  Market Relevance: ${m.market_relevance}`);
+      if (m.current_thesis_impact) lines.push(`  Thesis Impact: ${m.current_thesis_impact}`);
+      if (m.volatility_impact) lines.push(`  Volatility Impact: ${m.volatility_impact}`);
+      if (m.timeframe) lines.push(`  Timeframe: ${m.timeframe}`);
+      if (m.affected_assets?.length > 1) lines.push(`  Also affects: ${m.affected_assets.filter(a => a !== d.ticker).join(', ')}`);
+      if (m.trade_implications?.length) {
+        lines.push('  Trade Implications:');
+        m.trade_implications.forEach(ti => lines.push(`    - ${ti}`));
+      }
+      // Sentiment history
+      if (m.updates?.length) {
+        const recent = m.updates.slice(0, 3);
+        lines.push('  Recent Updates:');
+        recent.forEach(u => {
+          const delta = u.sentiment_delta >= 0 ? `+${u.sentiment_delta}` : `${u.sentiment_delta}`;
+          lines.push(`    [${u.created_at?.split('T')[0] || '?'}] ${u.summary} (sentiment ${delta} → ${u.new_sentiment})`);
+          if (u.reasoning) lines.push(`      Reasoning: ${u.reasoning}`);
+        });
+      }
+    });
   }
 
   return lines.join('\n');
