@@ -412,6 +412,7 @@ function renderCard(check) {
           <button class="btn btn-sm" onclick="window.dcGoOptions('${check.ticker}')">📈 Options</button>
           <button class="btn btn-sm" onclick="window.dcRunOptionsRec('${check.id}')" id="dc-optrec-btn-${check.id}">🎯 Options Rec</button>
           <button class="btn btn-sm" onclick="window.dcOpenModal('${check.id}')">✎ Edit</button>
+          <button class="btn btn-sm dc-copy-llm-btn" id="dc-copy-btn-${check.id}" onclick="window.dcCopyForLLM('${check.id}')">📋 Copy for LLM</button>
         </div>
         <div class="dc-expanded-grid">
           <div class="dc-exp-block">
@@ -793,6 +794,264 @@ window.dcDelete = async function(id, ticker) {
     await loadDailyChecker();
   } catch (e) {
     console.error('[DAILY_CHECKER] Delete failed:', e);
+  }
+};
+
+// ── Copy for LLM ─────────────────────────────────────────────
+
+function buildLLMText(check) {
+  const r = check.latest_result;
+  let market = null, opts = null, analysis = null;
+  try {
+    const raw = r?.market_snapshot ? JSON.parse(r.market_snapshot) : null;
+    market = raw?.price != null ? raw : (raw?.daily ?? null);
+  } catch (_) {}
+  try { opts = r?.options_snapshot ? JSON.parse(r.options_snapshot) : null; } catch (_) {}
+  try { analysis = r?.ai_analysis ? JSON.parse(r.ai_analysis) : null; } catch (_) {}
+
+  const lines = [];
+  const add = (label, val) => { if (val != null && val !== '' && val !== '--') lines.push(`${label}: ${val}`); };
+  const section = (title) => { lines.push(''); lines.push(`── ${title} ──`); };
+  const divider = () => lines.push('');
+
+  lines.push(`═══ DAILY CHECK: ${check.ticker} ═══`);
+  lines.push(`Generated: ${new Date().toISOString()}`);
+  if (r?.created_at) lines.push(`Last Analysis: ${r.created_at}`);
+  divider();
+
+  // Core info
+  add('Direction', check.direction?.toUpperCase());
+  add('Priority', `${check.priority}/5`);
+  add('Status', check.status);
+  if (check.tags) add('Tags', check.tags);
+  if (check.starred) add('Starred', 'Yes');
+  divider();
+
+  // Thesis
+  section('THESIS');
+  lines.push(check.thesis);
+  if (analysis?.thesis_notes && analysis.thesis_notes !== check.thesis) {
+    lines.push(`Thesis Notes: ${analysis.thesis_notes}`);
+  }
+  if (r) {
+    add('Thesis Valid', r.thesis_valid ? 'YES' : 'NO');
+    add('Macro Alignment', r.macro_alignment?.toUpperCase());
+  }
+
+  // Signal & Score
+  if (r) {
+    section('SIGNAL & SCORE');
+    add('Signal', r.signal);
+    add('Opportunity Score', `${r.opportunity_score}/100`);
+    if (analysis?.conviction) add('Conviction', analysis.conviction.toUpperCase());
+    if (r.ai_summary) add('AI Summary', r.ai_summary);
+    if (analysis?.signal_reason) add('Signal Reason', analysis.signal_reason);
+  }
+
+  // Market Snapshot
+  if (market) {
+    section('MARKET SNAPSHOT');
+    add('Price', fmtPrice(market.price));
+    add('Change', fmtPct(market.changePct));
+    add('RSI (14)', market.rsi != null ? parseFloat(market.rsi).toFixed(1) : null);
+
+    const si = market.shortInterest;
+    if (si) {
+      add('Short Interest (% Float)', si.shortFloatPct != null ? `${parseFloat(si.shortFloatPct).toFixed(1)}%` : null);
+      add('Days to Cover', si.shortRatio != null ? `${parseFloat(si.shortRatio).toFixed(1)}` : null);
+      add('Shares Short', si.sharesShort != null ? si.sharesShort.toLocaleString() : null);
+      add('Shares Float', si.sharesFloat != null ? si.sharesFloat.toLocaleString() : null);
+      const sqRisk = si.shortFloatPct >= 20 ? 'HIGH' : si.shortFloatPct >= 10 ? 'MODERATE' : 'LOW';
+      add('Squeeze Risk', sqRisk);
+      add('Insider Ownership', si.insiderOwnPct != null ? `${si.insiderOwnPct.toFixed(1)}%` : null);
+      add('Institutional Ownership', si.instOwnPct != null ? `${si.instOwnPct.toFixed(1)}%` : null);
+    }
+  }
+
+  // Options Snapshot
+  if (opts) {
+    section('OPTIONS SNAPSHOT');
+    add('Avg IV', opts.avgIV != null ? `${parseFloat(opts.avgIV).toFixed(1)}%` : null);
+    add('IV Rank', opts.ivRank != null ? `${opts.ivRank}th percentile` : null);
+    add('Premium Flow Bias', opts.premiumBias);
+    add('VRP', opts.vrp != null ? `${opts.vrp > 0 ? '+' : ''}${opts.vrp}%` : null);
+  }
+
+  // Key Levels
+  const levels = analysis?.key_levels;
+  if (levels) {
+    section('KEY LEVELS');
+    add('Entry', fmtPrice(levels.entry));
+    add('Target', fmtPrice(levels.target ?? levels.target_1));
+    add('Stop', fmtPrice(levels.stop));
+    add('Risk:Reward', levels.risk_reward != null ? `${parseFloat(levels.risk_reward).toFixed(1)}x` : null);
+    add('Expected Hold', levels.expected_hold_days != null ? `${levels.expected_hold_days} days` : null);
+    add('Entry Zone', levels.entry_zone);
+    add('Stop Basis', levels.stop_basis);
+  }
+
+  // Timeframe Alignment
+  const tfa = analysis?.timeframe_alignment;
+  if (tfa) {
+    section('TIMEFRAME ALIGNMENT');
+    add('Monthly', tfa.monthly);
+    add('Weekly', tfa.weekly);
+    add('Daily', tfa.daily);
+    add('Alignment Quality', tfa.alignment_quality);
+    if (tfa.notes) add('Notes', tfa.notes);
+  }
+
+  // Position Sizing
+  const ps = analysis?.position_sizing;
+  if (ps) {
+    section('POSITION SIZING');
+    add('Suggested Size', ps.suggested_size?.toUpperCase());
+    add('Max Risk', ps.max_risk_pct);
+    add('Rationale', ps.size_rationale);
+    add('Scale-in Plan', ps.scale_in_plan);
+  }
+
+  // Technical & Options Summaries
+  if (analysis?.technical_summary) {
+    section('TECHNICAL ANALYSIS');
+    lines.push(analysis.technical_summary);
+  }
+  if (analysis?.options_summary) {
+    section('OPTIONS ANALYSIS');
+    lines.push(analysis.options_summary);
+  }
+
+  // Trade Structure
+  const ts = analysis?.trade_structure;
+  if (ts) {
+    section('TRADE STRUCTURE');
+    add('Instrument', ts.instrument);
+    add('Structure', ts.specific_structure);
+    add('Entry Trigger', ts.entry_condition);
+    add('Exit Rules', ts.exit_rules);
+    add('Avoid If', ts.avoid_if);
+  }
+
+  // Strategy Fit
+  const sf = analysis?.strategy_fit;
+  if (sf) {
+    section('STRATEGY FIT');
+    add('Still Fits', sf.still_fits ? 'YES' : 'NO');
+    add('Entry Met', sf.strategy_entry_met ? 'YES' : 'NO');
+    add('Exit Triggered', sf.strategy_exit_triggered ? 'YES' : 'NO');
+    if (sf.fit_notes) add('Notes', sf.fit_notes);
+  }
+
+  // Catalysts
+  const cat = analysis?.catalysts;
+  const cal = market?.catalystCalendar;
+  if (cat || cal) {
+    section('CATALYSTS & TIMING');
+    if (cal?.earnings) add('Earnings', `${cal.earnings.date} (${cal.earnings.days}d away)`);
+    if (cal?.exDividend) add('Ex-Dividend', `${cal.exDividend.date} (${cal.exDividend.days}d away)${cal.exDividend.amount ? ` $${cal.exDividend.amount}` : ''}`);
+    if (cal?.split) add('Split', `${cal.split.date} (${cal.split.days}d away)${cal.split.ratio ? ` ${cal.split.ratio}` : ''}`);
+    add('Catalyst Impact', cat?.catalyst_impact);
+    add('Timing Edge', cat?.timing_edge);
+    add('News Assessment', cat?.news_assessment);
+    const riskEvents = cat?.upcoming_risk_events || analysis?.risk_events || [];
+    if (riskEvents.length) add('Risk Events', riskEvents.join(', '));
+  }
+
+  // Macro
+  if (analysis?.macro_notes) {
+    section('MACRO CONTEXT');
+    lines.push(analysis.macro_notes);
+  }
+
+  // Institutional
+  if (analysis?.institutional_summary) {
+    section('INSTITUTIONAL FILINGS');
+    lines.push(analysis.institutional_summary);
+  }
+
+  // Fund Holders
+  const fh = market?.fundHolders;
+  if (fh?.length) {
+    section('FUND HOLDERS');
+    fh.forEach(f => {
+      const tag = f.isNew ? ' [NEW]' : f.isExit ? ' [EXIT]' : (f.pctChange ? ` [${f.pctChange > 0 ? '+' : ''}${f.pctChange}%]` : '');
+      lines.push(`  ${f.name} — ${((f.shares || 0) / 1e3).toFixed(0)}K shares${tag}`);
+    });
+  }
+
+  // Memory Context
+  if (analysis?.memory_relevance) {
+    section('MEMORY CONTEXT');
+    lines.push(analysis.memory_relevance);
+  }
+
+  // Counter-Check Review
+  const review = analysis?._review;
+  if (review) {
+    section('COUNTER-CHECK REVIEW');
+    add('Grade', review.grade);
+    add('Action', review.action);
+    add('Adjusted Confidence', review.adjusted_confidence != null ? `${(review.adjusted_confidence * 100).toFixed(0)}%` : null);
+    add('Key Concern', review.key_concern);
+    add('Counter-Thesis', review.counter_thesis);
+    if (review.flags) {
+      const flagged = Object.entries(review.flags).filter(([, v]) => v?.found);
+      if (flagged.length) {
+        lines.push('Flags:');
+        flagged.forEach(([k, v]) => lines.push(`  - ${k.replace(/_/g, ' ')}: ${v.detail}`));
+      }
+    }
+  }
+
+  // Validation Override
+  if (analysis?._validation) {
+    section('VALIDATION OVERRIDE');
+    lines.push(`Signal demoted from ${analysis._validation.original_signal} → ${analysis._validation.demoted_to}`);
+  }
+
+  // Confirmation Conditions
+  const cc = analysis?.confirmation_conditions || [];
+  const ce = analysis?.confirmation_evaluation || {};
+  if (cc.length) {
+    section('CONFIRMATION CONDITIONS');
+    cc.forEach(cond => {
+      const status = ce[cond] || 'pending';
+      const icon = status === 'met' ? '[MET]' : status === 'invalidated' ? '[INVALIDATED]' : '[PENDING]';
+      lines.push(`  ${icon} ${cond}`);
+    });
+  }
+
+  // Linked Strategies
+  if (check.strategies?.length) {
+    section('LINKED STRATEGIES');
+    check.strategies.forEach(s => {
+      lines.push(`  ${s.category.replace(/_/g, ' ')} — ${s.name}`);
+    });
+  }
+
+  lines.push('');
+  lines.push('═══ END ═══');
+  return lines.join('\n');
+}
+
+window.dcCopyForLLM = async function(id) {
+  const check = checksCache.find(c => c.id === id);
+  if (!check) return;
+  const text = buildLLMText(check);
+  const btn = document.getElementById(`dc-copy-btn-${id}`);
+  try {
+    await navigator.clipboard.writeText(text);
+    if (btn) { btn.textContent = '✓ Copied'; setTimeout(() => { btn.textContent = '📋 Copy for LLM'; }, 1500); }
+  } catch {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;left:-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (btn) { btn.textContent = '✓ Copied'; setTimeout(() => { btn.textContent = '📋 Copy for LLM'; }, 1500); }
   }
 };
 
