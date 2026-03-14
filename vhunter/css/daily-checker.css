@@ -1322,6 +1322,18 @@
 .dc-optrec-eliminated li {
   margin-bottom: 2px; line-height: 1.4;
 }
+.dc-optrec-stale {
+  border-color: rgba(251,191,36,0.25);
+  background: rgba(251,191,36,0.04);
+}
+.dc-optrec-stale-tag {
+  font-size: 0.6rem; font-weight: 700; color: #fbbf24;
+  background: rgba(251,191,36,0.12); padding: 1px 6px;
+  border-radius: 3px; margin-left: 8px; vertical-align: middle;
+}
+.dc-optrec-badge.stale {
+  color: #fbbf24; background: rgba(251,191,36,0.12);
+}
 .dc-copy-llm-btn {
   border: 1px solid rgba(96,165,250,0.3) !important;
   color: #60a5fa !important;

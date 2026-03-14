@@ -1163,25 +1163,28 @@ function renderOptionsRec(data) {
   const p = rec.primary;
   const stratLabel = (p.strategy || '').replace(/_/g, ' ').toUpperCase();
   const rr = p.risk_reward?.toFixed(1) || '--';
+  const stale = data.quotesLive === false;
 
   const legsHtml = (p.legs || []).map(leg => {
     const action = (leg.action || '').toUpperCase();
     const type = (leg.type || '').toUpperCase();
-    const mid = leg.mid?.toFixed(2) || ((leg.bid + leg.ask) / 2).toFixed(2);
+    const bid = leg.bid ?? '--';
+    const ask = leg.ask ?? '--';
+    const priceLabel = bid === ask ? `~$${bid}` : `$${bid}/$${ask}`;
     const delta = leg.delta ? `.${Math.abs(leg.delta * 100).toFixed(0).padStart(2, '0')}d` : '';
     return `<div class="dc-optrec-leg">
       <span class="dc-optrec-leg-action ${action === 'BUY' ? 'buy' : 'sell'}">${action}</span>
       <span class="dc-optrec-leg-desc">${type} $${leg.strike} ${leg.expiry}</span>
-      <span class="dc-optrec-leg-price">$${leg.bid}/$${leg.ask}</span>
+      <span class="dc-optrec-leg-price">${priceLabel}</span>
       <span class="dc-optrec-leg-delta">${delta}</span>
       ${leg.oi ? `<span class="dc-optrec-leg-oi">OI:${leg.oi >= 1000 ? (leg.oi / 1000).toFixed(1) + 'K' : leg.oi}</span>` : ''}
     </div>`;
   }).join('');
 
   const greeks = p.greeks_summary || {};
-  const greeksHtml = `<span class="dc-optrec-greek">δ ${greeks.net_delta?.toFixed(2) || '--'}</span>
-    <span class="dc-optrec-greek neg">θ ${greeks.net_theta?.toFixed(3) || '--'}</span>
-    <span class="dc-optrec-greek">ν ${greeks.net_vega?.toFixed(3) || '--'}</span>`;
+  const greeksHtml = `<span class="dc-optrec-greek">\u03b4 ${greeks.net_delta?.toFixed(2) || '--'}</span>
+    <span class="dc-optrec-greek neg">\u03b8 ${greeks.net_theta?.toFixed(3) || '--'}</span>
+    <span class="dc-optrec-greek">\u03bd ${greeks.net_vega?.toFixed(3) || '--'}</span>`;
 
   const chain = data.chainAnalysis || {};
   const ivEnv = chain.iv_environment || {};
@@ -1202,18 +1205,18 @@ function renderOptionsRec(data) {
   const costStr = data.metrics?.totalCost ? `$${data.metrics.totalCost.toFixed(3)}` : '';
   const timeStr = data.metrics?.totalTime ? `${(data.metrics.totalTime / 1000).toFixed(1)}s` : '';
 
-  return `<div class="dc-exp-block dc-optrec-block">
-    <div class="dc-exp-title">Options Recommendation</div>
+  return `<div class="dc-exp-block dc-optrec-block${stale ? ' dc-optrec-stale' : ''}">
+    <div class="dc-exp-title">Options Recommendation${stale ? ' <span class="dc-optrec-stale-tag">MARKET CLOSED</span>' : ''}</div>
     <div class="dc-optrec-header">
       <span class="dc-optrec-strategy">${stratLabel}</span>
       <span class="dc-optrec-rr">R:R ${rr}x</span>
     </div>
     <div class="dc-optrec-legs">${legsHtml}</div>
     <div class="dc-optrec-metrics">
-      <div class="dc-optrec-metric"><span class="dc-optrec-metric-label">Debit</span><span>$${p.max_risk ? (p.max_risk / 100).toFixed(2) : '--'}</span></div>
+      <div class="dc-optrec-metric"><span class="dc-optrec-metric-label">Debit</span><span>${p.max_risk ? '$' + (p.max_risk / 100).toFixed(2) : '--'}${stale ? '~' : ''}</span></div>
       <div class="dc-optrec-metric"><span class="dc-optrec-metric-label">Risk</span><span>$${p.max_risk || '--'}</span></div>
-      <div class="dc-optrec-metric"><span class="dc-optrec-metric-label">Reward</span><span>$${p.max_reward || '--'}</span></div>
-      <div class="dc-optrec-metric"><span class="dc-optrec-metric-label">Breakeven</span><span>$${p.breakeven?.toFixed(2) || '--'}</span></div>
+      <div class="dc-optrec-metric"><span class="dc-optrec-metric-label">Reward</span><span>${p.max_reward ? '$' + p.max_reward : 'unlim.'}</span></div>
+      <div class="dc-optrec-metric"><span class="dc-optrec-metric-label">Breakeven</span><span>$${typeof p.breakeven === 'number' ? p.breakeven.toFixed(2) : '--'}</span></div>
       ${p.probability_of_profit ? `<div class="dc-optrec-metric"><span class="dc-optrec-metric-label">PoP</span><span>${p.probability_of_profit}%</span></div>` : ''}
     </div>
     <div class="dc-optrec-greeks">${greeksHtml}</div>
@@ -1223,6 +1226,7 @@ function renderOptionsRec(data) {
     ${p.time_stop ? `<div class="dc-optrec-timestop"><span class="dc-optrec-entry-label">Time stop:</span> ${p.time_stop}</div>` : ''}
     <div class="dc-optrec-rationale">${p.rationale || ''}</div>
     <div class="dc-optrec-badges">
+      ${stale ? '<span class="dc-optrec-badge stale">STALE PRICES</span>' : ''}
       ${chain.liquidity_grade ? `<span class="dc-optrec-badge liq-${chain.liquidity_grade}">Liq ${chain.liquidity_grade}</span>` : ''}
       ${ivEnv.regime ? `<span class="dc-optrec-badge iv-${ivEnv.regime}">IV ${ivEnv.regime}</span>` : ''}
       ${ivEnv.skew_bias ? `<span class="dc-optrec-badge">Skew ${ivEnv.skew_bias}</span>` : ''}
