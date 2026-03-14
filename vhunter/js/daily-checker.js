@@ -1078,7 +1078,7 @@ window.dcRunOptionsRec = async function(checkId) {
     if (result.success) {
       container.innerHTML = renderOptionsRec(result);
     } else {
-      container.innerHTML = `<div class="dc-optrec-error">Options Rec failed: ${result.error || 'Unknown error'}${result.stage ? ` (stage: ${result.stage})` : ''}</div>`;
+      container.innerHTML = renderOptionsRecError(result);
     }
   } catch (e) {
     console.error('[OPTIONS_REC] Failed:', e);
@@ -1104,6 +1104,57 @@ window.dcLoadOptionsRec = async function(checkId) {
     }
   } catch {}
 };
+
+function renderOptionsRecError(result) {
+  const scan = result.scanOutput || {};
+  const chain = result.chainSummary || {};
+  const eliminated = (scan.eliminated || []).filter(Boolean);
+  const chainQuality = scan.chain_quality || {};
+  const ivEnv = scan.iv_environment || {};
+
+  let diagnosticHtml = '';
+
+  if (chainQuality.liquidity_grade || chainQuality.contracts_scanned) {
+    diagnosticHtml += `<div class="dc-optrec-diag-row">
+      ${chainQuality.liquidity_grade ? `<span class="dc-optrec-badge liq-${chainQuality.liquidity_grade}">Liq ${chainQuality.liquidity_grade}</span>` : ''}
+      ${chainQuality.contracts_scanned ? `<span class="dc-optrec-badge">${chainQuality.contracts_scanned} scanned</span>` : ''}
+      ${chainQuality.liquid_expiries?.length ? `<span class="dc-optrec-badge">${chainQuality.liquid_expiries.length} expiries</span>` : ''}
+    </div>`;
+  } else if (chain.totalContracts) {
+    diagnosticHtml += `<div class="dc-optrec-diag-row">
+      <span class="dc-optrec-badge">${chain.totalContracts} contracts</span>
+      ${chain.expiries?.length ? `<span class="dc-optrec-badge">${chain.expiries.length} expiries</span>` : ''}
+      ${chain.termStructure ? `<span class="dc-optrec-badge">Term: ${chain.termStructure}</span>` : ''}
+    </div>`;
+  }
+
+  if (ivEnv.regime || ivEnv.rank != null) {
+    diagnosticHtml += `<div class="dc-optrec-diag-row">
+      ${ivEnv.rank != null ? `<span class="dc-optrec-badge">IVR ${ivEnv.rank}</span>` : ''}
+      ${ivEnv.regime ? `<span class="dc-optrec-badge iv-${ivEnv.regime}">IV ${ivEnv.regime}</span>` : ''}
+      ${ivEnv.skew_bias ? `<span class="dc-optrec-badge">Skew ${ivEnv.skew_bias}</span>` : ''}
+      ${ivEnv.term_structure ? `<span class="dc-optrec-badge">TS ${ivEnv.term_structure}</span>` : ''}
+    </div>`;
+  }
+
+  if (eliminated.length) {
+    diagnosticHtml += `<div class="dc-optrec-eliminated">
+      <div class="dc-optrec-elim-title">Eliminated reasons:</div>
+      <ul>${eliminated.map(e => `<li>${e}</li>`).join('')}</ul>
+    </div>`;
+  }
+
+  const stageLabel = result.stage ? ` at ${result.stage}` : '';
+  const costStr = result.metrics?.cost ? ` · $${result.metrics.cost.toFixed(3)}` : '';
+  const timeStr = result.metrics?.processingTime ? `${(result.metrics.processingTime / 1000).toFixed(1)}s` : '';
+
+  return `<div class="dc-exp-block dc-optrec-block dc-optrec-fail">
+    <div class="dc-exp-title">Options Recommendation</div>
+    <div class="dc-optrec-fail-msg">No viable candidates found${stageLabel}</div>
+    ${diagnosticHtml}
+    ${timeStr || costStr ? `<div class="dc-optrec-meta">${timeStr}${costStr}</div>` : ''}
+  </div>`;
+}
 
 function renderOptionsRec(data) {
   const rec = data.recommendation;
