@@ -730,6 +730,92 @@
   margin-top: 12px;
 }
 
+/* ── Natural Resource Scarcity Card ── */
+
+.pb-card-nrs {
+  border-color: #059669;
+  background: linear-gradient(135deg, var(--tv-bg-secondary) 0%, rgba(5, 150, 105, 0.06) 100%);
+}
+
+.pb-card-nrs:hover {
+  border-color: #10b981;
+}
+
+.pb-nrs-header-card {
+  border-left: 3px solid #059669;
+}
+
+.nrs-tag {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: #059669;
+  background: #d1fae5;
+  letter-spacing: 0.02em;
+}
+
+.nrs-overview-table {
+  margin: 16px 0;
+}
+
+.nrs-commodities {
+  margin-top: 16px;
+}
+
+.nrs-commodity-section {
+  margin-bottom: 20px;
+}
+
+.nrs-commodity-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.nrs-commodity-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--tv-text-primary);
+}
+
+.nrs-gulf-share {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: #059669;
+  background: #d1fae5;
+}
+
+.nrs-commodity-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.72rem;
+  color: var(--tv-text-tertiary);
+  margin-bottom: 10px;
+}
+
+.nrs-tickers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 8px;
+}
+
+.nrs-ticker-card {
+  background: var(--tv-bg-secondary);
+  border: 1px solid var(--tv-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.nrs-ticker-card:hover {
+  border-color: #10b981;
+}
+
 /* ── Strategy Tickers ── */
 
 .pb-tickers-header {

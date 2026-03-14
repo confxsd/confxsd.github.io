@@ -108,6 +108,26 @@ function renderNpiCard() {
   `;
 }
 
+function renderNrsCard() {
+  const tickerCount = NRS_COMMODITIES.reduce((sum, c) => sum + c.tickers.length, 0);
+  return `
+    <div class="pb-card pb-card-nrs" onclick="window.pbOpenNrs()">
+      <div class="pb-card-header">
+        <span class="pb-name">Natural Resource Scarcity</span>
+        <span class="pb-cat-badge macro_rotation">Macro Rotation</span>
+        <span class="pb-dir-badge long">long</span>
+        <div class="pb-priority">${priorityDots(4)}</div>
+      </div>
+      <div class="pb-desc">Gulf states control outsized share of critical non-energy commodities. Any geopolitical disruption = supply chain shock across helium, ammonia, methanol, aluminum, and more.</div>
+      <div class="pb-stats">
+        <span>Commodities: <span class="pb-stat-val">${NRS_COMMODITIES.length}</span></span>
+        <span>Tickers: <span class="pb-stat-val">${tickerCount}</span></span>
+        <span>Thesis: <span class="pb-stat-val">Gulf concentration risk</span></span>
+      </div>
+    </div>
+  `;
+}
+
 function renderList() {
   const container = document.getElementById('pbPage');
   if (!container) return;
@@ -146,6 +166,7 @@ function renderList() {
     </div>
     <div class="pb-cards">
       ${renderNpiCard()}
+      ${renderNrsCard()}
       ${userCards || `<div class="pb-empty" style="grid-column:1/-1">
         <div class="pb-empty-icon">♟</div>
         <div class="pb-empty-text">No custom strategy playbooks yet. Create one to get started.</div>
@@ -158,6 +179,87 @@ function renderList() {
 
 const TIER_ORDER = { major: 0, midcap: 1, junior: 2, explorer: 3 };
 const TIER_LABELS = { major: 'Major', midcap: 'Mid-Cap', junior: 'Junior', explorer: 'Explorer' };
+
+// ── Natural Resource Scarcity — Gulf Supply Concentration Thesis ──
+// Gulf states control outsized share of non-energy commodities.
+// Any geopolitical disruption = supply chain shock for these materials.
+
+const NRS_COMMODITIES = [
+  {
+    name: 'Helium',
+    gulfShare: '38.8%',
+    exporters: 'Qatar',
+    uses: 'Chip-making, medical imaging',
+    tickers: [
+      { symbol: 'APD', tier: 'major', direction: 'long', note: 'World\'s largest helium supplier. Direct beneficiary of helium scarcity — controls global distribution network.' },
+      { symbol: 'LIN', tier: 'major', direction: 'long', note: 'Second-largest industrial gas company. Helium sourcing diversified but Gulf disruption lifts pricing power.' },
+    ]
+  },
+  {
+    name: 'Ammonia & Urea',
+    gulfShare: '35–45% urea, 30% ammonia',
+    exporters: 'Bahrain, Iran, Kuwait, Oman, Qatar, Saudi Arabia, UAE',
+    uses: 'Fertilizer, basic chemical input',
+    tickers: [
+      { symbol: 'CF', tier: 'major', direction: 'long', note: 'Largest North American ammonia producer. Natural gas cost advantage over Gulf competitors. Direct pricing beneficiary.' },
+      { symbol: 'NTR', tier: 'major', direction: 'long', note: 'World\'s largest fertilizer company. Vertically integrated potash + nitrogen. Gulf disruption = margin expansion.' },
+      { symbol: 'LXU', tier: 'junior', direction: 'long', note: 'Small-cap ammonia/fertilizer producer. High operating leverage — big moves on ammonia price spikes.' },
+      { symbol: 'OCI', tier: 'midcap', direction: 'long', note: 'Netherlands-based nitrogen & methanol producer. Major non-Gulf ammonia capacity. Acquisition target potential.' },
+    ]
+  },
+  {
+    name: 'Methanol',
+    gulfShare: '32–35%',
+    exporters: 'Bahrain, Iran, Oman, Qatar, Saudi Arabia',
+    uses: 'Fuel, basic chemical input, biodiesel manufacturing',
+    tickers: [
+      { symbol: 'MEOH', tier: 'major', direction: 'long', note: 'World\'s largest methanol producer. Geographically diversified production. Gulf disruption = pricing tailwind.' },
+      { symbol: 'CE', tier: 'midcap', direction: 'long', note: 'Major acetyls & methanol derivative producer. Benefits from methanol scarcity through downstream pricing.' },
+    ]
+  },
+  {
+    name: 'Sulfur',
+    gulfShare: '21.6% (45% of exports)',
+    exporters: 'Iran, Iraq, Kuwait, Oman, Qatar, Saudi Arabia, UAE',
+    uses: 'Fertilizer, mining, metals processing, uranium extraction',
+    tickers: [
+      { symbol: 'MOS', tier: 'major', direction: 'long', note: 'Major phosphate & potash fertilizer producer. Sulfur is key input — benefits from pricing disruption if Gulf supply tightens.' },
+      { symbol: 'CCJ', tier: 'midcap', direction: 'long', note: 'World\'s largest pure-play uranium producer. Sulfuric acid (from sulfur) essential for ISR uranium extraction.' },
+      { symbol: 'FCX', tier: 'major', direction: 'long', note: 'World\'s largest copper miner. Sulfuric acid critical in copper leaching — Gulf sulfur disruption raises extraction costs industry-wide, benefits low-cost producers.' },
+    ]
+  },
+  {
+    name: 'Polyethylene & Polypropylene',
+    gulfShare: '15% PE / 9% PP capacity',
+    exporters: 'Iran, Kuwait, Qatar, Saudi Arabia, UAE, Oman',
+    uses: 'Packaging, pipes, bottles, insulation, automotive',
+    tickers: [
+      { symbol: 'LYB', tier: 'major', direction: 'long', note: 'World\'s largest polyolefin producer. Non-Gulf capacity = pricing power if Gulf supply disrupted. High dividend yield.' },
+      { symbol: 'DOW', tier: 'major', direction: 'long', note: 'Major PE producer with US ethane advantage. Gulf disruption widens cost spread vs naphtha-based competitors.' },
+      { symbol: 'WLK', tier: 'midcap', direction: 'long', note: 'Westlake Chemical — US-based PE/PVC producer. Benefits from tightening global polyolefin supply.' },
+    ]
+  },
+  {
+    name: 'Aluminum',
+    gulfShare: '9% global (22% non-China)',
+    exporters: 'Bahrain, Oman, Qatar, Saudi Arabia, UAE',
+    uses: 'Key industrial metal',
+    tickers: [
+      { symbol: 'AA', tier: 'major', direction: 'long', note: 'Largest US aluminum producer. Gulf smelters (Alba, EGA) are major non-China supply — disruption = aluminum price spike.' },
+      { symbol: 'CENX', tier: 'junior', direction: 'long', note: 'US-focused aluminum smelter. High operating leverage — small aluminum price increases = outsized earnings impact.' },
+    ]
+  },
+  {
+    name: 'Phosphate',
+    gulfShare: '3.9%',
+    exporters: 'Saudi Arabia',
+    uses: 'Fertilizer',
+    tickers: [
+      { symbol: 'MOS', tier: 'major', direction: 'long', note: 'Also a major phosphate producer. Saudi\'s Ma\'aden JV is growing — watch for competitive dynamics.' },
+      { symbol: 'ICL', tier: 'midcap', direction: 'long', note: 'Israel-based specialty minerals & phosphate. Alternative non-Gulf supply source. Dead Sea potash is unique asset.' },
+    ]
+  },
+];
 
 function renderTickersSection(tickers, checks, strategyId) {
   if (!tickers || !tickers.length) return '';
@@ -509,6 +611,108 @@ async function openLinkModal(strategyId) {
 
 function closeLinkModal() {
   document.getElementById('pbLinkModal').classList.remove('open');
+}
+
+// ── Natural Resource Scarcity Detail View ─────────────────────
+
+function loadNrsView() {
+  const container = document.getElementById('pbPage');
+  if (!container) return;
+
+  currentView = 'nrs';
+
+  // Deduplicate tickers across commodities (e.g. MOS appears in sulfur + phosphate)
+  const allTickers = [];
+  const seen = new Set();
+  for (const comm of NRS_COMMODITIES) {
+    for (const t of comm.tickers) {
+      if (!seen.has(t.symbol)) {
+        seen.add(t.symbol);
+        allTickers.push(t);
+      }
+    }
+  }
+
+  const commodityCards = NRS_COMMODITIES.map(comm => {
+    const tickerCards = comm.tickers.map(t => `
+      <div class="nrs-ticker-card" onclick="window.switchPage('analyze', '${t.symbol}')">
+        <div class="pb-ticker-head">
+          <span class="pb-ticker-sym">${t.symbol}</span>
+          <span class="pb-ticker-tier ${t.tier}">${TIER_LABELS[t.tier] || t.tier}</span>
+          <span class="pb-dir-badge ${t.direction}">${t.direction}</span>
+        </div>
+        <div class="pb-ticker-note">${t.note}</div>
+      </div>
+    `).join('');
+
+    return `
+      <div class="nrs-commodity-section">
+        <div class="nrs-commodity-header">
+          <span class="nrs-commodity-name">${comm.name}</span>
+          <span class="nrs-gulf-share">${comm.gulfShare}</span>
+        </div>
+        <div class="nrs-commodity-meta">
+          <span>Exporters: ${comm.exporters}</span>
+          <span>Uses: ${comm.uses}</span>
+        </div>
+        <div class="nrs-tickers-grid">${tickerCards}</div>
+      </div>
+    `;
+  }).join('');
+
+  // Gulf commodity concentration table
+  const tableRows = NRS_COMMODITIES.map(c => `
+    <tr>
+      <td><strong>${c.name}</strong></td>
+      <td>${c.gulfShare}</td>
+      <td style="font-size:0.72rem;color:var(--tv-text-secondary)">${c.exporters}</td>
+      <td style="font-size:0.72rem;color:var(--tv-text-secondary)">${c.uses}</td>
+      <td><strong>${c.tickers.map(t => t.symbol).join(', ')}</strong></td>
+    </tr>
+  `).join('');
+
+  container.innerHTML = `
+    <div class="pb-detail">
+      <span class="pb-detail-back" onclick="window.pbBackToList()"><i class="fa-solid fa-arrow-left"></i> All Playbooks</span>
+
+      <div class="pb-detail-card pb-nrs-header-card">
+        <div class="pb-detail-title">Natural Resource Scarcity</div>
+        <div class="pb-detail-meta">
+          <span class="pb-cat-badge macro_rotation">Macro Rotation</span>
+          <span class="pb-dir-badge long">long</span>
+          <div class="pb-priority">${priorityDots(4)}</div>
+        </div>
+        <div class="pb-detail-desc">Gulf states control outsized share of critical non-energy commodities — helium (38.8%), ammonia/urea (35-45%), methanol (32-35%), sulfur (21.6%), and key plastics/metals. Any geopolitical disruption, trade restriction, or conflict in the region creates immediate supply chain shocks across chip-making, fertilizer, industrial chemicals, and metals.
+
+This playbook tracks non-Gulf producers and downstream beneficiaries who gain pricing power when Gulf supply is constrained.</div>
+        <div class="npi-filter-tags">
+          <span class="nrs-tag">Gulf concentration</span>
+          <span class="nrs-tag">Supply chain risk</span>
+          <span class="nrs-tag">Non-energy commodities</span>
+          <span class="nrs-tag">Long non-Gulf producers</span>
+        </div>
+      </div>
+
+      <div class="nrs-overview-table">
+        <table class="pb-checks-table">
+          <thead>
+            <tr>
+              <th>Commodity</th>
+              <th>Gulf Share</th>
+              <th>Main Exporters</th>
+              <th>Uses</th>
+              <th>Tickers</th>
+            </tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+
+      <div class="nrs-commodities">
+        ${commodityCards}
+      </div>
+    </div>
+  `;
 }
 
 // ── Not Priced In Scanner ──────────────────────────────────────
@@ -977,3 +1181,4 @@ window.pbSortChecks = (key) => {
 };
 
 window.pbOpenNpi = () => loadNpiView();
+window.pbOpenNrs = () => loadNrsView();
