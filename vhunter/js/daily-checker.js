@@ -564,6 +564,14 @@ export function renderDailyChecker() {
     return;
   }
   container.innerHTML = filtered.map(renderCard).join('');
+
+  // Load saved options recs for already-expanded cards
+  for (const check of filtered) {
+    const exp = document.getElementById(`dc-exp-${check.id}`);
+    if (exp?.classList.contains('open')) {
+      window.dcLoadOptionsRec(check.id);
+    }
+  }
 }
 
 // ── Load ──────────────────────────────────────────────────────
@@ -607,6 +615,10 @@ window.dcToggleExpand = function(id) {
   if (!exp) return;
   exp.classList.toggle('open');
   btn?.classList.toggle('open', exp.classList.contains('open'));
+  // Load saved options rec when expanding
+  if (exp.classList.contains('open')) {
+    window.dcLoadOptionsRec(id);
+  }
 };
 
 window.dcSetFilter = function(filter) {
@@ -1095,8 +1107,10 @@ window.dcLoadOptionsRec = async function(checkId) {
     const recs = await getOptionsRec(checkId);
     if (recs?.length) {
       const latest = recs[0];
+      const recJson = latest.recommendation_json || {};
       container.innerHTML = renderOptionsRec({
-        recommendation: latest.recommendation_json,
+        recommendation: recJson,
+        quotesLive: recJson._quotesLive ?? true,
         chainAnalysis: latest.chain_analysis_json,
         evaluations: latest.evaluations_json,
         metrics: { totalTime: latest.processing_time, totalCost: latest.total_cost }
