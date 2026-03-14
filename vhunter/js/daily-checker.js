@@ -1094,7 +1094,10 @@ window.dcRunOptionsRec = async function(checkId) {
     }
   } catch (e) {
     console.error('[OPTIONS_REC] Failed:', e);
-    container.innerHTML = `<div class="dc-optrec-error">Options Rec error: ${e.message}</div>`;
+    const msg = e.name === 'TimeoutError' ? 'Pipeline timed out (chain too large or API slow). Try again.'
+      : e.message === 'Failed to fetch' ? 'Request failed — network error or worker timeout. Try again.'
+      : e.message;
+    container.innerHTML = `<div class="dc-optrec-error">${msg}</div>`;
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '🎯 Options Rec'; }
   }

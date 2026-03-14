@@ -385,7 +385,8 @@ export async function getStrategyChecks(strategyId) {
 export async function runOptionsRec(checkId) {
   return dbFetch('/api/options-rec/run', {
     method: 'POST',
-    body: JSON.stringify({ checkId })
+    body: JSON.stringify({ checkId }),
+    signal: AbortSignal.timeout(120000)
   });
 }
 
