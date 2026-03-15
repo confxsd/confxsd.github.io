@@ -1212,8 +1212,23 @@
 .dc-optrec-block {
   border: 1px solid rgba(59,130,246,0.25);
   background: rgba(59,130,246,0.04);
-  border-radius: 8px; padding: 12px;
+  border-radius: 8px; padding: 0;
 }
+.dc-optrec-summary {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; cursor: pointer; user-select: none;
+  list-style: none;
+}
+.dc-optrec-summary::-webkit-details-marker { display: none; }
+.dc-optrec-summary::before {
+  content: '▸'; font-size: 0.7rem; color: #94a3b8;
+  transition: transform 0.15s;
+}
+.dc-optrec-block[open] > .dc-optrec-summary::before { transform: rotate(90deg); }
+.dc-optrec-summary-info {
+  display: flex; align-items: center; gap: 10px; margin-left: auto;
+}
+.dc-optrec-body { padding: 0 12px 12px; }
 .dc-optrec-header {
   display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
 }

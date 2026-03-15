@@ -422,6 +422,7 @@ function renderCard(check) {
           <button class="btn btn-sm dc-copy-llm-btn" id="dc-copy-btn-${check.id}" onclick="window.dcCopyForLLM('${check.id}')">📋 Copy for LLM</button>
         </div>
         <div class="dc-expanded-grid">
+          <div id="dc-optrec-${check.id}" class="dc-optrec-container"></div>
           <div class="dc-exp-block">
             <div class="dc-exp-title">Thesis</div>
             <div class="dc-exp-badges" style="margin-bottom:8px">${thesisValidBadge}${alignQualBadge}</div>
@@ -476,7 +477,6 @@ function renderCard(check) {
             <div class="dc-exp-text">${analysis.strategy_fit.fit_notes || '--'}</div>
           </div>` : ''}
           ${tradeHtml}
-          <div id="dc-optrec-${check.id}" class="dc-optrec-container"></div>
           ${catHtml}
           ${macroHtml}
           ${memHtml}
@@ -1229,35 +1229,39 @@ function renderOptionsRec(data) {
   const costStr = data.metrics?.totalCost ? `$${data.metrics.totalCost.toFixed(3)}` : '';
   const timeStr = data.metrics?.totalTime ? `${(data.metrics.totalTime / 1000).toFixed(1)}s` : '';
 
-  return `<div class="dc-exp-block dc-optrec-block${stale ? ' dc-optrec-stale' : ''}">
-    <div class="dc-exp-title">Options Recommendation${stale ? ' <span class="dc-optrec-stale-tag">MARKET CLOSED</span>' : ''}</div>
-    <div class="dc-optrec-header">
-      <span class="dc-optrec-strategy">${stratLabel}</span>
-      <span class="dc-optrec-rr">R:R ${rr}x</span>
+  return `<details class="dc-exp-block dc-optrec-block${stale ? ' dc-optrec-stale' : ''}" open>
+    <summary class="dc-optrec-summary">
+      <span class="dc-exp-title" style="margin:0">Options Recommendation${stale ? ' <span class="dc-optrec-stale-tag">MARKET CLOSED</span>' : ''}</span>
+      <span class="dc-optrec-summary-info">
+        <span class="dc-optrec-strategy">${stratLabel}</span>
+        <span class="dc-optrec-rr">R:R ${rr}x</span>
+      </span>
+    </summary>
+    <div class="dc-optrec-body">
+      <div class="dc-optrec-legs">${legsHtml}</div>
+      <div class="dc-optrec-metrics">
+        <div class="dc-optrec-metric"><span class="dc-optrec-metric-label">Debit</span><span>${p.max_risk ? '$' + (p.max_risk / 100).toFixed(2) : '--'}${stale ? '~' : ''}</span></div>
+        <div class="dc-optrec-metric"><span class="dc-optrec-metric-label">Risk</span><span>$${p.max_risk || '--'}</span></div>
+        <div class="dc-optrec-metric"><span class="dc-optrec-metric-label">Reward</span><span>${p.max_reward ? '$' + p.max_reward : 'unlim.'}</span></div>
+        <div class="dc-optrec-metric"><span class="dc-optrec-metric-label">Breakeven</span><span>$${typeof p.breakeven === 'number' ? p.breakeven.toFixed(2) : '--'}</span></div>
+        ${p.probability_of_profit ? `<div class="dc-optrec-metric"><span class="dc-optrec-metric-label">PoP</span><span>${p.probability_of_profit}%</span></div>` : ''}
+      </div>
+      <div class="dc-optrec-greeks">${greeksHtml}</div>
+      ${p.entry_instruction ? `<div class="dc-optrec-entry"><span class="dc-optrec-entry-label">Entry:</span> ${p.entry_instruction}</div>` : ''}
+      ${p.position_size_note ? `<div class="dc-optrec-sizing">${p.position_size_note}</div>` : ''}
+      ${adjustHtml ? `<details class="dc-optrec-adjust"><summary>Adjustments</summary><ul>${adjustHtml}</ul></details>` : ''}
+      ${p.time_stop ? `<div class="dc-optrec-timestop"><span class="dc-optrec-entry-label">Time stop:</span> ${p.time_stop}</div>` : ''}
+      <div class="dc-optrec-rationale">${p.rationale || ''}</div>
+      <div class="dc-optrec-badges">
+        ${stale ? '<span class="dc-optrec-badge stale">STALE PRICES</span>' : ''}
+        ${chain.liquidity_grade ? `<span class="dc-optrec-badge liq-${chain.liquidity_grade}">Liq ${chain.liquidity_grade}</span>` : ''}
+        ${ivEnv.regime ? `<span class="dc-optrec-badge iv-${ivEnv.regime}">IV ${ivEnv.regime}</span>` : ''}
+        ${ivEnv.skew_bias ? `<span class="dc-optrec-badge">Skew ${ivEnv.skew_bias}</span>` : ''}
+        ${chain.contracts_scanned ? `<span class="dc-optrec-badge">${chain.contracts_scanned} contracts</span>` : ''}
+      </div>
+      ${altHtml}
+      ${rec.avoid ? `<div class="dc-optrec-avoid"><span class="dc-optrec-entry-label">Avoid:</span> ${rec.avoid}</div>` : ''}
+      ${costStr || timeStr ? `<div class="dc-optrec-meta">${timeStr ? `${timeStr}` : ''}${costStr ? ` · ${costStr}` : ''}</div>` : ''}
     </div>
-    <div class="dc-optrec-legs">${legsHtml}</div>
-    <div class="dc-optrec-metrics">
-      <div class="dc-optrec-metric"><span class="dc-optrec-metric-label">Debit</span><span>${p.max_risk ? '$' + (p.max_risk / 100).toFixed(2) : '--'}${stale ? '~' : ''}</span></div>
-      <div class="dc-optrec-metric"><span class="dc-optrec-metric-label">Risk</span><span>$${p.max_risk || '--'}</span></div>
-      <div class="dc-optrec-metric"><span class="dc-optrec-metric-label">Reward</span><span>${p.max_reward ? '$' + p.max_reward : 'unlim.'}</span></div>
-      <div class="dc-optrec-metric"><span class="dc-optrec-metric-label">Breakeven</span><span>$${typeof p.breakeven === 'number' ? p.breakeven.toFixed(2) : '--'}</span></div>
-      ${p.probability_of_profit ? `<div class="dc-optrec-metric"><span class="dc-optrec-metric-label">PoP</span><span>${p.probability_of_profit}%</span></div>` : ''}
-    </div>
-    <div class="dc-optrec-greeks">${greeksHtml}</div>
-    ${p.entry_instruction ? `<div class="dc-optrec-entry"><span class="dc-optrec-entry-label">Entry:</span> ${p.entry_instruction}</div>` : ''}
-    ${p.position_size_note ? `<div class="dc-optrec-sizing">${p.position_size_note}</div>` : ''}
-    ${adjustHtml ? `<details class="dc-optrec-adjust"><summary>Adjustments</summary><ul>${adjustHtml}</ul></details>` : ''}
-    ${p.time_stop ? `<div class="dc-optrec-timestop"><span class="dc-optrec-entry-label">Time stop:</span> ${p.time_stop}</div>` : ''}
-    <div class="dc-optrec-rationale">${p.rationale || ''}</div>
-    <div class="dc-optrec-badges">
-      ${stale ? '<span class="dc-optrec-badge stale">STALE PRICES</span>' : ''}
-      ${chain.liquidity_grade ? `<span class="dc-optrec-badge liq-${chain.liquidity_grade}">Liq ${chain.liquidity_grade}</span>` : ''}
-      ${ivEnv.regime ? `<span class="dc-optrec-badge iv-${ivEnv.regime}">IV ${ivEnv.regime}</span>` : ''}
-      ${ivEnv.skew_bias ? `<span class="dc-optrec-badge">Skew ${ivEnv.skew_bias}</span>` : ''}
-      ${chain.contracts_scanned ? `<span class="dc-optrec-badge">${chain.contracts_scanned} contracts</span>` : ''}
-    </div>
-    ${altHtml}
-    ${rec.avoid ? `<div class="dc-optrec-avoid"><span class="dc-optrec-entry-label">Avoid:</span> ${rec.avoid}</div>` : ''}
-    ${costStr || timeStr ? `<div class="dc-optrec-meta">${timeStr ? `${timeStr}` : ''}${costStr ? ` · ${costStr}` : ''}</div>` : ''}
-  </div>`;
+  </details>`;
 }
