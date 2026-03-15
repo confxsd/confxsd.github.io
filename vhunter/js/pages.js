@@ -1,7 +1,6 @@
 // VHunter Page Navigation Module
 import * as ui from './ui.js';
 import { updateRoute } from './router.js';
-import { stopPolling } from './terminal.js';
 import { updateChartsTheme } from './charts.js';
 
 let currentPage = 'analyze';
@@ -14,7 +13,6 @@ const pageTitles = {
   feed: 'Feed',
   memory: 'Memory Map',
   filings: 'Institutional Filings',
-  terminal: 'Terminal',
   macro: 'Macro Dashboard',
   daily: 'Daily Checker',
   pipeline: 'Deep Research',
@@ -36,11 +34,6 @@ export function registerPageLoaders(loaders) {
 }
 
 export function switchPage(page, shouldUpdateRoute = true) {
-  // Stop terminal polling if leaving terminal page
-  if (currentPage === 'terminal' && page !== 'terminal') {
-    stopPolling();
-  }
-
   // Stop macro auto-refresh if leaving macro page
   if (currentPage === 'macro' && page !== 'macro' && window.unloadMacro) {
     window.unloadMacro();

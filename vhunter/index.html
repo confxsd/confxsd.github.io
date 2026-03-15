@@ -65,7 +65,6 @@
     <link rel="stylesheet" href="css/feed.css" />
     <link rel="stylesheet" href="css/memory-map.css" />
     <link rel="stylesheet" href="css/filings.css?v=3" />
-    <link rel="stylesheet" href="css/terminal.css?v=3" />
     <link rel="stylesheet" href="css/teaching.css" />
     <link rel="stylesheet" href="css/tooltip.css" />
     <link rel="stylesheet" href="css/macro.css?v=5" />
@@ -225,18 +224,6 @@
           >
             <span class="nav-icon"><i class="fa-solid fa-chess"></i></span>
             <span class="nav-label">Playbooks</span>
-          </a>
-          <a
-            href="#"
-            class="nav-item"
-            data-page="terminal"
-            onclick="
-              event.preventDefault();
-              switchPage('terminal');
-            "
-          >
-            <span class="nav-icon"><i class="fa-solid fa-terminal"></i></span>
-            <span class="nav-label">Terminal</span>
           </a>
           <a
             href="#"
@@ -1399,22 +1386,6 @@
             </div>
             <!-- End Fund Detail Tab -->
           </div>
-        </div>
-
-        <!-- Page: Terminal -->
-        <div class="page" id="page-terminal">
-          <div class="terminal-header">
-            <div class="terminal-add">
-              <input
-                type="text"
-                id="terminal-ticker-input"
-                placeholder="SPX, GOLD, BTC..."
-                maxlength="10"
-              />
-              <button id="terminal-add-btn">+ Add</button>
-            </div>
-          </div>
-          <div class="terminal-grid" id="terminal-grid"></div>
         </div>
 
         <!-- Page: Options (Professional Quant Terminal) -->

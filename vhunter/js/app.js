@@ -9,7 +9,6 @@ import { loadMemoryMap, setRunCallback as setMemoryRunCallback } from './memory-
 import { loadFilings } from './filings.js';
 import { run, initPeriodSwitch } from './analysis.js';
 import { loadOptionsData, initOptionsPage } from './options-page.js';
-import { initTerminal, startPolling, stopPolling } from './terminal.js';
 import { loadMacro } from './macro.js';
 import { loadDailyChecker, prefetchDailyBadge } from './daily-checker.js';
 import { loadActiveTrades } from './active-trades.js';
@@ -40,11 +39,6 @@ registerStrip('holdingsHistoryStrip', (ticker) => {
 setFeedRunCallback(() => run());
 setMemoryRunCallback(() => run());
 
-// Terminal page handler (start/stop polling)
-function loadTerminal() {
-  startPolling();
-}
-
 // Register page loaders
 console.log('[APP] About to register page loaders');
 console.log('[APP] loadMacro:', loadMacro);
@@ -54,7 +48,6 @@ registerPageLoaders({
   feed: loadFeed,
   memory: loadMemoryMap,
   filings: loadFilings,
-  terminal: loadTerminal,
   macro: loadMacro,
   daily: loadDailyChecker,
   pipeline: loadPipeline,
@@ -85,7 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initPeriodSwitch();
   renderHistory();
   initOptionsPage();
-  initTerminal();
   restoreCollapsedSections();
 
   // Initialize tooltip system

@@ -175,25 +175,6 @@ export function getWallShiftAnalysis(ticker) {
   };
 }
 
-// ==================== TERMINAL ====================
-
-export async function getTerminalPanels() {
-  try {
-    const result = await dbFetch('/api/terminal');
-    return result?.tickers || [];
-  } catch (e) {
-    console.warn('Failed to get terminal panels:', e);
-    return [];
-  }
-}
-
-export async function saveTerminalPanels(tickers) {
-  return dbFetch('/api/terminal', {
-    method: 'POST',
-    body: JSON.stringify({ tickers })
-  });
-}
-
 // ==================== MEMORY MAP ====================
 
 export async function getMemories(status = 'active') {
