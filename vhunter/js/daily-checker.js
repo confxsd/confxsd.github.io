@@ -85,6 +85,13 @@ function sortChecks(checks) {
     const sb = b.starred ? 1 : 0;
     if (sa !== sb) return sb - sa;
 
+    // Within starred group, sort by last run date (most recent first)
+    if (sa && sb) {
+      const ta = a.latest_result?.created_at ? new Date(a.latest_result.created_at).getTime() : 0;
+      const tb = b.latest_result?.created_at ? new Date(b.latest_result.created_at).getTime() : 0;
+      if (ta !== tb) return tb - ta;
+    }
+
     if (activeSort === 'score') {
       return (b.latest_result?.opportunity_score ?? -1) - (a.latest_result?.opportunity_score ?? -1);
     }
