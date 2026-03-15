@@ -99,7 +99,24 @@
   flex-direction: column;
   min-width: 0;
   background: var(--tv-bg);
+  position: relative;
 }
+
+/* ── Copy message button ── */
+.chat-msg-copy {
+  opacity: 0;
+  background: var(--tv-bg-secondary);
+  border: 1px solid var(--tv-border);
+  color: var(--tv-text-secondary);
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-top: 4px;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+}
+.chat-msg:hover .chat-msg-copy { opacity: 0.7; }
+.chat-msg-copy:hover { opacity: 1 !important; color: var(--tv-text-primary); background: var(--tv-bg); }
 
 .chat-messages {
   flex: 1;
@@ -448,6 +465,9 @@
   }
   .chat-messages {
     padding: 16px 12px;
+  }
+  .chat-msg-copy {
+    opacity: 0.5;
   }
   .chat-input-area {
     padding: 10px 12px 14px;

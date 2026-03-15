@@ -117,7 +117,7 @@ async function sendMessage() {
   typingEl.className = 'chat-msg assistant';
   typingEl.id = 'chatTyping';
   typingEl.innerHTML = `
-    <div class="chat-msg-avatar"><i class="fa-solid fa-robot" style="font-size:13px"></i></div>
+    <div class="chat-msg-avatar"><i class="fa-solid fa-landmark" style="font-size:12px"></i></div>
     <div class="chat-msg-body">
       <div class="chat-msg-content">
         <div class="chat-typing">
@@ -344,11 +344,14 @@ function appendMessage(msg, animate = true) {
   el.className = `chat-msg ${msg.role}`;
   if (!animate) el.style.animation = 'none';
 
+  const copyBtn = `<button class="chat-msg-copy" onclick="chatCopyMsg(this)" title="Copy"><i class="fa-solid fa-copy" style="font-size:11px"></i></button>`;
+
   if (msg.role === 'user') {
     el.innerHTML = `
       <div class="chat-msg-avatar"><i class="fa-solid fa-user" style="font-size:12px"></i></div>
       <div class="chat-msg-body">
         <div class="chat-msg-content">${escapeHtml(msg.content)}</div>
+        ${copyBtn}
       </div>
     `;
   } else {
@@ -360,10 +363,11 @@ function appendMessage(msg, animate = true) {
       : '';
 
     el.innerHTML = `
-      <div class="chat-msg-avatar"><i class="fa-solid fa-robot" style="font-size:13px"></i></div>
+      <div class="chat-msg-avatar"><i class="fa-solid fa-landmark" style="font-size:12px"></i></div>
       <div class="chat-msg-body">
         ${toolBadges}
         <div class="chat-msg-content">${renderMarkdown(msg.content)}</div>
+        ${copyBtn}
       </div>
     `;
   }
@@ -376,7 +380,7 @@ function createAssistantBubble() {
   const el = document.createElement('div');
   el.className = 'chat-msg assistant';
   el.innerHTML = `
-    <div class="chat-msg-avatar"><i class="fa-solid fa-robot" style="font-size:13px"></i></div>
+    <div class="chat-msg-avatar"><i class="fa-solid fa-landmark" style="font-size:12px"></i></div>
     <div class="chat-msg-body">
       <div class="chat-tools" style="display:none"></div>
       <div class="chat-msg-content"><span class="chat-msg-text"></span></div>
@@ -390,7 +394,7 @@ function showEmptyState() {
   if (!area) return;
   area.innerHTML = `
     <div class="chat-empty">
-      <div class="chat-empty-icon"><i class="fa-solid fa-robot"></i></div>
+      <div class="chat-empty-icon"><i class="fa-solid fa-landmark"></i></div>
       <div class="chat-empty-title">VHunter Chat</div>
       <div class="chat-empty-subtitle">
         Ask anything about your trading system. I have access to market data, positions, filings, daily checks, thesis, and can query the database directly.
@@ -514,6 +518,23 @@ document.addEventListener('click', (e) => {
   sidebar.classList.remove('open');
 });
 
+function copyMessage(btn) {
+  const msgEl = btn.closest('.chat-msg');
+  const content = msgEl?.querySelector('.chat-msg-content');
+  if (!content) return;
+  navigator.clipboard.writeText(content.innerText).then(() => {
+    const icon = btn.querySelector('i');
+    icon.className = 'fa-solid fa-check';
+    icon.style.color = '#22c55e';
+    setTimeout(() => { icon.className = 'fa-solid fa-copy'; icon.style.color = ''; }, 1500);
+  });
+}
+
+function deleteCurrentChat() {
+  if (!currentConvId) return;
+  deleteConversation(currentConvId);
+}
+
 // ── Window bindings ──
 window.chatNewConversation = newConversation;
 window.chatSendMessage = sendMessage;
@@ -521,3 +542,5 @@ window.chatSelectConv = selectConversation;
 window.chatDeleteConv = deleteConversation;
 window.chatStopStreaming = stopStreaming;
 window.chatToggleSidebar = toggleChatSidebar;
+window.chatCopyMsg = copyMessage;
+window.chatDeleteCurrentChat = deleteCurrentChat;
