@@ -86,7 +86,7 @@ function processHistoricalData(ticker, data) {
 
   // Calculate indicators
   const sma20 = indicators.average(prices.slice(-20));
-  const sma50 = prices.length >= 50 ? indicators.average(prices.slice(-50)) : sma20;
+  const sma50 = prices.length >= 50 ? indicators.average(prices.slice(-50)) : null;
   const rsiValues = indicators.calcRSI(prices, 14);
   const rsi = rsiValues[rsiValues.length - 1];
   const atrValues = indicators.calcATR(data, 14);
@@ -131,9 +131,11 @@ function processHistoricalData(ticker, data) {
   const olderVol = indicators.average(volumes.slice(-20, -5));
   const volTrend = ((recentVol - olderVol) / olderVol * 100).toFixed(0);
 
-  // SMA signal
-  const smaSignal = currentPrice > sma20 && sma20 > sma50 ? 'Bull' :
-    currentPrice < sma20 && sma20 < sma50 ? 'Bear' : 'Mix';
+  // SMA signal (requires sma50 for full signal; fallback to price vs sma20 only)
+  const smaSignal = sma50 != null
+    ? (currentPrice > sma20 && sma20 > sma50 ? 'Bull' :
+       currentPrice < sma20 && sma20 < sma50 ? 'Bear' : 'Mix')
+    : (currentPrice > sma20 ? 'Mix' : 'Mix');
 
   // Pivots
   const pivot = (lastBar.h + lastBar.l + lastBar.c) / 3;
@@ -587,7 +589,7 @@ export function exportData() {
   const exportText = `[${d.ticker}] $${d.price.toFixed(2)} (${d.change >= 0 ? '+' : ''}${d.change.toFixed(1)}%) | Score: ${score}/100 ${signal}
 Vol: ${d.volume} (${d.rvol.toFixed(1)}x) | ATR: $${d.atr.toFixed(2)} | HV: ${d.vol.toFixed(0)}%
 RSI: ${d.rsi.toFixed(0)} | MACD: ${d.macdH >= 0 ? '+' : ''}${d.macdH.toFixed(2)} | MFI: ${d.mfi.toFixed(0)} | ADX: ${d.adx.toFixed(0)} (+DI:${d.pdi.toFixed(0)}/-DI:${d.mdi.toFixed(0)})
-BB%: ${d.bbPct}% | SMA20: $${d.sma20.toFixed(2)} | SMA50: $${d.sma50.toFixed(2)}
+BB%: ${d.bbPct}% | SMA20: $${d.sma20.toFixed(2)} | SMA50: $${d.sma50 != null ? d.sma50.toFixed(2) : 'N/A'}
 Flow: ${d.buyPct}% buy | A/D: ${d.adlTrend >= 0 ? '+' : ''}${d.adlTrend.toFixed(0)}% ${d.adlTrend >= 0 ? 'accum' : 'distr'}
 Opts: C:${d.callVol} P:${d.putVol} | P/C: ${d.pcRatio.toFixed(2)} | MaxPain: $${d.maxPain}
 Calls: ${d.topCalls} | Puts: ${d.topPuts}`;

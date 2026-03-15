@@ -16,6 +16,7 @@ import { loadPipeline, unloadPipeline } from './ticker-pipeline.js';
 import { loadDeepAnalysis } from './deep-analysis.js';
 import { loadPlaybooks } from './playbooks.js';
 import { loadDashboard } from './dashboard.js';
+import { loadChat } from './chat.js';
 import { initTooltips } from './tooltip.js';
 import { initTooltipPositioning } from './tooltip-position.js';
 
@@ -53,7 +54,8 @@ registerPageLoaders({
   pipeline: loadPipeline,
   'active-trades': loadActiveTrades,
   'deep-analysis': loadDeepAnalysis,
-  playbooks: loadPlaybooks
+  playbooks: loadPlaybooks,
+  chat: loadChat
 });
 console.log('[APP] Page loaders registered');
 

@@ -76,6 +76,7 @@
     <link rel="stylesheet" href="css/deep-analysis.css" />
     <link rel="stylesheet" href="css/playbooks.css" />
     <link rel="stylesheet" href="css/dashboard.css" />
+    <link rel="stylesheet" href="css/chat.css" />
     <link rel="stylesheet" href="css/responsive.css?v=2" />
   </head>
   <body>
@@ -236,6 +237,18 @@
           >
             <span class="nav-icon"><i class="fa-solid fa-globe"></i></span>
             <span class="nav-label">Macro</span>
+          </a>
+          <a
+            href="#"
+            class="nav-item"
+            data-page="chat"
+            onclick="
+              event.preventDefault();
+              switchPage('chat');
+            "
+          >
+            <span class="nav-icon"><i class="fa-solid fa-robot"></i></span>
+            <span class="nav-label">Chat</span>
           </a>
         </nav>
         <div class="sidebar-footer">
@@ -2626,6 +2639,46 @@
           <div id="pbPage">
             <div style="padding: 40px; text-align: center; color: #64748b">
               Loading...
+            </div>
+          </div>
+        </div>
+
+        <!-- Page: Chat -->
+        <div class="page" id="page-chat">
+          <div class="chat-container">
+            <button class="chat-sidebar-toggle" onclick="chatToggleSidebar()">
+              <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="chat-sidebar" id="chatSidebar">
+              <div class="chat-sidebar-header">
+                <button class="chat-new-btn" onclick="chatNewConversation()">
+                  <i class="fa-solid fa-plus"></i> New Chat
+                </button>
+              </div>
+              <div class="chat-conv-list" id="chatConvList"></div>
+            </div>
+            <div class="chat-main">
+              <div class="chat-messages" id="chatMessages">
+                <div class="chat-empty">
+                  <div class="chat-empty-icon"><i class="fa-solid fa-robot"></i></div>
+                  <div class="chat-empty-title">VHunter Chat</div>
+                  <div class="chat-empty-subtitle">
+                    Ask anything about your trading system. I have access to market data, positions, filings, daily checks, thesis, and can query the database directly.
+                  </div>
+                </div>
+              </div>
+              <div class="chat-input-area">
+                <div class="chat-input-row">
+                  <textarea class="chat-textarea" id="chatInput" placeholder="Ask about your positions, market data, filings..." rows="1"></textarea>
+                  <button class="chat-send-btn" id="chatSendBtn" onclick="chatSendMessage()">
+                    <i class="fa-solid fa-paper-plane"></i>
+                  </button>
+                  <button class="chat-stop-btn" id="chatStopBtn" style="display:none" onclick="chatStopStreaming()">
+                    <i class="fa-solid fa-stop"></i>
+                  </button>
+                </div>
+                <div class="chat-input-hint">Enter to send, Shift+Enter for newline</div>
+              </div>
             </div>
           </div>
         </div>

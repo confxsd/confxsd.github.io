@@ -18,7 +18,8 @@ const pageTitles = {
   pipeline: 'Deep Research',
   'active-trades': 'Active Trades',
   'deep-analysis': 'Filings Research',
-  playbooks: 'Strategy Playbooks'
+  playbooks: 'Strategy Playbooks',
+  chat: 'Chat'
 };
 
 export function getCurrentPage() {

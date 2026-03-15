@@ -409,12 +409,13 @@ export function calcDeltaFlow(options, spotPrice) {
 export function calcCharmPressure(options, spotPrice) {
   const today = new Date();
 
-  // Filter to 0-3 DTE options (highest charm)
+  // Filter to 1-3 DTE options (highest charm)
+  // Exclude DTE=0 (expired/expiring today) — their delta is binary, not charm-driven
   const nearExpiry = options.filter(o => {
     const expDate = o.details?.expiration_date;
     if (!expDate) return false;
     const dte = Math.ceil((new Date(expDate) - today) / (1000 * 60 * 60 * 24));
-    return dte >= 0 && dte <= 3;
+    return dte >= 1 && dte <= 3;
   });
 
   if (nearExpiry.length === 0) {

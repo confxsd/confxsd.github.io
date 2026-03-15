@@ -258,7 +258,11 @@ async function tickerLookup() {
   if (!ticker) return;
 
   const result = document.getElementById('daTickerResult');
-  result.innerHTML = '<div class="da-loading">Analyzing ' + ticker + '...</div>';
+  result.textContent = '';
+  const loading = document.createElement('div');
+  loading.className = 'da-loading';
+  loading.textContent = `Analyzing ${ticker}...`;
+  result.appendChild(loading);
 
   try {
     const [conf, anomalies, patterns, pipe, vel, smf] = await Promise.all([

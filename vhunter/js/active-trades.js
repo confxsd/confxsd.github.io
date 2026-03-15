@@ -18,6 +18,10 @@ async function apiFetch(path, opts = {}) {
     ...opts,
     headers: { 'Content-Type': 'application/json', 'X-User-Id': USER_ID(), ...(opts.headers || {}) }
   });
+  if (!res.ok) {
+    const err = await res.text().catch(() => res.statusText);
+    throw new Error(`API ${res.status}: ${err}`);
+  }
   return res.json();
 }
 
