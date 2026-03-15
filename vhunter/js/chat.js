@@ -172,14 +172,7 @@ async function sendMessage() {
     const decoder = new TextDecoder();
     let buffer = '';
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const parts = buffer.split('\n\n');
-      buffer = parts.pop();
-
+    const processSSEParts = async (parts) => {
       for (const part of parts) {
         const lines = part.split('\n');
         let eventType = '';
@@ -253,6 +246,23 @@ async function sendMessage() {
           }
         }
       }
+    };
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split('\n\n');
+      buffer = parts.pop();
+      await processSSEParts(parts);
+    }
+
+    // Process any remaining data in buffer after stream ends
+    buffer += decoder.decode();
+    if (buffer.trim()) {
+      const remaining = buffer.split('\n\n').filter(p => p.trim());
+      await processSSEParts(remaining);
     }
 
     // Save to local messages array
@@ -488,6 +498,15 @@ function toggleChatSidebar() {
   const sidebar = $('chatSidebar');
   if (sidebar) sidebar.classList.toggle('open');
 }
+
+// Close chat sidebar when clicking outside (mobile)
+document.addEventListener('click', (e) => {
+  const sidebar = $('chatSidebar');
+  if (!sidebar || !sidebar.classList.contains('open')) return;
+  const toggleBtn = document.querySelector('.chat-sidebar-toggle');
+  if (sidebar.contains(e.target) || (toggleBtn && toggleBtn.contains(e.target))) return;
+  sidebar.classList.remove('open');
+});
 
 // ── Window bindings ──
 window.chatNewConversation = newConversation;

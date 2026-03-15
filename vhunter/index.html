@@ -9,9 +9,10 @@
     <title>VHunter - Signal Terminal</title>
     <script>
       // Theme: apply before render to prevent flash
-      (function() {
-        var t = localStorage.getItem('vhunter_theme') || 'light';
-        if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      (function () {
+        var t = localStorage.getItem("vhunter_theme") || "light";
+        if (t === "dark")
+          document.documentElement.setAttribute("data-theme", "dark");
       })();
     </script>
     <script>
@@ -116,6 +117,18 @@
           <a
             href="#"
             class="nav-item"
+            data-page="chat"
+            onclick="
+              event.preventDefault();
+              switchPage('chat');
+            "
+          >
+            <span class="nav-icon"><i class="fa-solid fa-robot"></i></span>
+            <span class="nav-label">Chat</span>
+          </a>
+          <a
+            href="#"
+            class="nav-item"
             data-page="daily"
             onclick="
               event.preventDefault();
@@ -199,7 +212,9 @@
               switchPage('deep-analysis');
             "
           >
-            <span class="nav-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></span>
+            <span class="nav-icon"
+              ><i class="fa-solid fa-magnifying-glass-chart"></i
+            ></span>
             <span class="nav-label">Filings Research</span>
           </a>
           <a
@@ -238,18 +253,6 @@
             <span class="nav-icon"><i class="fa-solid fa-globe"></i></span>
             <span class="nav-label">Macro</span>
           </a>
-          <a
-            href="#"
-            class="nav-item"
-            data-page="chat"
-            onclick="
-              event.preventDefault();
-              switchPage('chat');
-            "
-          >
-            <span class="nav-icon"><i class="fa-solid fa-robot"></i></span>
-            <span class="nav-label">Chat</span>
-          </a>
         </nav>
         <div class="sidebar-footer">
           <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
@@ -284,7 +287,15 @@
         <!-- Page: Dashboard -->
         <div class="page active" id="page-dashboard">
           <div id="dbPage">
-            <div style="padding: 40px; text-align: center; color: var(--tv-text-tertiary)">Loading...</div>
+            <div
+              style="
+                padding: 40px;
+                text-align: center;
+                color: var(--tv-text-tertiary);
+              "
+            >
+              Loading...
+            </div>
           </div>
         </div>
 
@@ -519,7 +530,9 @@
             </div>
             <div class="section-content">
               <div id="financialsContent">
-                <div class="financials-error">Analyze a ticker to load financials</div>
+                <div class="financials-error">
+                  Analyze a ticker to load financials
+                </div>
               </div>
             </div>
           </div>
@@ -1187,13 +1200,21 @@
               <!-- Holdings Summary Stats -->
               <div class="fil-holdings-summary">
                 <i class="fas fa-chart-pie fil-holdings-icon"></i>
-                <span class="fil-summary-item"><strong id="holdPeriod">--</strong></span>
+                <span class="fil-summary-item"
+                  ><strong id="holdPeriod">--</strong></span
+                >
                 <span class="fil-summary-sep">·</span>
-                <span class="fil-summary-item"><strong id="holdTickers">0</strong> tickers</span>
+                <span class="fil-summary-item"
+                  ><strong id="holdTickers">0</strong> tickers</span
+                >
                 <span class="fil-summary-sep">·</span>
-                <span class="fil-summary-item"><strong id="holdFunds">0</strong> funds</span>
+                <span class="fil-summary-item"
+                  ><strong id="holdFunds">0</strong> funds</span
+                >
                 <span class="fil-summary-sep">·</span>
-                <span class="fil-summary-item"><strong id="holdValue">$0</strong> total</span>
+                <span class="fil-summary-item"
+                  ><strong id="holdValue">$0</strong> total</span
+                >
               </div>
 
               <!-- Holdings Filter -->
@@ -1205,7 +1226,13 @@
                     id="holdSearchInput"
                     placeholder="Search by ticker..."
                     onkeyup="searchHoldings(this.value)"
-                    onkeydown="if(event.key==='Enter'){event.preventDefault();const t=this.value.trim().toUpperCase();if(t)showTickerHoldings(t);}"
+                    onkeydown="
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        const t = this.value.trim().toUpperCase();
+                        if (t) showTickerHoldings(t);
+                      }
+                    "
                   />
                 </div>
                 <div class="fil-filter-group">
@@ -1346,12 +1373,21 @@
               </div>
 
               <!-- Not Priced In Info Banner -->
-              <div class="fil-npi-banner" id="changesNpiBanner" style="display:none">
+              <div
+                class="fil-npi-banner"
+                id="changesNpiBanner"
+                style="display: none"
+              >
                 <i class="fa-solid fa-circle-info"></i>
                 <div>
-                  <strong>Not Priced In</strong> - Showing institutional changes where price hasn't moved in the expected direction.
-                  Funds bought/increased but stock hasn't risen, or funds sold/exited but stock hasn't fallen since the filing period.
-                  <span class="fil-npi-badge-sample"><i class="fa-solid fa-circle-exclamation"></i></span> marks potential opportunities.
+                  <strong>Not Priced In</strong> - Showing institutional changes
+                  where price hasn't moved in the expected direction. Funds
+                  bought/increased but stock hasn't risen, or funds sold/exited
+                  but stock hasn't fallen since the filing period.
+                  <span class="fil-npi-badge-sample"
+                    ><i class="fa-solid fa-circle-exclamation"></i
+                  ></span>
+                  marks potential opportunities.
                 </div>
               </div>
 
@@ -2483,16 +2519,14 @@
         <div class="page" id="page-daily">
           <!-- Header -->
           <div class="dc-header">
-            <div class="dc-header-left">
-            </div>
+            <div class="dc-header-left"></div>
             <div class="dc-header-actions">
               <button
                 class="btn btn-sm"
                 id="dcToggleAllBtn"
                 onclick="window.dcToggleAll()"
                 title="Toggle all checks active/inactive"
-              >
-              </button>
+              ></button>
               <button
                 class="btn btn-sm"
                 id="dcForceRunBtn"
@@ -2598,7 +2632,11 @@
           </div>
 
           <!-- Recent Tickers Strip -->
-          <div class="header-history" id="dcHistoryStrip" style="margin-bottom:10px"></div>
+          <div
+            class="header-history"
+            id="dcHistoryStrip"
+            style="margin-bottom: 10px"
+          ></div>
 
           <!-- Cards -->
           <div class="dc-cards" id="dcCards">
@@ -2660,24 +2698,44 @@
             <div class="chat-main">
               <div class="chat-messages" id="chatMessages">
                 <div class="chat-empty">
-                  <div class="chat-empty-icon"><i class="fa-solid fa-robot"></i></div>
+                  <div class="chat-empty-icon">
+                    <i class="fa-solid fa-robot"></i>
+                  </div>
                   <div class="chat-empty-title">VHunter Chat</div>
                   <div class="chat-empty-subtitle">
-                    Ask anything about your trading system. I have access to market data, positions, filings, daily checks, thesis, and can query the database directly.
+                    Ask anything about your trading system. I have access to
+                    market data, positions, filings, daily checks, thesis, and
+                    can query the database directly.
                   </div>
                 </div>
               </div>
               <div class="chat-input-area">
                 <div class="chat-input-row">
-                  <textarea class="chat-textarea" id="chatInput" placeholder="Ask about your positions, market data, filings..." rows="1"></textarea>
-                  <button class="chat-send-btn" id="chatSendBtn" onclick="chatSendMessage()">
+                  <textarea
+                    class="chat-textarea"
+                    id="chatInput"
+                    placeholder="Ask about your positions, market data, filings..."
+                    rows="1"
+                  ></textarea>
+                  <button
+                    class="chat-send-btn"
+                    id="chatSendBtn"
+                    onclick="chatSendMessage()"
+                  >
                     <i class="fa-solid fa-paper-plane"></i>
                   </button>
-                  <button class="chat-stop-btn" id="chatStopBtn" style="display:none" onclick="chatStopStreaming()">
+                  <button
+                    class="chat-stop-btn"
+                    id="chatStopBtn"
+                    style="display: none"
+                    onclick="chatStopStreaming()"
+                  >
                     <i class="fa-solid fa-stop"></i>
                   </button>
                 </div>
-                <div class="chat-input-hint">Enter to send, Shift+Enter for newline</div>
+                <div class="chat-input-hint">
+                  Enter to send, Shift+Enter for newline
+                </div>
               </div>
             </div>
           </div>
@@ -2774,7 +2832,11 @@
     ></div>
 
     <!-- Options Chain Modal (Fullscreen) -->
-    <div class="chain-modal" id="chainModal" onclick="if (event.target === this) closeChainModal();">
+    <div
+      class="chain-modal"
+      id="chainModal"
+      onclick="if (event.target === this) closeChainModal();"
+    >
       <div class="chain-modal-content">
         <!-- Chain Header -->
         <div class="chain-modal-header">
@@ -2783,12 +2845,18 @@
             <span class="chain-ticker-price" id="chainTickerPrice">--</span>
             <span class="chain-ticker-change" id="chainTickerChange"></span>
           </div>
-          <button class="chain-modal-close" onclick="closeChainModal()">&times;</button>
+          <button class="chain-modal-close" onclick="closeChainModal()">
+            &times;
+          </button>
         </div>
 
         <!-- Expiry Tabs (horizontal scroll) -->
         <div class="chain-expiry-tabs" id="chainExpiryTabs">
-          <select id="optExpSelect" onchange="loadChainForExpiry()" class="chain-expiry-select">
+          <select
+            id="optExpSelect"
+            onchange="loadChainForExpiry()"
+            class="chain-expiry-select"
+          >
             <option value="">Select Expiry</option>
           </select>
         </div>
@@ -2796,17 +2864,65 @@
         <!-- View Controls -->
         <div class="chain-view-controls">
           <div class="chain-view-tabs">
-            <button class="chain-view-tab active" data-view="both" onclick="switchChainViewMode('both')">Both</button>
-            <button class="chain-view-tab" data-view="calls" onclick="switchChainViewMode('calls')">Calls</button>
-            <button class="chain-view-tab" data-view="puts" onclick="switchChainViewMode('puts')">Puts</button>
+            <button
+              class="chain-view-tab active"
+              data-view="both"
+              onclick="switchChainViewMode('both')"
+            >
+              Both
+            </button>
+            <button
+              class="chain-view-tab"
+              data-view="calls"
+              onclick="switchChainViewMode('calls')"
+            >
+              Calls
+            </button>
+            <button
+              class="chain-view-tab"
+              data-view="puts"
+              onclick="switchChainViewMode('puts')"
+            >
+              Puts
+            </button>
           </div>
           <div class="chain-filters">
-            <button class="chain-toggle active" data-show="all" onclick="toggleChainView('all')">All</button>
-            <button class="chain-toggle" data-show="near" onclick="toggleChainView('near')">Near ATM</button>
-            <button class="chain-toggle" data-show="itm" onclick="toggleChainView('itm')">ITM</button>
-            <button class="chain-toggle" data-show="otm" onclick="toggleChainView('otm')">OTM</button>
+            <button
+              class="chain-toggle active"
+              data-show="all"
+              onclick="toggleChainView('all')"
+            >
+              All
+            </button>
+            <button
+              class="chain-toggle"
+              data-show="near"
+              onclick="toggleChainView('near')"
+            >
+              Near ATM
+            </button>
+            <button
+              class="chain-toggle"
+              data-show="itm"
+              onclick="toggleChainView('itm')"
+            >
+              ITM
+            </button>
+            <button
+              class="chain-toggle"
+              data-show="otm"
+              onclick="toggleChainView('otm')"
+            >
+              OTM
+            </button>
           </div>
-          <button class="chain-atm-btn" onclick="scrollToATM()" title="Scroll to ATM">ATM</button>
+          <button
+            class="chain-atm-btn"
+            onclick="scrollToATM()"
+            title="Scroll to ATM"
+          >
+            ATM
+          </button>
         </div>
 
         <!-- Chain Table -->
@@ -2815,30 +2931,47 @@
           <div class="chain-table chain-view-both" id="chainTableBoth">
             <div class="chain-header-row">
               <div class="chain-side-header calls-header">
-                <span>Vol</span><span>OI</span><span>Sprd</span><span>Bid</span><span>Ask</span><span>IV</span><span>&Delta;</span>
+                <span>Vol</span><span>OI</span><span>Sprd</span><span>Bid</span
+                ><span>Ask</span><span>IV</span><span>&Delta;</span>
               </div>
               <div class="chain-strike-col-header">Strike</div>
               <div class="chain-side-header puts-header">
-                <span>&Delta;</span><span>IV</span><span>Bid</span><span>Ask</span><span>Sprd</span><span>OI</span><span>Vol</span>
+                <span>&Delta;</span><span>IV</span><span>Bid</span
+                ><span>Ask</span><span>Sprd</span><span>OI</span
+                ><span>Vol</span>
               </div>
             </div>
             <div class="chain-body" id="optChainBody">
-              <div class="chain-loading">Analyze a ticker to load options chain</div>
+              <div class="chain-loading">
+                Analyze a ticker to load options chain
+              </div>
             </div>
           </div>
 
           <!-- Calls-only view (mobile friendly) -->
-          <div class="chain-table chain-view-calls" id="chainTableCalls" style="display:none">
+          <div
+            class="chain-table chain-view-calls"
+            id="chainTableCalls"
+            style="display: none"
+          >
             <div class="chain-single-header">
-              <span>Strike</span><span>&Delta;</span><span>IV</span><span>Bid</span><span>Ask</span><span>Sprd%</span><span>Vol</span><span>OI</span>
+              <span>Strike</span><span>&Delta;</span><span>IV</span
+              ><span>Bid</span><span>Ask</span><span>Sprd%</span><span>Vol</span
+              ><span>OI</span>
             </div>
             <div class="chain-body" id="optChainBodyCalls"></div>
           </div>
 
           <!-- Puts-only view (mobile friendly) -->
-          <div class="chain-table chain-view-puts" id="chainTablePuts" style="display:none">
+          <div
+            class="chain-table chain-view-puts"
+            id="chainTablePuts"
+            style="display: none"
+          >
             <div class="chain-single-header">
-              <span>Strike</span><span>&Delta;</span><span>IV</span><span>Bid</span><span>Ask</span><span>Sprd%</span><span>Vol</span><span>OI</span>
+              <span>Strike</span><span>&Delta;</span><span>IV</span
+              ><span>Bid</span><span>Ask</span><span>Sprd%</span><span>Vol</span
+              ><span>OI</span>
             </div>
             <div class="chain-body" id="optChainBodyPuts"></div>
           </div>
@@ -2905,7 +3038,9 @@
             >
               Cancel
             </button>
-            <button type="submit" class="btn btn-primary">Add to Watchlist</button>
+            <button type="submit" class="btn btn-primary">
+              Add to Watchlist
+            </button>
           </div>
         </form>
       </div>
@@ -3154,17 +3289,35 @@
     </button>
 
     <!-- Playbooks Strategy Modal -->
-    <div id="pbModal" class="pb-overlay" onclick="if (event.target === this) window.pbCloseModal();">
+    <div
+      id="pbModal"
+      class="pb-overlay"
+      onclick="if (event.target === this) window.pbCloseModal();"
+    >
       <div class="pb-dialog">
         <div class="pb-dialog-header">
           <span id="pbModalTitle">New Strategy</span>
-          <button class="pb-dialog-close" onclick="window.pbCloseModal()">×</button>
+          <button class="pb-dialog-close" onclick="window.pbCloseModal()">
+            ×
+          </button>
         </div>
-        <form id="pbForm" data-edit-id="" onsubmit="event.preventDefault(); window.pbSave();">
+        <form
+          id="pbForm"
+          data-edit-id=""
+          onsubmit="
+            event.preventDefault();
+            window.pbSave();
+          "
+        >
           <div class="pb-field-row">
             <div class="pb-field">
               <label>Name</label>
-              <input type="text" id="pbNameInput" placeholder="e.g. Fade Rallies" required>
+              <input
+                type="text"
+                id="pbNameInput"
+                placeholder="e.g. Fade Rallies"
+                required
+              />
             </div>
             <div class="pb-field">
               <label>Category</label>
@@ -3191,30 +3344,55 @@
             </div>
             <div class="pb-field">
               <label>Priority (1-5)</label>
-              <input type="number" id="pbPriorityInput" min="1" max="5" value="3">
+              <input
+                type="number"
+                id="pbPriorityInput"
+                min="1"
+                max="5"
+                value="3"
+              />
             </div>
           </div>
           <div class="pb-field">
             <label>Description</label>
-            <textarea id="pbDescInput" placeholder="2-3 sentence playbook description"></textarea>
+            <textarea
+              id="pbDescInput"
+              placeholder="2-3 sentence playbook description"
+            ></textarea>
           </div>
           <div class="pb-field">
             <label>Entry Conditions</label>
             <div class="pb-entry-list" id="pbEntryList"></div>
-            <button type="button" class="pb-add-entry" onclick="window.pbAddEntry()">+ Add condition</button>
+            <button
+              type="button"
+              class="pb-add-entry"
+              onclick="window.pbAddEntry()"
+            >
+              + Add condition
+            </button>
           </div>
           <div class="pb-field-row-3">
             <div class="pb-field">
               <label>Profit Target (ATR x)</label>
-              <input type="number" id="pbProfitAtr" step="0.1" placeholder="2.0">
+              <input
+                type="number"
+                id="pbProfitAtr"
+                step="0.1"
+                placeholder="2.0"
+              />
             </div>
             <div class="pb-field">
               <label>Stop Loss (ATR x)</label>
-              <input type="number" id="pbStopAtr" step="0.1" placeholder="1.5">
+              <input
+                type="number"
+                id="pbStopAtr"
+                step="0.1"
+                placeholder="1.5"
+              />
             </div>
             <div class="pb-field">
               <label>Time Stop (days)</label>
-              <input type="number" id="pbTimeStop" placeholder="15">
+              <input type="number" id="pbTimeStop" placeholder="15" />
             </div>
           </div>
           <div class="pb-field-row">
@@ -3230,7 +3408,11 @@
             </div>
             <div class="pb-field">
               <label>Scale Condition</label>
-              <input type="text" id="pbScaleCondition" placeholder="e.g. half on confirm">
+              <input
+                type="text"
+                id="pbScaleCondition"
+                placeholder="e.g. half on confirm"
+              />
             </div>
           </div>
           <div class="pb-field">
@@ -3282,7 +3464,13 @@
             </div>
           </div>
           <div class="pb-form-actions">
-            <button type="button" class="btn btn-sm" onclick="window.pbCloseModal()">Cancel</button>
+            <button
+              type="button"
+              class="btn btn-sm"
+              onclick="window.pbCloseModal()"
+            >
+              Cancel
+            </button>
             <button type="submit" class="btn btn-primary btn-sm">Save</button>
           </div>
         </form>
@@ -3290,11 +3478,17 @@
     </div>
 
     <!-- Playbooks Link Modal -->
-    <div id="pbLinkModal" class="pb-overlay" onclick="if (event.target === this) window.pbCloseLinkModal();">
-      <div class="pb-dialog" style="width:440px">
+    <div
+      id="pbLinkModal"
+      class="pb-overlay"
+      onclick="if (event.target === this) window.pbCloseLinkModal();"
+    >
+      <div class="pb-dialog" style="width: 440px">
         <div class="pb-dialog-header">
           <span>Link Daily Check</span>
-          <button class="pb-dialog-close" onclick="window.pbCloseLinkModal()">×</button>
+          <button class="pb-dialog-close" onclick="window.pbCloseLinkModal()">
+            ×
+          </button>
         </div>
         <div class="pb-link-list" id="pbLinkList"></div>
       </div>

@@ -75,6 +75,12 @@ export function switchPage(page, shouldUpdateRoute = true) {
     if (historyStrip) historyStrip.style.display = 'none';
   }
 
+  // Hide FAB button on chat page
+  const fabButton = document.getElementById('fabButton');
+  if (fabButton) {
+    fabButton.style.display = page === 'chat' ? 'none' : '';
+  }
+
   // Update URL
   if (shouldUpdateRoute) {
     const ticker = page === 'analyze' ? ui.$('tk').value.toUpperCase().trim() : null;
