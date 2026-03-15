@@ -850,6 +850,14 @@ window.switchFilingsTab = function(tab) {
   document.getElementById('filTabHoldings').classList.toggle('active', tab === 'holdings');
   document.getElementById('filTabChanges').classList.toggle('active', tab === 'changes');
   document.getElementById('filTabAnalytics').classList.toggle('active', tab === 'analytics');
+  const fundTab = document.getElementById('filTabFund');
+  if (fundTab) fundTab.classList.toggle('active', tab === 'fund');
+
+  // Remove dynamic fund tab button when switching away
+  if (tab !== 'fund') {
+    const dynBtn = document.querySelector('.fil-tab[data-tab="fund"]');
+    if (dynBtn) dynBtn.remove();
+  }
 
   // Lazy-load changes on first visit
   if (tab === 'changes' && !changesData) {
@@ -1686,17 +1694,44 @@ window.showPipeDetails = async function(ticker) {
 };
 
 window.showFundDetails = async function(id) {
-  const modal = showModal('Loading...', '<div class="fil-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading fund...</div>');
+  // Switch to the fund detail tab
+  const tabBar = document.querySelector('.fil-tabs');
+  let dynBtn = tabBar?.querySelector('.fil-tab[data-tab="fund"]');
+  if (!dynBtn && tabBar) {
+    dynBtn = document.createElement('button');
+    dynBtn.className = 'fil-tab';
+    dynBtn.dataset.tab = 'fund';
+    dynBtn.innerHTML = '<i class="fa-solid fa-building-columns"></i> <span id="fundTabLabel">Fund</span>';
+    dynBtn.onclick = () => window.switchFilingsTab('fund');
+    tabBar.appendChild(dynBtn);
+  }
+  window.switchFilingsTab('fund');
+
+  const root = document.getElementById('fundDetailRoot');
+  if (root) root.innerHTML = '<div class="fil-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading fund details...</div>';
+
   try {
-    const response = await fetch(`${CONFIG.PROXY_URL}/api/funds/${id}`, {
-      headers: { 'X-User-Id': getUserId() }
-    });
-    const fund = await response.json();
-    updateModal(modal, fund.name, buildFundModal(fund));
+    // Fetch fund info, fund filings, and fund holdings in parallel
+    const [fundRes, filingsRes, holdingsRes] = await Promise.all([
+      fetch(`${CONFIG.PROXY_URL}/api/funds/${id}`, { headers: { 'X-User-Id': getUserId() } }),
+      fetch(`${CONFIG.PROXY_URL}/api/filings?fund_id=${id}&days=365&limit=200`, { headers: { 'X-User-Id': getUserId() } }),
+      fetch(`${CONFIG.PROXY_URL}/api/holdings/compare?fund_id=${id}&periods=2`, { headers: { 'X-User-Id': getUserId() } }).catch(() => null)
+    ]);
+
+    const fund = await fundRes.json();
+    const filingsData = await filingsRes.json();
+    const holdingsData = holdingsRes ? await holdingsRes.json().catch(() => null) : null;
+
+    const fundFilings = filingsData.filings || filingsData || [];
+
+    // Update tab label
+    const tabLabel = document.getElementById('fundTabLabel');
+    if (tabLabel) tabLabel.textContent = fund.name?.length > 20 ? fund.name.slice(0, 18) + '...' : fund.name;
+
+    if (root) root.innerHTML = buildFundPage(fund, fundFilings, holdingsData);
   } catch (e) {
-    console.error('Failed to load fund:', e);
-    showToast('Failed to load fund details', 'error');
-    modal.remove();
+    console.error('Failed to load fund details:', e);
+    if (root) root.innerHTML = '<div class="fil-error"><i class="fa-solid fa-circle-exclamation"></i> Failed to load fund details</div>';
   }
 };
 
@@ -2433,6 +2468,240 @@ function buildFundModal(fund) {
       </div>
     ` : ''}
   `;
+}
+
+// ============== FUND DETAIL PAGE ==============
+
+function buildFundPage(fund, fundFilings, holdingsData) {
+  const patterns = fund.known_patterns || [];
+  const filingsByType = {};
+  for (const f of fundFilings) {
+    const t = f.filing_type || 'Other';
+    if (!filingsByType[t]) filingsByType[t] = [];
+    filingsByType[t].push(f);
+  }
+
+  // Holdings from compare endpoint
+  const latestHoldings = holdingsData?.periods?.[0]?.holdings || holdingsData?.holdings || [];
+  const priorHoldings = holdingsData?.periods?.[1]?.holdings || [];
+  const latestPeriod = holdingsData?.periods?.[0]?.period || holdingsData?.period || null;
+
+  // Build prior lookup for change detection
+  const priorMap = {};
+  for (const h of priorHoldings) {
+    priorMap[h.ticker] = h;
+  }
+
+  // Compute top holdings sorted by value
+  const sortedHoldings = [...latestHoldings].sort((a, b) => (b.value || 0) - (a.value || 0));
+  const topHoldings = sortedHoldings.slice(0, 50);
+
+  // Compute stats
+  const totalValue = sortedHoldings.reduce((s, h) => s + (h.value || 0), 0);
+  const totalPositions = sortedHoldings.length;
+  const newPositions = sortedHoldings.filter(h => !priorMap[h.ticker]).length;
+  const exitedPositions = priorHoldings.filter(h => !sortedHoldings.find(s => s.ticker === h.ticker)).length;
+
+  // Recent filings (last 30 days)
+  const now = Date.now();
+  const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+  const recentFilings = fundFilings.filter(f => new Date(f.filed_date).getTime() > thirtyDaysAgo);
+
+  return `
+    <div class="fund-page">
+      <!-- Back button -->
+      <div class="fund-page-back">
+        <button class="fil-btn fil-btn-ghost" onclick="switchFilingsTab('filings')">
+          <i class="fa-solid fa-arrow-left"></i> Back to Filings
+        </button>
+      </div>
+
+      <!-- Fund Header -->
+      <div class="fund-page-header">
+        <div class="fund-page-title">
+          <h2>${escapeHtml(fund.name)}</h2>
+          ${fund.priority >= 9 ? '<span class="fund-page-priority-badge">Priority ' + fund.priority + '</span>' : ''}
+        </div>
+        <div class="fund-page-meta">
+          ${fund.cik ? `<span class="fund-meta-item"><strong>CIK</strong> ${fund.cik}</span>` : ''}
+          <span class="fund-meta-item"><strong>Type</strong> ${formatFundType(fund.fund_type)}</span>
+          ${fund.aum_approx ? `<span class="fund-meta-item"><strong>AUM</strong> ${fund.aum_approx}</span>` : ''}
+          ${fund.key_person ? `<span class="fund-meta-item"><strong>Key Person</strong> ${fund.key_person}</span>` : ''}
+        </div>
+      </div>
+
+      <!-- Overview Stats -->
+      <div class="fund-page-stats">
+        <div class="fund-stat-card">
+          <div class="fund-stat-value">${totalPositions}</div>
+          <div class="fund-stat-label">Positions</div>
+        </div>
+        <div class="fund-stat-card">
+          <div class="fund-stat-value">${formatValue(totalValue)}</div>
+          <div class="fund-stat-label">Total Value</div>
+        </div>
+        <div class="fund-stat-card">
+          <div class="fund-stat-value">${fundFilings.length}</div>
+          <div class="fund-stat-label">Filings (1Y)</div>
+        </div>
+        <div class="fund-stat-card">
+          <div class="fund-stat-value fil-trend-up">${newPositions}</div>
+          <div class="fund-stat-label">New Positions</div>
+        </div>
+        <div class="fund-stat-card">
+          <div class="fund-stat-value fil-trend-down">${exitedPositions}</div>
+          <div class="fund-stat-label">Exited</div>
+        </div>
+        <div class="fund-stat-card">
+          <div class="fund-stat-value">${recentFilings.length}</div>
+          <div class="fund-stat-label">Last 30d</div>
+        </div>
+      </div>
+
+      ${fund.lineage ? `<div class="fund-page-section fund-lineage"><i class="fa-solid fa-diagram-project"></i> <strong>Lineage:</strong> ${escapeHtml(fund.lineage)}</div>` : ''}
+
+      ${patterns.length ? `
+        <div class="fund-page-section">
+          <h3>Known Patterns</h3>
+          <div class="fund-patterns">${patterns.map(p => `<span class="fund-pattern-chip">${escapeHtml(p)}</span>`).join('')}</div>
+        </div>
+      ` : ''}
+
+      <!-- Two-column layout: Holdings + Filings -->
+      <div class="fund-page-columns">
+        <!-- Holdings Column -->
+        <div class="fund-page-col">
+          <div class="fund-page-section">
+            <h3>Top Holdings ${latestPeriod ? `<span class="fund-section-sub">${formatQuarter(latestPeriod)}</span>` : ''}</h3>
+            ${topHoldings.length > 0 ? `
+              <table class="fil-table fund-holdings-table">
+                <thead>
+                  <tr>
+                    <th>Ticker</th>
+                    <th>Shares</th>
+                    <th>Value</th>
+                    <th>% of Portfolio</th>
+                    <th>Change</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${topHoldings.map(h => {
+                    const pct = totalValue > 0 ? ((h.value || 0) / totalValue * 100) : 0;
+                    const prior = priorMap[h.ticker];
+                    let changeHtml = '<span class="fil-text-muted">--</span>';
+                    if (prior) {
+                      const shareDiff = (h.shares || 0) - (prior.shares || 0);
+                      if (shareDiff > 0) changeHtml = `<span class="fil-trend-up">+${formatNumber(shareDiff)}</span>`;
+                      else if (shareDiff < 0) changeHtml = `<span class="fil-trend-down">${formatNumber(shareDiff)}</span>`;
+                      else changeHtml = '<span class="fil-text-muted">-</span>';
+                    } else {
+                      changeHtml = '<span class="fil-trend-up fund-new-badge">NEW</span>';
+                    }
+                    return `
+                      <tr class="fund-holding-row" onclick="window.switchPage && window.switchPage('analyze'); const tk=document.getElementById('tk'); if(tk){tk.value='${h.ticker}';} if(window.run) window.run();">
+                        <td><code class="fil-feed-ticker">${h.ticker}</code></td>
+                        <td class="fund-td-right">${formatNumber(h.shares || 0)}</td>
+                        <td class="fund-td-right">${formatValue(h.value || 0)}</td>
+                        <td class="fund-td-right">${pct.toFixed(1)}%</td>
+                        <td class="fund-td-right">${changeHtml}</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+              ${sortedHoldings.length > 50 ? `<div class="fund-show-more"><button class="fil-btn fil-btn-ghost" onclick="this.parentElement.previousElementSibling.querySelector('tbody').innerHTML += buildRemainingHoldingsRows('${fund.id}'); this.remove();">Show all ${sortedHoldings.length} positions</button></div>` : ''}
+            ` : '<div class="fil-empty">No holdings data available. Holdings appear after 13F filings are parsed.</div>'}
+          </div>
+
+          ${exitedPositions > 0 ? `
+            <div class="fund-page-section">
+              <h3>Exited Positions</h3>
+              <div class="fund-exited-list">
+                ${priorHoldings.filter(h => !sortedHoldings.find(s => s.ticker === h.ticker)).slice(0, 20).map(h => `
+                  <span class="fund-exited-chip" title="${formatValue(h.value || 0)}">
+                    <code>${h.ticker}</code>
+                    <span class="fil-trend-down">${formatValue(h.value || 0)}</span>
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- Filings Column -->
+        <div class="fund-page-col">
+          <div class="fund-page-section">
+            <h3>Filing Activity <span class="fund-section-sub">${fundFilings.length} filings in past year</span></h3>
+            <!-- Filing type breakdown -->
+            <div class="fund-filing-types">
+              ${Object.entries(filingsByType).sort((a, b) => b[1].length - a[1].length).map(([type, items]) => `
+                <div class="fund-filing-type-chip" style="border-left: 3px solid ${getTypeColor(type)}">
+                  <span class="fund-ft-count">${items.length}</span>
+                  <span class="fund-ft-label">${type}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="fund-page-section">
+            <h3>All Filings</h3>
+            <div class="fund-filings-list">
+              ${fundFilings.length > 0 ? renderFundFilingsFeed(fundFilings) : '<div class="fil-empty">No filings found for this fund</div>'}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderFundFilingsFeed(filingsList) {
+  // Group by month
+  const groups = {};
+  for (const f of filingsList) {
+    const monthKey = f.filed_date ? f.filed_date.slice(0, 7) : 'unknown';
+    if (!groups[monthKey]) groups[monthKey] = [];
+    groups[monthKey].push(f);
+  }
+
+  const sortedMonths = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+
+  return `<div class="fund-filings-feed">${sortedMonths.map(month => `
+    <div class="fund-filings-month">
+      <div class="fund-filings-month-label">${formatMonthLabel(month)}</div>
+      ${groups[month].map(f => {
+        const typeColor = getTypeColor(f.filing_type);
+        const preview = buildParsedPreview(f);
+        const priorityClass = f.alert_priority === 'critical' ? 'fil-feed-critical' :
+                               f.alert_priority === 'high' ? 'fil-feed-high' : '';
+        const ticker = f.subject_ticker || f.parsed_data?.issuerTicker || '';
+        return `
+          <div class="fil-feed-item ${priorityClass}" onclick="showFilingDetails('${f.id}')">
+            <span class="fil-feed-type" style="border-color:${typeColor};color:${typeColor}">${f.filing_type}</span>
+            <div class="fil-feed-body">
+              <div class="fil-feed-top">
+                ${ticker ? `<code class="fil-feed-ticker" onclick="event.stopPropagation()">${ticker}</code>` : '<span class="fil-text-muted">No ticker</span>'}
+              </div>
+              ${preview ? `<div class="fil-feed-preview fil-parsed-preview">${preview}</div>` : ''}
+              <div class="fil-feed-meta">
+                <span class="fil-feed-time">${formatDate(f.filed_date)}</span>
+                <a href="${f.filing_url}" target="_blank" class="fil-link-btn" onclick="event.stopPropagation()" title="SEC EDGAR">
+                  <i class="fa-solid fa-external-link"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `).join('')}</div>`;
+}
+
+function formatMonthLabel(monthStr) {
+  if (!monthStr || monthStr === 'unknown') return 'Unknown';
+  const [year, month] = monthStr.split('-');
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${months[parseInt(month) - 1] || '??'} ${year}`;
 }
 
 // ============== SERVER-SIDE PARSE TRIGGER ==============

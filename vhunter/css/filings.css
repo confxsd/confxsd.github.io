@@ -2352,3 +2352,303 @@
   opacity: 0.7;
   pointer-events: none;
 }
+
+/* ============================================
+   Fund Detail Page
+============================================ */
+
+.fund-page {
+  padding: 0;
+}
+
+.fund-page-back {
+  margin-bottom: 16px;
+}
+
+.fund-page-header {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--tv-border);
+}
+
+.fund-page-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.fund-page-title h2 {
+  font-size: var(--t-2xl);
+  font-weight: 600;
+  margin: 0;
+  color: var(--tv-text-primary);
+}
+
+.fund-page-priority-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-radius: 12px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.fund-page-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.fund-meta-item {
+  font-size: var(--t-sm);
+  color: var(--tv-text-secondary);
+}
+
+.fund-meta-item strong {
+  color: var(--tv-text-primary);
+  margin-right: 4px;
+}
+
+/* Fund Stats Grid */
+.fund-page-stats {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.fund-stat-card {
+  background: var(--tv-bg);
+  border: 1px solid var(--tv-border);
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+  transition: border-color 0.15s;
+}
+
+.fund-stat-card:hover {
+  border-color: var(--tv-accent-hover);
+}
+
+.fund-stat-value {
+  font-size: var(--t-xl);
+  font-weight: 700;
+  color: var(--tv-text-primary);
+}
+
+.fund-stat-label {
+  font-size: var(--t-xs);
+  color: var(--tv-text-secondary);
+  margin-top: 4px;
+}
+
+/* Fund Lineage */
+.fund-lineage {
+  background: var(--tv-bg-tertiary);
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: var(--t-sm);
+  color: var(--tv-text-secondary);
+  margin-bottom: 16px;
+}
+
+.fund-lineage i {
+  color: var(--tv-accent);
+  margin-right: 4px;
+}
+
+/* Fund Patterns */
+.fund-patterns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fund-pattern-chip {
+  display: inline-block;
+  padding: 4px 12px;
+  font-size: var(--t-xs);
+  background: var(--tv-bg-tertiary);
+  border: 1px solid var(--tv-border);
+  border-radius: 14px;
+  color: var(--tv-text-secondary);
+}
+
+/* Fund Page Sections */
+.fund-page-section {
+  margin-bottom: 20px;
+}
+
+.fund-page-section h3 {
+  font-size: var(--t-base);
+  font-weight: 600;
+  color: var(--tv-text-primary);
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fund-section-sub {
+  font-size: var(--t-xs);
+  font-weight: 400;
+  color: var(--tv-text-secondary);
+}
+
+/* Two-column layout */
+.fund-page-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.fund-page-col {
+  min-width: 0;
+}
+
+/* Fund Holdings Table */
+.fund-holdings-table {
+  font-size: var(--t-sm);
+}
+
+.fund-holdings-table thead th {
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--tv-text-secondary);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--tv-border);
+  white-space: nowrap;
+}
+
+.fund-holdings-table tbody td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--tv-border-light, rgba(0,0,0,0.05));
+}
+
+.fund-holding-row {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.fund-holding-row:hover {
+  background: var(--tv-bg-tertiary);
+}
+
+.fund-td-right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.fund-new-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(38, 166, 154, 0.12);
+}
+
+.fund-show-more {
+  text-align: center;
+  padding: 12px 0;
+}
+
+/* Exited Positions */
+.fund-exited-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fund-exited-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: var(--t-xs);
+  background: var(--tv-bg);
+  border: 1px solid var(--tv-border);
+  border-radius: 6px;
+}
+
+.fund-exited-chip code {
+  font-weight: 600;
+}
+
+/* Filing Type Breakdown */
+.fund-filing-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.fund-filing-type-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--tv-bg);
+  border: 1px solid var(--tv-border);
+  border-radius: 6px;
+  font-size: var(--t-xs);
+}
+
+.fund-ft-count {
+  font-weight: 700;
+  color: var(--tv-text-primary);
+}
+
+.fund-ft-label {
+  color: var(--tv-text-secondary);
+}
+
+/* Fund Filings Feed */
+.fund-filings-feed {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.fund-filings-month {
+  margin-bottom: 16px;
+}
+
+.fund-filings-month-label {
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--tv-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 0 8px 0;
+  border-bottom: 1px solid var(--tv-border);
+  margin-bottom: 8px;
+}
+
+.fund-filings-list .fil-feed-item {
+  margin-bottom: 4px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .fund-page-columns {
+    grid-template-columns: 1fr;
+  }
+  .fund-page-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .fund-page-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .fund-page-meta {
+    flex-direction: column;
+    gap: 6px;
+  }
+}
