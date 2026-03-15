@@ -278,6 +278,12 @@ async function sendMessage() {
     isStreaming = false;
     abortController = null;
     updateSendButton();
+
+    // Clean up any tool badges still showing spinners (stream ended unexpectedly)
+    document.querySelectorAll('.chat-tool-badge:not(.complete)').forEach(badge => {
+      badge.className = 'chat-tool-badge complete';
+      badge.innerHTML = badge.innerHTML.replace(/<span class="chat-tool-spinner"><\/span>/, '<i class="fa-solid fa-xmark" style="font-size:9px"></i>');
+    });
   }
 }
 

@@ -146,7 +146,6 @@ function scaffold() {
       </div>
       <div class="db-col">
         <div class="db-card" id="dbMemory"><div class="db-card-loading"></div></div>
-        <div class="db-card" id="dbWatchlist"><div class="db-card-loading"></div></div>
         <div class="db-card" id="dbNotes"><div class="db-card-loading"></div></div>
       </div>
     </div>
@@ -345,35 +344,15 @@ function renderOpps(opps, pipeline) {
     </div>
     <div class="db-card-body db-card-body-tight">
       ${items.length === 0 ? '<div class="db-empty">No scored opportunities</div>' : `
-        ${items.slice(0, 8).map(o => {
+        ${items.slice(0, 12).map(o => {
           const sc = o.score >= 70 ? 'var(--tv-green)' : o.score >= 40 ? 'var(--tv-orange)' : 'var(--tv-text-tertiary)';
           const dc = o.direction === 'short' ? 'var(--tv-red)' : 'var(--tv-green)';
-          // Stage score chips
-          const stages = Object.entries(o.stageScores);
           return `
-            <div class="db-opp-row">
-              <div class="db-opp-row-top">
-                <span class="db-ticker" ${goTicker(o.ticker)}>${o.ticker}</span>
-                <span class="db-dir-sm" style="color:${dc}">${o.direction.toUpperCase()}</span>
-                ${convDot(o.conviction)}
-                <span class="db-opp-score" style="color:${sc}">${Math.round(o.score)}</span>
-              </div>
-              ${o.thesis ? `<div class="db-opp-thesis">${esc(o.thesis).substring(0, 120)}</div>` : ''}
-              ${stages.length > 0 ? `
-                <div class="db-stage-scores">
-                  ${stages.map(([name, data]) => {
-                    const s = typeof data === 'object' ? data.score : data;
-                    const sColor = s >= 70 ? 'var(--tv-green)' : s >= 40 ? 'var(--tv-orange)' : 'var(--tv-text-tertiary)';
-                    return `<span class="db-stage-chip"><span class="db-stage-name">${esc(name)}</span><span style="color:${sColor};font-weight:700">${Math.round(s || 0)}</span></span>`;
-                  }).join('')}
-                </div>
-              ` : ''}
-              ${o.greenFlags.length > 0 || o.redFlags.length > 0 ? `
-                <div class="db-opp-flags">
-                  ${o.greenFlags.slice(0, 3).map(f => `<span class="db-flag-green"><i class="fa-solid fa-plus" style="font-size:7px;margin-right:3px"></i>${esc(f)}</span>`).join('')}
-                  ${o.redFlags.slice(0, 3).map(f => `<span class="db-flag-red"><i class="fa-solid fa-minus" style="font-size:7px;margin-right:3px"></i>${esc(f)}</span>`).join('')}
-                </div>
-              ` : ''}
+            <div class="db-opp-row-simple">
+              <span class="db-ticker" ${goTicker(o.ticker)}>${o.ticker}</span>
+              <span class="db-dir-sm" style="color:${dc}">${o.direction.toUpperCase()}</span>
+              ${convDot(o.conviction)}
+              <span class="db-opp-score" style="color:${sc}">${Math.round(o.score)}</span>
             </div>
           `;
         }).join('')}
@@ -635,7 +614,6 @@ export async function loadDashboard() {
   renderThemes(data.thesis);
   renderFeed(data.feed);
   renderMemory(data.memory);
-  renderWatchlist(data.watchlist);
   renderNotes(data.notes);
 
   const statusEl = document.getElementById('dbStatus');

@@ -452,6 +452,16 @@
 
 .db-opp-row:last-child { border-bottom: none; }
 
+.db-opp-row-simple {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--tv-border-light);
+}
+.db-opp-row-simple:last-child { border-bottom: none; }
+.db-opp-row-simple .db-opp-score { margin-left: auto; font-size: var(--t-sm); font-weight: 700; }
+
 .db-opp-row-top {
   display: flex;
   align-items: center;
