@@ -18,6 +18,7 @@ import { loadActiveTrades } from './active-trades.js';
 import { loadPipeline, unloadPipeline } from './ticker-pipeline.js';
 import { loadDeepAnalysis } from './deep-analysis.js';
 import { loadPlaybooks } from './playbooks.js';
+import { loadDashboard } from './dashboard.js';
 import { initTooltips } from './tooltip.js';
 import { initTooltipPositioning } from './tooltip-position.js';
 
@@ -53,6 +54,7 @@ function loadTerminal() {
 console.log('[APP] About to register page loaders');
 console.log('[APP] loadMacro:', loadMacro);
 registerPageLoaders({
+  dashboard: loadDashboard,
   positions: loadPositions,
   options: loadOptionsData,
   feed: loadFeed,

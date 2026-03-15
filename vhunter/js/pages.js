@@ -8,6 +8,7 @@ let currentPage = 'analyze';
 let pageLoaders = {};
 
 const pageTitles = {
+  dashboard: 'Dashboard',
   analyze: '',
   options: 'Options Terminal',
   feed: 'Feed',

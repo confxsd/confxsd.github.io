@@ -1,9 +1,9 @@
 // VHunter Router Module
 
 export function parseRoute() {
-  const hash = window.location.hash.slice(1) || 'analyze';
+  const hash = window.location.hash.slice(1) || 'dashboard';
   const [page, ticker] = hash.split('/');
-  return { page: page || 'analyze', ticker: ticker || null };
+  return { page: page || 'dashboard', ticker: ticker || null };
 }
 
 export function updateRoute(page, ticker = null) {
