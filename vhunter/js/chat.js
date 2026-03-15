@@ -151,6 +151,7 @@ async function sendMessage() {
       body: JSON.stringify({
         conversation_id: currentConvId,
         message: text,
+        ...($('chatSmartToggle')?.checked ? { model: CONFIG.CLAUDE_SMART_MODEL } : {}),
       }),
       signal: abortController.signal,
     });
@@ -580,6 +581,58 @@ function copyMessage(btn) {
   });
 }
 
+// ── Model menu ──
+function toggleModelMenu() {
+  const menu = $('chatModelMenu');
+  if (menu) menu.classList.toggle('open');
+}
+
+function selectModel(model) {
+  const toggle = $('chatSmartToggle');
+  const btnName = $('chatModelBtnName');
+  if (model === 'sonnet') {
+    if (toggle) toggle.checked = false;
+    updateModelButton();
+  }
+  $('chatModelMenu')?.classList.remove('open');
+}
+
+function toggleSmart(e) {
+  e.stopPropagation();
+  const toggle = $('chatSmartToggle');
+  // If clicking the row (not the switch itself), toggle the checkbox
+  if (e.target.closest('.chat-smart-switch')) return;
+  if (toggle) toggle.checked = !toggle.checked;
+  updateModelButton();
+}
+
+function updateModelButton() {
+  const smart = $('chatSmartToggle')?.checked;
+  const btnName = $('chatModelBtnName');
+  if (btnName) {
+    btnName.innerHTML = smart
+      ? 'Opus <span class="chat-model-btn-badge">Smart</span>'
+      : 'Sonnet';
+  }
+  // Update checkmark
+  const sonnetOpt = document.querySelector('[data-model="sonnet"]');
+  if (sonnetOpt) sonnetOpt.classList.toggle('active', !smart);
+}
+
+// Listen for direct toggle changes
+document.addEventListener('change', (e) => {
+  if (e.target.id === 'chatSmartToggle') updateModelButton();
+});
+
+// Close menu on outside click
+document.addEventListener('click', (e) => {
+  const menu = $('chatModelMenu');
+  const btn = $('chatModelBtn');
+  if (!menu || !menu.classList.contains('open')) return;
+  if (menu.contains(e.target) || btn?.contains(e.target)) return;
+  menu.classList.remove('open');
+});
+
 // ── Window bindings ──
 window.chatNewConversation = newConversation;
 window.chatSendMessage = sendMessage;
@@ -588,3 +641,6 @@ window.chatDeleteConv = deleteConversation;
 window.chatStopStreaming = stopStreaming;
 window.chatToggleSidebar = toggleChatSidebar;
 window.chatCopyMsg = copyMessage;
+window.chatToggleModelMenu = toggleModelMenu;
+window.chatSelectModel = selectModel;
+window.chatToggleSmart = toggleSmart;

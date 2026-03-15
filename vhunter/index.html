@@ -2829,8 +2829,32 @@
                     <i class="fa-solid fa-stop"></i>
                   </button>
                 </div>
-                <div class="chat-input-hint">
-                  Enter to send, Shift+Enter for newline
+                <div class="chat-input-footer">
+                  <button class="chat-model-btn" id="chatModelBtn" onclick="chatToggleModelMenu()">
+                    <span class="chat-model-btn-name" id="chatModelBtnName">Sonnet</span>
+                    <i class="fa-solid fa-chevron-down" style="font-size:9px;opacity:0.6"></i>
+                  </button>
+                  <div class="chat-model-menu" id="chatModelMenu">
+                    <div class="chat-model-option active" data-model="sonnet" onclick="chatSelectModel('sonnet')">
+                      <div class="chat-model-option-info">
+                        <div class="chat-model-option-name">Sonnet</div>
+                        <div class="chat-model-option-desc">Fast & efficient for everyday tasks</div>
+                      </div>
+                      <i class="fa-solid fa-check chat-model-check" id="chatModelCheckSonnet"></i>
+                    </div>
+                    <div class="chat-model-divider"></div>
+                    <div class="chat-model-option" data-model="smart" onclick="chatToggleSmart(event)">
+                      <div class="chat-model-option-info">
+                        <div class="chat-model-option-name">Smart</div>
+                        <div class="chat-model-option-desc">Use Opus for deeper analysis</div>
+                      </div>
+                      <label class="chat-smart-switch">
+                        <input type="checkbox" id="chatSmartToggle">
+                        <span class="chat-smart-track"></span>
+                      </label>
+                    </div>
+                  </div>
+                  <span class="chat-input-hint">Enter to send</span>
                 </div>
               </div>
             </div>
