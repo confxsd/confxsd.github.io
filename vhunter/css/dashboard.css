@@ -370,20 +370,45 @@
 }
 
 /* ══════════════════════════
-   FILTERS
+   TOOLBAR (filters + sort)
    ══════════════════════════ */
+
+.dc-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
 
 .dc-filters {
   display: flex;
   gap: 2px;
   align-items: center;
-  margin-bottom: 10px;
   overflow-x: auto;
   padding-bottom: 2px;
   scrollbar-width: none;
+  flex: 1;
+  min-width: 0;
 }
 
 .dc-filters::-webkit-scrollbar { display: none; }
+
+.dc-sort {
+  flex-shrink: 0;
+}
+
+.dc-sort-select {
+  background: var(--tv-bg-secondary);
+  border: 1px solid var(--tv-border);
+  color: var(--tv-text-secondary);
+  font-size: var(--t-3xs);
+  font-family: inherit;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.dc-sort-select:hover { border-color: var(--tv-text-tertiary); }
 
 .dc-filter {
   background: none;
@@ -425,6 +450,16 @@
   min-width: 14px;
   text-align: center;
   font-variant-numeric: tabular-nums;
+}
+
+.dc-filter-tag {
+  color: var(--tag-color, var(--tv-text-tertiary));
+}
+
+.dc-filter-tag.dc-filter-active {
+  background: var(--tag-bg, var(--tv-bg-secondary));
+  color: var(--tag-color, var(--tv-text-primary));
+  border-color: var(--tag-color, var(--tv-border));
 }
 
 .dc-filter-sep {
@@ -509,6 +544,35 @@
 }
 
 .dc-card-type i { font-size: 9px; }
+
+.dc-card-tags {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  margin: 0 4px;
+}
+
+.dc-tag {
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  line-height: 1.4;
+}
+
+.dc-card-score {
+  font-size: var(--t-3xs);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  min-width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
 
 .dc-card-actions {
   display: flex;

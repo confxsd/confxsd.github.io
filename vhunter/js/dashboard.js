@@ -5,7 +5,8 @@ import { CONFIG } from './config.js';
 let loaded = false;
 let allCards = [];
 let cardPrefs = {};  // { cardId: 'star' | 'hide' }
-let activeFilter = 'all'; // 'all' | 'starred' | category filter
+let activeFilter = 'all'; // 'all' | 'starred' | category filter | tag filter
+let activeSort = 'score'; // 'score' | 'type' | 'recent'
 let briefingData = null;
 let briefingCollapsed = false;
 
@@ -159,6 +160,32 @@ function cardActions(id) {
   </div>`;
 }
 
+const MAX_CARDS = 50;
+
+// Tag definitions — each card gets tags for filtering and visual scanning
+const TAG_DEFS = {
+  actionable:  { label: 'Actionable',  color: 'var(--tv-green)',  bg: 'var(--tv-green-bg)' },
+  urgent:      { label: 'Urgent',      color: 'var(--tv-red)',    bg: 'var(--tv-red-bg)' },
+  risk:        { label: 'Risk',        color: 'var(--tv-red)',    bg: 'var(--tv-red-bg)' },
+  opportunity: { label: 'Opportunity', color: 'var(--tv-green)',  bg: 'var(--tv-green-bg)' },
+  contrarian:  { label: 'Contrarian',  color: 'var(--tv-purple)', bg: 'rgba(124,77,255,0.1)' },
+  high_conv:   { label: 'High Conv.',  color: 'var(--tv-green)',  bg: 'var(--tv-green-bg)' },
+  position:    { label: 'Position',    color: 'var(--tv-accent)', bg: 'rgba(41,98,255,0.08)' },
+  macro:       { label: 'Macro',       color: 'var(--tv-purple)', bg: 'rgba(124,77,255,0.1)' },
+  catalyst:    { label: 'Catalyst',    color: 'var(--tv-orange)', bg: 'var(--tv-orange-bg)' },
+  thesis:      { label: 'Thesis',      color: 'var(--tv-cyan)',   bg: 'rgba(0,188,212,0.08)' },
+  exit:        { label: 'Exit Signal', color: 'var(--tv-red)',    bg: 'var(--tv-red-bg)' },
+  entry:       { label: 'Entry Signal',color: 'var(--tv-green)',  bg: 'var(--tv-green-bg)' },
+};
+
+function renderTags(tags) {
+  if (!tags || !tags.length) return '';
+  return tags.map(t => {
+    const def = TAG_DEFS[t] || { label: t, color: 'var(--tv-text-tertiary)', bg: 'var(--tv-bg-tertiary)' };
+    return `<span class="dc-tag" style="color:${def.color};background:${def.bg}">${def.label}</span>`;
+  }).join('');
+}
+
 // ── Transform data into cards ──
 
 function buildCards(data) {
@@ -169,13 +196,16 @@ function buildCards(data) {
   const trades = Array.isArray(tradesRaw) ? tradesRaw : Array.isArray(tradesRaw?.trades) ? tradesRaw.trades : [];
   trades.filter(t => t.status === 'active').forEach(t => {
     const pnl = t.pnl_pct != null ? Number(t.pnl_pct) : null;
+    const tags = ['position'];
+    let score = 70;
+    if (pnl != null && pnl < -5) { tags.push('urgent', 'risk'); score = 95; }
+    else if (pnl != null && pnl > 10) { tags.push('actionable'); score = 75; }
+    const evalSig = (t.last_eval_signal || '').toUpperCase();
+    if (evalSig === 'EXIT' || evalSig === 'STOP_HIT') { tags.push('exit'); score = 95; }
+    else if (evalSig === 'ADD') { tags.push('opportunity'); score = 80; }
     cards.push({
-      id: cardId('trade', t.ticker),
-      type: 'trade',
-      icon: 'fa-chart-line',
-      label: 'ACTIVE TRADE',
-      ticker: t.ticker,
-      priority: pnl != null && pnl < -5 ? 95 : 60,
+      id: cardId('trade', t.ticker), type: 'trade', icon: 'fa-chart-line',
+      label: 'ACTIVE TRADE', ticker: t.ticker, score, tags,
       html: renderTradeCard(t),
     });
   });
@@ -185,14 +215,17 @@ function buildCards(data) {
   daily.forEach(r => {
     const sig = (r.signal || '').toUpperCase();
     const a = parseJson(r.ai_analysis) || {};
-    const priority = sig === 'ENTRY NOW' ? 90 : sig === 'ENTRY SOON' ? 80 : sig === 'EXIT' || sig === 'AVOID' ? 85 : 40;
+    const tags = [];
+    let score = 40;
+    if (sig === 'ENTRY NOW') { tags.push('entry', 'actionable'); score = 92; }
+    else if (sig === 'ENTRY SOON') { tags.push('entry', 'opportunity'); score = 78; }
+    else if (sig === 'EXIT' || sig === 'AVOID') { tags.push('exit', 'risk'); score = 85; }
+    else { score = 35; }
+    if (a.conviction === 'high') { tags.push('high_conv'); score = Math.min(score + 8, 99); }
+    if (r.opportunity_score) score = Math.max(score, Math.min(r.opportunity_score, 99));
     cards.push({
-      id: cardId('signal', r.ticker + '-' + (r.run_date || '')),
-      type: 'signal',
-      icon: 'fa-bolt',
-      label: 'SIGNAL',
-      ticker: r.ticker,
-      priority,
+      id: cardId('signal', r.ticker + '-' + (r.run_date || '')), type: 'signal',
+      icon: 'fa-bolt', label: 'SIGNAL', ticker: r.ticker, score, tags,
       html: renderSignalCard(r, a),
     });
   });
@@ -206,13 +239,13 @@ function buildCards(data) {
     const trade = parseJson(p.trade_idea) || {};
     const green = (parseJson(p.green_flags) || []).map(flagText);
     const red = (parseJson(p.red_flags) || []).map(flagText);
+    const tags = ['opportunity'];
+    let score = Math.min(p.composite_score || 40, 99);
+    if (score >= 70) tags.push('actionable');
+    if (p.conviction === 'high') tags.push('high_conv');
     cards.push({
-      id: cardId('opportunity', p.ticker),
-      type: 'opportunity',
-      icon: 'fa-microscope',
-      label: 'OPPORTUNITY',
-      ticker: p.ticker,
-      priority: (p.composite_score || 0) >= 70 ? 75 : 50,
+      id: cardId('opportunity', p.ticker), type: 'opportunity', icon: 'fa-microscope',
+      label: 'OPPORTUNITY', ticker: p.ticker, score, tags,
       html: renderOpportunityCard(p, trade, green, red),
     });
   });
@@ -220,41 +253,42 @@ function buildCards(data) {
   // Thesis themes
   const td = data.thesis ? parseJson(data.thesis.thesis_data) || {} : {};
   const themes = Array.isArray(td.themes) ? td.themes : [];
-  themes.forEach((t, i) => {
+  themes.slice(0, 6).forEach((t, i) => {
+    const tags = ['thesis'];
+    const conf = t.confidence || 5;
+    let score = conf * 7;
+    if ((t.direction || '').includes('bear')) tags.push('risk');
+    if ((t.direction || '').includes('bull')) tags.push('opportunity');
     cards.push({
-      id: cardId('theme', t.name || i),
-      type: 'theme',
-      icon: 'fa-compass',
-      label: 'THEME',
-      priority: (t.confidence || 5) >= 7 ? 55 : 35,
-      html: renderThemeCard(t),
+      id: cardId('theme', t.name || i), type: 'theme', icon: 'fa-compass',
+      label: 'THEME', score, tags, html: renderThemeCard(t),
     });
   });
 
   // Thesis risks
   const risks = Array.isArray(td.key_risks) ? td.key_risks : [];
-  risks.forEach((r, i) => {
+  risks.slice(0, 4).forEach((r, i) => {
     const text = typeof r === 'string' ? r : r.description || '';
+    const sev = r.severity || 'medium';
+    const score = sev === 'high' ? 75 : 55;
     cards.push({
-      id: cardId('risk', text.substring(0, 30) || i),
-      type: 'risk',
-      icon: 'fa-triangle-exclamation',
-      label: 'RISK',
-      priority: 65,
+      id: cardId('risk', text.substring(0, 30) || i), type: 'risk',
+      icon: 'fa-triangle-exclamation', label: 'RISK', score,
+      tags: ['risk', ...(sev === 'high' ? ['urgent'] : [])],
       html: renderRiskCard(r),
     });
   });
 
   // Thesis catalysts
   const catalysts = Array.isArray(td.catalysts) ? td.catalysts : [];
-  catalysts.forEach((c, i) => {
+  catalysts.slice(0, 4).forEach((c, i) => {
     const text = typeof c === 'string' ? c : c.description || '';
+    const impact = typeof c === 'string' ? 'medium' : (c.impact || 'medium');
+    const score = impact === 'high' ? 60 : 40;
     cards.push({
-      id: cardId('catalyst', text.substring(0, 30) || i),
-      type: 'catalyst',
-      icon: 'fa-clock',
-      label: 'CATALYST',
-      priority: 45,
+      id: cardId('catalyst', text.substring(0, 30) || i), type: 'catalyst',
+      icon: 'fa-clock', label: 'CATALYST', score,
+      tags: ['catalyst', ...(impact === 'high' ? ['actionable'] : [])],
       html: renderCatalystCard(c),
     });
   });
@@ -264,47 +298,49 @@ function buildCards(data) {
   feed.filter(f => {
     const ins = parseJson(f.insight_data) || {};
     return !ins.isNoise;
-  }).slice(0, 15).forEach(f => {
+  }).slice(0, 12).forEach(f => {
     const ins = parseJson(f.insight_data) || {};
-    const priority = ins.conviction === 'high' ? 70 : ins.conviction === 'medium' ? 45 : 25;
+    const tags = [];
+    let score = 30;
+    if (ins.conviction === 'high') { tags.push('high_conv'); score = 72; }
+    else if (ins.conviction === 'medium') score = 45;
+    if (ins.contrarian) { tags.push('contrarian'); score += 10; }
+    if ((ins.direction || '').includes('bull') || ins.direction === 'risk-on') tags.push('opportunity');
+    if ((ins.direction || '').includes('bear') || ins.direction === 'risk-off') tags.push('risk');
+    score = Math.min(score, 99);
     cards.push({
-      id: cardId('feed', f.id || f.created_at),
-      type: 'feed',
-      icon: 'fa-satellite-dish',
-      label: 'INTEL',
-      priority: priority + (ins.contrarian ? 10 : 0),
-      html: renderFeedCard(f, ins),
+      id: cardId('feed', f.id || f.created_at), type: 'feed', icon: 'fa-satellite-dish',
+      label: 'INTEL', score, tags, html: renderFeedCard(f, ins),
     });
   });
 
   // Memory Entities
   const memory = Array.isArray(data.memory) ? data.memory : [];
-  memory.filter(m => (m.importance_score || 0) >= 6).forEach(m => {
+  memory.filter(m => (m.importance_score || 0) >= 6).slice(0, 8).forEach(m => {
+    const score = Math.min((m.importance_score || 5) * 8, 80);
+    const tags = [m.category === 'macro' || m.category === 'risk' ? 'macro' : 'thesis'];
+    if (m.category === 'risk' || (m.sentiment_score || 0) < -3) tags.push('risk');
+    if (m.category === 'catalyst') tags.push('catalyst');
     cards.push({
-      id: cardId('memory', m.name || m.id),
-      type: 'memory',
-      icon: 'fa-brain',
-      label: m.category?.toUpperCase() || 'MEMORY',
-      priority: Math.min((m.importance_score || 5) * 6, 55),
+      id: cardId('memory', m.name || m.id), type: 'memory', icon: 'fa-brain',
+      label: m.category?.toUpperCase() || 'MEMORY', score, tags,
       html: renderMemoryCard(m),
     });
   });
 
-  // Notes (recent)
+  // Notes (recent, lower priority)
   const notes = Array.isArray(data.notes) ? data.notes : [];
-  notes.slice(0, 6).forEach(n => {
+  notes.slice(0, 4).forEach(n => {
     cards.push({
-      id: cardId('note', n.id || n.created_at),
-      type: 'note',
-      icon: 'fa-sticky-note',
-      label: 'NOTE',
-      ticker: n.ticker,
-      priority: 15,
+      id: cardId('note', n.id || n.created_at), type: 'note', icon: 'fa-sticky-note',
+      label: 'NOTE', ticker: n.ticker, score: 15, tags: [],
       html: renderNoteCard(n),
     });
   });
 
-  return cards;
+  // Sort by score desc, then cap at MAX_CARDS
+  cards.sort((a, b) => b.score - a.score);
+  return cards.slice(0, MAX_CARDS);
 }
 
 // ═══════════════════════════════════════════════
@@ -623,16 +659,22 @@ function renderCards() {
     if (activeFilter === 'starred') return pref === 'star';
     if (pref === 'hide' && activeFilter !== 'hidden') return false;
     if (activeFilter === 'hidden') return pref === 'hide';
-    if (activeFilter !== 'all' && c.type !== activeFilter) return false;
+    // Type filters
+    if (['trade', 'signal', 'opportunity', 'risk', 'theme', 'feed', 'memory', 'catalyst'].includes(activeFilter)) {
+      return c.type === activeFilter;
+    }
+    // Tag filters
+    if (TAG_DEFS[activeFilter]) return (c.tags || []).includes(activeFilter);
     return true;
   });
 
-  // Sort: starred first, then by priority desc
+  // Sort: starred always first, then by chosen sort
   visible.sort((a, b) => {
     const aStarred = getCardPref(a.id) === 'star' ? 1 : 0;
     const bStarred = getCardPref(b.id) === 'star' ? 1 : 0;
     if (aStarred !== bStarred) return bStarred - aStarred;
-    return b.priority - a.priority;
+    if (activeSort === 'type') return a.type.localeCompare(b.type) || b.score - a.score;
+    return b.score - a.score;
   });
 
   // Update filter counts
@@ -655,6 +697,7 @@ function renderCards() {
       feed: 'var(--tv-purple)', memory: 'var(--tv-purple)', note: 'var(--tv-text-tertiary)',
     };
     const accentColor = typeColors[c.type] || 'var(--tv-text-tertiary)';
+    const scoreColor = c.score >= 75 ? 'var(--tv-green)' : c.score >= 50 ? 'var(--tv-orange)' : 'var(--tv-text-tertiary)';
     return `
       <div class="dc-card${starClass}" data-card-id="${c.id}" data-card-type="${c.type}">
         <div class="dc-card-header">
@@ -662,6 +705,8 @@ function renderCards() {
             <i class="fa-solid ${c.icon}"></i>
             <span>${c.label}</span>
           </div>
+          <div class="dc-card-tags">${renderTags(c.tags)}</div>
+          <span class="dc-card-score" style="color:${scoreColor}">${c.score}</span>
           ${cardActions(c.id)}
         </div>
         ${c.html}
@@ -672,17 +717,14 @@ function renderCards() {
 
 function updateFilterCounts() {
   const counts = { all: 0, starred: 0, hidden: 0 };
-  const typeCounts = {};
 
   allCards.forEach(c => {
     const pref = getCardPref(c.id);
     if (pref === 'hide') { counts.hidden++; return; }
     counts.all++;
     if (pref === 'star') counts.starred++;
-    typeCounts[c.type] = (typeCounts[c.type] || 0) + 1;
   });
 
-  // Update badges
   const badge = (id, count) => {
     const el = document.getElementById(id);
     if (el) el.textContent = count;
@@ -690,11 +732,6 @@ function updateFilterCounts() {
   badge('dcCountAll', counts.all);
   badge('dcCountStarred', counts.starred);
   badge('dcCountHidden', counts.hidden);
-
-  // Update type filter badges
-  Object.keys(typeCounts).forEach(type => {
-    badge(`dcCount-${type}`, typeCounts[type]);
-  });
 }
 
 // ═══════════════════════════════════════════════
@@ -715,7 +752,12 @@ function scaffold() {
     { key: 'theme', icon: 'fa-compass', label: 'Themes' },
     { key: 'feed', icon: 'fa-satellite-dish', label: 'Intel' },
     { key: 'memory', icon: 'fa-brain', label: 'Memory' },
-    { key: 'catalyst', icon: 'fa-clock', label: 'Catalysts' },
+  ];
+  const tagFilters = [
+    { key: 'actionable', label: 'Actionable' },
+    { key: 'urgent', label: 'Urgent' },
+    { key: 'high_conv', label: 'High Conv.' },
+    { key: 'contrarian', label: 'Contrarian' },
   ];
 
   page.innerHTML = `
@@ -735,23 +777,38 @@ function scaffold() {
       <div class="dc-briefing-loading"><div class="dc-skeleton"></div></div>
     </div>
 
-    <div class="dc-filters" id="dcFilters">
-      <button class="dc-filter dc-filter-active" data-filter="all" onclick="window._dbFilter('all')">
-        All <span class="dc-filter-badge" id="dcCountAll">0</span>
-      </button>
-      <button class="dc-filter" data-filter="starred" onclick="window._dbFilter('starred')">
-        <i class="fa-solid fa-star"></i> Starred <span class="dc-filter-badge" id="dcCountStarred">0</span>
-      </button>
-      <span class="dc-filter-sep"></span>
-      ${typeFilters.map(f => `
-        <button class="dc-filter" data-filter="${f.key}" onclick="window._dbFilter('${f.key}')">
-          <i class="fa-solid ${f.icon}"></i> ${f.label} <span class="dc-filter-badge" id="dcCount-${f.key}">0</span>
+    <div class="dc-toolbar">
+      <div class="dc-filters" id="dcFilters">
+        <button class="dc-filter dc-filter-active" data-filter="all" onclick="window._dbFilter('all')">
+          All <span class="dc-filter-badge" id="dcCountAll">0</span>
         </button>
-      `).join('')}
-      <span class="dc-filter-sep"></span>
-      <button class="dc-filter" data-filter="hidden" onclick="window._dbFilter('hidden')">
-        <i class="fa-solid fa-eye-slash"></i> Hidden <span class="dc-filter-badge" id="dcCountHidden">0</span>
-      </button>
+        <button class="dc-filter" data-filter="starred" onclick="window._dbFilter('starred')">
+          <i class="fa-solid fa-star"></i> <span class="dc-filter-badge" id="dcCountStarred">0</span>
+        </button>
+        <span class="dc-filter-sep"></span>
+        ${typeFilters.map(f => `
+          <button class="dc-filter" data-filter="${f.key}" onclick="window._dbFilter('${f.key}')">
+            <i class="fa-solid ${f.icon}"></i> ${f.label}
+          </button>
+        `).join('')}
+        <span class="dc-filter-sep"></span>
+        ${tagFilters.map(f => {
+          const def = TAG_DEFS[f.key];
+          return `<button class="dc-filter dc-filter-tag" data-filter="${f.key}" onclick="window._dbFilter('${f.key}')" style="--tag-color:${def.color};--tag-bg:${def.bg}">
+            ${f.label}
+          </button>`;
+        }).join('')}
+        <span class="dc-filter-sep"></span>
+        <button class="dc-filter" data-filter="hidden" onclick="window._dbFilter('hidden')">
+          <i class="fa-solid fa-eye-slash"></i> <span class="dc-filter-badge" id="dcCountHidden">0</span>
+        </button>
+      </div>
+      <div class="dc-sort">
+        <select class="dc-sort-select" onchange="window._dbSort(this.value)" title="Sort cards">
+          <option value="score" selected>Score</option>
+          <option value="type">Type</option>
+        </select>
+      </div>
     </div>
 
     <div class="dc-grid" id="dcGrid">
@@ -778,6 +835,11 @@ window._dbFilter = (filter) => {
 };
 
 window._dbCardPref = (id, action) => setCardPref(id, action);
+
+window._dbSort = (sort) => {
+  activeSort = sort;
+  renderCards();
+};
 
 window._dbToggleBriefing = () => {
   briefingCollapsed = !briefingCollapsed;
