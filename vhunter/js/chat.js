@@ -10,6 +10,7 @@ let currentConvId = null;
 let messages = [];
 let isStreaming = false;
 let abortController = null;
+let listenersAttached = false;
 
 // ── DOM refs ──
 const $ = id => document.getElementById(id);
@@ -25,16 +26,19 @@ export async function loadChat() {
     showEmptyState();
   }
 
-  // Set up textarea auto-resize + enter handling
-  const textarea = $('chatInput');
-  if (textarea) {
-    textarea.addEventListener('input', autoResize);
-    textarea.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    });
+  // Attach listeners only once
+  if (!listenersAttached) {
+    const textarea = $('chatInput');
+    if (textarea) {
+      textarea.addEventListener('input', autoResize);
+      textarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+    }
+    listenersAttached = true;
   }
 }
 
@@ -44,6 +48,7 @@ async function fetchConversations() {
     const res = await fetch(`${API}/api/chat/conversations`, {
       headers: { 'X-User-Id': userId() }
     });
+    if (!res.ok) throw new Error(res.statusText);
     conversations = await res.json();
   } catch (e) {
     console.error('[CHAT] Failed to fetch conversations:', e);
@@ -60,6 +65,7 @@ async function selectConversation(id) {
     const res = await fetch(`${API}/api/chat/conversations/${id}`, {
       headers: { 'X-User-Id': userId() }
     });
+    if (!res.ok) throw new Error(res.statusText);
     const data = await res.json();
     messages = data.messages || [];
     renderMessages();
@@ -265,6 +271,14 @@ async function sendMessage() {
       await processSSEParts(remaining);
     }
 
+    // Add copy button to the completed assistant bubble
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'chat-msg-copy';
+    copyBtn.title = 'Copy';
+    copyBtn.onclick = () => copyMessage(copyBtn);
+    copyBtn.innerHTML = '<i class="fa-solid fa-copy" style="font-size:11px"></i>';
+    assistantEl.querySelector('.chat-msg-body')?.appendChild(copyBtn);
+
     // Save to local messages array
     messages.push({ role: 'user', content: text });
     messages.push({ role: 'assistant', content: fullText });
@@ -421,7 +435,7 @@ function renderMarkdown(text) {
 
   let html = escapeHtml(text);
 
-  // Code blocks
+  // Code blocks (must be first to protect content from other transforms)
   html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
     `<pre><code class="lang-${lang}">${code.trim()}</code></pre>`
   );
@@ -429,11 +443,11 @@ function renderMarkdown(text) {
   // Inline code
   html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
 
-  // Bold
+  // Bold (must be before italic)
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 
-  // Italic
-  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  // Italic (use negative lookbehind/ahead to avoid matching inside bold)
+  html = html.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
 
   // Headers
   html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
@@ -454,7 +468,10 @@ function renderMarkdown(text) {
   html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
 
   // Numbered lists
-  html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/(^\d+\. .+$\n?)+/gm, (block) => {
+    const items = block.trim().split('\n').map(line => `<li>${line.replace(/^\d+\.\s*/, '')}</li>`).join('');
+    return `<ol>${items}</ol>`;
+  });
 
   // Line breaks (but not inside pre/table)
   html = html.replace(/\n/g, '<br>');
@@ -479,7 +496,9 @@ function formatToolName(name) {
 
 function formatTimeAgo(dateStr) {
   if (!dateStr) return '';
-  const diff = Date.now() - new Date(dateStr + 'Z').getTime();
+  // Handle both ISO (with Z) and bare datetime strings
+  const ts = dateStr.endsWith('Z') || dateStr.includes('+') ? new Date(dateStr).getTime() : new Date(dateStr + 'Z').getTime();
+  const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return 'just now';
   if (mins < 60) return `${mins}m ago`;
@@ -487,16 +506,19 @@ function formatTimeAgo(dateStr) {
   if (hrs < 24) return `${hrs}h ago`;
   const days = Math.floor(hrs / 24);
   if (days < 7) return `${days}d ago`;
-  return new Date(dateStr + 'Z').toLocaleDateString();
+  return new Date(ts).toLocaleDateString();
 }
 
+// Throttled scroll — avoids flooding RAF during fast streaming
+let scrollPending = false;
 function scrollToBottom() {
-  const area = $('chatMessages');
-  if (area) {
-    requestAnimationFrame(() => {
-      area.scrollTop = area.scrollHeight;
-    });
-  }
+  if (scrollPending) return;
+  scrollPending = true;
+  requestAnimationFrame(() => {
+    const area = $('chatMessages');
+    if (area) area.scrollTop = area.scrollHeight;
+    scrollPending = false;
+  });
 }
 
 function autoResize() {
@@ -530,11 +552,6 @@ function copyMessage(btn) {
   });
 }
 
-function deleteCurrentChat() {
-  if (!currentConvId) return;
-  deleteConversation(currentConvId);
-}
-
 // ── Window bindings ──
 window.chatNewConversation = newConversation;
 window.chatSendMessage = sendMessage;
@@ -543,4 +560,3 @@ window.chatDeleteConv = deleteConversation;
 window.chatStopStreaming = stopStreaming;
 window.chatToggleSidebar = toggleChatSidebar;
 window.chatCopyMsg = copyMessage;
-window.chatDeleteCurrentChat = deleteCurrentChat;
