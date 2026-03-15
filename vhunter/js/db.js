@@ -17,7 +17,6 @@ function getUserId() {
   }
 }
 
-// Force set user ID (for importing positions)
 export function setUserId(id) {
   localStorage.setItem('vhunter_user_id', id);
 }
@@ -41,64 +40,6 @@ async function dbFetch(path, options = {}) {
     console.error(`Fetch failed for ${path}:`, e.message);
     throw e;
   }
-}
-
-// ==================== POSITIONS ====================
-
-export async function getPositions(status = null) {
-  const query = status ? `?status=${status}` : '';
-  return dbFetch(`/api/positions${query}`);
-}
-
-export async function getOpenPositions() {
-  return getPositions('open');
-}
-
-export async function getClosedPositions() {
-  return getPositions('closed');
-}
-
-export async function addPosition(position) {
-  return dbFetch('/api/positions', {
-    method: 'POST',
-    body: JSON.stringify(position)
-  });
-}
-
-export async function updatePosition(id, updates) {
-  return dbFetch(`/api/positions/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(updates)
-  });
-}
-
-export async function closePosition(id, exitPrice, position = null, exitDate = null) {
-  // Calculate P&L if position data is provided
-  let pnl = null;
-  if (position) {
-    const qty = position.quantity;
-    const entry = position.entry_price;
-    const type = position.type;
-    const isOption = ['put', 'call', 'short_put', 'short_call'].includes(type);
-    const multiplier = isOption ? 100 : 1;
-
-    if (type === 'long' || type === 'call' || type === 'put') {
-      pnl = (exitPrice - entry) * qty * multiplier;
-    } else if (type === 'short' || type === 'short_call' || type === 'short_put') {
-      pnl = (entry - exitPrice) * qty * multiplier;
-    }
-  }
-
-  return updatePosition(id, {
-    status: 'closed',
-    exit_price: exitPrice,
-    exit_date: exitDate || new Date().toISOString().split('T')[0],
-    pnl: pnl
-  });
-}
-
-export async function deletePosition(id) {
-  return dbFetch(`/api/positions/${id}`, { method: 'DELETE' });
 }
 
 // ==================== NOTES ====================
@@ -394,16 +335,3 @@ export async function getOptionsRec(checkId) {
   return dbFetch(`/api/options-rec?checkId=${checkId}`);
 }
 
-// ==================== HELPERS ====================
-
-// Calculate total P&L from closed positions
-export function calculateTotalPnL(positions) {
-  return positions
-    .filter(p => p.status === 'closed' && p.pnl !== null)
-    .reduce((sum, p) => sum + p.pnl, 0);
-}
-
-// Get positions for a specific ticker
-export function filterByTicker(positions, ticker) {
-  return positions.filter(p => p.ticker === ticker);
-}

@@ -4,8 +4,6 @@ import { initCharts } from './charts.js';
 import { parseRoute, initRouter } from './router.js';
 import { registerStrip, renderAll as renderHistory } from './history.js';
 import { switchPage, registerPageLoaders, restoreCollapsedSections, getCurrentPage } from './pages.js';
-import { loadPositions, setRunCallback as setPositionsRunCallback } from './positions.js';
-
 import { loadFeed, setRunCallback as setFeedRunCallback } from './feed.js';
 import { loadMemoryMap, setRunCallback as setMemoryRunCallback } from './memory-map.js';
 import { loadFilings } from './filings.js';
@@ -23,7 +21,6 @@ import { initTooltips } from './tooltip.js';
 import { initTooltipPositioning } from './tooltip-position.js';
 
 // Import modules for side effects (window bindings)
-import './portfolio.js';
 import './llm-export.js';
 
 // Register history strips
@@ -40,8 +37,6 @@ registerStrip('historyStripMobile', (ticker) => {
 registerStrip('holdingsHistoryStrip', (ticker) => {
   window.showTickerHoldings(ticker);
 });
-setPositionsRunCallback(() => run());
-
 setFeedRunCallback(() => run());
 setMemoryRunCallback(() => run());
 
@@ -55,7 +50,6 @@ console.log('[APP] About to register page loaders');
 console.log('[APP] loadMacro:', loadMacro);
 registerPageLoaders({
   dashboard: loadDashboard,
-  positions: loadPositions,
   options: loadOptionsData,
   feed: loadFeed,
   memory: loadMemoryMap,

@@ -45,13 +45,6 @@
     grid-template-columns: repeat(5, 1fr);
   }
 
-  .positions-header,
-  .position-row {
-    grid-template-columns: 2fr 0.7fr 0.5fr 1fr 1fr 1.2fr 0.8fr;
-    font-size: var(--t-sm);
-    padding: 10px 12px;
-  }
-
   /* Options Page */
   .options-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -222,16 +215,6 @@
     font-size: var(--t-3xs);
   }
 
-  /* Closed positions table - mobile */
-  .closed-header {
-    display: none;
-  }
-  .closed-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 14px;
-  }
   .closed-row .col-ticker {
     flex: 1;
     min-width: 0;
@@ -396,145 +379,6 @@
   .page-header .header-actions button {
     padding: 8px 14px;
     font-size: var(--t-base);
-  }
-
-  /* Positions table - compact horizontal mobile layout */
-  .positions-header {
-    display: none;
-  }
-
-  .positions-table {
-    border-radius: 12px;
-    max-width: 100%;
-    overflow: hidden;
-  }
-
-  .position-list {
-    max-width: 100%;
-    overflow-x: hidden;
-  }
-
-  .position-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--tv-border);
-    max-width: 100%;
-  }
-
-  .position-row:last-child {
-    border-bottom: none;
-  }
-
-  .position-row .col-ticker {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .col-ticker strong {
-    font-size: var(--t-xl);
-    display: block;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .col-ticker small {
-    font-size: var(--t-sm);
-    color: var(--tv-text-secondary);
-  }
-
-  .position-row .col-type {
-    flex-shrink: 0;
-  }
-  .type-badge {
-    font-size: var(--t-xs);
-    padding: 4px 8px;
-    white-space: nowrap;
-  }
-
-  /* Hide detailed columns on mobile */
-  .position-row .col-qty,
-  .position-row .col-entry,
-  .position-row .col-current {
-    display: none;
-  }
-
-  .position-row .col-pnl {
-    flex-shrink: 0;
-    text-align: right;
-    min-width: 70px;
-  }
-
-  .col-pnl strong {
-    font-size: var(--t-lg);
-    display: block;
-  }
-  .col-pnl small {
-    font-size: var(--t-sm);
-    color: var(--tv-text-secondary);
-  }
-
-  .position-row .col-actions {
-    flex-shrink: 0;
-    gap: 6px;
-  }
-
-  .btn-icon {
-    width: 32px;
-    height: 32px;
-    font-size: var(--t-base);
-  }
-
-  /* Closed positions - compact row */
-  .position-row-closed {
-    padding: 12px 16px;
-    font-size: var(--t-md);
-    gap: 10px;
-  }
-
-  .position-row-closed .ticker {
-    font-size: var(--t-lg);
-    min-width: 50px;
-  }
-
-  .position-row-closed .entry {
-    font-size: var(--t-base);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .position-row-closed .pnl {
-    font-size: var(--t-lg);
-    min-width: 60px;
-  }
-
-  .position-card {
-    grid-template-columns: 1fr;
-    padding: 16px;
-  }
-
-  .position-ticker {
-    font-size: var(--t-2xl);
-  }
-  .position-type {
-    font-size: var(--t-sm);
-  }
-  .position-details {
-    font-size: var(--t-md);
-    gap: 12px;
-  }
-  .position-pnl {
-    font-size: var(--t-xl);
-  }
-  .position-notes {
-    font-size: var(--t-base);
-  }
-
-  .position-actions {
-    flex-direction: row;
-    justify-content: flex-end;
   }
 
   /* Watchlist */

@@ -15,7 +15,6 @@ const pageTitles = {
   memory: 'Memory Map',
   filings: 'Institutional Filings',
   terminal: 'Terminal',
-  positions: 'Positions',
   macro: 'Macro Dashboard',
   daily: 'Daily Checker',
   pipeline: 'Deep Research',

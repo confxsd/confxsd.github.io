@@ -2,13 +2,12 @@
 // Central export for all AI prompts
 //
 // Usage:
-//   import { buildCombinedPrompt, buildPortfolioPrompt, buildSummaryPrompt } from './prompts/index.js';
+//   import { buildCombinedPrompt, buildSummaryPrompt } from './prompts/index.js';
 //   import * as prompts from './prompts/index.js';
 //   import { builders } from './prompts/index.js';
 
 // Main prompt builders
 export { buildCombinedPrompt, buildAnalysisPrompt, buildTradePrompt, COMBINED_SYSTEM_ROLE } from './combined.js';
-export { buildPortfolioPrompt, PORTFOLIO_SYSTEM_ROLE } from './portfolio.js';
 export { buildSummaryPrompt, SUMMARY_SYSTEM_ROLE } from './summary.js';
 
 // Context builders (for custom prompt composition)
@@ -32,12 +31,11 @@ export const builders = {
  *
  * @example
  * const prompt = PromptFactory.create('combined', marketData);
- * const portfolioPrompt = PromptFactory.create('portfolio', portfolioData);
  */
 export const PromptFactory = {
   /**
    * Create a prompt by type
-   * @param {'combined' | 'portfolio' | 'summary' | 'analysis' | 'trade'} type - Prompt type
+   * @param {'combined' | 'summary' | 'analysis' | 'trade'} type - Prompt type
    * @param {Object} data - Data to pass to prompt builder
    * @returns {string} Generated prompt
    */
@@ -46,7 +44,6 @@ export const PromptFactory = {
       combined: () => import('./combined.js').then(m => m.buildCombinedPrompt(data)),
       analysis: () => import('./combined.js').then(m => m.buildAnalysisPrompt(data)),
       trade: () => import('./combined.js').then(m => m.buildTradePrompt(data)),
-      portfolio: () => import('./portfolio.js').then(m => m.buildPortfolioPrompt(data)),
       summary: () => import('./summary.js').then(m => m.buildSummaryPrompt(data))
     };
 
@@ -63,14 +60,12 @@ export const PromptFactory = {
    */
   createSync(type, data) {
     const { buildCombinedPrompt } = require('./combined.js');
-    const { buildPortfolioPrompt } = require('./portfolio.js');
     const { buildSummaryPrompt } = require('./summary.js');
 
     const builders = {
       combined: buildCombinedPrompt,
       analysis: buildCombinedPrompt,
       trade: buildCombinedPrompt,
-      portfolio: buildPortfolioPrompt,
       summary: buildSummaryPrompt
     };
 
@@ -86,7 +81,7 @@ export const PromptFactory = {
    * Get available prompt types
    */
   getTypes() {
-    return ['combined', 'portfolio', 'summary', 'analysis', 'trade'];
+    return ['combined', 'summary', 'analysis', 'trade'];
   }
 };
 
