@@ -271,13 +271,14 @@ async function sendMessage() {
       await processSSEParts(remaining);
     }
 
-    // Add copy button to the completed assistant bubble
+    // Add copy button and collapse if needed
     const copyBtn = document.createElement('button');
     copyBtn.className = 'chat-msg-copy';
     copyBtn.title = 'Copy';
     copyBtn.onclick = () => copyMessage(copyBtn);
     copyBtn.innerHTML = '<i class="fa-solid fa-copy" style="font-size:11px"></i>';
     assistantEl.querySelector('.chat-msg-body')?.appendChild(copyBtn);
+    maybeCollapse(assistantEl);
 
     // Save to local messages array
     messages.push({ role: 'user', content: text });
@@ -387,7 +388,35 @@ function appendMessage(msg, animate = true) {
   }
 
   area.appendChild(el);
+  maybeCollapse(el);
   if (animate) scrollToBottom();
+}
+
+// Collapse long messages with a "Show more" toggle
+const COLLAPSE_HEIGHT = 300;
+
+function maybeCollapse(msgEl) {
+  const content = msgEl.querySelector('.chat-msg-content');
+  if (!content) return;
+  // Use rAF to measure after render
+  requestAnimationFrame(() => {
+    if (content.scrollHeight > COLLAPSE_HEIGHT + 40) {
+      content.classList.add('collapsed');
+      // Add toggle button if not already present
+      if (!msgEl.querySelector('.chat-msg-toggle')) {
+        const btn = document.createElement('button');
+        btn.className = 'chat-msg-toggle';
+        btn.textContent = 'Show more';
+        btn.onclick = () => toggleCollapse(content, btn);
+        content.parentElement.insertBefore(btn, content.nextSibling);
+      }
+    }
+  });
+}
+
+function toggleCollapse(content, btn) {
+  const isCollapsed = content.classList.toggle('collapsed');
+  btn.textContent = isCollapsed ? 'Show more' : 'Show less';
 }
 
 function createAssistantBubble() {
