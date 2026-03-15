@@ -363,7 +363,7 @@ export function calcYangZhangVolatility(bars, window = 30) {
  * @returns {number|null} Annualized volatility as percentage
  */
 export function calcRealizedVolatility(data, window = 30) {
-  if (!data || data.length < window) return null;
+  if (!data || data.length < window + 1) return null;
 
   // Check if we have OHLC data (array of objects with o, h, l, c)
   if (typeof data[0] === 'object' && data[0].h !== undefined) {
@@ -663,10 +663,12 @@ export function findOptionByDelta(targetDelta, options, spotPrice, type) {
     const dte = Math.max(1, Math.ceil((new Date(expDate) - new Date()) / (1000 * 60 * 60 * 24)));
 
     // Get delta from API or estimate
+    // iv from Polygon is decimal (e.g., 0.30), estimateDelta expects percentage
     let delta = opt.greeks?.delta;
     if (delta === undefined || delta === null) {
       delta = estimateDelta(type, spotPrice, strike, iv * 100, dte);
     }
+    if (isNaN(delta)) continue;
 
     const diff = Math.abs(delta - targetDelta);
     if (diff < minDiff) {

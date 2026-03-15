@@ -137,7 +137,8 @@ function getNextFriday(addDays = 0) {
   const d = new Date();
   d.setDate(d.getDate() + addDays);
   const day = d.getDay();
-  const daysUntilFriday = (5 - day + 7) % 7 || 7;
+  // If already Friday, use this Friday (0 days). Otherwise find the next one.
+  const daysUntilFriday = (5 - day + 7) % 7;
   d.setDate(d.getDate() + daysUntilFriday);
   return d.toISOString().split('T')[0];
 }
