@@ -116,8 +116,14 @@ function processHistoricalData(ticker, data) {
   const bbLower = sma20 - 2 * bbStd;
   const bbPct = ((currentPrice - bbLower) / (bbUpper - bbLower) * 100).toFixed(0);
 
-  // VWAP (simplified)
-  const vwap = (lastBar.h + lastBar.l + lastBar.c) / 3;
+  // VWAP — cumulative volume-weighted average price
+  const vwapData = data.reduce((acc, bar) => {
+    const tp = (bar.h + bar.l + bar.c) / 3;
+    acc.vwSum += tp * bar.v;
+    acc.volSum += bar.v;
+    return acc;
+  }, { vwSum: 0, volSum: 0 });
+  const vwap = vwapData.volSum > 0 ? vwapData.vwSum / vwapData.volSum : currentPrice;
   const vwapDiff = ((currentPrice - vwap) / vwap * 100).toFixed(1);
 
   // Volume trend

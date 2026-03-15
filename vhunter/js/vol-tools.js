@@ -59,13 +59,16 @@ export function extractEarningsVol(termIV, daysToExpiry, baseIV = null, daysToEa
     };
   }
 
-  // Variance additivity: termVar × T = baseVar × regularDays + eventVar × eventDays
-  const termVar = Math.pow(termIV / 100, 2);
-  const baseVar = Math.pow(baseIV / 100, 2);
+  // Variance additivity using daily variances:
+  // dailyVar = (annualizedIV / 100)^2 / 365
+  // totalVar over T days = dailyVar × T
+  const dailyTermVar = Math.pow(termIV / 100, 2) / 365;
+  const dailyBaseVar = Math.pow(baseIV / 100, 2) / 365;
 
-  // Solve for event variance
-  const totalTermVar = termVar * daysToExpiry;
-  const totalBaseVar = baseVar * regularDays;
+  // Solve for event variance:
+  // dailyTermVar × daysToExpiry = dailyBaseVar × regularDays + eventVar × eventDays
+  const totalTermVar = dailyTermVar * daysToExpiry;
+  const totalBaseVar = dailyBaseVar * regularDays;
   const eventVar = (totalTermVar - totalBaseVar) / eventDays;
 
   if (eventVar <= 0) {
@@ -77,9 +80,12 @@ export function extractEarningsVol(termIV, daysToExpiry, baseIV = null, daysToEa
     };
   }
 
-  const eventVol = Math.sqrt(eventVar) * 100; // Annualized event vol
-  const dailyEventVol = eventVol / Math.sqrt(365); // Daily event vol (annualized / sqrt(365), calendar days for consistency)
-  const expectedMove = dailyEventVol; // 1-SD daily expected move (percentage)
+  // eventVar is daily variance for the event day
+  // Annualized event vol = sqrt(eventVar × 365) × 100
+  const eventVol = Math.sqrt(eventVar * 365) * 100;
+  // Daily event vol (1-SD expected move as percentage)
+  const dailyEventVol = Math.sqrt(eventVar) * 100;
+  const expectedMove = dailyEventVol;
 
   // Variance weight: how much of total variance is from the event?
   const varianceWeight = (eventVar * eventDays) / totalTermVar * 100;

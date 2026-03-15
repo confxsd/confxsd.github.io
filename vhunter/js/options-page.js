@@ -977,10 +977,20 @@ export function runOptionsScanner() {
 
     const strike = details.strike_price;
     const moneyness = strike / spotPrice;
-    if (deltaFilter === 'high' && moneyness > 0.85) return false;
-    if (deltaFilter === 'atm' && (moneyness < 0.95 || moneyness > 1.05)) return false;
-    if (deltaFilter === 'otm' && (moneyness < 1.05 || moneyness > 1.25)) return false;
-    if (deltaFilter === 'deep-otm' && moneyness < 1.25) return false;
+    const isCall = details.contract_type === 'call';
+    // For calls: ITM = moneyness < 1, OTM = moneyness > 1
+    // For puts:  ITM = moneyness > 1, OTM = moneyness < 1
+    if (isCall) {
+      if (deltaFilter === 'high' && moneyness > 0.85) return false;
+      if (deltaFilter === 'atm' && (moneyness < 0.95 || moneyness > 1.05)) return false;
+      if (deltaFilter === 'otm' && (moneyness < 1.05 || moneyness > 1.25)) return false;
+      if (deltaFilter === 'deep-otm' && moneyness < 1.25) return false;
+    } else {
+      if (deltaFilter === 'high' && moneyness < 1.15) return false;
+      if (deltaFilter === 'atm' && (moneyness < 0.95 || moneyness > 1.05)) return false;
+      if (deltaFilter === 'otm' && (moneyness < 0.75 || moneyness > 0.95)) return false;
+      if (deltaFilter === 'deep-otm' && moneyness > 0.75) return false;
+    }
 
     if ((o.day?.volume || 0) < 10 && (o.open_interest || 0) < 100) return false;
 

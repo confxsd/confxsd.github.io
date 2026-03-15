@@ -6,19 +6,8 @@
 // CONFIGURATION
 // ============================================
 
-// Current Fed Funds rate - update quarterly or fetch dynamically
-// As of Jan 2026: ~4.25-4.50% (should be updated based on Fed decisions)
-let RISK_FREE_RATE = 0.04;
-
-// Set risk-free rate dynamically (can be called from API)
-export function setRiskFreeRate(rate) {
-  RISK_FREE_RATE = rate;
-}
-
-// Get current risk-free rate
-export function getRiskFreeRate() {
-  return RISK_FREE_RATE;
-}
+// Import risk-free rate from financial-math.js (single source of truth)
+import { getRiskFreeRate } from './financial-math.js';
 
 // ============================================
 // CORE GEX CALCULATIONS
@@ -40,31 +29,35 @@ function normPDF(x) {
   return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
 }
 
-// Black-Scholes d1
-function calcD1(spot, strike, t, r, iv) {
-  if (t <= 0 || iv <= 0) return 0;
+// Black-Scholes d1 — matches financial-math.js signature: (spot, strike, iv, t, r)
+function calcD1(spot, strike, iv, t, r) {
+  if (t <= 0 || iv <= 0) return NaN;
   return (Math.log(spot / strike) + (r + 0.5 * iv * iv) * t) / (iv * Math.sqrt(t));
 }
 
 // Estimate Delta if not provided by API
+// iv is ALWAYS decimal (e.g., 0.30 for 30%) — Polygon API returns decimal
 export function estimateDelta(spot, strike, dte, iv, isCall) {
   const t = Math.max(dte, 1) / 365;
-  const r = RISK_FREE_RATE;
-  const sigma = iv > 1 ? iv / 100 : iv; // Handle both 0.3 and 30% formats
+  const r = getRiskFreeRate();
+  const sigma = iv; // Always decimal — do NOT guess units
 
-  const d1 = calcD1(spot, strike, t, r, sigma);
+  const d1 = calcD1(spot, strike, sigma, t, r);
+  if (isNaN(d1)) return isCall ? 0.5 : -0.5;
   return isCall ? normCDF(d1) : normCDF(d1) - 1;
 }
 
 // Estimate Gamma if not provided by API
+// iv is ALWAYS decimal (e.g., 0.30 for 30%)
 export function estimateGamma(spot, strike, dte, iv) {
   const t = Math.max(dte, 1) / 365;
-  const r = RISK_FREE_RATE;
-  const sigma = iv > 1 ? iv / 100 : iv;
+  const r = getRiskFreeRate();
+  const sigma = iv; // Always decimal
 
   if (sigma <= 0 || t <= 0) return 0;
 
-  const d1 = calcD1(spot, strike, t, r, sigma);
+  const d1 = calcD1(spot, strike, sigma, t, r);
+  if (isNaN(d1)) return 0;
   return normPDF(d1) / (spot * sigma * Math.sqrt(t));
 }
 

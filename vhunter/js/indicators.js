@@ -3,6 +3,7 @@ import * as finMath from './financial-math.js';
 import { estimateGamma as estimateGammaFromBS } from './gamma.js';
 
 export function average(arr) {
+  if (!arr || !arr.length) return 0;
   return arr.reduce((s, v) => s + v, 0) / arr.length;
 }
 
