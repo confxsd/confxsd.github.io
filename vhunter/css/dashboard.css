@@ -1,5 +1,4 @@
-/* Dashboard — Pre-Market Intelligence Briefing
-   What does the system know? What should you understand before trading? */
+/* Dashboard — Pre-Market Intelligence Briefing */
 
 #page-dashboard {
   padding: 10px 12px;
@@ -106,9 +105,9 @@
   50% { opacity: 0.6; }
 }
 
-/* ══════════════════════════════════════
-   THESIS STRIP — The system's market view
-   ══════════════════════════════════════ */
+/* ══════════════════════════
+   THESIS STRIP
+   ══════════════════════════ */
 
 .db-thesis {
   border: 1px solid var(--tv-border);
@@ -208,26 +207,33 @@
 
 .db-sector-chip,
 .db-ticker-chip {
-  font-size: var(--t-3xs);
-  padding: 1px 6px;
-  border-radius: 3px;
+  font-size: var(--t-xs);
+  padding: 4px 10px;
+  border-radius: 5px;
   border: 1px solid var(--tv-border);
   background: var(--tv-bg-secondary);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .db-ticker-chip:hover { background: var(--tv-bg-tertiary); }
 
-/* ══════════════════════════════════════
-   GRID LAYOUT
-   ══════════════════════════════════════ */
+.db-bias-label {
+  font-weight: 700;
+  font-size: var(--t-xs);
+}
+
+/* ══════════════════════════
+   GRID
+   ══════════════════════════ */
 
 .db-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 8px;
   align-items: start;
-  margin-bottom: 8px;
 }
 
 .db-col {
@@ -236,19 +242,15 @@
   gap: 8px;
 }
 
-/* ══════════════════════════════════════
+/* ══════════════════════════
    CARD
-   ══════════════════════════════════════ */
+   ══════════════════════════ */
 
 .db-card {
   background: var(--tv-bg);
   border: 1px solid var(--tv-border);
   border-radius: 6px;
   overflow: hidden;
-}
-
-.db-card-wide {
-  margin-top: 0;
 }
 
 .db-card-head {
@@ -292,9 +294,9 @@
   padding: 16px 8px;
 }
 
-/* ══════════════════════════════════════
-   SHARED ELEMENTS
-   ══════════════════════════════════════ */
+/* ══════════════════════════
+   SHARED
+   ══════════════════════════ */
 
 .db-ticker {
   font-weight: 700;
@@ -374,9 +376,9 @@
 
 .db-sub-title-red { color: var(--tv-red); }
 
-/* ══════════════════════════════════════
-   SCANNER SIGNALS (Daily Checks)
-   ══════════════════════════════════════ */
+/* ══════════════════════════
+   SCANNER SIGNALS
+   ══════════════════════════ */
 
 .db-signal-group { margin-bottom: 10px; }
 .db-signal-group:last-child { margin-bottom: 0; }
@@ -421,9 +423,7 @@
   flex-wrap: wrap;
 }
 
-.db-signal-levels strong {
-  color: var(--tv-text-secondary);
-}
+.db-signal-levels strong { color: var(--tv-text-secondary); }
 
 .db-signal-conditions {
   display: flex;
@@ -441,12 +441,12 @@
   border: 1px dashed var(--tv-border);
 }
 
-/* ══════════════════════════════════════
+/* ══════════════════════════
    PIPELINE / OPPORTUNITIES
-   ══════════════════════════════════════ */
+   ══════════════════════════ */
 
 .db-opp-row {
-  padding: 5px 0;
+  padding: 8px 0;
   border-bottom: 1px solid var(--tv-border-light);
 }
 
@@ -456,161 +456,66 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  margin-bottom: 4px;
 }
 
 .db-opp-score {
-  font-size: var(--t-xs);
+  font-size: var(--t-lg);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   margin-left: auto;
 }
 
 .db-opp-thesis {
-  font-size: var(--t-3xs);
+  font-size: var(--t-xs);
   color: var(--tv-text-secondary);
-  margin-top: 2px;
-  line-height: 1.4;
+  margin-bottom: 4px;
+  line-height: 1.45;
+}
+
+.db-stage-scores {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.db-stage-chip {
+  font-size: var(--t-3xs);
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--tv-bg-secondary);
+  border: 1px solid var(--tv-border-light);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.db-stage-name {
+  color: var(--tv-text-tertiary);
+  text-transform: capitalize;
 }
 
 .db-opp-flags {
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
-  margin-top: 3px;
 }
 
 .db-flag-green,
 .db-flag-red {
-  font-size: var(--t-3xs);
-  padding: 1px 5px;
-  border-radius: 2px;
-  max-width: 180px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: var(--t-xs);
+  padding: 2px 8px;
+  border-radius: 3px;
+  line-height: 1.5;
 }
 
-.db-flag-green {
-  color: var(--tv-green);
-  background: var(--tv-green-bg);
-}
+.db-flag-green { color: var(--tv-green); background: var(--tv-green-bg); }
+.db-flag-red { color: var(--tv-red); background: var(--tv-red-bg); }
 
-.db-flag-red {
-  color: var(--tv-red);
-  background: var(--tv-red-bg);
-}
-
-/* ══════════════════════════════════════
-   FILING INTELLIGENCE
-   ══════════════════════════════════════ */
-
-.db-filing-group { margin-bottom: 8px; }
-.db-filing-group:last-child { margin-bottom: 0; }
-
-.db-filing-group-label {
-  font-size: var(--t-3xs);
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 3px;
-  padding-bottom: 3px;
-  border-bottom: 1px solid var(--tv-border-light);
-}
-
-.db-filing-item {
-  padding: 5px 0;
-  border-bottom: 1px solid var(--tv-border-light);
-}
-
-.db-filing-item:last-child { border-bottom: none; }
-
-.db-filing-item-top {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.db-filing-type {
-  font-size: var(--t-3xs);
-  font-weight: 600;
-  text-transform: uppercase;
-  color: var(--tv-text-secondary);
-}
-
-.db-filing-conviction {
-  font-size: var(--t-3xs);
-  font-weight: 800;
-  margin-left: auto;
-  font-variant-numeric: tabular-nums;
-}
-
-.db-filing-narrative {
-  font-size: var(--t-3xs);
-  color: var(--tv-text-secondary);
-  margin-top: 2px;
-  line-height: 1.35;
-}
-
-.db-filing-funds {
-  font-size: var(--t-3xs);
-  color: var(--tv-text-tertiary);
-  margin-top: 1px;
-  font-style: italic;
-}
-
-/* ══════════════════════════════════════
-   ML DETECTIONS
-   ══════════════════════════════════════ */
-
-.db-ml-section { margin-bottom: 8px; }
-.db-ml-section:last-child { margin-bottom: 0; }
-
-.db-ml-label {
-  font-size: var(--t-3xs);
-  font-weight: 700;
-  color: var(--tv-text-secondary);
-  margin-bottom: 3px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.db-ml-label i { font-size: 9px; }
-
-.db-ml-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 3px 0;
-  font-size: var(--t-2xs);
-}
-
-.db-ml-dir {
-  font-size: var(--t-3xs);
-  font-weight: 700;
-}
-
-.db-ml-desc {
-  font-size: var(--t-3xs);
-  color: var(--tv-text-secondary);
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.db-ml-val {
-  font-size: var(--t-3xs);
-  font-weight: 700;
-  color: var(--tv-text-tertiary);
-  margin-left: auto;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ══════════════════════════════════════
+/* ══════════════════════════
    THEMES & CATALYSTS
-   ══════════════════════════════════════ */
+   ══════════════════════════ */
 
 .db-theme-list { margin-bottom: 4px; }
 
@@ -697,9 +602,9 @@
   line-height: 1.4;
 }
 
-/* ══════════════════════════════════════
+/* ══════════════════════════
    FEED INTELLIGENCE
-   ══════════════════════════════════════ */
+   ══════════════════════════ */
 
 .db-feed-row {
   padding: 5px 0;
@@ -750,9 +655,9 @@
   line-height: 1.35;
 }
 
-/* ══════════════════════════════════════
+/* ══════════════════════════
    MEMORY ENTITIES
-   ══════════════════════════════════════ */
+   ══════════════════════════ */
 
 .db-memory-row {
   padding: 5px 0;
@@ -808,98 +713,92 @@
   flex-wrap: wrap;
 }
 
-/* ══════════════════════════════════════
-   TRACK RECORD (full-width bottom)
-   ══════════════════════════════════════ */
+/* ══════════════════════════
+   WATCHLIST
+   ══════════════════════════ */
 
-.db-track-metrics {
+.db-watchlist-grid {
   display: flex;
-  gap: 6px;
-  margin-bottom: 8px;
   flex-wrap: wrap;
-}
-
-.db-track-metric {
-  flex: 1;
-  min-width: 80px;
-  text-align: center;
-  padding: 8px 6px;
-  background: var(--tv-bg-secondary);
-  border-radius: 4px;
-}
-
-.db-track-metric-label {
-  font-size: var(--t-3xs);
-  color: var(--tv-text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.2px;
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-
-.db-track-metric-val {
-  font-size: var(--t-lg);
-  font-weight: 800;
-  color: var(--tv-text-primary);
-  font-variant-numeric: tabular-nums;
-}
-
-.db-track-metric-sub {
-  font-size: var(--t-3xs);
-  color: var(--tv-text-tertiary);
-  margin-top: 1px;
-}
-
-.db-track-recent { margin-top: 4px; }
-
-.db-track-strip {
-  display: flex;
   gap: 4px;
-  flex-wrap: wrap;
 }
 
-.db-track-chip {
-  display: flex;
+.db-wl-item {
+  display: inline-flex;
   align-items: center;
   gap: 5px;
   padding: 4px 8px;
   border-radius: 4px;
-  border: 1px solid var(--tv-border);
   background: var(--tv-bg-secondary);
-  font-size: var(--t-3xs);
+  border: 1px solid var(--tv-border-light);
   cursor: pointer;
   transition: background 0.1s;
 }
 
-.db-track-chip:hover { background: var(--tv-bg-tertiary); }
+.db-wl-item:hover { background: var(--tv-bg-tertiary); }
 
-.db-track-chip.win { border-left: 3px solid var(--tv-green); }
-.db-track-chip.loss { border-left: 3px solid var(--tv-red); }
-.db-track-chip.expired { border-left: 3px solid var(--tv-text-tertiary); }
-.db-track-chip.open { border-left: 3px solid var(--tv-accent); }
-
-.db-track-chip-ticker {
+.db-wl-ticker {
+  font-size: var(--t-2xs);
   font-weight: 700;
-  color: var(--tv-text-primary);
+  color: var(--tv-accent);
 }
 
-.db-track-chip-signal {
-  font-weight: 600;
-}
-
-.db-track-chip-outcome {
+.db-wl-target {
+  font-size: var(--t-3xs);
   color: var(--tv-text-tertiary);
-  text-transform: uppercase;
-}
-
-.db-track-chip-pnl {
-  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
-/* ══════════════════════════════════════
+.db-wl-bell {
+  color: var(--tv-orange);
+}
+
+.db-wl-priority {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+/* ══════════════════════════
+   NOTES
+   ══════════════════════════ */
+
+.db-note-row {
+  padding: 5px 0;
+  border-bottom: 1px solid var(--tv-border-light);
+}
+
+.db-note-row:last-child { border-bottom: none; }
+
+.db-note-row-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.db-note-tags {
+  font-size: var(--t-3xs);
+  color: var(--tv-purple);
+  font-weight: 600;
+}
+
+.db-note-time {
+  font-size: var(--t-3xs);
+  color: var(--tv-text-tertiary);
+  margin-left: auto;
+}
+
+.db-note-content {
+  font-size: var(--t-3xs);
+  color: var(--tv-text-secondary);
+  line-height: 1.4;
+}
+
+/* ══════════════════════════
    RESPONSIVE
-   ══════════════════════════════════════ */
+   ══════════════════════════ */
 
 @media (max-width: 1200px) {
   .db-grid { grid-template-columns: 1fr 1fr; }
@@ -909,7 +808,4 @@
   #page-dashboard { padding: 8px; }
   .db-grid { grid-template-columns: 1fr; }
   .db-thesis-bottom { flex-direction: column; gap: 6px; }
-  .db-track-metrics { gap: 4px; }
-  .db-track-metric { min-width: calc(33% - 4px); }
-  .db-track-strip { gap: 3px; }
 }

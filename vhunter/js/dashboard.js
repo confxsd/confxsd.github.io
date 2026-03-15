@@ -26,26 +26,24 @@ function val(r) { return r.status === 'fulfilled' ? r.value : null; }
 
 async function fetchAll() {
   const results = await Promise.allSettled([
-    safe('/api/thesis'),
-    safe('/api/daily-checks/results'),
-    safe('/api/feed?limit=40'),
-    safe('/api/filing-signals?status=active&min_conviction=30'),
-    safe('/api/ml/dashboard'),
-    safe('/api/memory?status=active'),
-    safe('/api/opportunities?status=active&limit=12'),
-    safe('/api/ticker-pipeline/analyses?status=completed&limit=12'),
-    safe('/api/signal-log')
+    safe('/api/thesis'),                                          // 0
+    safe('/api/daily-checks/results'),                            // 1
+    safe('/api/feed?limit=40'),                                   // 2
+    safe('/api/memory?status=active'),                            // 3
+    safe('/api/opportunities?status=active&limit=12'),            // 4
+    safe('/api/ticker-pipeline/analyses?status=completed&limit=12'), // 5
+    safe('/api/watchlist'),                                       // 6
+    safe('/api/notes'),                                           // 7
   ]);
   return {
     thesis: val(results[0]),
     daily: val(results[1]),
     feed: val(results[2]),
-    filingSignals: val(results[3]),
-    ml: val(results[4]),
-    memory: val(results[5]),
-    opps: val(results[6]),
-    pipeline: val(results[7]),
-    signalLog: val(results[8])
+    memory: val(results[3]),
+    opps: val(results[4]),
+    pipeline: val(results[5]),
+    watchlist: val(results[6]),
+    notes: val(results[7]),
   };
 }
 
@@ -74,8 +72,7 @@ function timeAgo(dateStr) {
   if (m < 60) return m + 'm';
   const h = Math.floor(m / 60);
   if (h < 24) return h + 'h';
-  const d = Math.floor(h / 24);
-  return d + 'd';
+  return Math.floor(h / 24) + 'd';
 }
 
 function parseJson(v) {
@@ -109,6 +106,13 @@ function convDot(c) {
   return `<span class="db-dot" style="background:${m[c] || m.low}"></span>`;
 }
 
+// Safely turn a flag into a string — handles {stage, flag} objects and plain strings
+function flagText(f) {
+  if (typeof f === 'string') return f;
+  if (f && typeof f === 'object') return f.flag || f.text || f.description || JSON.stringify(f);
+  return String(f || '');
+}
+
 // ── Scaffold ──
 
 function scaffold() {
@@ -137,25 +141,23 @@ function scaffold() {
         <div class="db-card" id="dbOpps"><div class="db-card-loading"></div></div>
       </div>
       <div class="db-col">
-        <div class="db-card" id="dbFilings"><div class="db-card-loading"></div></div>
-        <div class="db-card" id="dbML"><div class="db-card-loading"></div></div>
-      </div>
-      <div class="db-col">
         <div class="db-card" id="dbThemes"><div class="db-card-loading"></div></div>
         <div class="db-card" id="dbFeed"><div class="db-card-loading"></div></div>
+      </div>
+      <div class="db-col">
         <div class="db-card" id="dbMemory"><div class="db-card-loading"></div></div>
+        <div class="db-card" id="dbWatchlist"><div class="db-card-loading"></div></div>
+        <div class="db-card" id="dbNotes"><div class="db-card-loading"></div></div>
       </div>
     </div>
-
-    <div class="db-card db-card-wide" id="dbTrackRecord"><div class="db-card-loading"></div></div>
   `;
 }
 
 // ═══════════════════════════════════════════════
-// SECTION RENDERERS
+// SECTIONS
 // ═══════════════════════════════════════════════
 
-// ── Thesis: Current Market View ──
+// ── Thesis Strip ──
 
 function renderThesis(thesis) {
   const el = document.getElementById('dbThesis');
@@ -189,11 +191,8 @@ function renderThesis(thesis) {
   };
   const r = regimeMap[regime] || regimeMap.neutral;
 
-  // Sector views
   const sectors = td.sectors || {};
   const sectorEntries = Object.entries(sectors).slice(0, 6);
-
-  // Ticker intelligence
   const tickerIntel = Array.isArray(td.tickerIntelligence) ? td.tickerIntelligence.slice(0, 8) : [];
 
   el.innerHTML = `
@@ -229,8 +228,8 @@ function renderThesis(thesis) {
         <div class="db-thesis-tickers">
           <span class="db-thesis-section-label">Tickers</span>
           ${tickerIntel.map(t => {
-            const bc = t.netBias === 'bullish' ? 'var(--tv-green)' : t.netBias === 'bearish' ? 'var(--tv-red)' : 'var(--tv-text-tertiary)';
-            return `<span class="db-ticker-chip" ${goTicker(t.ticker)} style="border-color:${bc}30"><span style="color:var(--tv-accent);font-weight:700">${esc(t.ticker)}</span> <span style="color:${bc}">${esc(t.netBias || '')}</span></span>`;
+            const bc = t.netBias === 'bullish' ? 'var(--tv-green)' : t.netBias === 'bearish' ? 'var(--tv-red)' : 'var(--tv-text-secondary)';
+            return `<span class="db-ticker-chip" ${goTicker(t.ticker)} style="border-color:${bc}"><span style="color:var(--tv-accent);font-weight:700">${esc(t.ticker)}</span> <span class="db-bias-label" style="color:${bc}">${esc(t.netBias || '')}</span></span>`;
           }).join('')}
         </div>
       ` : ''}
@@ -239,15 +238,13 @@ function renderThesis(thesis) {
   `;
 }
 
-// ── Daily Check Signals: What the scanner found ──
+// ── Scanner Signals (Daily Checks) ──
 
 function renderSignals(daily) {
   const el = document.getElementById('dbSignals');
   if (!el) return;
 
   const arr = Array.isArray(daily) ? daily : [];
-
-  // Group by signal strength
   const hot = [], watch = [], exits = [];
   arr.forEach(r => {
     const sig = (r.signal || '').toUpperCase();
@@ -256,15 +253,13 @@ function renderSignals(daily) {
     else if (sig === 'EXIT' || sig === 'AVOID') exits.push(r);
   });
 
-  const total = hot.length + watch.length + exits.length;
-
   el.innerHTML = `
     <div class="db-card-head">
       <span class="db-card-title"><i class="fa-solid fa-bolt"></i> Scanner Signals</span>
       <span class="db-card-count">${hot.length} hot &middot; ${watch.length} watch &middot; ${exits.length} avoid</span>
     </div>
     <div class="db-card-body">
-      ${total === 0 ? '<div class="db-empty">No signals from daily checks</div>' : ''}
+      ${hot.length + watch.length + exits.length === 0 ? '<div class="db-empty">No signals from daily checks</div>' : ''}
       ${hot.length > 0 ? renderSignalGroup('ENTRY SIGNALS', 'var(--tv-green)', hot, 8) : ''}
       ${exits.length > 0 ? renderSignalGroup('EXIT / AVOID', 'var(--tv-red)', exits, 4) : ''}
       ${watch.length > 0 ? renderSignalGroup('ON WATCH', 'var(--tv-orange)', watch, 6) : ''}
@@ -305,7 +300,7 @@ function renderSignalGroup(label, color, items, max) {
   `;
 }
 
-// ── Opportunities: What the pipeline scored ──
+// ── Pipeline Results + Opportunities ──
 
 function renderOpps(opps, pipeline) {
   const el = document.getElementById('dbOpps');
@@ -319,23 +314,25 @@ function renderOpps(opps, pipeline) {
     if (!p.ticker || seen.has(p.ticker)) return;
     seen.add(p.ticker);
     const trade = parseJson(p.trade_idea) || {};
-    const greenFlags = parseJson(p.green_flags) || [];
-    const redFlags = parseJson(p.red_flags) || [];
+    const stageScores = parseJson(p.stage_scores) || {};
+    const greenFlags = (parseJson(p.green_flags) || []).map(flagText);
+    const redFlags = (parseJson(p.red_flags) || []).map(flagText);
     items.push({
       ticker: p.ticker, score: p.composite_score || 0, direction: p.direction || 'long',
       conviction: p.conviction || 'low', source: 'pipeline',
-      thesis: trade.thesis || trade.rationale || '', greenFlags, redFlags
+      thesis: trade.thesis || trade.rationale || '',
+      greenFlags, redFlags, stageScores
     });
   });
 
-  // Opportunities
+  // Fill from opps
   (Array.isArray(opps) ? opps : []).forEach(o => {
     if (seen.has(o.ticker)) return;
     seen.add(o.ticker);
     items.push({
       ticker: o.ticker, score: o.composite_score || 0, direction: o.direction || 'long',
       conviction: o.composite_score >= 70 ? 'high' : o.composite_score >= 40 ? 'medium' : 'low',
-      source: 'opp', thesis: o.signal_type || '', greenFlags: [], redFlags: []
+      source: 'opp', thesis: o.signal_type || '', greenFlags: [], redFlags: [], stageScores: {}
     });
   });
 
@@ -351,6 +348,8 @@ function renderOpps(opps, pipeline) {
         ${items.slice(0, 8).map(o => {
           const sc = o.score >= 70 ? 'var(--tv-green)' : o.score >= 40 ? 'var(--tv-orange)' : 'var(--tv-text-tertiary)';
           const dc = o.direction === 'short' ? 'var(--tv-red)' : 'var(--tv-green)';
+          // Stage score chips
+          const stages = Object.entries(o.stageScores);
           return `
             <div class="db-opp-row">
               <div class="db-opp-row-top">
@@ -359,11 +358,20 @@ function renderOpps(opps, pipeline) {
                 ${convDot(o.conviction)}
                 <span class="db-opp-score" style="color:${sc}">${Math.round(o.score)}</span>
               </div>
-              ${o.thesis ? `<div class="db-opp-thesis">${esc(o.thesis).substring(0, 100)}</div>` : ''}
+              ${o.thesis ? `<div class="db-opp-thesis">${esc(o.thesis).substring(0, 120)}</div>` : ''}
+              ${stages.length > 0 ? `
+                <div class="db-stage-scores">
+                  ${stages.map(([name, data]) => {
+                    const s = typeof data === 'object' ? data.score : data;
+                    const sColor = s >= 70 ? 'var(--tv-green)' : s >= 40 ? 'var(--tv-orange)' : 'var(--tv-text-tertiary)';
+                    return `<span class="db-stage-chip"><span class="db-stage-name">${esc(name)}</span><span style="color:${sColor};font-weight:700">${Math.round(s || 0)}</span></span>`;
+                  }).join('')}
+                </div>
+              ` : ''}
               ${o.greenFlags.length > 0 || o.redFlags.length > 0 ? `
                 <div class="db-opp-flags">
-                  ${o.greenFlags.slice(0, 2).map(f => `<span class="db-flag-green">${esc(f)}</span>`).join('')}
-                  ${o.redFlags.slice(0, 2).map(f => `<span class="db-flag-red">${esc(f)}</span>`).join('')}
+                  ${o.greenFlags.slice(0, 3).map(f => `<span class="db-flag-green"><i class="fa-solid fa-plus" style="font-size:7px;margin-right:3px"></i>${esc(f)}</span>`).join('')}
+                  ${o.redFlags.slice(0, 3).map(f => `<span class="db-flag-red"><i class="fa-solid fa-minus" style="font-size:7px;margin-right:3px"></i>${esc(f)}</span>`).join('')}
                 </div>
               ` : ''}
             </div>
@@ -374,146 +382,7 @@ function renderOpps(opps, pipeline) {
   `;
 }
 
-// ── Filing Intelligence: What institutions are doing ──
-
-function renderFilings(signals) {
-  const el = document.getElementById('dbFilings');
-  if (!el) return;
-
-  const arr = (Array.isArray(signals) ? signals : []).filter(s => s.status === 'active');
-
-  // Group by direction for readability
-  const bullish = arr.filter(s => s.direction === 'bullish');
-  const bearish = arr.filter(s => s.direction === 'bearish');
-  const other = arr.filter(s => s.direction !== 'bullish' && s.direction !== 'bearish');
-
-  el.innerHTML = `
-    <div class="db-card-head">
-      <span class="db-card-title"><i class="fa-solid fa-building-columns"></i> Institutional Moves</span>
-      <span class="db-card-count">${arr.length} signals</span>
-    </div>
-    <div class="db-card-body db-card-body-tight">
-      ${arr.length === 0 ? '<div class="db-empty">No active filing signals</div>' : ''}
-      ${bullish.length > 0 ? renderFilingGroup('Accumulation / Bullish', 'var(--tv-green)', bullish) : ''}
-      ${bearish.length > 0 ? renderFilingGroup('Distribution / Bearish', 'var(--tv-red)', bearish) : ''}
-      ${other.length > 0 ? renderFilingGroup('Events', 'var(--tv-text-secondary)', other) : ''}
-    </div>
-  `;
-}
-
-function renderFilingGroup(label, color, items) {
-  return `
-    <div class="db-filing-group">
-      <div class="db-filing-group-label" style="color:${color}">${label}</div>
-      ${items.slice(0, 6).map(s => {
-        const funds = Array.isArray(s.source_funds) ? s.source_funds : parseJson(s.source_funds) || [];
-        const typeLabel = (s.signal_type || '').replace(/_/g, ' ');
-        return `
-          <div class="db-filing-item">
-            <div class="db-filing-item-top">
-              <span class="db-ticker" ${goTicker(s.ticker)}>${s.ticker}</span>
-              <span class="db-filing-type">${typeLabel}</span>
-              <span class="db-filing-conviction" style="color:${s.conviction >= 70 ? 'var(--tv-green)' : s.conviction >= 40 ? 'var(--tv-orange)' : 'var(--tv-text-tertiary)'}">${s.conviction}</span>
-            </div>
-            <div class="db-filing-narrative">${esc(s.narrative || '').substring(0, 100)}</div>
-            ${funds.length > 0 ? `<div class="db-filing-funds">${funds.slice(0, 3).map(f => esc(f)).join(' &middot; ')}</div>` : ''}
-          </div>
-        `;
-      }).join('')}
-    </div>
-  `;
-}
-
-// ── ML Intelligence: What the models detected ──
-
-function renderML(ml) {
-  const el = document.getElementById('dbML');
-  if (!el) return;
-
-  const data = ml || {};
-  const smartMoney = Array.isArray(data.smart_money) ? data.smart_money : [];
-  const anomalies = Array.isArray(data.anomalies) ? data.anomalies : [];
-  const velocity = (Array.isArray(data.velocity_spikes) ? data.velocity_spikes : []).filter(v => v.is_anomalous);
-  const pipeUrgent = Array.isArray(data.pipe_urgent) ? data.pipe_urgent : [];
-  const patterns = Array.isArray(data.patterns) ? data.patterns : [];
-
-  const total = smartMoney.length + anomalies.length + velocity.length + pipeUrgent.length + patterns.length;
-
-  el.innerHTML = `
-    <div class="db-card-head">
-      <span class="db-card-title"><i class="fa-solid fa-robot"></i> ML Detections</span>
-      <span class="db-card-count">${total} findings</span>
-    </div>
-    <div class="db-card-body db-card-body-tight">
-      ${total === 0 ? '<div class="db-empty">No ML findings</div>' : ''}
-
-      ${smartMoney.length > 0 ? `
-        <div class="db-ml-section">
-          <div class="db-ml-label"><i class="fa-solid fa-landmark"></i> Smart Money Flows</div>
-          ${smartMoney.slice(0, 5).map(s => `
-            <div class="db-ml-row">
-              <span class="db-ticker" ${goTicker(s.ticker)}>${s.ticker}</span>
-              <span class="db-ml-dir" style="color:${s.direction === 'bullish' ? 'var(--tv-green)' : 'var(--tv-red)'}">${s.direction}</span>
-              <span class="db-ml-val">${(s.smart_money_score * 100).toFixed(0)}%</span>
-            </div>
-          `).join('')}
-        </div>
-      ` : ''}
-
-      ${anomalies.length > 0 ? `
-        <div class="db-ml-section">
-          <div class="db-ml-label"><i class="fa-solid fa-circle-exclamation"></i> Anomalies</div>
-          ${anomalies.slice(0, 4).map(a => `
-            <div class="db-ml-row">
-              <span class="db-ticker" ${goTicker(a.ticker)}>${a.ticker}</span>
-              <span class="db-ml-desc">${esc(a.anomaly_type || a.description || '')}</span>
-            </div>
-          `).join('')}
-        </div>
-      ` : ''}
-
-      ${velocity.length > 0 ? `
-        <div class="db-ml-section">
-          <div class="db-ml-label"><i class="fa-solid fa-gauge-high"></i> Velocity Spikes</div>
-          ${velocity.slice(0, 4).map(v => `
-            <div class="db-ml-row">
-              <span class="db-ticker" ${goTicker(v.ticker)}>${v.ticker}</span>
-              <span class="db-ml-val">${(v.velocity_score * 100).toFixed(0)}%</span>
-            </div>
-          `).join('')}
-        </div>
-      ` : ''}
-
-      ${pipeUrgent.length > 0 ? `
-        <div class="db-ml-section">
-          <div class="db-ml-label" style="color:var(--tv-red)"><i class="fa-solid fa-triangle-exclamation"></i> PIPE Urgent</div>
-          ${pipeUrgent.slice(0, 4).map(p => `
-            <div class="db-ml-row">
-              <span class="db-ticker" ${goTicker(p.ticker)}>${p.ticker}</span>
-              <span class="db-ml-desc" style="color:var(--tv-red)">${esc(p.prediction || '')}</span>
-              <span class="db-ml-val">${(p.probability * 100).toFixed(0)}%</span>
-            </div>
-          `).join('')}
-        </div>
-      ` : ''}
-
-      ${patterns.length > 0 ? `
-        <div class="db-ml-section">
-          <div class="db-ml-label"><i class="fa-solid fa-shapes"></i> Patterns</div>
-          ${patterns.slice(0, 4).map(p => `
-            <div class="db-ml-row">
-              <span class="db-ticker" ${goTicker(p.ticker)}>${p.ticker}</span>
-              <span class="db-ml-desc">${esc(p.pattern || '')}</span>
-              <span class="db-ml-val">${Math.round((p.completeness || 0) * 100)}%</span>
-            </div>
-          `).join('')}
-        </div>
-      ` : ''}
-    </div>
-  `;
-}
-
-// ── Themes, Catalysts, Risks ──
+// ── Themes, Catalysts, Risks (from thesis) ──
 
 function renderThemes(thesis) {
   const el = document.getElementById('dbThemes');
@@ -599,9 +468,7 @@ function renderFeed(feed) {
   if (!el) return;
 
   const arr = Array.isArray(feed) ? feed : [];
-
-  // Only show items with extracted insights, prioritize high-conviction and contrarian
-  const withInsight = arr.filter(f => f.insight_data).map(f => {
+  const withInsight = arr.map(f => {
     const insight = parseJson(f.insight_data) || {};
     return { ...f, insight };
   }).filter(f => !f.insight.isNoise);
@@ -616,12 +483,12 @@ function renderFeed(feed) {
 
   el.innerHTML = `
     <div class="db-card-head">
-      <span class="db-card-title"><i class="fa-solid fa-satellite-dish"></i> Feed Intelligence</span>
-      <span class="db-card-count">${withInsight.length} signals</span>
+      <span class="db-card-title"><i class="fa-solid fa-satellite-dish"></i> Fresh Signals</span>
+      <span class="db-card-count">${withInsight.length} captured</span>
     </div>
     <div class="db-card-body db-card-body-tight">
-      ${withInsight.length === 0 ? '<div class="db-empty">No extracted feed signals</div>' : `
-        ${withInsight.slice(0, 8).map(f => {
+      ${withInsight.length === 0 ? '<div class="db-empty">No feed signals</div>' : `
+        ${withInsight.slice(0, 10).map(f => {
           const ins = f.insight;
           const dirColor = (ins.direction || '').includes('bull') || ins.direction === 'risk-on' ? 'var(--tv-green)'
             : (ins.direction || '').includes('bear') || ins.direction === 'risk-off' ? 'var(--tv-red)'
@@ -646,7 +513,7 @@ function renderFeed(feed) {
   `;
 }
 
-// ── Memory: Active high-importance entities ──
+// ── Active Memory Entities ──
 
 function renderMemory(memory) {
   const el = document.getElementById('dbMemory');
@@ -668,7 +535,7 @@ function renderMemory(memory) {
     </div>
     <div class="db-card-body db-card-body-tight">
       ${important.length === 0 ? '<div class="db-empty">No high-importance memories</div>' : `
-        ${important.slice(0, 10).map(m => {
+        ${important.slice(0, 8).map(m => {
           const color = catColors[m.category] || 'var(--tv-text-secondary)';
           const sentiment = m.sentiment_score || 0;
           const assets = parseJson(m.affected_assets) || [];
@@ -690,82 +557,67 @@ function renderMemory(memory) {
   `;
 }
 
-// ── Track Record: How good are the system's signals? ──
+// ── Watchlist Overview ──
 
-function renderTrackRecord(signalLog) {
-  const el = document.getElementById('dbTrackRecord');
+function renderWatchlist(watchlist) {
+  const el = document.getElementById('dbWatchlist');
   if (!el) return;
 
-  const arr = Array.isArray(signalLog) ? signalLog : [];
-  const resolved = arr.filter(s => s.outcome && s.outcome !== 'open');
-  const open = arr.filter(s => s.outcome === 'open');
-  const wins = resolved.filter(s => s.outcome === 'hit_target');
-  const losses = resolved.filter(s => s.outcome === 'hit_stop');
-  const expired = resolved.filter(s => s.outcome === 'expired');
-  const winRate = resolved.length > 0 ? (wins.length / resolved.length * 100) : 0;
-  const avgWin = wins.length ? (wins.reduce((a, s) => a + (s.actual_pnl_pct || 0), 0) / wins.length) : 0;
-  const avgLoss = losses.length ? (losses.reduce((a, s) => a + (s.actual_pnl_pct || 0), 0) / losses.length) : 0;
-
-  // MFE/MAE (how much did winners run, how much did losers dip)
-  const avgMFE = arr.length ? (arr.reduce((a, s) => a + (s.mfe_pct || 0), 0) / arr.length) : 0;
-  const avgMAE = arr.length ? (arr.reduce((a, s) => a + (s.mae_pct || 0), 0) / arr.length) : 0;
-
-  // Recent 8 for the strip
-  const recent = arr.slice(0, 8);
+  const arr = Array.isArray(watchlist) ? watchlist : [];
 
   el.innerHTML = `
     <div class="db-card-head">
-      <span class="db-card-title"><i class="fa-solid fa-chart-pie"></i> System Track Record</span>
-      <span class="db-card-count">${resolved.length} resolved &middot; ${open.length} open</span>
+      <span class="db-card-title"><i class="fa-solid fa-eye"></i> Watchlist</span>
+      <span class="db-card-count">${arr.length} tickers</span>
     </div>
-    <div class="db-card-body">
-      <div class="db-track-metrics">
-        <div class="db-track-metric">
-          <div class="db-track-metric-label">Win Rate</div>
-          <div class="db-track-metric-val" style="color:${winRate >= 50 ? 'var(--tv-green)' : 'var(--tv-red)'}">${winRate.toFixed(0)}%</div>
-          <div class="db-track-metric-sub">${wins.length}W / ${losses.length}L / ${expired.length}E</div>
+    <div class="db-card-body db-card-body-tight">
+      ${arr.length === 0 ? '<div class="db-empty">Watchlist empty</div>' : `
+        <div class="db-watchlist-grid">
+          ${arr.slice(0, 12).map(w => {
+            const hasAlert = w.alert_above || w.alert_below;
+            const priColors = { 1: 'var(--tv-red)', 2: 'var(--tv-orange)', 3: 'var(--tv-text-tertiary)' };
+            return `
+              <div class="db-wl-item" ${goTicker(w.ticker)}>
+                <span class="db-wl-ticker">${esc(w.ticker)}</span>
+                ${w.target_price ? `<span class="db-wl-target">${fmtNum(w.target_price)}</span>` : ''}
+                ${hasAlert ? '<span class="db-wl-bell"><i class="fa-solid fa-bell" style="font-size:8px"></i></span>' : ''}
+                ${w.priority ? `<span class="db-wl-priority" style="background:${priColors[w.priority] || priColors[3]}"></span>` : ''}
+              </div>
+            `;
+          }).join('')}
         </div>
-        <div class="db-track-metric">
-          <div class="db-track-metric-label">Avg Win</div>
-          <div class="db-track-metric-val" style="color:var(--tv-green)">${fmtPct(avgWin)}</div>
-        </div>
-        <div class="db-track-metric">
-          <div class="db-track-metric-label">Avg Loss</div>
-          <div class="db-track-metric-val" style="color:var(--tv-red)">${fmtPct(avgLoss)}</div>
-        </div>
-        <div class="db-track-metric">
-          <div class="db-track-metric-label">Avg MFE</div>
-          <div class="db-track-metric-val" style="color:var(--tv-green)">${fmtPct(avgMFE)}</div>
-          <div class="db-track-metric-sub">best run-up</div>
-        </div>
-        <div class="db-track-metric">
-          <div class="db-track-metric-label">Avg MAE</div>
-          <div class="db-track-metric-val" style="color:var(--tv-red)">${fmtPct(avgMAE)}</div>
-          <div class="db-track-metric-sub">worst drawdown</div>
-        </div>
-        <div class="db-track-metric">
-          <div class="db-track-metric-label">Open Signals</div>
-          <div class="db-track-metric-val">${open.length}</div>
-        </div>
-      </div>
-      ${recent.length > 0 ? `
-        <div class="db-track-recent">
-          <div class="db-sub-title">Recent Signals</div>
-          <div class="db-track-strip">
-            ${recent.map(s => {
-              const oc = s.outcome === 'hit_target' ? 'win' : s.outcome === 'hit_stop' ? 'loss' : s.outcome === 'expired' ? 'expired' : 'open';
-              return `
-                <div class="db-track-chip ${oc}" ${goTicker(s.ticker)}>
-                  <span class="db-track-chip-ticker">${s.ticker}</span>
-                  <span class="db-track-chip-signal" style="color:${sigColor(s.signal)}">${s.signal}</span>
-                  <span class="db-track-chip-outcome">${s.outcome || 'open'}</span>
-                  ${s.actual_pnl_pct != null ? `<span class="db-track-chip-pnl" style="color:${s.actual_pnl_pct >= 0 ? 'var(--tv-green)' : 'var(--tv-red)'}">${fmtPct(s.actual_pnl_pct)}</span>` : ''}
-                </div>
-              `;
-            }).join('')}
+      `}
+    </div>
+  `;
+}
+
+// ── Recent Notes ──
+
+function renderNotes(notes) {
+  const el = document.getElementById('dbNotes');
+  if (!el) return;
+
+  const arr = Array.isArray(notes) ? notes : [];
+  const recent = arr.slice(0, 6);
+
+  el.innerHTML = `
+    <div class="db-card-head">
+      <span class="db-card-title"><i class="fa-solid fa-sticky-note"></i> Recent Notes</span>
+      <span class="db-card-count">${arr.length} total</span>
+    </div>
+    <div class="db-card-body db-card-body-tight">
+      ${recent.length === 0 ? '<div class="db-empty">No notes</div>' : `
+        ${recent.map(n => `
+          <div class="db-note-row">
+            <div class="db-note-row-top">
+              ${n.ticker ? `<span class="db-ticker" ${goTicker(n.ticker)}>${esc(n.ticker)}</span>` : ''}
+              ${n.tags ? `<span class="db-note-tags">${esc(n.tags)}</span>` : ''}
+              <span class="db-note-time">${timeAgo(n.created_at)}</span>
+            </div>
+            <div class="db-note-content">${esc(n.content || '').substring(0, 100)}</div>
           </div>
-        </div>
-      ` : ''}
+        `).join('')}
+      `}
     </div>
   `;
 }
@@ -780,12 +632,11 @@ export async function loadDashboard() {
   renderThesis(data.thesis);
   renderSignals(data.daily);
   renderOpps(data.opps, data.pipeline);
-  renderFilings(data.filingSignals);
-  renderML(data.ml);
   renderThemes(data.thesis);
   renderFeed(data.feed);
   renderMemory(data.memory);
-  renderTrackRecord(data.signalLog);
+  renderWatchlist(data.watchlist);
+  renderNotes(data.notes);
 
   const statusEl = document.getElementById('dbStatus');
   if (statusEl) {
