@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://confxsd.github.io/vhunter/sitemap.xml

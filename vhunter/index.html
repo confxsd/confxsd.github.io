@@ -6,7 +6,103 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=5.0"
     />
-    <title>VHunter - Signal Terminal</title>
+    <title>VHunter - AI-Powered Stock Analysis & Trading Signal Terminal</title>
+    <meta name="description" content="VHunter is an AI-powered stock analysis terminal featuring technical indicators, options analytics with IV/GEX/skew, SEC filing research, multi-agent intelligence, macro dashboards, and real-time position tracking for informed trading decisions." />
+    <meta name="keywords" content="stock analysis, AI trading terminal, options analytics, SEC filings, technical indicators, gamma exposure, implied volatility, PIPE deals, institutional holdings, market intelligence, trading signals" />
+    <meta name="author" content="VHunter" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://confxsd.github.io/vhunter/" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://confxsd.github.io/vhunter/" />
+    <meta property="og:title" content="VHunter - AI-Powered Stock Analysis & Trading Signal Terminal" />
+    <meta property="og:description" content="AI-powered stock analysis terminal with technical indicators, options analytics, SEC filing research, multi-agent intelligence, and real-time position tracking." />
+    <meta property="og:site_name" content="VHunter" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="VHunter - AI-Powered Stock Analysis & Trading Signal Terminal" />
+    <meta name="twitter:description" content="AI-powered stock analysis terminal with technical indicators, options analytics, SEC filing research, multi-agent intelligence, and real-time position tracking." />
+
+    <!-- JSON-LD Structured Data for SEO & Generative AI -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "VHunter",
+      "url": "https://confxsd.github.io/vhunter/",
+      "description": "AI-powered stock analysis and trading signal terminal featuring technical indicators (RSI, MACD, EMA, Bollinger Bands, VWAP), options analytics (IV term structure, skew, GEX, dealer positioning), SEC filing research (PIPE deals, institutional holdings, 13F/13D filings), multi-agent AI intelligence pipeline, macro market dashboards, and real-time portfolio tracking.",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Web Browser",
+      "browserRequirements": "Requires JavaScript. Works on all modern browsers.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Technical analysis with RSI, MACD, EMA, Bollinger Bands, VWAP, MFI, ADX indicators",
+        "Options analytics: IV term structure, volatility skew, gamma exposure (GEX), dealer positioning",
+        "SEC filing research: PIPE deals, 13F/13D filings, institutional fund holdings",
+        "Multi-agent AI analysis pipeline with macro, sector, technical, and quant analysts",
+        "Real-time portfolio tracking with P&L calculations",
+        "Macro dashboard: indices, VIX, interest rates, commodities, sector rotation",
+        "Signal intelligence feed with AI-powered extraction",
+        "Daily automated stock screening and scoring",
+        "Trading playbooks and strategy management",
+        "Memory map for semantic entity tracking"
+      ],
+      "creator": {
+        "@type": "Organization",
+        "name": "VHunter"
+      }
+    }
+    </script>
+
+    <!-- FAQ Structured Data for GEO - helps AI tools cite specific answers -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is VHunter?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "VHunter is a free, AI-powered stock analysis and trading signal terminal that combines technical indicators, options analytics, SEC filing research, and multi-agent AI intelligence to help traders make informed decisions."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What technical indicators does VHunter support?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "VHunter supports RSI, EMA, MACD, ATR, SMA, Bollinger Bands, VWAP, MFI (Money Flow Index), Accumulation/Distribution, and ADX (Average Directional Index) with multi-timeframe chart analysis."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What options analytics features does VHunter offer?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "VHunter provides implied volatility (IV) term structure, volatility skew analysis, gamma exposure (GEX) and delta exposure (DEX) calculations, dealer positioning analysis, straddle pricing, expected move calculations, and IV rank/percentile tracking."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does VHunter analyze SEC filings?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "VHunter researches SEC filings including PIPE deals, 13F institutional holdings, 13D activist positions, and fund holding changes. It uses AI to detect smart money movements and institutional accumulation patterns."
+          }
+        }
+      ]
+    }
+    </script>
+
     <script>
       // Theme: apply before render to prevent flash
       (function () {
@@ -82,9 +178,9 @@
   </head>
   <body>
     <!-- App Container -->
-    <div class="app">
+    <div class="app" role="application" aria-label="VHunter Trading Terminal">
       <!-- Sidebar -->
-      <aside class="sidebar" id="sidebar">
+      <aside class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
         <div class="sidebar-header">
           <span class="logo">VHUNTER</span>
           <button class="sidebar-close" onclick="toggleSidebar()">×</button>
