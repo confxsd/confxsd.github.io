@@ -424,3 +424,77 @@
 /* ── Positive / negative ── */
 .positive { color: var(--tv-green); }
 .negative { color: var(--tv-red); }
+
+/* ── Mobile: < 768px ── */
+@media (max-width: 768px) {
+  #page-active-trades { padding: 10px; }
+
+  .at-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .at-header-actions {
+    width: 100%;
+    display: flex;
+  }
+  .at-header-actions .btn { flex: 1; text-align: center; }
+
+  .at-dashboard { padding: 10px; }
+
+  .at-stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .at-stat {
+    min-width: 0;
+    padding: 8px 6px;
+  }
+  .at-stat-val { font-size: 1.1rem; }
+  .at-stat-label { font-size: 0.62rem; }
+  .at-stat-sub { font-size: 0.58rem; }
+
+  .at-tabs { width: 100%; }
+  .at-tab { flex: 1; text-align: center; padding: 6px 8px; }
+
+  /* Trade entries */
+  .at-entry { padding: 10px; }
+  .at-entry-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .at-entry-left { min-width: 0; width: 100%; }
+  .at-entry-mid { width: 100%; }
+  .at-entry-right {
+    margin-left: 0;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  /* Add form */
+  .at-add-form { padding: 10px; }
+  .at-form-row { flex-direction: column; gap: 6px; }
+  .at-input, .at-select { min-width: 0; width: 100%; }
+
+  /* Exposure panel */
+  .at-exposure-panel { padding: 10px; }
+  .at-exposure-metrics { gap: 10px; }
+  .at-sector-name { min-width: 80px; max-width: 80px; font-size: 0.6rem; }
+  .at-sector-tickers { display: none; }
+}
+
+/* ── Small Mobile: < 480px ── */
+@media (max-width: 480px) {
+  .at-stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  /* Last stat spans full width when odd count */
+  .at-stat:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+  .at-stat-val { font-size: 1rem; }
+
+  .at-empty { padding: 24px 16px; font-size: 0.78rem; }
+}
