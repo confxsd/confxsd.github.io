@@ -2484,7 +2484,7 @@ function buildFundPage(fund, fundFilings, holdingsData) {
   // Holdings from compare endpoint
   const latestHoldings = holdingsData?.periods?.[0]?.holdings || holdingsData?.holdings || [];
   const priorHoldings = holdingsData?.periods?.[1]?.holdings || [];
-  const latestPeriod = holdingsData?.periods?.[0]?.period || holdingsData?.period || null;
+  const latestPeriod = holdingsData?.periods?.[0]?.period || holdingsData?.period || fund.holdingsSummary?.period || null;
 
   // Build prior lookup for change detection
   const priorMap = {};
@@ -2496,9 +2496,14 @@ function buildFundPage(fund, fundFilings, holdingsData) {
   const sortedHoldings = [...latestHoldings].sort((a, b) => (b.value || 0) - (a.value || 0));
   const topHoldings = sortedHoldings.slice(0, 50);
 
-  // Compute stats
-  const totalValue = sortedHoldings.reduce((s, h) => s + (h.value || 0), 0);
-  const totalPositions = sortedHoldings.length;
+  // Compute stats - fall back to fund.holdingsSummary when compare endpoint returns no data
+  const hs = fund.holdingsSummary;
+  const totalValue = sortedHoldings.length > 0
+    ? sortedHoldings.reduce((s, h) => s + (h.value || 0), 0)
+    : (hs?.total_value || 0);
+  const totalPositions = sortedHoldings.length > 0
+    ? sortedHoldings.length
+    : (hs?.positions || 0);
   const newPositions = sortedHoldings.filter(h => !priorMap[h.ticker]).length;
   const exitedPositions = priorHoldings.filter(h => !sortedHoldings.find(s => s.ticker === h.ticker)).length;
 
@@ -2610,7 +2615,7 @@ function buildFundPage(fund, fundFilings, holdingsData) {
                 </tbody>
               </table>
               ${sortedHoldings.length > 50 ? `<div class="fund-show-more"><button class="fil-btn fil-btn-ghost" onclick="this.parentElement.previousElementSibling.querySelector('tbody').innerHTML += buildRemainingHoldingsRows('${fund.id}'); this.remove();">Show all ${sortedHoldings.length} positions</button></div>` : ''}
-            ` : '<div class="fil-empty">No holdings data available. Holdings appear after 13F filings are parsed.</div>'}
+            ` : (hs ? `<div class="fil-empty">Individual holdings breakdown not yet available for this fund.<br>Summary: <strong>${hs.positions || 0} positions</strong> worth <strong>${formatValue(hs.total_value || 0)}</strong> as of ${formatQuarter(hs.period)}</div>` : '<div class="fil-empty">No holdings data available. Holdings appear after 13F filings are parsed.</div>')}
           </div>
 
           ${exitedPositions > 0 ? `
