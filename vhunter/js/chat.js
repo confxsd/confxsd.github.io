@@ -401,12 +401,11 @@ function maybeCollapse(msgEl) {
   // Use rAF to measure after render
   requestAnimationFrame(() => {
     if (content.scrollHeight > COLLAPSE_HEIGHT + 40) {
-      content.classList.add('collapsed');
-      // Add toggle button if not already present
+      // Start expanded, show "Show less" toggle
       if (!msgEl.querySelector('.chat-msg-toggle')) {
         const btn = document.createElement('button');
         btn.className = 'chat-msg-toggle';
-        btn.textContent = 'Show more';
+        btn.textContent = 'Show less';
         btn.onclick = () => toggleCollapse(content, btn);
         content.parentElement.insertBefore(btn, content.nextSibling);
       }
