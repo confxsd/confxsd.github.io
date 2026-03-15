@@ -194,6 +194,18 @@
           <a
             href="#"
             class="nav-item"
+            data-page="playbooks"
+            onclick="
+              event.preventDefault();
+              switchPage('playbooks');
+            "
+          >
+            <span class="nav-icon"><i class="fa-solid fa-chess"></i></span>
+            <span class="nav-label">Playbooks</span>
+          </a>
+          <a
+            href="#"
+            class="nav-item"
             data-page="filings"
             onclick="
               event.preventDefault();
@@ -228,18 +240,6 @@
           >
             <span class="nav-icon"><i class="fa-solid fa-crosshairs"></i></span>
             <span class="nav-label">Active Trades</span>
-          </a>
-          <a
-            href="#"
-            class="nav-item"
-            data-page="playbooks"
-            onclick="
-              event.preventDefault();
-              switchPage('playbooks');
-            "
-          >
-            <span class="nav-icon"><i class="fa-solid fa-chess"></i></span>
-            <span class="nav-label">Playbooks</span>
           </a>
           <a
             href="#"
