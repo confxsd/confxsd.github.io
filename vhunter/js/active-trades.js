@@ -11,6 +11,16 @@ let isEvaluating = false;
 let isAutoAdding = false;
 let isLoadingExposure = false;
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function showToast(msg) {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
 // ── API ───────────────────────────────────────────────────────────────────────
 
 async function apiFetch(path, opts = {}) {
@@ -408,6 +418,10 @@ window.atAutoAdd = async function() {
   try {
     const r = await apiFetch('/api/active-trades/auto-add', { method: 'POST' });
     console.log('[ACTIVE_TRADES] Auto-add result:', r);
+    const msg = r.added
+      ? `Added ${r.added} trade${r.added > 1 ? 's' : ''}${r.skipped ? `, skipped ${r.skipped}` : ''}`
+      : r.skipped ? `No qualifying signals (${r.skipped} skipped — ${(r.details || []).map(d => `${d.ticker}: ${d.reason}`).join(', ')})` : 'No entry signals in last 3 days';
+    showToast(msg);
     await loadData();
     loadExposure().then(() => renderPage());
   } catch (e) { console.error('[ACTIVE_TRADES] Auto-add failed:', e); }
