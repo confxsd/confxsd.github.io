@@ -303,6 +303,42 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
   border-radius: var(--radius);
 }
 
+/* ========== LANGUAGE SELECTOR ========== */
+.lang-selector {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text-mid);
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.lang-btn:hover {
+  border-color: var(--accent-1-border);
+  background: var(--accent-1-bg);
+}
+.lang-btn.active {
+  border-color: var(--accent-1);
+  background: var(--accent-1-bg);
+  color: var(--text);
+  font-weight: 600;
+}
+.lang-btn .lang-flag {
+  font-size: 16px;
+  line-height: 1;
+}
+
 /* ========== ONBOARDING ========== */
 #onboarding {
   align-items: center;
@@ -992,214 +1028,174 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
   100% { opacity: 0; }
 }
 
-/* ========== RESULTS / VIBE RECEIPT ========== */
+/* ========== RESULTS / STORY ========== */
 #results {
   padding: 0;
-  align-items: center;
 }
-.receipt-scroll {
-  flex: 1;
+.story-scroll {
   width: 100%;
+  height: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 50px 20px 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
-.receipt-scroll::-webkit-scrollbar { display: none; }
+.story-scroll::-webkit-scrollbar { display: none; }
 
-/* The receipt card */
-.vibe-receipt {
-  width: 100%;
-  max-width: 350px;
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  overflow: hidden;
-  position: relative;
-}
-.receipt-header {
-  padding: 28px 24px 20px;
+/* Hero */
+.story-hero {
+  padding: 64px 28px 40px;
   text-align: center;
-  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  background: linear-gradient(160deg, var(--accent-1), var(--accent-2));
   position: relative;
   overflow: hidden;
 }
-.receipt-header::before {
+.story-hero::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: repeating-linear-gradient(
-    90deg,
-    transparent,
-    transparent 20px,
-    rgba(255,255,255,0.03) 20px,
-    rgba(255,255,255,0.03) 40px
-  );
+  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.15) 0%, transparent 50%);
 }
-.receipt-header .rh-emoji {
-  font-size: 48px;
-  margin-bottom: 8px;
-  position: relative;
-}
-.receipt-header h2 {
+.story-hero-emoji { font-size: 52px; position: relative; }
+.story-hero-score {
   font-family: 'Syne', sans-serif;
   font-weight: 800;
-  font-size: 28px;
+  font-size: 80px;
   color: white;
-  letter-spacing: -1px;
+  letter-spacing: -4px;
+  line-height: 1;
   position: relative;
+  margin: 8px 0;
 }
-.receipt-header .rh-sub {
-  font-size: 13px;
+.story-hero-names {
+  font-size: 15px;
   color: rgba(255,255,255,0.7);
-  margin-top: 4px;
   position: relative;
+  font-weight: 500;
 }
-
-/* Score section */
-.receipt-score {
-  padding: 24px;
-  text-align: center;
-  border-bottom: 1px dashed var(--border);
-}
-.receipt-score .rs-big {
+.story-hero-vibe {
   font-family: 'Syne', sans-serif;
   font-weight: 800;
-  font-size: 64px;
-  letter-spacing: -3px;
-  line-height: 1;
-  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 20px;
+  color: white;
+  position: relative;
+  margin-top: 14px;
 }
-.receipt-score .rs-label {
+.story-hero-sub {
   font-size: 13px;
-  color: var(--text-dim);
-  font-weight: 600;
+  color: rgba(255,255,255,0.55);
+  position: relative;
   margin-top: 4px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-family: 'Syne', sans-serif;
+  font-style: italic;
 }
 
-/* Vibe label / badge */
-.receipt-vibe-badge {
-  margin: 20px 24px;
-  padding: 14px 18px;
-  border-radius: var(--radius);
-  background: var(--accent-1-bg);
-  border: 1px solid var(--accent-1-border);
+/* Narrative intro */
+.story-intro {
+  padding: 28px 24px;
   text-align: center;
-}
-.receipt-vibe-badge .rvb-emoji { font-size: 24px; }
-.receipt-vibe-badge .rvb-title {
-  font-family: 'Syne', sans-serif;
-  font-weight: 700;
-  font-size: 15px;
-  margin-top: 4px;
-  color: var(--accent-1);
-}
-.receipt-vibe-badge .rvb-desc {
-  font-size: 12px;
-  color: var(--text-dim);
-  margin-top: 2px;
-}
-
-/* Breakdown list */
-.receipt-breakdown {
-  padding: 0 24px 8px;
-}
-.receipt-breakdown-title {
-  font-family: 'Syne', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--text-dim);
-  margin-bottom: 12px;
-}
-.rb-item-full {
-  padding: 14px 0;
   border-bottom: 1px solid var(--border);
 }
-.rb-item-full:last-child { border-bottom: none; }
-.rb-q-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 10px;
+.story-intro p {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text-mid);
 }
-.rb-q-row .rb-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
-.rb-q-row .rb-q { font-size: 13px; color: var(--text-mid); line-height: 1.35; }
-.rb-answers-row {
+.story-intro strong { color: var(--text); }
+
+/* Chapter per question */
+.story-chapter {
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.ch-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.ch-question {
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.45;
+  margin-bottom: 14px;
+}
+.ch-answers {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin-left: 24px;
+  margin-bottom: 12px;
 }
-.rb-ans {
-  padding: 10px 12px;
-  border-radius: var(--radius-xs);
-  position: relative;
+.ch-ans {
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  text-align: center;
 }
-.rb-ans-label {
+.ch-ans .ch-label {
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 1.2px;
   font-weight: 700;
   font-family: 'Syne', sans-serif;
-  display: block;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
 }
-.rb-ans-text {
+.ch-ans .ch-text {
   font-size: 13px;
   font-weight: 600;
   line-height: 1.3;
 }
-.rb-ans-you {
+.ch-ans.ch-you {
   background: var(--accent-1-bg);
   border: 1px solid var(--accent-1-border);
 }
-.rb-ans-you .rb-ans-label { color: var(--accent-1); }
-.rb-ans-them {
+.ch-ans.ch-you .ch-label { color: var(--accent-1); }
+.ch-ans.ch-them {
   background: var(--accent-2-bg);
   border: 1px solid var(--accent-2-border);
 }
-.rb-ans-them .rb-ans-label { color: var(--accent-2); }
-.rb-verdict {
-  margin-left: 24px;
-  margin-top: 8px;
-  font-size: 11px;
-  font-weight: 700;
-  font-family: 'Syne', sans-serif;
-}
-.rb-verdict.rb-match { color: var(--match-green); }
-.rb-verdict.rb-diff { color: var(--text-dim); }
+.ch-ans.ch-them .ch-label { color: var(--accent-2); }
 
-/* Fun stats row */
-.receipt-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+/* Narrative comment bubble */
+.ch-comment {
+  display: flex;
+  align-items: flex-start;
   gap: 10px;
-  padding: 16px 24px;
-  border-top: 1px dashed var(--border);
-}
-.receipt-stat {
-  text-align: center;
-  padding: 12px 8px;
+  padding: 12px 14px;
   border-radius: var(--radius-sm);
   background: var(--surface);
 }
-.receipt-stat .rs-val {
+.ch-comment .ch-emoji { font-size: 20px; flex-shrink: 0; line-height: 1.3; }
+.ch-comment .ch-msg {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-mid);
+}
+.ch-comment .ch-msg strong { color: var(--text); font-weight: 600; }
+
+/* Outro */
+.story-outro {
+  padding: 32px 24px;
+  text-align: center;
+}
+.story-stats {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-bottom: 24px;
+}
+.story-stat-val {
   font-family: 'Syne', sans-serif;
   font-weight: 800;
-  font-size: 20px;
+  font-size: 28px;
   letter-spacing: -1px;
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
-.receipt-stat .rs-lbl {
+.story-stat-lbl {
   font-size: 10px;
   color: var(--text-dim);
   text-transform: uppercase;
@@ -1207,35 +1203,27 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
   font-weight: 600;
   margin-top: 2px;
 }
-
-/* Footer with branding */
-.receipt-footer {
-  padding: 16px 24px 20px;
-  text-align: center;
-  border-top: 1px dashed var(--border);
-}
-.receipt-footer .rf-brand {
+.story-brand {
   font-family: 'Syne', sans-serif;
   font-weight: 800;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--text-dim);
   letter-spacing: -0.5px;
+  opacity: 0.4;
 }
-.receipt-footer .rf-date {
+.story-date {
   font-size: 11px;
   color: var(--text-dim);
-  margin-top: 4px;
-  opacity: 0.6;
+  opacity: 0.35;
+  margin-top: 2px;
 }
 
-/* Actions below receipt */
-.receipt-actions {
-  width: 100%;
-  max-width: 350px;
+/* Actions */
+.story-actions {
+  padding: 0 24px 44px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 20px;
 }
 .btn-share {
   background: var(--bg2);
@@ -1254,6 +1242,12 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
   transition: all 0.2s;
 }
 .btn-share:active { transform: scale(0.97); }
+
+/* Disabled button */
+.btn.disabled, .btn:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
 
 /* ========== CONFETTI ========== */
 .confetti-container {
@@ -1506,34 +1500,35 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
   <div id="splash" class="screen active">
     <div class="logo-mark">🫣</div>
     <h1 class="syne logo-text">blindside.</h1>
-    <p class="tagline">same questions. blind answers. one reveal.</p>
+    <p class="tagline" data-i18n="splash_tagline">same questions. blind answers. one reveal.</p>
     <div class="splash-cta">
-      <button class="btn btn-primary" onclick="goTo('onboarding')">get started</button>
-      <button class="btn btn-ghost" onclick="goTo('home')">i have an account</button>
+      <button class="btn btn-primary" onclick="goTo('onboarding')" data-i18n="splash_get_started">get started</button>
+      <button class="btn btn-ghost" onclick="goTo('home')" data-i18n="splash_have_account">i have an account</button>
     </div>
   </div>
 
   <!-- ONBOARDING -->
   <div id="onboarding" class="screen">
-    <h2 class="syne" style="font-size:22px;letter-spacing:-0.5px;">how it works</h2>
+    <div class="lang-selector" id="langSelector"></div>
+    <h2 class="syne" style="font-size:22px;letter-spacing:-0.5px;" data-i18n="onboarding_title">how it works</h2>
     <div class="onboarding-slides">
       <div class="onboarding-slide">
         <div class="slide-emoji">📦</div>
-        <div class="slide-title">pick a pack</div>
-        <div class="slide-desc">choose a question pack that matches your vibe</div>
+        <div class="slide-title" data-i18n="onboarding_step1_title">pick a pack</div>
+        <div class="slide-desc" data-i18n="onboarding_step1_desc">choose a question pack that matches your vibe</div>
       </div>
       <div class="onboarding-slide">
         <div class="slide-emoji">🔒</div>
-        <div class="slide-title">answer privately</div>
-        <div class="slide-desc">both of you answer the same questions — no peeking</div>
+        <div class="slide-title" data-i18n="onboarding_step2_title">answer privately</div>
+        <div class="slide-desc" data-i18n="onboarding_step2_desc">both of you answer the same questions — no peeking</div>
       </div>
       <div class="onboarding-slide">
         <div class="slide-emoji">✨</div>
-        <div class="slide-title">reveal together</div>
-        <div class="slide-desc">answers unlock only when you've both submitted</div>
+        <div class="slide-title" data-i18n="onboarding_step3_title">reveal together</div>
+        <div class="slide-desc" data-i18n="onboarding_step3_desc">answers unlock only when you've both submitted</div>
       </div>
     </div>
-    <button class="btn btn-primary" style="width:100%" onclick="goTo('home')">let's go</button>
+    <button class="btn btn-primary" style="width:100%" onclick="goTo('home')" data-i18n="onboarding_cta">let's go</button>
   </div>
 
   <!-- HOME -->
@@ -1551,7 +1546,7 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
       </div>
     </div>
 
-    <div class="section-label">Active</div>
+    <div class="section-label" data-i18n="home_active">Active</div>
 
     <div class="session-card glass" onclick="goTo('reveal-flow')">
       <div class="s-icon" style="background:rgba(132,204,22,0.1)">💚</div>
@@ -1559,7 +1554,7 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
         <div class="s-title">Couples Edition</div>
         <div class="s-sub">with Alex</div>
       </div>
-      <div class="s-badge badge-reveal">Reveal!</div>
+      <div class="s-badge badge-reveal" data-i18n="badge_reveal">Reveal!</div>
     </div>
 
     <div class="session-card glass">
@@ -1568,19 +1563,19 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
         <div class="s-title">Best Friends</div>
         <div class="s-sub">with Jordan</div>
       </div>
-      <div class="s-badge badge-progress">In progress</div>
+      <div class="s-badge badge-progress" data-i18n="badge_progress">In progress</div>
     </div>
 
     <div class="session-card glass">
       <div class="s-icon" style="background:rgba(249,115,22,0.1)">🧡</div>
       <div class="s-info">
         <div class="s-title">Deep Talk</div>
-        <div class="s-sub">invite sent</div>
+        <div class="s-sub" data-i18n="home_invite_sent">invite sent</div>
       </div>
-      <div class="s-badge badge-waiting">Waiting</div>
+      <div class="s-badge badge-waiting" data-i18n="badge_waiting">Waiting</div>
     </div>
 
-    <div class="section-label">Completed</div>
+    <div class="section-label" data-i18n="home_completed">Completed</div>
 
     <div class="session-card glass">
       <div class="s-icon" style="background:var(--surface)">🩶</div>
@@ -1592,17 +1587,17 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
     </div>
 
     <div class="fab-wrap">
-      <button class="fab" onclick="goTo('packs')">+ new session</button>
+      <button class="fab" onclick="goTo('packs')" data-i18n="home_new_session">+ new session</button>
     </div>
 
     <nav class="bottom-nav" id="bottomNav">
       <button class="nav-item active" onclick="goTo('home')">
         <span class="nav-icon">🏠</span>
-        Home
+        <span data-i18n="nav_home">Home</span>
       </button>
       <button class="nav-item" onclick="goTo('packs')">
         <span class="nav-icon">📦</span>
-        Packs
+        <span data-i18n="nav_packs">Packs</span>
       </button>
     </nav>
   </div>
@@ -1612,9 +1607,9 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
     <div class="packs-header">
       <div class="top-bar" style="padding:60px 0 0">
         <button class="btn-icon" onclick="goTo('home')">←</button>
-        <h2>packs</h2>
+        <h2 data-i18n="nav_packs">packs</h2>
       </div>
-      <p>pick one, send it, see what happens</p>
+      <p data-i18n="packs_subtitle">pick one, send it, see what happens</p>
     </div>
 
     <div class="packs-grid">
@@ -1648,11 +1643,11 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
     <nav class="bottom-nav">
       <button class="nav-item" onclick="goTo('home')">
         <span class="nav-icon">🏠</span>
-        Home
+        <span data-i18n="nav_home">Home</span>
       </button>
       <button class="nav-item active" onclick="goTo('packs')">
         <span class="nav-icon">📦</span>
-        Packs
+        <span data-i18n="nav_packs">Packs</span>
       </button>
     </nav>
   </div>
@@ -1670,12 +1665,12 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
       <div class="invite-avatar them">?</div>
     </div>
 
-    <h2 class="syne" style="font-size:22px;letter-spacing:-0.5px">share with your person</h2>
-    <p style="font-size:13px;color:var(--text-dim)">they'll get the same questions. no one sees answers until you both finish.</p>
+    <h2 class="syne" style="font-size:22px;letter-spacing:-0.5px" data-i18n="invite_title">share with your person</h2>
+    <p style="font-size:13px;color:var(--text-dim)" data-i18n="invite_desc">they'll get the same questions. no one sees answers until you both finish.</p>
 
     <div class="link-box glass">
       <span class="link-text">blindside.app/join/x7k2m9</span>
-      <button class="copy-btn" onclick="copyLink(this)">copy</button>
+      <button class="copy-btn" onclick="copyLink(this)" data-i18n="invite_copy">copy</button>
     </div>
 
     <div class="share-row">
@@ -1726,9 +1721,9 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
     <div id="revealCardsContainer"></div>
   </div>
 
-  <!-- RESULTS / VIBE RECEIPT -->
+  <!-- RESULTS / STORY -->
   <div id="results" class="screen">
-    <div class="receipt-scroll" id="receiptScroll"></div>
+    <div class="story-scroll" id="storyScroll"></div>
   </div>
 
   <!-- SUBMIT MODAL -->
@@ -1933,7 +1928,9 @@ function renderQuestion() {
   document.getElementById('quizCount').textContent = `${currentQuestion + 1} / ${total}`;
 
   const isLast = currentQuestion === total - 1;
-  document.getElementById('quizNextBtn').textContent = isLast ? 'submit' : 'next';
+  const nextBtn = document.getElementById('quizNextBtn');
+  nextBtn.textContent = isLast ? 'submit' : 'next';
+  nextBtn.disabled = selectedAnswers[currentQuestion] === undefined;
   document.getElementById('quizBackBtn').style.display = currentQuestion > 0 ? '' : 'none';
 
   const body = document.getElementById('quizBody');
@@ -1957,14 +1954,11 @@ function selectAnswer(qIndex, answer, el) {
   selectedAnswers[qIndex] = answer;
   el.parentElement.querySelectorAll('.answer-opt').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
+  document.getElementById('quizNextBtn').disabled = false;
 }
 
 function nextQuestion() {
-  if (selectedAnswers[currentQuestion] === undefined) {
-    document.querySelector('.question-card').classList.add('shake');
-    setTimeout(() => document.querySelector('.question-card')?.classList.remove('shake'), 400);
-    return;
-  }
+  if (selectedAnswers[currentQuestion] === undefined) return;
 
   if (currentQuestion === questions.length - 1) {
     document.getElementById('submitModal').classList.add('show');
@@ -2193,6 +2187,24 @@ function spawnConfetti() {
 }
 
 // Vibe Receipt builder
+// Narrative comments per question - match vs diff
+const matchComments = [
+  (q, a) => `🔥 <strong>Same energy.</strong> You both went with "${a}" without hesitation. That's not luck — that's a wavelength.`,
+  (q, a) => `🧠 <strong>Telepathic.</strong> "${a}" from both of you. Either you rehearsed this or you're genuinely in sync.`,
+  (q, a) => `💫 <strong>No notes.</strong> You both said "${a}" — and honestly? Perfect answer.`,
+  (q, a) => `⚡ <strong>Connected.</strong> "${a}" — same page, same chapter, same book.`,
+  (q, a) => `🎯 <strong>Bullseye.</strong> Of all the options, you both landed on "${a}". The universe is paying attention.`,
+  (q, a) => `✨ <strong>In sync.</strong> "${a}" — when you know, you know.`,
+];
+const diffComments = [
+  (q, y, t) => `👀 You said <strong>"${y}"</strong>, Alex said <strong>"${t}"</strong>. Different chapters, but still a good story.`,
+  (q, y, t) => `😏 <strong>"${y}"</strong> vs <strong>"${t}"</strong> — this is the kind of debate that could last hours.`,
+  (q, y, t) => `🌀 You went with <strong>"${y}"</strong> while Alex chose <strong>"${t}"</strong>. Interesting plot twist.`,
+  (q, y, t) => `💭 <strong>"${y}"</strong> meets <strong>"${t}"</strong> — different instincts, but that's what makes it interesting.`,
+  (q, y, t) => `🤷 You: <strong>"${y}"</strong>. Alex: <strong>"${t}"</strong>. Agree to disagree? Or discuss over dinner?`,
+  (q, y, t) => `🎭 <strong>"${y}"</strong> and <strong>"${t}"</strong> — two sides of something worth exploring.`,
+];
+
 function buildReceipt() {
   const data = revealData.length ? revealData : questions.map((q, i) => {
     const userAns = selectedAnswers[i] || q.options[0];
@@ -2203,87 +2215,90 @@ function buildReceipt() {
   const total = data.length;
   const pct = Math.round((matches / total) * 100);
 
-  // Vibe labels based on score
   const vibeLabels = [
-    { min: 0,  emoji: '🫠', title: 'Wildly Different', desc: 'opposites attract...right?' },
-    { min: 20, emoji: '🌀', title: 'Unpredictable Duo', desc: 'never a boring moment with you two' },
-    { min: 40, emoji: '🤝', title: 'Getting There', desc: 'common ground exists — keep digging' },
-    { min: 60, emoji: '💜', title: 'Real Ones', desc: 'you get each other more than most' },
-    { min: 80, emoji: '🔮', title: 'Mind Readers', desc: 'are you sure you\'re not the same person?' },
-    { min: 100, emoji: '👽', title: 'Literally Telepathic', desc: 'this is actually scary' },
+    { min: 0,  emoji: '🫠', title: 'Wildly Different', desc: 'opposites attract...right?', intro: 'Well, this was... <strong>eventful</strong>. You two see the world through very different lenses — and honestly, that might be the most interesting part.' },
+    { min: 20, emoji: '🌀', title: 'Unpredictable Duo', desc: 'never a boring moment', intro: 'You two are <strong>unpredictable</strong> in the best way. Not always on the same page, but always an interesting read.' },
+    { min: 40, emoji: '🤝', title: 'Getting There', desc: 'common ground exists', intro: 'There\'s real <strong>overlap</strong> here — and where there isn\'t, there\'s curiosity. That counts for a lot.' },
+    { min: 60, emoji: '💜', title: 'Real Ones', desc: 'you get each other', intro: 'You two <strong>get each other</strong>. Not perfectly, not always — but more than most. And the differences? That\'s where the good conversations live.' },
+    { min: 80, emoji: '🔮', title: 'Mind Readers', desc: 'basically the same person', intro: 'OK this is getting <strong>suspicious</strong>. You two are answering like you share a brain. Who copied who?' },
+    { min: 100, emoji: '👽', title: 'Literally Telepathic', desc: 'this is actually scary', intro: '<strong>Every. Single. One.</strong> You matched on all of them. This is either beautiful or terrifying. Probably both.' },
   ];
   const vibe = [...vibeLabels].reverse().find(v => pct >= v.min);
 
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-  const scroll = document.getElementById('receiptScroll');
-  scroll.innerHTML = `
-    <div class="vibe-receipt">
-      <div class="receipt-header">
-        <div class="rh-emoji">${vibe.emoji}</div>
-        <h2>${pct}%</h2>
-        <div class="rh-sub">you & Alex</div>
-      </div>
+  // Build chapters
+  let chaptersHtml = '';
+  data.forEach((d, i) => {
+    const comment = d.matched
+      ? matchComments[i % matchComments.length](d.q, d.userAns)
+      : diffComments[i % diffComments.length](d.q, d.userAns, d.partnerAns);
 
-      <div class="receipt-score">
-        <div class="rs-big">${vibe.title}</div>
-        <div class="rs-label">${vibe.desc}</div>
-      </div>
-
-      <div class="receipt-vibe-badge">
-        <div class="rvb-emoji">${matches === total ? '🏆' : matches > total/2 ? '✨' : '🌱'}</div>
-        <div class="rvb-title">${matches} of ${total} matched</div>
-        <div class="rvb-desc">${matches === total ? 'perfect score — you\'re scary good' : matches > total/2 ? 'more alike than different' : 'variety is the spice of life'}</div>
-      </div>
-
-      <div class="receipt-breakdown">
-        <div class="receipt-breakdown-title">the breakdown</div>
-        ${data.map((d, i) => `
-          <div class="rb-item-full">
-            <div class="rb-q-row">
-              <span class="rb-icon">${d.matched ? '💚' : '💬'}</span>
-              <span class="rb-q">${d.q}</span>
-            </div>
-            <div class="rb-answers-row">
-              <div class="rb-ans rb-ans-you">
-                <span class="rb-ans-label">you</span>
-                <span class="rb-ans-text">${d.userAns}</span>
-              </div>
-              <div class="rb-ans rb-ans-them">
-                <span class="rb-ans-label">alex</span>
-                <span class="rb-ans-text">${d.partnerAns}</span>
-              </div>
-            </div>
-            <div class="rb-verdict ${d.matched ? 'rb-match' : 'rb-diff'}">${d.matched ? '✓ match' : '✗ different vibes'}</div>
+    chaptersHtml += `
+      <div class="story-chapter">
+        <div class="ch-num">${i + 1} of ${total}</div>
+        <div class="ch-question">${d.q}</div>
+        <div class="ch-answers">
+          <div class="ch-ans ch-you">
+            <div class="ch-label">you</div>
+            <div class="ch-text">${d.userAns}</div>
           </div>
-        `).join('')}
-      </div>
-
-      <div class="receipt-stats">
-        <div class="receipt-stat">
-          <div class="rs-val">${pct}%</div>
-          <div class="rs-lbl">sync rate</div>
+          <div class="ch-ans ch-them">
+            <div class="ch-label">alex</div>
+            <div class="ch-text">${d.partnerAns}</div>
+          </div>
         </div>
-        <div class="receipt-stat">
-          <div class="rs-val">${total - matches}</div>
-          <div class="rs-lbl">plot twists</div>
+        <div class="ch-comment">
+          <div class="ch-msg">${comment}</div>
         </div>
       </div>
+    `;
+  });
 
-      <div class="receipt-footer">
-        <div class="rf-brand">blindside.</div>
-        <div class="rf-date">${dateStr}</div>
-      </div>
+  const scroll = document.getElementById('storyScroll');
+  scroll.innerHTML = `
+    <div class="story-hero">
+      <div class="story-hero-emoji">${vibe.emoji}</div>
+      <div class="story-hero-score">${pct}%</div>
+      <div class="story-hero-names">you & Alex</div>
+      <div class="story-hero-vibe">${vibe.title}</div>
+      <div class="story-hero-sub">${vibe.desc}</div>
     </div>
 
-    <div class="receipt-actions">
+    <div class="story-intro">
+      <p>${vibe.intro}</p>
+    </div>
+
+    ${chaptersHtml}
+
+    <div class="story-outro">
+      <div class="story-stats">
+        <div>
+          <div class="story-stat-val">${matches}</div>
+          <div class="story-stat-lbl">matches</div>
+        </div>
+        <div>
+          <div class="story-stat-val">${total - matches}</div>
+          <div class="story-stat-lbl">plot twists</div>
+        </div>
+        <div>
+          <div class="story-stat-val">${pct}%</div>
+          <div class="story-stat-lbl">sync rate</div>
+        </div>
+      </div>
+      <div class="story-brand">blindside.</div>
+      <div class="story-date">${dateStr}</div>
+    </div>
+
+    <div class="story-actions">
       <button class="btn-share" onclick="shareReceipt()">📤 share this vibe check</button>
       <button class="btn btn-primary" style="width:100%" onclick="goTo('packs')">play another pack</button>
       <button class="btn btn-ghost" onclick="goTo('home')">back home</button>
     </div>
   `;
 
+  scroll.scrollTop = 0;
   spawnConfetti();
 }
 
