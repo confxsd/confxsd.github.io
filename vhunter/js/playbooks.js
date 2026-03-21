@@ -7,7 +7,7 @@ import { CONFIG } from './config.js';
 import { createSortableTable } from './sortable-table.js';
 
 let strategiesCache = [];
-let currentView = 'list'; // 'list' | 'detail' | 'npi'
+let currentView = 'list'; // 'list' | 'detail' | 'npi' | 'squeeze'
 let currentStrategyId = null;
 let linkedChecks = [];
 let editEntryConditions = [''];
@@ -108,6 +108,25 @@ function renderNpiCard() {
   `;
 }
 
+function renderSqueezeCard() {
+  return `
+    <div class="pb-card pb-card-squeeze" onclick="window.pbOpenSqueeze()">
+      <div class="pb-card-header">
+        <span class="pb-name">Short Squeeze</span>
+        <span class="pb-cat-badge contrarian">Contrarian</span>
+        <span class="pb-dir-badge long">long</span>
+        <div class="pb-priority">${priorityDots(5)}</div>
+      </div>
+      <div class="pb-desc">High short interest + low float + rising SI = forced covering. The LMND playbook: crowded shorts, improving fundamentals, catalyst ignites violent unwind.</div>
+      <div class="pb-stats">
+        <span>SI: <span class="pb-stat-val">&ge;15% float</span></span>
+        <span>DTC: <span class="pb-stat-val">&ge;2 days</span></span>
+        <span>Fuel: <span class="pb-stat-val">Rising SI trend</span></span>
+      </div>
+    </div>
+  `;
+}
+
 function renderList() {
   const container = document.getElementById('pbPage');
   if (!container) return;
@@ -146,6 +165,7 @@ function renderList() {
     </div>
     <div class="pb-cards">
       ${renderNpiCard()}
+      ${renderSqueezeCard()}
       ${userCards || `<div class="pb-empty" style="grid-column:1/-1">
         <div class="pb-empty-icon">♟</div>
         <div class="pb-empty-text">No custom strategy playbooks yet. Create one to get started.</div>
@@ -977,3 +997,162 @@ window.pbSortChecks = (key) => {
 };
 
 window.pbOpenNpi = () => loadNpiView();
+
+// ── Short Squeeze Scanner ─────────────────────────────────────
+
+let squeezeData = [];
+let squeezeSortBy = 'score'; // score | si | dtc | trend
+let squeezeLoading = false;
+
+async function fetchSqueezeCandidates() {
+  const params = new URLSearchParams({ min_si: '15', min_dtc: '2', limit: '50' });
+  const response = await fetch(`${CONFIG.PROXY_URL}/api/short-interest/squeeze-scan?${params}`, {
+    headers: { 'X-User-Id': getUserId() }
+  });
+  return response.json();
+}
+
+function squeezeSortCandidates(candidates) {
+  return [...candidates].sort((a, b) => {
+    switch (squeezeSortBy) {
+      case 'si': return (b.short_float_pct || 0) - (a.short_float_pct || 0);
+      case 'dtc': return (b.short_ratio || 0) - (a.short_ratio || 0);
+      case 'trend': return (b.si_trend || 0) - (a.si_trend || 0);
+      default: return (b.squeeze_score || 0) - (a.squeeze_score || 0);
+    }
+  });
+}
+
+function squeezeScoreColor(score) {
+  if (score >= 70) return '#ef4444';
+  if (score >= 50) return '#f59e0b';
+  if (score >= 30) return '#22c55e';
+  return '#64748b';
+}
+
+function squeezeScoreLabel(score) {
+  if (score >= 70) return 'EXTREME';
+  if (score >= 50) return 'HIGH';
+  if (score >= 30) return 'MODERATE';
+  return 'LOW';
+}
+
+function renderSqueezeResults(candidates) {
+  const el = document.getElementById('squeezeResults');
+  if (!el) return;
+
+  if (!candidates.length) {
+    el.innerHTML = '<div class="pb-empty"><div class="pb-empty-text">No squeeze candidates found. Run short interest scans on tickers first.</div></div>';
+    return;
+  }
+
+  const sorted = squeezeSortCandidates(candidates);
+  const sortBtn = (key, label) =>
+    `<button class="npi-ctrl-btn ${squeezeSortBy === key ? 'active' : ''}" onclick="window.pbSqueezeSort('${key}')">${label}</button>`;
+
+  const cards = sorted.map(c => {
+    const scoreColor = squeezeScoreColor(c.squeeze_score);
+    const scoreLabel = squeezeScoreLabel(c.squeeze_score);
+    const trendArrow = c.si_trend > 0 ? '<span style="color:#ef4444">&#9650;</span>' : c.si_trend < 0 ? '<span style="color:#22c55e">&#9660;</span>' : '';
+    const mcapStr = c.market_cap ? (c.market_cap >= 1e9 ? `$${(c.market_cap / 1e9).toFixed(1)}B` : `$${(c.market_cap / 1e6).toFixed(0)}M`) : '--';
+    const floatStr = c.shares_float ? (c.shares_float >= 1e6 ? `${(c.shares_float / 1e6).toFixed(1)}M` : `${(c.shares_float / 1e3).toFixed(0)}K`) : '--';
+
+    return `
+      <div class="squeeze-card" onclick="window.switchPage('analyze', '${c.ticker}')">
+        <div class="squeeze-card-head">
+          <span class="squeeze-ticker">${c.ticker}</span>
+          <span class="squeeze-score-badge" style="background:${scoreColor}15;color:${scoreColor};border:1px solid ${scoreColor}30">
+            ${c.squeeze_score} &middot; ${scoreLabel}
+          </span>
+        </div>
+        <div class="squeeze-metrics">
+          <div class="squeeze-metric">
+            <span class="squeeze-metric-label">SI % Float</span>
+            <span class="squeeze-metric-value ${c.short_float_pct >= 25 ? 'extreme' : c.short_float_pct >= 15 ? 'high' : ''}">${c.short_float_pct?.toFixed(1) || '--'}%</span>
+          </div>
+          <div class="squeeze-metric">
+            <span class="squeeze-metric-label">Days to Cover</span>
+            <span class="squeeze-metric-value ${c.short_ratio >= 5 ? 'extreme' : c.short_ratio >= 3 ? 'high' : ''}">${c.short_ratio?.toFixed(1) || '--'}d</span>
+          </div>
+          <div class="squeeze-metric">
+            <span class="squeeze-metric-label">SI Trend</span>
+            <span class="squeeze-metric-value">${trendArrow} ${c.si_trend > 0 ? '+' : ''}${c.si_trend?.toFixed(1) || '0'}%</span>
+          </div>
+          <div class="squeeze-metric">
+            <span class="squeeze-metric-label">Float</span>
+            <span class="squeeze-metric-value">${floatStr}</span>
+          </div>
+        </div>
+        <div class="squeeze-meta">
+          <span>MCap: ${mcapStr}</span>
+          <span>Inst: ${c.inst_own_pct?.toFixed(0) || '--'}%</span>
+          <span>Insider: ${c.insider_own_pct?.toFixed(0) || '--'}%</span>
+          <span>${c.report_date || ''}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="npi-ctrl-row" style="margin-bottom:10px">
+      <span class="npi-ctrl-label">Sort</span>
+      <div class="npi-ctrl-group">
+        ${sortBtn('score', 'Squeeze Score')}
+        ${sortBtn('si', 'SI %')}
+        ${sortBtn('dtc', 'Days to Cover')}
+        ${sortBtn('trend', 'SI Trend')}
+      </div>
+      <span style="flex:1"></span>
+      <span style="font-size:0.72rem;color:var(--tv-text-tertiary)">${candidates.length} candidates</span>
+    </div>
+    <div class="squeeze-grid">${cards}</div>
+  `;
+}
+
+async function loadSqueezeView() {
+  const container = document.getElementById('pbPage');
+  if (!container) return;
+
+  currentView = 'squeeze';
+  container.innerHTML = `
+    <div class="pb-detail">
+      <span class="pb-detail-back" onclick="window.pbBackToList()"><i class="fa-solid fa-arrow-left"></i> All Playbooks</span>
+      <div class="pb-detail-card pb-squeeze-header-card">
+        <div class="pb-detail-title">Short Squeeze Scanner</div>
+        <div class="pb-detail-desc">Crowded shorts with squeeze mechanics. Inspired by LMND: heavily shorted name where improving loss ratios + growing premiums created a fundamental catalyst that forced violent short covering. The playbook targets high SI% + tight float + rising short interest trend = trapped shorts with no exit liquidity.</div>
+        <div class="npi-filter-tags">
+          <span class="npi-tag squeeze-tag">SI &ge;15% Float</span>
+          <span class="npi-tag squeeze-tag">DTC &ge;2 Days</span>
+          <span class="npi-tag squeeze-tag">Low Float Preferred</span>
+          <span class="npi-tag squeeze-tag">Rising SI = Fuel</span>
+        </div>
+      </div>
+      <div id="squeezeResults" class="npi-results">
+        <div class="npi-loading">
+          <i class="fa-solid fa-spinner fa-spin"></i> Scanning for squeeze candidates...
+        </div>
+      </div>
+    </div>
+  `;
+
+  if (squeezeLoading) return;
+  squeezeLoading = true;
+
+  try {
+    const result = await fetchSqueezeCandidates();
+    squeezeData = result.candidates || [];
+    renderSqueezeResults(squeezeData);
+  } catch (e) {
+    console.error('[PLAYBOOKS] Squeeze scan failed:', e);
+    const el = document.getElementById('squeezeResults');
+    if (el) el.innerHTML = '<div class="pb-empty"><div class="pb-empty-text">Failed to load squeeze data. Check console for details.</div></div>';
+  }
+
+  squeezeLoading = false;
+}
+
+window.pbOpenSqueeze = () => loadSqueezeView();
+window.pbSqueezeSort = (key) => {
+  squeezeSortBy = key;
+  renderSqueezeResults(squeezeData);
+};

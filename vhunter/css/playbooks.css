@@ -848,6 +848,111 @@
   color: var(--tv-text-primary);
 }
 
+/* ── Short Squeeze Card & Scanner ── */
+
+.pb-card-squeeze {
+  border-color: #dc2626;
+  background: linear-gradient(135deg, var(--tv-bg-secondary) 0%, rgba(220, 38, 38, 0.06) 100%);
+}
+
+.pb-card-squeeze:hover {
+  border-color: #ef4444;
+}
+
+.pb-squeeze-header-card {
+  border-left: 3px solid #dc2626;
+}
+
+.npi-tag.squeeze-tag {
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.squeeze-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 10px;
+}
+
+.squeeze-card {
+  background: var(--tv-bg-secondary);
+  border: 1px solid var(--tv-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.squeeze-card:hover {
+  border-color: var(--tv-accent);
+}
+
+.squeeze-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.squeeze-ticker {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--tv-text-primary);
+  letter-spacing: 0.02em;
+}
+
+.squeeze-score-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.03em;
+}
+
+.squeeze-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.squeeze-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.squeeze-metric-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--tv-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.squeeze-metric-value {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--tv-text-primary);
+}
+
+.squeeze-metric-value.high {
+  color: #f59e0b;
+}
+
+.squeeze-metric-value.extreme {
+  color: #ef4444;
+}
+
+.squeeze-meta {
+  display: flex;
+  gap: 10px;
+  font-size: 0.65rem;
+  color: var(--tv-text-tertiary);
+  padding-top: 8px;
+  border-top: 1px solid var(--tv-border);
+}
+
 @media (max-width: 768px) {
   .pb-cards {
     grid-template-columns: 1fr;
@@ -868,5 +973,13 @@
 
   .pb-tickers-grid {
     grid-template-columns: 1fr;
+  }
+
+  .squeeze-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .squeeze-metrics {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
