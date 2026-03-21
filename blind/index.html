@@ -400,7 +400,7 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
 }
 
 /* ========== HOME ========== */
-#home { padding-bottom: 90px; }
+#home { padding-bottom: 100px; }
 .home-header {
   padding: 60px 24px 20px;
   display: flex;
@@ -540,9 +540,10 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
 .nav-item.active { color: var(--purple); }
 
 /* ========== PACKS ========== */
-#packs { padding-bottom: 90px; }
+#packs { padding-bottom: 100px; }
 .packs-header {
-  padding: 60px 24px 8px;
+  padding: 0 24px 8px;
+  flex-shrink: 0;
 }
 .packs-header h1 { font-size: 28px; letter-spacing: -1px; }
 .packs-header p { font-size: 13px; color: var(--text-dim); margin-top: 6px; }
@@ -550,7 +551,7 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  padding: 20px 24px;
+  padding: 20px 24px 24px;
 }
 .pack-card {
   padding: 20px 16px;
@@ -560,7 +561,7 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
   cursor: pointer;
   transition: all 0.2s;
   border-radius: var(--radius);
-  min-height: 160px;
+  min-height: 150px;
 }
 .pack-card:active { transform: scale(0.96); }
 .pack-card .pack-emoji { font-size: 36px; }
@@ -1607,7 +1608,7 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
   <!-- PACKS -->
   <div id="packs" class="screen">
     <div class="packs-header">
-      <div class="top-bar" style="padding:60px 0 0">
+      <div class="top-bar">
         <button class="btn-icon" onclick="goTo('home')">←</button>
         <h2 data-i18n="nav_packs">packs</h2>
       </div>
