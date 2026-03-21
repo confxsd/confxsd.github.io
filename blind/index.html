@@ -5,8 +5,10 @@
   (function(){
     var t = localStorage.getItem('bs-theme') || 'light';
     var a = localStorage.getItem('bs-accent') || 'sunset';
+    var l = localStorage.getItem('bs-lang') || 'en';
     document.documentElement.setAttribute('data-theme', t);
     document.documentElement.setAttribute('data-accent', a);
+    document.documentElement.setAttribute('lang', l);
   })();
 </script>
 <head>
@@ -1551,8 +1553,8 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
     <div class="session-card glass" onclick="goTo('reveal-flow')">
       <div class="s-icon" style="background:rgba(132,204,22,0.1)">💚</div>
       <div class="s-info">
-        <div class="s-title">Couples Edition</div>
-        <div class="s-sub">with Alex</div>
+        <div class="s-title" data-i18n="pack_couples">Couples Edition</div>
+        <div class="s-sub" data-i18n="home_with_alex">with Alex</div>
       </div>
       <div class="s-badge badge-reveal" data-i18n="badge_reveal">Reveal!</div>
     </div>
@@ -1560,8 +1562,8 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
     <div class="session-card glass">
       <div class="s-icon" style="background:rgba(124,58,237,0.1)">💜</div>
       <div class="s-info">
-        <div class="s-title">Best Friends</div>
-        <div class="s-sub">with Jordan</div>
+        <div class="s-title" data-i18n="pack_bestfriends">Best Friends</div>
+        <div class="s-sub" data-i18n="home_with_jordan">with Jordan</div>
       </div>
       <div class="s-badge badge-progress" data-i18n="badge_progress">In progress</div>
     </div>
@@ -1569,7 +1571,7 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
     <div class="session-card glass">
       <div class="s-icon" style="background:rgba(249,115,22,0.1)">🧡</div>
       <div class="s-info">
-        <div class="s-title">Deep Talk</div>
+        <div class="s-title" data-i18n="pack_deeptalk">Deep Talk</div>
         <div class="s-sub" data-i18n="home_invite_sent">invite sent</div>
       </div>
       <div class="s-badge badge-waiting" data-i18n="badge_waiting">Waiting</div>
@@ -1580,8 +1582,8 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
     <div class="session-card glass">
       <div class="s-icon" style="background:var(--surface)">🩶</div>
       <div class="s-info">
-        <div class="s-title">Friendship Deep Dive</div>
-        <div class="s-sub">with Taylor · 83% match</div>
+        <div class="s-title" data-i18n="pack_friendship_deep_dive">Friendship Deep Dive</div>
+        <div class="s-sub" data-i18n="home_with_taylor_match">with Taylor · 83% match</div>
       </div>
       <div class="s-badge badge-done">Mar 15</div>
     </div>
@@ -1612,33 +1614,7 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
       <p data-i18n="packs_subtitle">pick one, send it, see what happens</p>
     </div>
 
-    <div class="packs-grid">
-      <div class="pack-card glass" onclick="selectPack('Couples Edition','💕','10 questions')">
-        <div class="pack-emoji">💕</div>
-        <div class="pack-title">Couples Edition</div>
-        <div class="pack-count">10 questions</div>
-      </div>
-      <div class="pack-card glass" onclick="selectPack('Best Friends','👯','8 questions')">
-        <div class="pack-emoji">👯</div>
-        <div class="pack-title">Best Friends</div>
-        <div class="pack-count">8 questions</div>
-      </div>
-      <div class="pack-card glass" onclick="selectPack('Deep Talk','🌊','12 questions')">
-        <div class="pack-emoji">🌊</div>
-        <div class="pack-title">Deep Talk</div>
-        <div class="pack-count">12 questions</div>
-      </div>
-      <div class="pack-card glass" onclick="selectPack('Coworkers','💼','5 questions')">
-        <div class="pack-emoji">💼</div>
-        <div class="pack-title">Coworkers</div>
-        <div class="pack-count">5 questions</div>
-      </div>
-      <div class="pack-card glass" style="grid-column:1/-1" onclick="selectPack('36 Questions','❤️‍🔥','6 questions')">
-        <div class="pack-emoji">❤️‍🔥</div>
-        <div class="pack-title">36 Questions to Fall in Love</div>
-        <div class="pack-count">6 questions · based on Arthur Aron's study</div>
-      </div>
-    </div>
+    <div class="packs-grid" id="packsGrid"></div>
 
     <nav class="bottom-nav">
       <button class="nav-item" onclick="goTo('home')">
@@ -1679,7 +1655,7 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
       <button class="share-btn" title="More">📤</button>
     </div>
 
-    <button class="btn btn-primary" style="width:100%;margin-top:auto" onclick="simulateJoin()">simulate: partner joins →</button>
+    <button class="btn btn-primary" style="width:100%;margin-top:auto" onclick="simulateJoin()" data-i18n="invite_simulate">simulate: partner joins →</button>
   </div>
 
   <!-- QUIZ -->
@@ -1693,8 +1669,8 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
     </div>
     <div class="quiz-body" id="quizBody"></div>
     <div class="quiz-footer">
-      <button class="btn btn-secondary" id="quizBackBtn" onclick="prevQuestion()" style="display:none">back</button>
-      <button class="btn btn-primary" id="quizNextBtn" onclick="nextQuestion()">next</button>
+      <button class="btn btn-secondary" id="quizBackBtn" onclick="prevQuestion()" style="display:none" data-i18n="quiz_back">back</button>
+      <button class="btn btn-primary" id="quizNextBtn" onclick="nextQuestion()" data-i18n="quiz_next">next</button>
     </div>
   </div>
 
@@ -1705,14 +1681,14 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
       <div class="orb orb-2"></div>
       <div class="orb-line"></div>
     </div>
-    <h2 class="syne" style="font-size:24px;letter-spacing:-0.5px">you're locked in 🔒</h2>
-    <p style="font-size:14px;color:var(--text-dim);line-height:1.5">waiting for <strong style="color:var(--text)">Alex</strong> to finish answering...</p>
+    <h2 class="syne" style="font-size:24px;letter-spacing:-0.5px" data-i18n="waiting_title">you're locked in 🔒</h2>
+    <p style="font-size:14px;color:var(--text-dim);line-height:1.5" data-i18n="waiting_desc">waiting for <strong style="color:var(--text)">Alex</strong> to finish answering...</p>
     <div class="waiting-partner-progress">
       <div class="dot-pulse"></div>
-      <span>Alex is on question 3 of 5</span>
+      <span data-i18n="waiting_progress">Alex is on question 3 of 5</span>
     </div>
-    <button class="nudge-btn" onclick="sendNudge(this)">👉 send a nudge</button>
-    <button class="btn btn-primary" style="width:100%;margin-top:auto" onclick="startReveal()">simulate: partner done →</button>
+    <button class="nudge-btn" onclick="sendNudge(this)" data-i18n="waiting_nudge">👉 send a nudge</button>
+    <button class="btn btn-primary" style="width:100%;margin-top:auto" onclick="startReveal()" data-i18n="waiting_simulate">simulate: partner done →</button>
   </div>
 
   <!-- REVEAL -->
@@ -1730,10 +1706,10 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
   <div class="modal-overlay" id="submitModal">
     <div class="modal-box">
       <div style="font-size:36px">🔐</div>
-      <h3 class="syne">lock in your answers?</h3>
-      <p>once you submit, no take-backs. your person will be notified you're done.</p>
-      <button class="btn btn-primary" onclick="submitAnswers()">lock it in</button>
-      <button class="btn btn-ghost" onclick="closeModal()">wait, go back</button>
+      <h3 class="syne" data-i18n="modal_title">lock in your answers?</h3>
+      <p data-i18n="modal_desc">once you submit, no take-backs. your person will be notified you're done.</p>
+      <button class="btn btn-primary" onclick="submitAnswers()" data-i18n="modal_confirm">lock it in</button>
+      <button class="btn btn-ghost" onclick="closeModal()" data-i18n="modal_cancel">wait, go back</button>
     </div>
   </div>
 
@@ -1741,12 +1717,12 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
   <div class="settings-backdrop" id="settingsBackdrop" onclick="toggleSettings()"></div>
   <div class="settings-panel" id="settingsPanel">
     <div class="settings-handle"></div>
-    <div class="settings-label">Mode</div>
+    <div class="settings-label" data-i18n="settings_mode">Mode</div>
     <div class="theme-mode-row">
       <button class="theme-mode-btn" id="modeBtn-dark" onclick="setTheme('dark')">🌙 Dark</button>
       <button class="theme-mode-btn active" id="modeBtn-light" onclick="setTheme('light')">☀️ Light</button>
     </div>
-    <div class="settings-label">Accent Color</div>
+    <div class="settings-label" data-i18n="settings_accent">Accent Color</div>
     <div class="accent-row">
       <button class="accent-swatch active" data-accent="sunset" onclick="setAccent('sunset')">
         <div class="swatch-inner"><div class="half" style="background:#7C3AED"></div><div class="half" style="background:#EC4899"></div></div>
@@ -1777,7 +1753,372 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
 </div>
 
 <script>
-// Theme system
+// ==================== i18n SYSTEM ====================
+const i18n = {
+  languages: {
+    en: { flag: '🇬🇧', label: 'EN' },
+    tr: { flag: '🇹🇷', label: 'TR' },
+    es: { flag: '🇪🇸', label: 'ES' },
+    de: { flag: '🇩🇪', label: 'DE' },
+  },
+
+  translations: {
+    en: {
+      // Splash
+      splash_tagline: 'same questions. blind answers. one reveal.',
+      splash_get_started: 'get started',
+      splash_have_account: 'i have an account',
+      // Onboarding
+      onboarding_title: 'how it works',
+      onboarding_step1_title: 'pick a pack',
+      onboarding_step1_desc: 'choose a question pack that matches your vibe',
+      onboarding_step2_title: 'answer privately',
+      onboarding_step2_desc: 'both of you answer the same questions — no peeking',
+      onboarding_step3_title: 'reveal together',
+      onboarding_step3_desc: 'answers unlock only when you\'ve both submitted',
+      onboarding_cta: 'let\'s go',
+      // Home
+      home_active: 'Active',
+      home_completed: 'Completed',
+      home_invite_sent: 'invite sent',
+      home_new_session: '+ new session',
+      home_with_alex: 'with Alex',
+      home_with_jordan: 'with Jordan',
+      home_with_taylor_match: 'with Taylor · 83% match',
+      badge_reveal: 'Reveal!',
+      badge_progress: 'In progress',
+      badge_waiting: 'Waiting',
+      // Pack names
+      pack_couples: 'Couples Edition',
+      pack_bestfriends: 'Best Friends',
+      pack_deeptalk: 'Deep Talk',
+      pack_coworkers: 'Coworkers',
+      pack_36questions: '36 Questions to Fall in Love',
+      pack_friendship_deep_dive: 'Friendship Deep Dive',
+      // Pack counts
+      pack_count_couples: '10 questions',
+      pack_count_bestfriends: '8 questions',
+      pack_count_deeptalk: '12 questions',
+      pack_count_coworkers: '5 questions',
+      pack_count_36questions: '6 questions · based on Arthur Aron\'s study',
+      // Nav
+      nav_home: 'Home',
+      nav_packs: 'Packs',
+      // Packs
+      packs_subtitle: 'pick one, send it, see what happens',
+      // Invite
+      invite_title: 'share with your person',
+      invite_desc: 'they\'ll get the same questions. no one sees answers until you both finish.',
+      invite_copy: 'copy',
+      invite_simulate: 'simulate: partner joins →',
+      // Quiz
+      quiz_back: 'back',
+      quiz_next: 'next',
+      quiz_submit: 'submit',
+      quiz_question: 'question',
+      // Waiting
+      waiting_title: 'you\'re locked in 🔒',
+      waiting_desc: 'waiting for <strong style="color:var(--text)">Alex</strong> to finish answering...',
+      waiting_progress: 'Alex is on question 3 of 5',
+      waiting_nudge: '👉 send a nudge',
+      waiting_simulate: 'simulate: partner done →',
+      // Modal
+      modal_title: 'lock in your answers?',
+      modal_desc: 'once you submit, no take-backs. your person will be notified you\'re done.',
+      modal_confirm: 'lock it in',
+      modal_cancel: 'wait, go back',
+      // Settings
+      settings_mode: 'Mode',
+      settings_accent: 'Accent Color',
+      // Results
+      results_matches: 'matches',
+      results_plot_twists: 'plot twists',
+      results_sync_rate: 'sync rate',
+      results_share: '📤 share this vibe check',
+      results_play_another: 'play another pack',
+      results_back_home: 'back home',
+      results_you: 'you',
+      results_of: 'of',
+      // Reveal
+      reveal_question_of: 'question {n} of {total}',
+      reveal_you: 'You',
+      reveal_tap_reveal: 'tap to reveal',
+      reveal_tap_continue: 'tap to continue →',
+      reveal_get_ready: 'get ready',
+      // Feedback
+      feedback_copied: 'copied!',
+      feedback_nudge_sent: '✅ nudge sent!',
+      feedback_link_copied: '✅ link copied!',
+    },
+
+    tr: {
+      splash_tagline: 'aynı sorular. gizli cevaplar. bir açılış.',
+      splash_get_started: 'başla',
+      splash_have_account: 'hesabım var',
+      onboarding_title: 'nasıl çalışır',
+      onboarding_step1_title: 'bir paket seç',
+      onboarding_step1_desc: 'tarzına uyan bir soru paketi seç',
+      onboarding_step2_title: 'gizlice cevapla',
+      onboarding_step2_desc: 'ikiniz de aynı soruları cevaplıyorsunuz — gözetleme yok',
+      onboarding_step3_title: 'birlikte aç',
+      onboarding_step3_desc: 'cevaplar ancak ikiniz de gönderdikten sonra açılır',
+      onboarding_cta: 'hadi başlayalım',
+      home_active: 'Aktif',
+      home_completed: 'Tamamlanan',
+      home_invite_sent: 'davet gönderildi',
+      home_new_session: '+ yeni oturum',
+      home_with_alex: 'Alex ile',
+      home_with_jordan: 'Jordan ile',
+      home_with_taylor_match: 'Taylor ile · %83 eşleşme',
+      badge_reveal: 'Aç!',
+      badge_progress: 'Devam ediyor',
+      badge_waiting: 'Bekliyor',
+      pack_couples: 'Çiftler Paketi',
+      pack_bestfriends: 'En İyi Arkadaşlar',
+      pack_deeptalk: 'Derin Sohbet',
+      pack_coworkers: 'İş Arkadaşları',
+      pack_36questions: 'Aşık Olmak İçin 36 Soru',
+      pack_friendship_deep_dive: 'Arkadaşlık Analizi',
+      pack_count_couples: '10 soru',
+      pack_count_bestfriends: '8 soru',
+      pack_count_deeptalk: '12 soru',
+      pack_count_coworkers: '5 soru',
+      pack_count_36questions: '6 soru · Arthur Aron\'un çalışmasına dayanır',
+      nav_home: 'Ana Sayfa',
+      nav_packs: 'Paketler',
+      packs_subtitle: 'birini seç, gönder, neler olacak gör',
+      invite_title: 'kişinle paylaş',
+      invite_desc: 'aynı soruları alacak. ikiniz de bitirene kadar kimse cevapları göremez.',
+      invite_copy: 'kopyala',
+      invite_simulate: 'simülasyon: partner katılıyor →',
+      quiz_back: 'geri',
+      quiz_next: 'ileri',
+      quiz_submit: 'gönder',
+      quiz_question: 'soru',
+      waiting_title: 'kilitlendin 🔒',
+      waiting_desc: '<strong style="color:var(--text)">Alex</strong>\'in cevaplaması bekleniyor...',
+      waiting_progress: 'Alex 5 sorudan 3. soruda',
+      waiting_nudge: '👉 dürt',
+      waiting_simulate: 'simülasyon: partner bitti →',
+      modal_title: 'cevaplarını kilitle?',
+      modal_desc: 'gönderdikten sonra geri dönüş yok. kişine bildirim gidecek.',
+      modal_confirm: 'kilitle',
+      modal_cancel: 'dur, geri dön',
+      settings_mode: 'Mod',
+      settings_accent: 'Vurgu Rengi',
+      results_matches: 'eşleşme',
+      results_plot_twists: 'sürpriz',
+      results_sync_rate: 'uyum oranı',
+      results_share: '📤 vibe check\'i paylaş',
+      results_play_another: 'başka paket oyna',
+      results_back_home: 'ana sayfaya dön',
+      results_you: 'sen',
+      results_of: '/',
+      reveal_question_of: 'soru {n} / {total}',
+      reveal_you: 'Sen',
+      reveal_tap_reveal: 'açmak için dokun',
+      reveal_tap_continue: 'devam için dokun →',
+      reveal_get_ready: 'hazır ol',
+      feedback_copied: 'kopyalandı!',
+      feedback_nudge_sent: '✅ dürtü gönderildi!',
+      feedback_link_copied: '✅ link kopyalandı!',
+    },
+
+    es: {
+      splash_tagline: 'mismas preguntas. respuestas ciegas. una revelación.',
+      splash_get_started: 'empezar',
+      splash_have_account: 'ya tengo cuenta',
+      onboarding_title: 'cómo funciona',
+      onboarding_step1_title: 'elige un pack',
+      onboarding_step1_desc: 'elige un pack de preguntas que vaya contigo',
+      onboarding_step2_title: 'responde en privado',
+      onboarding_step2_desc: 'ambos responden las mismas preguntas — sin espiar',
+      onboarding_step3_title: 'revelen juntos',
+      onboarding_step3_desc: 'las respuestas se desbloquean solo cuando ambos hayan enviado',
+      onboarding_cta: 'vamos',
+      home_active: 'Activo',
+      home_completed: 'Completado',
+      home_invite_sent: 'invitación enviada',
+      home_new_session: '+ nueva sesión',
+      home_with_alex: 'con Alex',
+      home_with_jordan: 'con Jordan',
+      home_with_taylor_match: 'con Taylor · 83% coincidencia',
+      badge_reveal: '¡Revelar!',
+      badge_progress: 'En progreso',
+      badge_waiting: 'Esperando',
+      pack_couples: 'Edición Parejas',
+      pack_bestfriends: 'Mejores Amigos',
+      pack_deeptalk: 'Charla Profunda',
+      pack_coworkers: 'Compañeros',
+      pack_36questions: '36 Preguntas para Enamorarse',
+      pack_friendship_deep_dive: 'Inmersión de Amistad',
+      pack_count_couples: '10 preguntas',
+      pack_count_bestfriends: '8 preguntas',
+      pack_count_deeptalk: '12 preguntas',
+      pack_count_coworkers: '5 preguntas',
+      pack_count_36questions: '6 preguntas · basado en el estudio de Arthur Aron',
+      nav_home: 'Inicio',
+      nav_packs: 'Packs',
+      packs_subtitle: 'elige uno, envíalo, y mira qué pasa',
+      invite_title: 'comparte con tu persona',
+      invite_desc: 'recibirán las mismas preguntas. nadie ve las respuestas hasta que ambos terminen.',
+      invite_copy: 'copiar',
+      invite_simulate: 'simular: pareja se une →',
+      quiz_back: 'atrás',
+      quiz_next: 'siguiente',
+      quiz_submit: 'enviar',
+      quiz_question: 'pregunta',
+      waiting_title: 'estás bloqueado 🔒',
+      waiting_desc: 'esperando a que <strong style="color:var(--text)">Alex</strong> termine de responder...',
+      waiting_progress: 'Alex está en la pregunta 3 de 5',
+      waiting_nudge: '👉 enviar empujón',
+      waiting_simulate: 'simular: pareja terminó →',
+      modal_title: '¿bloquear tus respuestas?',
+      modal_desc: 'una vez enviadas, no hay vuelta atrás. tu persona será notificada.',
+      modal_confirm: 'bloquear',
+      modal_cancel: 'espera, volver',
+      settings_mode: 'Modo',
+      settings_accent: 'Color de acento',
+      results_matches: 'coincidencias',
+      results_plot_twists: 'giros',
+      results_sync_rate: 'sintonía',
+      results_share: '📤 compartir vibe check',
+      results_play_another: 'jugar otro pack',
+      results_back_home: 'volver al inicio',
+      results_you: 'tú',
+      results_of: 'de',
+      reveal_question_of: 'pregunta {n} de {total}',
+      reveal_you: 'Tú',
+      reveal_tap_reveal: 'toca para revelar',
+      reveal_tap_continue: 'toca para continuar →',
+      reveal_get_ready: 'prepárate',
+      feedback_copied: '¡copiado!',
+      feedback_nudge_sent: '✅ ¡empujón enviado!',
+      feedback_link_copied: '✅ ¡link copiado!',
+    },
+
+    de: {
+      splash_tagline: 'gleiche Fragen. blinde Antworten. eine Enthüllung.',
+      splash_get_started: 'los geht\'s',
+      splash_have_account: 'ich habe ein Konto',
+      onboarding_title: 'so funktioniert\'s',
+      onboarding_step1_title: 'wähle ein Pack',
+      onboarding_step1_desc: 'wähle ein Fragenpaket, das zu dir passt',
+      onboarding_step2_title: 'antworte privat',
+      onboarding_step2_desc: 'ihr beantwortet beide die gleichen Fragen — kein Spähen',
+      onboarding_step3_title: 'gemeinsam enthüllen',
+      onboarding_step3_desc: 'Antworten werden erst freigeschaltet, wenn beide gesendet haben',
+      onboarding_cta: 'los geht\'s',
+      home_active: 'Aktiv',
+      home_completed: 'Abgeschlossen',
+      home_invite_sent: 'Einladung gesendet',
+      home_new_session: '+ neue Sitzung',
+      home_with_alex: 'mit Alex',
+      home_with_jordan: 'mit Jordan',
+      home_with_taylor_match: 'mit Taylor · 83% Übereinstimmung',
+      badge_reveal: 'Enthüllen!',
+      badge_progress: 'Läuft',
+      badge_waiting: 'Wartet',
+      pack_couples: 'Paar-Edition',
+      pack_bestfriends: 'Beste Freunde',
+      pack_deeptalk: 'Tiefes Gespräch',
+      pack_coworkers: 'Kollegen',
+      pack_36questions: '36 Fragen zum Verlieben',
+      pack_friendship_deep_dive: 'Freundschafts-Analyse',
+      pack_count_couples: '10 Fragen',
+      pack_count_bestfriends: '8 Fragen',
+      pack_count_deeptalk: '12 Fragen',
+      pack_count_coworkers: '5 Fragen',
+      pack_count_36questions: '6 Fragen · basierend auf Arthur Arons Studie',
+      nav_home: 'Start',
+      nav_packs: 'Packs',
+      packs_subtitle: 'wähle eins, sende es, schau was passiert',
+      invite_title: 'teile es mit deiner Person',
+      invite_desc: 'sie bekommen die gleichen Fragen. niemand sieht Antworten, bis beide fertig sind.',
+      invite_copy: 'kopieren',
+      invite_simulate: 'Simulation: Partner tritt bei →',
+      quiz_back: 'zurück',
+      quiz_next: 'weiter',
+      quiz_submit: 'absenden',
+      quiz_question: 'Frage',
+      waiting_title: 'du bist drin 🔒',
+      waiting_desc: 'warte auf <strong style="color:var(--text)">Alex</strong>...',
+      waiting_progress: 'Alex ist bei Frage 3 von 5',
+      waiting_nudge: '👉 anstupsen',
+      waiting_simulate: 'Simulation: Partner fertig →',
+      modal_title: 'Antworten festlegen?',
+      modal_desc: 'nach dem Absenden gibt es kein Zurück. Deine Person wird benachrichtigt.',
+      modal_confirm: 'festlegen',
+      modal_cancel: 'warte, zurück',
+      settings_mode: 'Modus',
+      settings_accent: 'Akzentfarbe',
+      results_matches: 'Übereinstimmungen',
+      results_plot_twists: 'Überraschungen',
+      results_sync_rate: 'Sync-Rate',
+      results_share: '📤 Vibe-Check teilen',
+      results_play_another: 'anderes Pack spielen',
+      results_back_home: 'zurück zum Start',
+      results_you: 'du',
+      results_of: 'von',
+      reveal_question_of: 'Frage {n} von {total}',
+      reveal_you: 'Du',
+      reveal_tap_reveal: 'tippen zum Enthüllen',
+      reveal_tap_continue: 'tippen zum Fortfahren →',
+      reveal_get_ready: 'mach dich bereit',
+      feedback_copied: 'kopiert!',
+      feedback_nudge_sent: '✅ angestupst!',
+      feedback_link_copied: '✅ Link kopiert!',
+    },
+  },
+
+  current: localStorage.getItem('bs-lang') || 'en',
+
+  t(key) {
+    return this.translations[this.current]?.[key]
+      || this.translations.en[key]
+      || key;
+  },
+
+  setLanguage(lang) {
+    if (!this.translations[lang]) return;
+    this.current = lang;
+    localStorage.setItem('bs-lang', lang);
+    document.documentElement.setAttribute('lang', lang);
+    this.applyAll();
+    this.renderSelector();
+    // Re-render dynamic content
+    if (typeof renderPacksGrid === 'function') renderPacksGrid();
+    if (typeof getQuestions === 'function') {
+      questions = getQuestions(selectedPackKey || 'couples');
+    }
+  },
+
+  applyAll() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      const val = this.t(key);
+      if (el.innerHTML !== val) el.innerHTML = val;
+    });
+  },
+
+  renderSelector() {
+    const container = document.getElementById('langSelector');
+    if (!container) return;
+    container.innerHTML = Object.entries(this.languages).map(([code, { flag, label }]) =>
+      `<button class="lang-btn ${code === this.current ? 'active' : ''}" onclick="i18n.setLanguage('${code}')">
+        <span class="lang-flag">${flag}</span>${label}
+      </button>`
+    ).join('');
+  },
+
+  init() {
+    document.documentElement.setAttribute('lang', this.current);
+    this.applyAll();
+    this.renderSelector();
+  }
+};
+
+// ==================== Theme system ====================
 let currentThemeMode = localStorage.getItem('bs-theme') || 'light';
 let currentAccent = localStorage.getItem('bs-accent') || 'sunset';
 
@@ -1817,53 +2158,205 @@ function toggleSettings() {
 }
 
 initTheme();
+i18n.init();
 
 // State
 let currentScreen = 'splash';
 let currentQuestion = 0;
 let selectedAnswers = {};
-let selectedPack = { name: 'Couples Edition', emoji: '💕', count: '10 questions' };
+let selectedPackKey = 'couples';
 
+// Pack definitions — language-independent metadata
+const packDefs = [
+  { key: 'couples',      emoji: '💕', nameKey: 'pack_couples',      countKey: 'pack_count_couples' },
+  { key: 'bestfriends',  emoji: '👯', nameKey: 'pack_bestfriends',  countKey: 'pack_count_bestfriends' },
+  { key: 'deeptalk',     emoji: '🌊', nameKey: 'pack_deeptalk',     countKey: 'pack_count_deeptalk' },
+  { key: 'coworkers',    emoji: '💼', nameKey: 'pack_coworkers',    countKey: 'pack_count_coworkers' },
+  { key: '36questions',  emoji: '❤️‍🔥', nameKey: 'pack_36questions', countKey: 'pack_count_36questions', wide: true },
+];
+
+// Question packs per language — partnerAnswerIndex stores index so it works across languages
 const questionPacks = {
-  'Couples Edition': [
-    { q: "What's the first thing you noticed about the other person?", options: ["Their smile", "Their energy", "Their style", "Their humor"], partnerAnswer: "Their energy" },
-    { q: "If you two had a song, what genre would it be?", options: ["R&B / Soul", "Pop", "Indie", "Lo-fi beats"], partnerAnswer: "Indie" },
-    { q: "What do you secretly admire most about them?", options: ["Their confidence", "Their kindness", "Their creativity", "Their resilience"], partnerAnswer: "Their kindness" },
-    { q: "Pick a vibe for your ideal hangout:", options: ["Rooftop sunset", "Late night drive", "Cozy movie night", "Spontaneous adventure"], partnerAnswer: "Late night drive" },
-    { q: "One word to describe your bond:", options: ["Chaotic", "Electric", "Comfort", "Unmatched"], partnerAnswer: "Electric" },
-  ],
-  'Best Friends': [
-    { q: "What's your go-to comfort food?", options: ["Pizza", "Ramen", "Tacos", "Ice cream"], partnerAnswer: "Ramen" },
-    { q: "Pick a weekend plan:", options: ["Brunch + thrifting", "Netflix marathon", "Road trip", "Do absolutely nothing"], partnerAnswer: "Road trip" },
-    { q: "What's the best quality in a friend?", options: ["Loyalty", "Humor", "Honesty", "Spontaneity"], partnerAnswer: "Humor" },
-    { q: "Your friendship anthem genre:", options: ["Pop bangers", "Throwback hits", "Indie vibes", "Hip-hop"], partnerAnswer: "Throwback hits" },
-    { q: "How do you cheer each other up?", options: ["Memes", "Food delivery", "Show up unannounced", "Long voice notes"], partnerAnswer: "Memes" },
-  ],
-  'Deep Talk': [
-    { q: "What matters most to you in life?", options: ["Freedom", "Connection", "Growth", "Security"], partnerAnswer: "Connection" },
-    { q: "Your biggest fear:", options: ["Being forgotten", "Being alone", "Wasting time", "Losing myself"], partnerAnswer: "Wasting time" },
-    { q: "What does love look like to you?", options: ["Small daily acts", "Grand gestures", "Just being there", "Words of affirmation"], partnerAnswer: "Small daily acts" },
-    { q: "If you could change one thing about the world:", options: ["More empathy", "More honesty", "More equality", "More curiosity"], partnerAnswer: "More empathy" },
-    { q: "What's your emotional superpower?", options: ["Reading the room", "Staying calm", "Making people laugh", "Deep listening"], partnerAnswer: "Deep listening" },
-  ],
-  'Coworkers': [
-    { q: "Morning person or night owl?", options: ["Up at 6am", "Night owl 100%", "Depends on the day", "Permanently tired"], partnerAnswer: "Permanently tired" },
-    { q: "Ideal work setup:", options: ["Coffee shop", "Home office", "Open plan", "Library silence"], partnerAnswer: "Home office" },
-    { q: "Your meeting style:", options: ["Camera on, engaged", "Camera off, multitask", "This could be an email", "Love a whiteboard"], partnerAnswer: "This could be an email" },
-    { q: "Slack message style:", options: ["One long paragraph", "20 short messages", "Voice note", "Just emojis"], partnerAnswer: "Just emojis" },
-    { q: "Lunch break move:", options: ["Desk lunch", "Walk outside", "Group lunch", "Power nap"], partnerAnswer: "Walk outside" },
-  ],
-  '36 Questions': [
-    { q: "Given the choice of anyone in the world, whom would you want as a dinner guest?", options: ["A childhood hero", "A historical figure", "Someone I've lost touch with", "A celebrity I admire"], partnerAnswer: "A historical figure" },
-    { q: "Would you like to be famous? In what way?", options: ["Yes — for my talent", "Yes — for making a difference", "Maybe — just a little known", "No — I prefer privacy"], partnerAnswer: "Yes — for making a difference" },
-    { q: "Before making a phone call, do you ever rehearse what you're going to say?", options: ["Every single time", "Only for important calls", "Rarely", "Never — I just wing it"], partnerAnswer: "Only for important calls" },
-    { q: "What would constitute a perfect day for you?", options: ["Slow morning, no plans", "Adventure from dawn to dusk", "Quality time with people I love", "Creating something meaningful"], partnerAnswer: "Slow morning, no plans" },
-    { q: "When did you last sing to yourself? To someone else?", options: ["Today — I'm always singing", "This week, in the shower", "Can't remember honestly", "I hum, does that count?"], partnerAnswer: "Today — I'm always singing" },
-    { q: "If you could live to 90 and keep either the mind or body of a 30-year-old, which would you want?", options: ["The mind, 100%", "The body, no question", "Mind — my thoughts are me", "Body — I'd figure the rest out"], partnerAnswer: "The mind, 100%" },
-  ],
+  en: {
+    couples: [
+      { q: "What's the first thing you noticed about the other person?", options: ["Their smile", "Their energy", "Their style", "Their humor"], pi: 1 },
+      { q: "If you two had a song, what genre would it be?", options: ["R&B / Soul", "Pop", "Indie", "Lo-fi beats"], pi: 2 },
+      { q: "What do you secretly admire most about them?", options: ["Their confidence", "Their kindness", "Their creativity", "Their resilience"], pi: 1 },
+      { q: "Pick a vibe for your ideal hangout:", options: ["Rooftop sunset", "Late night drive", "Cozy movie night", "Spontaneous adventure"], pi: 1 },
+      { q: "One word to describe your bond:", options: ["Chaotic", "Electric", "Comfort", "Unmatched"], pi: 1 },
+    ],
+    bestfriends: [
+      { q: "What's your go-to comfort food?", options: ["Pizza", "Ramen", "Tacos", "Ice cream"], pi: 1 },
+      { q: "Pick a weekend plan:", options: ["Brunch + thrifting", "Netflix marathon", "Road trip", "Do absolutely nothing"], pi: 2 },
+      { q: "What's the best quality in a friend?", options: ["Loyalty", "Humor", "Honesty", "Spontaneity"], pi: 1 },
+      { q: "Your friendship anthem genre:", options: ["Pop bangers", "Throwback hits", "Indie vibes", "Hip-hop"], pi: 1 },
+      { q: "How do you cheer each other up?", options: ["Memes", "Food delivery", "Show up unannounced", "Long voice notes"], pi: 0 },
+    ],
+    deeptalk: [
+      { q: "What matters most to you in life?", options: ["Freedom", "Connection", "Growth", "Security"], pi: 1 },
+      { q: "Your biggest fear:", options: ["Being forgotten", "Being alone", "Wasting time", "Losing myself"], pi: 2 },
+      { q: "What does love look like to you?", options: ["Small daily acts", "Grand gestures", "Just being there", "Words of affirmation"], pi: 0 },
+      { q: "If you could change one thing about the world:", options: ["More empathy", "More honesty", "More equality", "More curiosity"], pi: 0 },
+      { q: "What's your emotional superpower?", options: ["Reading the room", "Staying calm", "Making people laugh", "Deep listening"], pi: 3 },
+    ],
+    coworkers: [
+      { q: "Morning person or night owl?", options: ["Up at 6am", "Night owl 100%", "Depends on the day", "Permanently tired"], pi: 3 },
+      { q: "Ideal work setup:", options: ["Coffee shop", "Home office", "Open plan", "Library silence"], pi: 1 },
+      { q: "Your meeting style:", options: ["Camera on, engaged", "Camera off, multitask", "This could be an email", "Love a whiteboard"], pi: 2 },
+      { q: "Slack message style:", options: ["One long paragraph", "20 short messages", "Voice note", "Just emojis"], pi: 3 },
+      { q: "Lunch break move:", options: ["Desk lunch", "Walk outside", "Group lunch", "Power nap"], pi: 1 },
+    ],
+    '36questions': [
+      { q: "Given the choice of anyone in the world, whom would you want as a dinner guest?", options: ["A childhood hero", "A historical figure", "Someone I've lost touch with", "A celebrity I admire"], pi: 1 },
+      { q: "Would you like to be famous? In what way?", options: ["Yes — for my talent", "Yes — for making a difference", "Maybe — just a little known", "No — I prefer privacy"], pi: 1 },
+      { q: "Before making a phone call, do you ever rehearse what you're going to say?", options: ["Every single time", "Only for important calls", "Rarely", "Never — I just wing it"], pi: 1 },
+      { q: "What would constitute a perfect day for you?", options: ["Slow morning, no plans", "Adventure from dawn to dusk", "Quality time with people I love", "Creating something meaningful"], pi: 0 },
+      { q: "When did you last sing to yourself? To someone else?", options: ["Today — I'm always singing", "This week, in the shower", "Can't remember honestly", "I hum, does that count?"], pi: 0 },
+      { q: "If you could live to 90 and keep either the mind or body of a 30-year-old, which would you want?", options: ["The mind, 100%", "The body, no question", "Mind — my thoughts are me", "Body — I'd figure the rest out"], pi: 0 },
+    ],
+  },
+  tr: {
+    couples: [
+      { q: "Karşındaki kişide ilk fark ettiğin şey neydi?", options: ["Gülümsemesi", "Enerjisi", "Tarzı", "Espri anlayışı"], pi: 1 },
+      { q: "İkinizin bir şarkısı olsa türü ne olurdu?", options: ["R&B / Soul", "Pop", "Indie", "Lo-fi"], pi: 2 },
+      { q: "Onda gizlice en çok neye hayransın?", options: ["Özgüveni", "Nezaketi", "Yaratıcılığı", "Dayanıklılığı"], pi: 1 },
+      { q: "İdeal buluşma vibes'ını seç:", options: ["Çatıda gün batımı", "Gece araba turu", "Film gecesi", "Spontane macera"], pi: 1 },
+      { q: "Bağınızı tek kelimeyle tanımlayın:", options: ["Kaotik", "Elektrik", "Huzur", "Eşsiz"], pi: 1 },
+    ],
+    bestfriends: [
+      { q: "Vazgeçemediğin comfort food nedir?", options: ["Pizza", "Ramen", "Taco", "Dondurma"], pi: 1 },
+      { q: "Hafta sonu planı seç:", options: ["Brunch + vintage alışveriş", "Netflix maratonu", "Yolculuk", "Hiçbir şey yapma"], pi: 2 },
+      { q: "Bir arkadaşta en iyi özellik nedir?", options: ["Sadakat", "Espri", "Dürüstlük", "Spontanlık"], pi: 1 },
+      { q: "Arkadaşlık marşınızın türü:", options: ["Pop hit'leri", "Nostalji şarkıları", "Indie", "Hip-hop"], pi: 1 },
+      { q: "Birbirinizi nasıl neşelendirirsiniz?", options: ["Meme'ler", "Yemek siparişi", "Habersiz gelme", "Uzun sesli mesajlar"], pi: 0 },
+    ],
+    deeptalk: [
+      { q: "Hayatta senin için en önemli olan ne?", options: ["Özgürlük", "Bağlantı", "Gelişim", "Güvenlik"], pi: 1 },
+      { q: "En büyük korkun:", options: ["Unutulmak", "Yalnız kalmak", "Zaman kaybetmek", "Kendimi kaybetmek"], pi: 2 },
+      { q: "Sence sevgi nasıl görünür?", options: ["Küçük günlük jestler", "Büyük sürprizler", "Sadece orada olmak", "Sevgi dolu sözler"], pi: 0 },
+      { q: "Dünyada bir şeyi değiştirebilsen:", options: ["Daha çok empati", "Daha çok dürüstlük", "Daha çok eşitlik", "Daha çok merak"], pi: 0 },
+      { q: "Duygusal süper gücün ne?", options: ["Ortamı okumak", "Sakin kalmak", "İnsanları güldürmek", "Derin dinleme"], pi: 3 },
+    ],
+    coworkers: [
+      { q: "Sabahçı mısın gececi mi?", options: ["6'da kalkarım", "Kesinlikle gececi", "Güne bağlı", "Sürekli yorgun"], pi: 3 },
+      { q: "İdeal çalışma ortamı:", options: ["Kafe", "Ev ofisi", "Açık ofis", "Kütüphane sessizliği"], pi: 1 },
+      { q: "Toplantı tarzın:", options: ["Kamera açık, ilgili", "Kamera kapalı, multitask", "Bu e-posta olabilirdi", "Beyaz tahta sevdalısı"], pi: 2 },
+      { q: "Mesaj tarzın:", options: ["Tek uzun paragraf", "20 kısa mesaj", "Sesli mesaj", "Sadece emoji"], pi: 3 },
+      { q: "Öğle arası tercihin:", options: ["Masada yemek", "Dışarıda yürüyüş", "Grup yemeği", "Kısa uyku"], pi: 1 },
+    ],
+    '36questions': [
+      { q: "Dünyadaki herhangi biriyle akşam yemeği yiyebilsen, kim olurdu?", options: ["Çocukluk kahramanım", "Tarihi bir figür", "İletişimi kopan biri", "Hayran olduğum bir ünlü"], pi: 1 },
+      { q: "Ünlü olmak ister misin? Nasıl?", options: ["Evet — yeteneğimle", "Evet — fark yaratarak", "Belki — biraz tanınan", "Hayır — gizliliği tercih ederim"], pi: 1 },
+      { q: "Telefon etmeden önce ne söyleyeceğini prova eder misin?", options: ["Her seferinde", "Sadece önemli aramalarda", "Nadiren", "Asla — doğaçlama yaparım"], pi: 1 },
+      { q: "Mükemmel bir gün senin için nasıl olurdu?", options: ["Yavaş sabah, plan yok", "Şafaktan akşama macera", "Sevdiklerimle vakit", "Anlamlı bir şey yaratmak"], pi: 0 },
+      { q: "En son ne zaman kendi kendine şarkı söyledin?", options: ["Bugün — hep söylerim", "Bu hafta, duşta", "Hatırlamıyorum", "Mırıldanırım, sayılır mı?"], pi: 0 },
+      { q: "90 yaşına kadar yaşayıp 30 yaşındaki aklını mı bedenini mi korumak istersin?", options: ["Aklımı, kesinlikle", "Bedenimi, tartışmasız", "Aklımı — düşüncelerim benim", "Bedenimi — gerisini hallederim"], pi: 0 },
+    ],
+  },
+  es: {
+    couples: [
+      { q: "¿Qué fue lo primero que notaste de la otra persona?", options: ["Su sonrisa", "Su energía", "Su estilo", "Su humor"], pi: 1 },
+      { q: "Si tuvieran una canción juntos, ¿qué género sería?", options: ["R&B / Soul", "Pop", "Indie", "Lo-fi beats"], pi: 2 },
+      { q: "¿Qué admiras secretamente más de ellos?", options: ["Su confianza", "Su amabilidad", "Su creatividad", "Su resiliencia"], pi: 1 },
+      { q: "Elige un vibe para tu cita ideal:", options: ["Atardecer en azotea", "Paseo nocturno", "Noche de cine", "Aventura espontánea"], pi: 1 },
+      { q: "Una palabra para describir su conexión:", options: ["Caótica", "Eléctrica", "Cómoda", "Inigualable"], pi: 1 },
+    ],
+    bestfriends: [
+      { q: "¿Tu comfort food favorita?", options: ["Pizza", "Ramen", "Tacos", "Helado"], pi: 1 },
+      { q: "Elige un plan de fin de semana:", options: ["Brunch + tiendas", "Maratón de Netflix", "Viaje por carretera", "No hacer nada"], pi: 2 },
+      { q: "¿La mejor cualidad en un amigo?", options: ["Lealtad", "Humor", "Honestidad", "Espontaneidad"], pi: 1 },
+      { q: "Género del himno de su amistad:", options: ["Pop bailable", "Éxitos retro", "Indie vibes", "Hip-hop"], pi: 1 },
+      { q: "¿Cómo se animan mutuamente?", options: ["Memes", "Delivery de comida", "Aparecer sin avisar", "Notas de voz largas"], pi: 0 },
+    ],
+    deeptalk: [
+      { q: "¿Qué es lo más importante para ti en la vida?", options: ["Libertad", "Conexión", "Crecimiento", "Seguridad"], pi: 1 },
+      { q: "Tu mayor miedo:", options: ["Ser olvidado", "Estar solo", "Perder el tiempo", "Perderme a mí mismo"], pi: 2 },
+      { q: "¿Cómo se ve el amor para ti?", options: ["Pequeños actos diarios", "Grandes gestos", "Solo estar ahí", "Palabras de afirmación"], pi: 0 },
+      { q: "Si pudieras cambiar una cosa del mundo:", options: ["Más empatía", "Más honestidad", "Más igualdad", "Más curiosidad"], pi: 0 },
+      { q: "¿Cuál es tu superpoder emocional?", options: ["Leer el ambiente", "Mantener la calma", "Hacer reír", "Escuchar profundo"], pi: 3 },
+    ],
+    coworkers: [
+      { q: "¿Madrugador o noctámbulo?", options: ["Levantado a las 6am", "Noctámbulo 100%", "Depende del día", "Permanentemente cansado"], pi: 3 },
+      { q: "Setup de trabajo ideal:", options: ["Cafetería", "Home office", "Planta abierta", "Silencio de biblioteca"], pi: 1 },
+      { q: "Tu estilo en reuniones:", options: ["Cámara encendida", "Cámara apagada, multitask", "Esto podía ser un email", "Me encanta la pizarra"], pi: 2 },
+      { q: "Estilo de mensajes:", options: ["Un párrafo largo", "20 mensajes cortos", "Nota de voz", "Solo emojis"], pi: 3 },
+      { q: "En la hora de almuerzo:", options: ["Como en el escritorio", "Caminar afuera", "Almuerzo grupal", "Siesta rápida"], pi: 1 },
+    ],
+    '36questions': [
+      { q: "Si pudieras elegir a cualquier persona del mundo, ¿a quién invitarías a cenar?", options: ["Un héroe de infancia", "Una figura histórica", "Alguien con quien perdí contacto", "Una celebridad que admiro"], pi: 1 },
+      { q: "¿Te gustaría ser famoso? ¿De qué manera?", options: ["Sí — por mi talento", "Sí — por hacer la diferencia", "Quizás — un poco conocido", "No — prefiero la privacidad"], pi: 1 },
+      { q: "¿Ensayas lo que vas a decir antes de llamar?", options: ["Siempre", "Solo para llamadas importantes", "Raramente", "Nunca — improviso"], pi: 1 },
+      { q: "¿Cómo sería un día perfecto para ti?", options: ["Mañana lenta, sin planes", "Aventura de sol a sol", "Tiempo con los que amo", "Crear algo significativo"], pi: 0 },
+      { q: "¿Cuándo fue la última vez que cantaste?", options: ["Hoy — siempre canto", "Esta semana, en la ducha", "No recuerdo", "Tarareo, ¿cuenta?"], pi: 0 },
+      { q: "Si pudieras vivir hasta los 90, ¿conservarías la mente o el cuerpo de los 30?", options: ["La mente, 100%", "El cuerpo, sin duda", "La mente — mis pensamientos soy yo", "El cuerpo — el resto lo resuelvo"], pi: 0 },
+    ],
+  },
+  de: {
+    couples: [
+      { q: "Was ist dir als Erstes an der anderen Person aufgefallen?", options: ["Ihr Lächeln", "Ihre Energie", "Ihr Stil", "Ihr Humor"], pi: 1 },
+      { q: "Wenn ihr einen Song hättet, welches Genre?", options: ["R&B / Soul", "Pop", "Indie", "Lo-fi Beats"], pi: 2 },
+      { q: "Was bewunderst du heimlich am meisten?", options: ["Ihr Selbstbewusstsein", "Ihre Freundlichkeit", "Ihre Kreativität", "Ihre Stärke"], pi: 1 },
+      { q: "Wähle einen Vibe für euer ideales Treffen:", options: ["Sonnenuntergang auf dem Dach", "Nächtliche Autofahrt", "Gemütlicher Filmabend", "Spontanes Abenteuer"], pi: 1 },
+      { q: "Ein Wort für eure Verbindung:", options: ["Chaotisch", "Elektrisch", "Geborgen", "Unvergleichlich"], pi: 1 },
+    ],
+    bestfriends: [
+      { q: "Dein Lieblings-Comfort-Food?", options: ["Pizza", "Ramen", "Tacos", "Eiscreme"], pi: 1 },
+      { q: "Wähle einen Wochenendplan:", options: ["Brunch + Shoppen", "Netflix-Marathon", "Roadtrip", "Absolut gar nichts"], pi: 2 },
+      { q: "Die beste Eigenschaft bei einem Freund?", options: ["Loyalität", "Humor", "Ehrlichkeit", "Spontanität"], pi: 1 },
+      { q: "Genre eurer Freundschafts-Hymne:", options: ["Pop-Hits", "Retro-Klassiker", "Indie Vibes", "Hip-Hop"], pi: 1 },
+      { q: "Wie muntert ihr euch gegenseitig auf?", options: ["Memes", "Essen bestellen", "Unangekündigt auftauchen", "Lange Sprachnachrichten"], pi: 0 },
+    ],
+    deeptalk: [
+      { q: "Was ist dir im Leben am wichtigsten?", options: ["Freiheit", "Verbindung", "Wachstum", "Sicherheit"], pi: 1 },
+      { q: "Deine größte Angst:", options: ["Vergessen zu werden", "Allein zu sein", "Zeit zu verschwenden", "Mich selbst zu verlieren"], pi: 2 },
+      { q: "Wie sieht Liebe für dich aus?", options: ["Kleine tägliche Gesten", "Große Gesten", "Einfach da sein", "Worte der Bestätigung"], pi: 0 },
+      { q: "Wenn du eine Sache an der Welt ändern könntest:", options: ["Mehr Empathie", "Mehr Ehrlichkeit", "Mehr Gleichheit", "Mehr Neugier"], pi: 0 },
+      { q: "Was ist deine emotionale Superkraft?", options: ["Den Raum lesen", "Ruhig bleiben", "Menschen zum Lachen bringen", "Tiefes Zuhören"], pi: 3 },
+    ],
+    coworkers: [
+      { q: "Morgenmensch oder Nachteule?", options: ["Um 6 Uhr auf", "100% Nachteule", "Kommt auf den Tag an", "Dauerhaft müde"], pi: 3 },
+      { q: "Ideales Arbeits-Setup:", options: ["Café", "Home Office", "Großraumbüro", "Bibliotheks-Stille"], pi: 1 },
+      { q: "Dein Meeting-Stil:", options: ["Kamera an, engagiert", "Kamera aus, Multitasking", "Das hätte eine E-Mail sein können", "Whiteboard-Fan"], pi: 2 },
+      { q: "Nachrichtenstil:", options: ["Ein langer Absatz", "20 kurze Nachrichten", "Sprachnachricht", "Nur Emojis"], pi: 3 },
+      { q: "Mittagspause:", options: ["Am Schreibtisch essen", "Draußen spazieren", "Gruppenessen", "Power Nap"], pi: 1 },
+    ],
+    '36questions': [
+      { q: "Wen auf der Welt würdest du gerne zum Abendessen einladen?", options: ["Einen Kindheitshelden", "Eine historische Figur", "Jemand, den ich aus den Augen verloren habe", "Einen Prominenten, den ich bewundere"], pi: 1 },
+      { q: "Möchtest du berühmt sein? Auf welche Weise?", options: ["Ja — für mein Talent", "Ja — um etwas zu bewirken", "Vielleicht — ein bisschen bekannt", "Nein — ich bevorzuge Privatsphäre"], pi: 1 },
+      { q: "Probst du vor einem Telefonat, was du sagen willst?", options: ["Jedes einzelne Mal", "Nur bei wichtigen Anrufen", "Selten", "Nie — ich improvisiere"], pi: 1 },
+      { q: "Wie würde ein perfekter Tag für dich aussehen?", options: ["Langsamer Morgen, keine Pläne", "Abenteuer von früh bis spät", "Zeit mit geliebten Menschen", "Etwas Bedeutsames schaffen"], pi: 0 },
+      { q: "Wann hast du zuletzt für dich selbst gesungen?", options: ["Heute — ich singe ständig", "Diese Woche, unter der Dusche", "Kann mich nicht erinnern", "Ich summe, zählt das?"], pi: 0 },
+      { q: "Wenn du 90 werden könntest — den Geist oder Körper eines 30-Jährigen behalten?", options: ["Den Geist, 100%", "Den Körper, keine Frage", "Geist — meine Gedanken sind ich", "Körper — den Rest krieg ich hin"], pi: 0 },
+    ],
+  },
 };
 
-let questions = questionPacks['Couples Edition'];
+// Get current language questions for a pack
+function getQuestions(packKey) {
+  const lang = i18n.current;
+  const pack = questionPacks[lang]?.[packKey] || questionPacks.en[packKey];
+  return pack.map(q => ({
+    q: q.q,
+    options: q.options,
+    partnerAnswer: q.options[q.pi]
+  }));
+}
+
+let questions = getQuestions('couples');
+
+// Render packs grid
+function renderPacksGrid() {
+  const grid = document.getElementById('packsGrid');
+  if (!grid) return;
+  grid.innerHTML = packDefs.map(p =>
+    `<div class="pack-card glass"${p.wide ? ' style="grid-column:1/-1"' : ''} onclick="selectPack('${p.key}')">
+      <div class="pack-emoji">${p.emoji}</div>
+      <div class="pack-title">${i18n.t(p.nameKey)}</div>
+      <div class="pack-count">${i18n.t(p.countKey)}</div>
+    </div>`
+  ).join('');
+}
+renderPacksGrid();
 
 // Navigation
 function goTo(screenId) {
@@ -1882,7 +2375,7 @@ function goTo(screenId) {
     if (screenId === 'quiz') renderQuestion();
     if (screenId === 'results') animateResults();
     if (screenId === 'home') updateNav('home');
-    if (screenId === 'packs') updateNav('packs');
+    if (screenId === 'packs') { updateNav('packs'); renderPacksGrid(); }
   }, 200);
 }
 
@@ -1892,20 +2385,21 @@ function updateNav(active) {
 }
 
 // Pack selection
-function selectPack(name, emoji, count) {
-  selectedPack = { name, emoji, count };
-  questions = questionPacks[name] || questionPacks['Couples Edition'];
-  document.getElementById('invitePackName').textContent = name;
+function selectPack(key) {
+  selectedPackKey = key;
+  const def = packDefs.find(p => p.key === key);
+  questions = getQuestions(key);
+  document.getElementById('invitePackName').textContent = i18n.t(def.nameKey);
   goTo('invite');
 }
 
 // Copy link
 function copyLink(btn) {
-  btn.textContent = 'copied!';
+  btn.textContent = i18n.t('feedback_copied');
   btn.style.background = 'var(--lime)';
   btn.style.color = '#000';
   setTimeout(() => {
-    btn.textContent = 'copy';
+    btn.textContent = i18n.t('invite_copy');
     btn.style.background = '';
     btn.style.color = '';
   }, 2000);
@@ -1929,14 +2423,14 @@ function renderQuestion() {
 
   const isLast = currentQuestion === total - 1;
   const nextBtn = document.getElementById('quizNextBtn');
-  nextBtn.textContent = isLast ? 'submit' : 'next';
+  nextBtn.textContent = isLast ? i18n.t('quiz_submit') : i18n.t('quiz_next');
   nextBtn.disabled = selectedAnswers[currentQuestion] === undefined;
   document.getElementById('quizBackBtn').style.display = currentQuestion > 0 ? '' : 'none';
 
   const body = document.getElementById('quizBody');
   body.innerHTML = `
     <div class="question-card" key="${currentQuestion}">
-      <div class="question-label">question ${currentQuestion + 1}</div>
+      <div class="question-label">${i18n.t('quiz_question')} ${currentQuestion + 1}</div>
       <div class="question-text">${q.q}</div>
       <div class="answer-options">
         ${q.options.map((opt, i) => `
@@ -1992,10 +2486,10 @@ function submitAnswers() {
 
 // Nudge
 function sendNudge(btn) {
-  btn.textContent = '✅ nudge sent!';
+  btn.textContent = i18n.t('feedback_nudge_sent');
   btn.style.color = 'var(--lime)';
   setTimeout(() => {
-    btn.textContent = '👉 send a nudge';
+    btn.textContent = i18n.t('waiting_nudge');
     btn.style.color = '';
   }, 2000);
 }
@@ -2015,7 +2509,7 @@ function runCountdown() {
     if (count > 0) {
       container.innerHTML = `
         <div class="countdown-num" key="${count}">${count}</div>
-        <div class="countdown-label">get ready</div>
+        <div class="countdown-label">${i18n.t('reveal_get_ready')}</div>
       `;
       count--;
       setTimeout(showNum, 800);
@@ -2081,11 +2575,11 @@ function showRevealCard(idx) {
   const card = document.createElement('div');
   card.className = 'reveal-fullscreen';
   card.innerHTML = `
-    <div class="reveal-q-num">question ${idx + 1} of ${revealData.length}</div>
+    <div class="reveal-q-num">${i18n.t('reveal_question_of').replace('{n}', idx + 1).replace('{total}', revealData.length)}</div>
     <div class="reveal-question">${d.q}</div>
     <div class="reveal-vs-block">
       <div class="reveal-vs-card you-card">
-        <div class="rv-label">You</div>
+        <div class="rv-label">${i18n.t('reveal_you')}</div>
         <div class="rv-answer rv-answer-hidden" id="revYou${idx}">• • •</div>
       </div>
       <div class="reveal-vs-card them-card">
@@ -2097,7 +2591,7 @@ function showRevealCard(idx) {
       <span class="reaction-emoji">${reaction.emoji}</span>
       <div class="reaction-text ${d.matched ? 'matched-text' : 'diff-text'}">${reaction.text}</div>
     </div>
-    <div class="reveal-tap-hint" id="revHint${idx}">tap to reveal</div>
+    <div class="reveal-tap-hint" id="revHint${idx}">${i18n.t('reveal_tap_reveal')}</div>
     ${d.matched ? '<div class="card-confetti" id="revConfetti' + idx + '"></div>' : ''}
   `;
   container.appendChild(card);
@@ -2129,7 +2623,7 @@ function showRevealCard(idx) {
         }
       }, 300);
 
-      hintEl.textContent = 'tap to continue →';
+      hintEl.textContent = i18n.t('reveal_tap_continue');
       tapState = 1;
     } else {
       revealIndex++;
@@ -2237,11 +2731,11 @@ function buildReceipt() {
 
     chaptersHtml += `
       <div class="story-chapter">
-        <div class="ch-num">${i + 1} of ${total}</div>
+        <div class="ch-num">${i + 1} ${i18n.t('results_of')} ${total}</div>
         <div class="ch-question">${d.q}</div>
         <div class="ch-answers">
           <div class="ch-ans ch-you">
-            <div class="ch-label">you</div>
+            <div class="ch-label">${i18n.t('results_you')}</div>
             <div class="ch-text">${d.userAns}</div>
           </div>
           <div class="ch-ans ch-them">
@@ -2261,7 +2755,7 @@ function buildReceipt() {
     <div class="story-hero">
       <div class="story-hero-emoji">${vibe.emoji}</div>
       <div class="story-hero-score">${pct}%</div>
-      <div class="story-hero-names">you & Alex</div>
+      <div class="story-hero-names">${i18n.t('results_you')} & Alex</div>
       <div class="story-hero-vibe">${vibe.title}</div>
       <div class="story-hero-sub">${vibe.desc}</div>
     </div>
@@ -2276,15 +2770,15 @@ function buildReceipt() {
       <div class="story-stats">
         <div>
           <div class="story-stat-val">${matches}</div>
-          <div class="story-stat-lbl">matches</div>
+          <div class="story-stat-lbl">${i18n.t('results_matches')}</div>
         </div>
         <div>
           <div class="story-stat-val">${total - matches}</div>
-          <div class="story-stat-lbl">plot twists</div>
+          <div class="story-stat-lbl">${i18n.t('results_plot_twists')}</div>
         </div>
         <div>
           <div class="story-stat-val">${pct}%</div>
-          <div class="story-stat-lbl">sync rate</div>
+          <div class="story-stat-lbl">${i18n.t('results_sync_rate')}</div>
         </div>
       </div>
       <div class="story-brand">blindside.</div>
@@ -2292,9 +2786,9 @@ function buildReceipt() {
     </div>
 
     <div class="story-actions">
-      <button class="btn-share" onclick="shareReceipt()">📤 share this vibe check</button>
-      <button class="btn btn-primary" style="width:100%" onclick="goTo('packs')">play another pack</button>
-      <button class="btn btn-ghost" onclick="goTo('home')">back home</button>
+      <button class="btn-share" onclick="shareReceipt()">${i18n.t('results_share')}</button>
+      <button class="btn btn-primary" style="width:100%" onclick="goTo('packs')">${i18n.t('results_play_another')}</button>
+      <button class="btn btn-ghost" onclick="goTo('home')">${i18n.t('results_back_home')}</button>
     </div>
   `;
 
@@ -2310,8 +2804,8 @@ function shareReceipt() {
     }).catch(() => {});
   } else {
     const btn = event.target;
-    btn.textContent = '✅ link copied!';
-    setTimeout(() => { btn.innerHTML = '📤 share this vibe check'; }, 2000);
+    btn.textContent = i18n.t('feedback_link_copied');
+    setTimeout(() => { btn.innerHTML = i18n.t('results_share'); }, 2000);
   }
 }
 
