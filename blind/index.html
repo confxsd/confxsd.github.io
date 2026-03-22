@@ -1780,8 +1780,8 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
         <button class="theme-toggle" onclick="toggleSettings()" title="Customize" style="font-size:14px">
           <span>🎨</span>
         </button>
-        <button class="theme-toggle" onclick="switchUser()" title="Logout" style="font-size:14px" data-i18n-title="home_logout">
-          <span>🚪</span>
+        <button class="theme-toggle" onclick="switchUser()" title="Logout" style="font-size:14px">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         </button>
       </div>
     </div>
@@ -2340,7 +2340,7 @@ const i18n = {
     if (typeof updateLangCycleBtn === 'function') updateLangCycleBtn();
     // Re-render dynamic content
     if (typeof renderPacksGrid === 'function') renderPacksGrid();
-    if (typeof loadHomeSessions === 'function' && currentScreen === 'home') loadHomeSessions();
+    if (typeof renderHomeSessions === 'function' && currentScreen === 'home') renderHomeSessions();
     if (typeof getQuestions === 'function') {
       questions = getQuestions(selectedPackKey || 'couples');
     }
@@ -2887,73 +2887,83 @@ function switchUser() {
 }
 
 // ==================== HOME SESSIONS ====================
-async function loadHomeSessions() {
+let _cachedSessions = null;
+
+function renderHomeSessions() {
   const container = document.getElementById('homeSessions');
+  if (!container) return;
+  const sessions = _cachedSessions;
+
+  if (sessions === null) {
+    container.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-dim)">${i18n.t('home_loading')}</div>`;
+    return;
+  }
+  if (sessions.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:40px 20px;color:var(--text-dim)">
+        <div style="font-size:36px;margin-bottom:12px">🫣</div>
+        <p>${i18n.t('home_no_sessions')}</p>
+      </div>`;
+    return;
+  }
+
+  const packEmojis = { couples: '💕', bestfriends: '👯', deeptalk: '🌊', coworkers: '💼', '36questions': '❤️‍🔥', hottakes: '🌶️', redflags: '🚩', chaotic: '🎲' };
+  let html = '';
+  const active = sessions.filter(s => s.status !== 'complete');
+  const done = sessions.filter(s => s.status === 'complete');
+
+  if (active.length) {
+    html += `<div class="section-label">${i18n.t('home_active')}</div>`;
+    active.forEach(s => {
+      const partner = s.creator_id === currentUser.id ? s.partner_username : s.creator_username;
+      const emoji = packEmojis[s.pack_key] || '📦';
+      const packName = i18n.t('pack_' + s.pack_key) || s.pack_key;
+      let badge = '';
+      if (s.status === 'waiting') badge = `<div class="s-badge badge-waiting">${i18n.t('badge_waiting')}</div>`;
+      else if (s.status === 'active') badge = `<div class="s-badge badge-progress">${i18n.t('badge_progress')}</div>`;
+
+      html += `<div class="session-card glass" onclick="resumeSession('${s.code}')">
+        <div class="s-icon" style="background:rgba(124,58,237,0.1)">${emoji}</div>
+        <div class="s-info">
+          <div class="s-title">${packName}</div>
+          <div class="s-sub">${partner ? i18n.t('home_with') + ' ' + partner : i18n.t('home_waiting_partner')} · ${s.code}</div>
+        </div>
+        ${badge}
+      </div>`;
+    });
+  }
+
+  if (done.length) {
+    html += `<div class="section-label">${i18n.t('home_completed')}</div>`;
+    done.forEach(s => {
+      const partner = s.creator_id === currentUser.id ? s.partner_username : s.creator_username;
+      const emoji = packEmojis[s.pack_key] || '📦';
+      const packName = i18n.t('pack_' + s.pack_key) || s.pack_key;
+      html += `<div class="session-card glass" onclick="viewResults('${s.code}')">
+        <div class="s-icon" style="background:var(--surface)">${emoji}</div>
+        <div class="s-info">
+          <div class="s-title">${packName}</div>
+          <div class="s-sub">${i18n.t('home_with')} ${partner || '?'}</div>
+        </div>
+        <div class="s-badge badge-done">${i18n.t('home_done')}</div>
+      </div>`;
+    });
+  }
+
+  container.innerHTML = html;
+}
+
+async function loadHomeSessions() {
   const usernameEl = document.getElementById('homeUsername');
   if (currentUser) usernameEl.textContent = '@' + currentUser.username;
-
-  container.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-dim)">${i18n.t('home_loading')}</div>`;
-
+  if (_cachedSessions === null) renderHomeSessions();
   try {
     const data = await blindApi.getUserSessions();
-    const sessions = data.sessions || [];
-
-    if (sessions.length === 0) {
-      container.innerHTML = `
-        <div style="text-align:center;padding:40px 20px;color:var(--text-dim)">
-          <div style="font-size:36px;margin-bottom:12px">🫣</div>
-          <p>${i18n.t('home_no_sessions')}</p>
-        </div>`;
-      return;
-    }
-
-    const packEmojis = { couples: '💕', bestfriends: '👯', deeptalk: '🌊', coworkers: '💼', '36questions': '❤️‍🔥', hottakes: '🌶️', redflags: '🚩', chaotic: '🎲' };
-
-    let html = '';
-    const active = sessions.filter(s => s.status !== 'complete');
-    const done = sessions.filter(s => s.status === 'complete');
-
-    if (active.length) {
-      html += `<div class="section-label">${i18n.t('home_active')}</div>`;
-      active.forEach(s => {
-        const partner = s.creator_id === currentUser.id ? s.partner_username : s.creator_username;
-        const emoji = packEmojis[s.pack_key] || '📦';
-        const packName = i18n.t('pack_' + s.pack_key) || s.pack_key;
-        let badge = '';
-        if (s.status === 'waiting') badge = `<div class="s-badge badge-waiting">${i18n.t('badge_waiting')}</div>`;
-        else if (s.status === 'active') badge = `<div class="s-badge badge-progress">${i18n.t('badge_progress')}</div>`;
-
-        html += `<div class="session-card glass" onclick="resumeSession('${s.code}')">
-          <div class="s-icon" style="background:rgba(124,58,237,0.1)">${emoji}</div>
-          <div class="s-info">
-            <div class="s-title">${packName}</div>
-            <div class="s-sub">${partner ? i18n.t('home_with') + ' ' + partner : i18n.t('home_waiting_partner')} · ${s.code}</div>
-          </div>
-          ${badge}
-        </div>`;
-      });
-    }
-
-    if (done.length) {
-      html += `<div class="section-label">${i18n.t('home_completed')}</div>`;
-      done.forEach(s => {
-        const partner = s.creator_id === currentUser.id ? s.partner_username : s.creator_username;
-        const emoji = packEmojis[s.pack_key] || '📦';
-        const packName = i18n.t('pack_' + s.pack_key) || s.pack_key;
-        html += `<div class="session-card glass" onclick="viewResults('${s.code}')">
-          <div class="s-icon" style="background:var(--surface)">${emoji}</div>
-          <div class="s-info">
-            <div class="s-title">${packName}</div>
-            <div class="s-sub">${i18n.t('home_with')} ${partner || '?'}</div>
-          </div>
-          <div class="s-badge badge-done">${i18n.t('home_done')}</div>
-        </div>`;
-      });
-    }
-
-    container.innerHTML = html;
+    _cachedSessions = data.sessions || [];
+    renderHomeSessions();
   } catch (e) {
-    container.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-dim)">${i18n.t('home_load_error')}</div>`;
+    const container = document.getElementById('homeSessions');
+    if (container) container.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-dim)">${i18n.t('home_load_error')}</div>`;
   }
 }
 
