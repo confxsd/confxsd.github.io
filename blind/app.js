@@ -112,6 +112,12 @@ let joinCode = null; // set when joining via URL
 
 // packDefs + questionPacks are loaded from packs.js
 
+// Check if a pack is solo (no partner needed)
+function isSoloPack(key) {
+  const def = packDefs.find(p => p.key === key);
+  return def && def.solo === true;
+}
+
 // Get current language questions for a pack
 function getQuestions(packKey) {
   const lang = i18n.current;
@@ -119,7 +125,8 @@ function getQuestions(packKey) {
   return pack.map(q => ({
     q: q.q,
     options: q.options,
-    partnerAnswerIndex: q.pi
+    partnerAnswerIndex: q.pi,
+    traits: q.traits || null
   }));
 }
 
@@ -224,7 +231,7 @@ function renderHomeSessions() {
     return;
   }
 
-  const packEmojis = { couples: '💕', bestfriends: '👯', deeptalk: '🌊', coworkers: '💼', '36questions': '❤️‍🔥', hottakes: '🌶️', redflags: '🚩', chaotic: '🎲', fungames: '🎉', worldtaste: '🌍', ethics: '⚖️', situations: '😱', livingtogether: '🏠', soulspirit: '🕊️' };
+  const packEmojis = { couples: '💕', bestfriends: '👯', deeptalk: '🌊', coworkers: '💼', '36questions': '❤️‍🔥', hottakes: '🌶️', redflags: '🚩', chaotic: '🎲', fungames: '🎉', worldtaste: '🌍', ethics: '⚖️', situations: '😱', livingtogether: '🏠', soulspirit: '🕊️', attachment: '🔗', innermirror: '🪞', stresstype: '🧊' };
   let html = '';
   const active = sessions.filter(s => s.status !== 'complete');
   const done = sessions.filter(s => s.status === 'complete');
@@ -432,26 +439,36 @@ async function handleJoinCode(code) {
   }
 }
 
-// Render marquee
-function renderPacksMarquee() {
-  const el = document.getElementById('packsMarquee');
-  if (!el) return;
-  const items = [
-    `<span class="marquee-hot">${i18n.t('marquee_trending')}</span>`,
-    `<span>${i18n.t('marquee_plays')}</span>`,
-    `<span class="marquee-hot">${i18n.t('marquee_new')}</span>`,
-    `<span>${i18n.t('marquee_dare')}</span>`,
-    `<span class="marquee-hot">${i18n.t('marquee_viral')}</span>`,
-    `<span>${i18n.t('marquee_send')}</span>`,
-  ];
-  el.innerHTML = items.join('') + items.join('');
+// Pack mode: 'partner' (duo) or 'self' (solo)
+let activePackMode = 'partner';
+
+function setPackMode(mode) {
+  activePackMode = mode;
+  document.querySelectorAll('.mode-toggle-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+  // Reset category filter
+  activePackFilter = 'all';
+  renderPacksFilters();
+  renderPacksFeatured();
+  renderPacksGridCards();
+  // Hide/show featured and section label based on mode
+  const featuredSection = document.getElementById('packsFeaturedSection');
+  const sectionLabel = document.querySelector('.packs-section-label');
+  const hasFeatured = packDefs.filter(p => p.featured && (mode === 'self' ? p.solo : !p.solo)).length > 0;
+  if (featuredSection) featuredSection.style.display = hasFeatured ? '' : 'none';
+  if (sectionLabel) sectionLabel.style.display = '';
 }
 
-// Render filter pills
+// Render filter pills — only show categories relevant to the active mode
 function renderPacksFilters() {
   const el = document.getElementById('packsFilters');
   if (!el) return;
-  el.innerHTML = packCategories.map(c =>
+  const isSelf = activePackMode === 'self';
+  const relevantPacks = packDefs.filter(p => isSelf ? p.solo : !p.solo);
+  const relevantCats = new Set(relevantPacks.map(p => p.cat));
+  const cats = packCategories.filter(c => c.key === 'all' || relevantCats.has(c.key));
+  el.innerHTML = cats.map(c =>
     `<button class="filter-pill${c.key === activePackFilter ? ' active' : ''}" onclick="filterPacks('${c.key}')">${c.icon ? c.icon + ' ' : ''}${i18n.t(c.labelKey)}</button>`
   ).join('');
 }
@@ -463,14 +480,17 @@ function filterPacks(catKey) {
   const featuredSection = document.getElementById('packsFeaturedSection');
   const sectionLabel = document.querySelector('.packs-section-label');
   if (featuredSection) featuredSection.style.display = catKey === 'all' ? '' : 'none';
-  if (sectionLabel) sectionLabel.style.display = catKey === 'all' ? '' : 'none';
+  if (sectionLabel) sectionLabel.style.display = '';
 }
 
 // Render featured carousel
 function renderPacksFeatured() {
   const el = document.getElementById('packsFeatured');
   if (!el) return;
-  const featured = packDefs.filter(p => p.featured);
+  const isSelf = activePackMode === 'self';
+  const featured = packDefs.filter(p => p.featured && (isSelf ? p.solo : !p.solo));
+  const featuredSection = document.getElementById('packsFeaturedSection');
+  if (featuredSection) featuredSection.style.display = featured.length ? '' : 'none';
   el.innerHTML = featured.map((p, idx) =>
     `<div class="featured-card" style="animation-delay:${idx * 0.1}s" onclick="selectPack('${p.key}')">
       <div class="featured-badge ${p.featuredBadge}">${i18n.t('badge_' + p.featuredBadge)}</div>
@@ -484,30 +504,36 @@ function renderPacksFeatured() {
   ).join('');
 }
 
-// Render pack grid cards
+// Render pack list cards
 function renderPacksGridCards() {
   const grid = document.getElementById('packsGrid');
   if (!grid) return;
-  const filtered = activePackFilter === 'all'
-    ? packDefs
-    : packDefs.filter(p => p.cat === activePackFilter);
+  const isSelf = activePackMode === 'self';
+  let filtered = packDefs.filter(p => isSelf ? p.solo : !p.solo);
+  if (activePackFilter !== 'all') {
+    filtered = filtered.filter(p => p.cat === activePackFilter);
+  }
   grid.innerHTML = filtered.map((p, idx) => {
     const badgeHtml = p.badge
       ? `<span class="pack-badge badge-${p.badge}">${i18n.t('badge_' + p.badge)}</span>`
       : '';
-    return `<div class="pack-card glass" style="animation-delay:${idx * 0.06}s" onclick="selectPack('${p.key}')">
-      ${badgeHtml}
+    return `<div class="pack-card glass" style="animation-delay:${idx * 0.04}s" onclick="selectPack('${p.key}')">
       <div class="pack-emoji">${p.emoji}</div>
-      <div class="pack-title">${i18n.t(p.nameKey)}</div>
-      <div class="pack-plays">${p.plays} ${i18n.t('packs_played')}</div>
-      <div class="pack-count">${i18n.t(p.countKey)}</div>
+      <div class="pack-info">
+        <div class="pack-title">${i18n.t(p.nameKey)}</div>
+        <div class="pack-meta-row">
+          <span class="pack-plays">${p.plays} ${i18n.t('packs_played')}</span>
+          <span class="pack-count">${i18n.t(p.countKey)}</span>
+          ${badgeHtml}
+        </div>
+      </div>
+      <span class="pack-arrow">›</span>
     </div>`;
   }).join('');
 }
 
 // Full packs render
 function renderPacksGrid() {
-  renderPacksMarquee();
   renderPacksFilters();
   renderPacksFeatured();
   renderPacksGridCards();
@@ -550,6 +576,17 @@ async function selectPack(key) {
   selectedPackKey = key;
   const def = packDefs.find(p => p.key === key);
   questions = getQuestions(key);
+
+  // Solo packs skip invite — go straight to quiz
+  if (def.solo) {
+    currentSession = null;
+    currentQuestion = 0;
+    selectedAnswers = {};
+    questionModes = [];
+    goTo('quiz');
+    return;
+  }
+
   document.getElementById('invitePackName').textContent = i18n.t(def.nameKey);
 
   // Create session via API
@@ -847,6 +884,11 @@ function nextQuestion() {
   if (selectedAnswers[currentQuestion] === undefined) return;
 
   if (currentQuestion === questions.length - 1) {
+    // Solo packs skip the confirmation modal — submit directly
+    if (isSoloPack(selectedPackKey)) {
+      submitAnswers();
+      return;
+    }
     document.getElementById('submitModal').classList.add('show');
     return;
   }
@@ -973,6 +1015,13 @@ function confirmDeleteSession() {
 async function submitAnswers() {
   closeModal();
   document.getElementById('quizProgress').style.width = '100%';
+
+  // Solo packs — skip API, go straight to solo results
+  if (isSoloPack(selectedPackKey)) {
+    goTo('results');
+    buildSoloReceipt();
+    return;
+  }
 
   if (currentSession) {
     try {
@@ -1467,6 +1516,135 @@ function buildReceiptWithName(partnerName) {
   spawnConfetti();
   // AI vibe report disabled for now
   // loadVibeReport(data, partnerName, pct, selectedPackKey);
+}
+
+// ==================== SOLO RESULT DEFINITIONS ====================
+const soloResultDefs = {
+  attachment: {
+    traits: ['anxious', 'avoidant', 'secure'],
+    results: {
+      anxious: { emoji: '💗', title: 'Anxious Attachment', desc: 'You love deeply and fear losing it. You crave closeness, reassurance, and can sense distance before it\'s spoken.', advice: 'Your capacity to love is a strength. Practice self-soothing and trust that silence doesn\'t mean abandonment.' },
+      avoidant: { emoji: '🛡️', title: 'Avoidant Attachment', desc: 'Independence is your armor. You value space, freedom, and tend to pull away when things get too close.', advice: 'Your need for space is valid. Try letting one person in past the walls — vulnerability isn\'t weakness.' },
+      secure: { emoji: '🌱', title: 'Secure Attachment', desc: 'You can be close without losing yourself. You communicate, trust, and handle conflict with grounded presence.', advice: 'You\'re the anchor. Keep modeling healthy relating — and don\'t forget to check in with your own needs too.' },
+    }
+  },
+  innermirror: {
+    traits: ['introvert', 'extrovert', 'thinker', 'feeler'],
+    results: {
+      introvert: { emoji: '🌙', title: 'The Inner World', desc: 'You recharge in solitude, process deeply, and prefer meaningful connection over surface-level interaction.', advice: 'Your depth is rare. Make sure you\'re not isolating — the right people deserve access to your inner world.' },
+      extrovert: { emoji: '☀️', title: 'The Social Force', desc: 'People are your fuel. You thrive in groups, think out loud, and bring energy wherever you go.', advice: 'Your energy lights rooms up. Just remember: stillness isn\'t stagnation — rest is part of the rhythm.' },
+      thinker: { emoji: '🧠', title: 'The Analyst', desc: 'Logic is your compass. You approach life with reason, structure, and a need to understand before you feel.', advice: 'Your clarity is powerful. Don\'t forget that feelings aren\'t inefficiencies — they\'re data too.' },
+      feeler: { emoji: '🫀', title: 'The Empath', desc: 'You feel everything — yours and everyone else\'s. Emotion is your first language and your deepest strength.', advice: 'Your empathy is a gift. Set boundaries so you don\'t carry what isn\'t yours to hold.' },
+    }
+  },
+  stresstype: {
+    traits: ['fight', 'flight', 'fawn', 'freeze'],
+    results: {
+      fight: { emoji: '🔥', title: 'Fight Response', desc: 'Under pressure, you take control. You push harder, get louder, and channel stress into action — sometimes too much.', advice: 'Your drive is incredible. Learn to pause before reacting — not every stress needs a battle.' },
+      flight: { emoji: '💨', title: 'Flight Response', desc: 'When things get heavy, you escape. Physically, mentally, digitally — you find a way out before the walls close in.', advice: 'Leaving is sometimes wisdom. But notice when you\'re running from growth, not danger.' },
+      fawn: { emoji: '🕊️', title: 'Fawn Response', desc: 'You survive by pleasing. You read rooms, adjust yourself, and prioritize others\' comfort over your own truth.', advice: 'Your kindness is real. Start asking: "Am I being kind, or am I being safe?" They\'re not always the same.' },
+      freeze: { emoji: '🧊', title: 'Freeze Response', desc: 'Overwhelm makes you still. You go quiet, numb, and wait for the storm to pass — often from the inside.', advice: 'Stillness can be wisdom. But practice small movements when frozen — one action can break the spell.' },
+    }
+  },
+};
+
+function buildSoloReceipt() {
+  // Tally trait scores
+  const scores = {};
+  questions.forEach((q, i) => {
+    const ansIdx = selectedAnswers[i];
+    if (ansIdx == null || !q.traits) return;
+    const traitMap = q.traits[ansIdx];
+    if (!traitMap) return;
+    Object.entries(traitMap).forEach(([trait, val]) => {
+      scores[trait] = (scores[trait] || 0) + val;
+    });
+  });
+
+  // Get pack result definitions
+  const packResult = soloResultDefs[selectedPackKey];
+  if (!packResult) { buildReceipt(); return; } // fallback
+
+  // Find dominant trait
+  const sortedTraits = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const dominantKey = sortedTraits[0]?.[0] || packResult.traits[0];
+  const result = packResult.results[dominantKey];
+  const totalScore = sortedTraits.reduce((sum, [, v]) => sum + v, 0) || 1;
+
+  // Build trait breakdown bars
+  let breakdownHtml = '';
+  sortedTraits.forEach(([trait, val]) => {
+    const pct = Math.round((val / totalScore) * 100);
+    const r = packResult.results[trait];
+    if (!r) return;
+    breakdownHtml += `
+      <div class="solo-trait-bar">
+        <div class="solo-trait-header">
+          <span class="solo-trait-emoji">${r.emoji}</span>
+          <span class="solo-trait-name">${r.title}</span>
+          <span class="solo-trait-pct">${pct}%</span>
+        </div>
+        <div class="solo-bar-track">
+          <div class="solo-bar-fill" style="width:${pct}%"></div>
+        </div>
+      </div>
+    `;
+  });
+
+  // Build answer review
+  let answersHtml = '';
+  questions.forEach((q, i) => {
+    const ansIdx = selectedAnswers[i];
+    const ansText = ansIdx != null ? q.options[ansIdx] : '—';
+    answersHtml += `
+      <div class="story-chapter">
+        <div class="ch-num">${i + 1} ${i18n.t('results_of')} ${questions.length}</div>
+        <div class="ch-question">${q.q}</div>
+        <div class="ch-answers">
+          <div class="ch-ans ch-you" style="flex:1">
+            <div class="ch-label">${i18n.t('results_you')}</div>
+            <div class="ch-text">${ansText}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  const packDef = packDefs.find(p => p.key === selectedPackKey);
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  const scroll = document.getElementById('storyScroll');
+  scroll.innerHTML = `
+    <div class="story-hero">
+      <div class="story-hero-top">
+        <div class="story-hero-emoji">${result.emoji}</div>
+      </div>
+      <div class="story-hero-vibe">${result.title}</div>
+      <div class="story-hero-sub">${i18n.t(packDef.nameKey)}</div>
+      <div class="story-hero-names"><span class="solo-badge-tag">${i18n.t('solo_badge')}</span></div>
+    </div>
+    <div class="story-intro"><p>${result.desc}</p></div>
+    <div class="solo-advice-card glass">
+      <div class="solo-advice-text">${result.advice}</div>
+    </div>
+    <div class="solo-breakdown-section">
+      <div class="solo-breakdown-title">${i18n.t('solo_breakdown')}</div>
+      ${breakdownHtml}
+    </div>
+    ${answersHtml}
+    <div class="story-outro">
+      <div class="story-brand">blindside.</div>
+      <div class="story-date">${dateStr}</div>
+    </div>
+    <div class="story-actions">
+      <button class="btn-share" onclick="shareReceipt()">${i18n.t('results_share')}</button>
+      <button class="btn btn-primary" style="width:100%" onclick="goTo('packs')">${i18n.t('solo_take_another')}</button>
+      <button class="btn btn-ghost" onclick="goTo('home')">${i18n.t('results_back_home')}</button>
+    </div>
+  `;
+  scroll.scrollTop = 0;
+  spawnConfetti();
 }
 
 function buildReceipt() {

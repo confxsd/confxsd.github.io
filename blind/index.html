@@ -119,11 +119,15 @@
         <button class="btn-icon" onclick="goTo('home')">←</button>
         <h2 data-i18n="nav_packs">decks</h2>
       </div>
-      <p data-i18n="packs_subtitle">pick one, send it, see what happens</p>
 
-      <!-- Scrolling marquee -->
-      <div class="packs-marquee">
-        <div class="packs-marquee-inner" id="packsMarquee"></div>
+      <!-- Mode toggle: Partner / Self -->
+      <div class="mode-toggle" id="modeToggle">
+        <button class="mode-toggle-btn active" data-mode="partner" onclick="setPackMode('partner')">
+          <span class="mode-icon">👥</span> <span data-i18n="mode_partner">Partner</span>
+        </button>
+        <button class="mode-toggle-btn" data-mode="self" onclick="setPackMode('self')">
+          <span class="mode-icon">🪞</span> <span data-i18n="mode_self">Self</span>
+        </button>
       </div>
     </div>
 
@@ -142,8 +146,8 @@
     <!-- All packs section label -->
     <div class="packs-section-label" data-i18n="packs_all">all packs</div>
 
-    <!-- Pack grid -->
-    <div class="packs-grid" id="packsGrid"></div>
+    <!-- Pack list -->
+    <div class="packs-list" id="packsGrid"></div>
 
     <nav class="bottom-nav">
       <button class="nav-item" onclick="goTo('home')">
