@@ -3318,15 +3318,20 @@ async function buildReceiptFromApi(code) {
     const partnerName = isCreator ? s.partner_username : s.creator_username;
 
     // Build reveal data from real answers — compare by index, display in viewer's language
+    // Helper: parse answer as option index if it's a number (int or float like 0.0)
+    function toIdx(raw) {
+      if (typeof raw === 'number') return Math.round(raw);
+      if (typeof raw === 'string' && /^\d+(\.\d+)?$/.test(raw.trim())) return Math.round(parseFloat(raw));
+      return null;
+    }
     revealData = questions.map((q, i) => {
       const qAnswers = answers[i] || {};
       const rawUser = qAnswers[myId] != null ? qAnswers[myId] : (selectedAnswers[i] != null ? selectedAnswers[i] : '?');
       const rawPartner = qAnswers[partnerId] != null ? qAnswers[partnerId] : '?';
-      // Support both index-based (new) and text-based (legacy) answers
-      const userIdx = typeof rawUser === 'number' ? rawUser : null;
-      const partnerIdx = typeof rawPartner === 'number' ? rawPartner : null;
-      const userAns = userIdx != null ? (q.options[userIdx] || rawUser) : rawUser;
-      const partnerAns = partnerIdx != null ? (q.options[partnerIdx] || rawPartner) : rawPartner;
+      const userIdx = toIdx(rawUser);
+      const partnerIdx = toIdx(rawPartner);
+      const userAns = userIdx != null && q.options[userIdx] ? q.options[userIdx] : String(rawUser);
+      const partnerAns = partnerIdx != null && q.options[partnerIdx] ? q.options[partnerIdx] : String(rawPartner);
       const matched = (userIdx != null && partnerIdx != null) ? userIdx === partnerIdx : userAns === partnerAns;
       return { q: q.q, userAns, partnerAns, matched };
     });
