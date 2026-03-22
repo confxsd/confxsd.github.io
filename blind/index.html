@@ -2607,7 +2607,7 @@ function getQuestions(packKey) {
   return pack.map(q => ({
     q: q.q,
     options: q.options,
-    partnerAnswer: q.options[q.pi]
+    partnerAnswerIndex: q.pi
   }));
 }
 
@@ -2769,6 +2769,11 @@ async function resumeSession(code) {
       // Already submitted, go to waiting
       goTo('waiting');
       document.getElementById('waitingCode').textContent = s.code;
+      const pName = s.creator_id === currentUser?.id ? s.partner_username : s.creator_username;
+      if (pName) {
+        document.getElementById('waitingDesc').innerHTML =
+          `waiting for <strong style="color:var(--text)">${pName}</strong> to finish answering...`;
+      }
       startPolling();
       return;
     }
@@ -2849,6 +2854,11 @@ async function handleJoinCode(code) {
       questions = getQuestions(session.pack_key);
       goTo('waiting');
       document.getElementById('waitingCode').textContent = session.code;
+      const pName = session.creator_id === currentUser?.id ? session.partner_username : session.creator_username;
+      if (pName) {
+        document.getElementById('waitingDesc').innerHTML =
+          `waiting for <strong style="color:var(--text)">${pName}</strong> to finish answering...`;
+      }
       startPolling();
       return;
     }
@@ -2961,9 +2971,9 @@ function renderQuestion() {
       <div class="question-label">${i18n.t('quiz_question')} ${currentQuestion + 1}</div>
       <div class="question-text">${q.q}</div>
       <div class="answer-options">
-        ${q.options.map((opt, i) => `
-          <button class="answer-opt ${selectedAnswers[currentQuestion] === opt ? 'selected' : ''}"
-                  onclick="selectAnswer(${currentQuestion}, '${opt.replace(/'/g, "\\'")}', this)">
+        ${q.options.map((opt, oi) => `
+          <button class="answer-opt ${selectedAnswers[currentQuestion] === oi ? 'selected' : ''}"
+                  onclick="selectAnswer(${currentQuestion}, ${oi}, this)">
             ${opt}
           </button>
         `).join('')}
@@ -3013,14 +3023,18 @@ async function submitAnswers() {
   if (currentSession) {
     try {
       const data = await blindApi.submitAnswers(currentSession.code, selectedAnswers);
+      if (data.error) {
+        alert('Failed to submit: ' + data.error);
+        return;
+      }
       if (data.both_done) {
-        // Both done! Go straight to reveal
         goTo('reveal');
         runCountdown();
         return;
       }
     } catch (e) {
-      console.error('Submit failed:', e);
+      alert('Could not submit answers. Check your connection and try again.');
+      return;
     }
   }
 
@@ -3129,9 +3143,9 @@ const diffReactions = [
 function showRevealCards() {
   revealIndex = 0;
   revealData = questions.map((q, i) => {
-    const userAns = selectedAnswers[i] || q.options[0];
-    const partnerAns = q.partnerAnswer;
-    return { q: q.q, userAns, partnerAns, matched: userAns === partnerAns };
+    const userIdx = selectedAnswers[i] != null ? selectedAnswers[i] : 0;
+    const partnerIdx = q.partnerAnswerIndex;
+    return { q: q.q, userAns: q.options[userIdx], partnerAns: q.options[partnerIdx], matched: userIdx === partnerIdx };
   });
   showRevealCard(0);
 }
@@ -3275,19 +3289,26 @@ const matchComments = [
   (q, a) => `🎯 <strong>Bullseye.</strong> Of all the options, you both landed on "${a}". The universe is paying attention.`,
   (q, a) => `✨ <strong>In sync.</strong> "${a}" — when you know, you know.`,
 ];
+// Note: diffComments use a 4th param `name` for partner name in live sessions
 const diffComments = [
-  (q, y, t) => `👀 You said <strong>"${y}"</strong>, Alex said <strong>"${t}"</strong>. Different chapters, but still a good story.`,
-  (q, y, t) => `😏 <strong>"${y}"</strong> vs <strong>"${t}"</strong> — this is the kind of debate that could last hours.`,
-  (q, y, t) => `🌀 You went with <strong>"${y}"</strong> while Alex chose <strong>"${t}"</strong>. Interesting plot twist.`,
-  (q, y, t) => `💭 <strong>"${y}"</strong> meets <strong>"${t}"</strong> — different instincts, but that's what makes it interesting.`,
-  (q, y, t) => `🤷 You: <strong>"${y}"</strong>. Alex: <strong>"${t}"</strong>. Agree to disagree? Or discuss over dinner?`,
-  (q, y, t) => `🎭 <strong>"${y}"</strong> and <strong>"${t}"</strong> — two sides of something worth exploring.`,
+  (q, y, t, name) => `👀 You said <strong>"${y}"</strong>, ${name} said <strong>"${t}"</strong>. Different chapters, but still a good story.`,
+  (q, y, t, name) => `😏 <strong>"${y}"</strong> vs <strong>"${t}"</strong> — this is the kind of debate that could last hours.`,
+  (q, y, t, name) => `🌀 You went with <strong>"${y}"</strong> while ${name} chose <strong>"${t}"</strong>. Interesting plot twist.`,
+  (q, y, t, name) => `💭 <strong>"${y}"</strong> meets <strong>"${t}"</strong> — different instincts, but that's what makes it interesting.`,
+  (q, y, t, name) => `🤷 You: <strong>"${y}"</strong>. ${name}: <strong>"${t}"</strong>. Agree to disagree? Or discuss over dinner?`,
+  (q, y, t, name) => `🎭 <strong>"${y}"</strong> and <strong>"${t}"</strong> — two sides of something worth exploring.`,
 ];
 
 async function buildReceiptFromApi(code) {
+  const scroll = document.getElementById('storyScroll');
+  scroll.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text-dim)"><div class="dot-pulse" style="margin:0 auto"></div><p style="margin-top:16px">loading results...</p></div>';
+
   try {
     const result = await blindApi.getResults(code);
-    if (result.error) { buildReceipt(); return; }
+    if (result.error) {
+      scroll.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text-dim)"><p>could not load results</p><button class="btn btn-ghost" onclick="goTo(\'home\')">back home</button></div>';
+      return;
+    }
 
     const s = result.session;
     const answers = result.answers;
@@ -3296,18 +3317,24 @@ async function buildReceiptFromApi(code) {
     const partnerId = isCreator ? s.partner_id : s.creator_id;
     const partnerName = isCreator ? s.partner_username : s.creator_username;
 
-    // Build reveal data from real answers
+    // Build reveal data from real answers — compare by index, display in viewer's language
     revealData = questions.map((q, i) => {
       const qAnswers = answers[i] || {};
-      const userAns = qAnswers[myId] || selectedAnswers[i] || '?';
-      const partnerAns = qAnswers[partnerId] || '?';
-      return { q: q.q, userAns, partnerAns, matched: userAns === partnerAns };
+      const rawUser = qAnswers[myId] != null ? qAnswers[myId] : (selectedAnswers[i] != null ? selectedAnswers[i] : '?');
+      const rawPartner = qAnswers[partnerId] != null ? qAnswers[partnerId] : '?';
+      // Support both index-based (new) and text-based (legacy) answers
+      const userIdx = typeof rawUser === 'number' ? rawUser : null;
+      const partnerIdx = typeof rawPartner === 'number' ? rawPartner : null;
+      const userAns = userIdx != null ? (q.options[userIdx] || rawUser) : rawUser;
+      const partnerAns = partnerIdx != null ? (q.options[partnerIdx] || rawPartner) : rawPartner;
+      const matched = (userIdx != null && partnerIdx != null) ? userIdx === partnerIdx : userAns === partnerAns;
+      return { q: q.q, userAns, partnerAns, matched };
     });
 
     buildReceiptWithName(partnerName || 'partner');
   } catch (e) {
     console.error('Failed to load results:', e);
-    buildReceipt();
+    scroll.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text-dim)"><p>could not load results</p><button class="btn btn-ghost" onclick="goTo(\'home\')">back home</button></div>';
   }
 }
 
@@ -3332,7 +3359,7 @@ function buildReceiptWithName(partnerName) {
   data.forEach((d, i) => {
     const comment = d.matched
       ? matchComments[i % matchComments.length](d.q, d.userAns)
-      : diffComments[i % diffComments.length](d.q, d.userAns, d.partnerAns);
+      : diffComments[i % diffComments.length](d.q, d.userAns, d.partnerAns, partnerName);
 
     chaptersHtml += `
       <div class="story-chapter">
@@ -3385,8 +3412,9 @@ function buildReceiptWithName(partnerName) {
 
 function buildReceipt() {
   const data = revealData.length ? revealData : questions.map((q, i) => {
-    const userAns = selectedAnswers[i] || q.options[0];
-    return { q: q.q, userAns, partnerAns: q.partnerAnswer, matched: userAns === q.partnerAnswer };
+    const userIdx = selectedAnswers[i] != null ? selectedAnswers[i] : 0;
+    const partnerIdx = q.partnerAnswerIndex;
+    return { q: q.q, userAns: q.options[userIdx], partnerAns: q.options[partnerIdx], matched: userIdx === partnerIdx };
   });
 
   const matches = data.filter(d => d.matched).length;
@@ -3411,7 +3439,7 @@ function buildReceipt() {
   data.forEach((d, i) => {
     const comment = d.matched
       ? matchComments[i % matchComments.length](d.q, d.userAns)
-      : diffComments[i % diffComments.length](d.q, d.userAns, d.partnerAns);
+      : diffComments[i % diffComments.length](d.q, d.userAns, d.partnerAns, 'Alex');
 
     chaptersHtml += `
       <div class="story-chapter">
@@ -3517,7 +3545,6 @@ function animateResults() { buildReceipt(); }
   } else if (currentUser) {
     // Auto-login: skip splash, go to home
     goTo('home');
-    loadHomeSessions();
   }
 })();
 </script>
