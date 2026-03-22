@@ -446,6 +446,28 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
   color: var(--text-dim);
   font-family: 'Syne', sans-serif;
 }
+.home-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 0 24px 4px;
+}
+.home-tab {
+  padding: 7px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text-dim);
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+.home-tab:active { transform: scale(0.96); }
+.home-tab.active {
+  background: var(--purple);
+  color: #fff;
+}
 .session-card {
   margin: 0 24px 10px;
   padding: 16px;
@@ -498,6 +520,60 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
 .badge-done {
   background: var(--surface);
   color: var(--text-dim);
+}
+
+/* Session card swipe-to-delete */
+.session-card-wrap {
+  position: relative;
+  overflow: hidden;
+  margin: 0 24px 10px;
+  border-radius: var(--radius);
+}
+.session-card-wrap .session-card {
+  margin: 0;
+  position: relative;
+  z-index: 1;
+  background: var(--bg2);
+  transition: transform 0.25s ease;
+}
+.session-card-wrap.swiped .session-card {
+  transform: translateX(-80px);
+}
+.session-card-wrap .delete-btn {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  background: #ef4444;
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  z-index: 0;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.session-card-wrap.swiped .delete-btn {
+  opacity: 1;
+}
+.session-card-wrap.removing {
+  max-height: 80px;
+  animation: slideRemove 0.3s ease forwards;
+}
+@keyframes slideRemove {
+  to {
+    max-height: 0;
+    margin-bottom: 0;
+    opacity: 0;
+    transform: translateX(-100%);
+  }
 }
 
 /* FAB — full width */
@@ -567,34 +643,292 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
 }
 .packs-header h1 { font-size: 28px; letter-spacing: -1px; }
 .packs-header p { font-size: 13px; color: var(--text-dim); margin-top: 6px; }
-.packs-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  padding: 20px 24px 24px;
+
+/* --- Marquee banner --- */
+.packs-marquee {
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 7px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin: 6px 0 0;
 }
-.pack-card {
-  padding: 20px 16px;
+.packs-marquee-inner {
+  display: inline-block;
+  animation: marqueeScroll 18s linear infinite;
+}
+.packs-marquee span {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  padding: 0 18px;
+}
+.packs-marquee .marquee-hot {
+  background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+@keyframes marqueeScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* --- Category filter pills --- */
+.packs-filters {
+  display: flex;
+  gap: 6px;
+  padding: 10px 24px 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+.packs-filters::-webkit-scrollbar { display: none; }
+.filter-pill {
+  flex-shrink: 0;
+  padding: 5px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s;
+  white-space: nowrap;
+}
+.filter-pill:active { transform: scale(0.95); }
+.filter-pill.active {
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 2px 12px var(--accent-1-glow);
+}
+
+/* --- Featured / trending hero carousel --- */
+.packs-featured {
+  padding: 10px 24px 4px;
+  flex-shrink: 0;
+}
+.packs-featured-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.packs-featured-label .pulse-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  animation: pulseDot 1.5s ease-in-out infinite;
+}
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+.featured-scroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 4px;
+  align-items: stretch;
+}
+.featured-scroll::-webkit-scrollbar { display: none; }
+.featured-card {
+  flex-shrink: 0;
+  width: 200px;
+  padding: 14px;
+  border-radius: 14px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  scroll-snap-align: start;
+  transition: transform 0.2s;
+  border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-  border-radius: var(--radius);
-  min-height: 150px;
 }
-.pack-card:active { transform: scale(0.96); }
-.pack-card .pack-emoji { font-size: 36px; }
-.pack-card .pack-title {
+.featured-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--accent-1-bg), var(--accent-2-bg));
+  opacity: 0.7;
+  z-index: 0;
+}
+.featured-card:active { transform: scale(0.97); }
+.featured-card > * { position: relative; z-index: 1; }
+.featured-card .featured-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 100px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+.featured-badge.trending {
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  color: #fff;
+}
+.featured-badge.viral {
+  background: rgba(249,115,22,0.15);
+  color: var(--orange);
+  border: 1px solid rgba(249,115,22,0.3);
+}
+.featured-badge.new-badge {
+  background: rgba(132,204,22,0.15);
+  color: var(--lime);
+  border: 1px solid rgba(132,204,22,0.3);
+}
+.featured-card .featured-emoji {
+  font-size: 30px;
+  margin-bottom: 6px;
+}
+.featured-card .featured-title {
   font-family: 'Syne', sans-serif;
   font-weight: 700;
   font-size: 15px;
+  line-height: 1.25;
+  margin-bottom: 4px;
+  letter-spacing: -0.3px;
+}
+.featured-card .featured-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.35;
+  margin-bottom: auto;
+}
+.featured-card .featured-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--text-dim);
+  padding-top: 8px;
+}
+.featured-meta .meta-plays {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.featured-meta .meta-plays::before {
+  content: '';
+  width: 0; height: 0;
+  border-left: 5px solid var(--accent-2);
+  border-top: 3px solid transparent;
+  border-bottom: 3px solid transparent;
+}
+
+/* --- Section labels --- */
+.packs-section-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  padding: 12px 24px 6px;
+  flex-shrink: 0;
+}
+
+/* --- Pack grid (all packs) --- */
+.packs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 4px 24px 100px;
+}
+.pack-card {
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: var(--radius);
+  min-height: 120px;
+  position: relative;
+  overflow: hidden;
+}
+.pack-card:active { transform: scale(0.96); }
+.pack-card .pack-emoji { font-size: 32px; }
+.pack-card .pack-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
   line-height: 1.2;
 }
 .pack-card .pack-count {
-  font-size: 12px;
+  font-size: 10px;
   color: var(--text-dim);
+}
+.pack-card .pack-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 3px 8px;
+  border-radius: 100px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.pack-badge.badge-hot {
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  color: #fff;
+}
+.pack-badge.badge-new {
+  background: rgba(132,204,22,0.15);
+  color: var(--lime);
+  border: 1px solid rgba(132,204,22,0.25);
+}
+.pack-badge.badge-popular {
+  background: rgba(6,182,212,0.12);
+  color: var(--cyan);
+  border: 1px solid rgba(6,182,212,0.25);
+}
+.pack-card .pack-plays {
+  font-size: 10px;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin-top: auto;
+}
+.pack-plays::before {
+  content: '';
+  width: 0; height: 0;
+  border-left: 4px solid var(--accent-2);
+  border-top: 2.5px solid transparent;
+  border-bottom: 2.5px solid transparent;
+}
+
+/* --- Stagger animation for cards --- */
+.pack-card, .featured-card {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: packFadeIn 0.4s ease forwards;
+}
+@keyframes packFadeIn {
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ========== INVITE ========== */
@@ -787,6 +1121,309 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
   background: var(--accent-1-bg);
 }
 .answer-opt:active { transform: scale(0.98); }
+
+/* ========== MINI-GAME MODES ========== */
+
+/* Mode badge (shows which mode is active) */
+.mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent-1);
+  font-family: 'Syne', sans-serif;
+  margin-bottom: 4px;
+  opacity: 0;
+  animation: badgePop 0.4s ease 0.2s forwards;
+}
+@keyframes badgePop {
+  0% { opacity: 0; transform: scale(0.8); }
+  60% { transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* --- MODE: THIS OR THAT (2-option dramatic split) --- */
+.tot-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+.tot-matchup {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+}
+.tot-side {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px 12px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  line-height: 1.35;
+}
+.tot-side::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.tot-side.selected {
+  border-color: var(--accent-1);
+  transform: scale(1.03);
+  box-shadow: 0 0 24px var(--accent-1-glow);
+}
+.tot-side.selected::before { opacity: 0.15; }
+.tot-side.dimmed {
+  opacity: 0.35;
+  transform: scale(0.96);
+}
+.tot-vs {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--text-dim);
+  text-align: center;
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- MODE: BUBBLE POP --- */
+.bubble-field {
+  position: relative;
+  flex: 1;
+  min-height: 220px;
+  overflow: hidden;
+}
+.bubble {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  padding: 12px;
+  animation: bubbleFloat 3s ease-in-out infinite;
+  line-height: 1.25;
+}
+.bubble:nth-child(1) { animation-delay: 0s; }
+.bubble:nth-child(2) { animation-delay: 0.5s; }
+.bubble:nth-child(3) { animation-delay: 1s; }
+.bubble:nth-child(4) { animation-delay: 1.5s; }
+@keyframes bubbleFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.bubble.selected {
+  border-color: var(--accent-1);
+  background: var(--accent-1-bg);
+  box-shadow: 0 0 28px var(--accent-1-glow);
+  animation: bubblePop 0.4s ease forwards;
+}
+@keyframes bubblePop {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.2); }
+  60% { transform: scale(0.95); }
+  100% { transform: scale(1.05); }
+}
+.bubble.dimmed {
+  opacity: 0.25;
+  transform: scale(0.8);
+  animation: none;
+}
+
+/* --- MODE: COUNTDOWN BLITZ --- */
+.blitz-timer-bar {
+  width: 100%;
+  height: 5px;
+  background: var(--surface);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.blitz-timer-fill {
+  height: 100%;
+  width: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent-2), var(--accent-1));
+  transition: width 0.1s linear;
+}
+.blitz-timer-fill.urgent {
+  background: linear-gradient(90deg, #ef4444, #f97316);
+}
+.blitz-label {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 28px;
+  text-align: center;
+  color: var(--text);
+  margin-bottom: 4px;
+  transition: color 0.3s;
+}
+.blitz-label.urgent { color: #ef4444; }
+.answer-options.blitz-mode .answer-opt {
+  animation: blitzSlide 0.3s ease backwards;
+}
+.answer-options.blitz-mode .answer-opt:nth-child(1) { animation-delay: 0.05s; }
+.answer-options.blitz-mode .answer-opt:nth-child(2) { animation-delay: 0.15s; }
+.answer-options.blitz-mode .answer-opt:nth-child(3) { animation-delay: 0.25s; }
+.answer-options.blitz-mode .answer-opt:nth-child(4) { animation-delay: 0.35s; }
+@keyframes blitzSlide {
+  from { opacity: 0; transform: translateX(60px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* --- MODE: SWIPE CARDS --- */
+.swipe-deck {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+.swipe-card {
+  position: absolute;
+  width: 85%;
+  max-width: 280px;
+  padding: 32px 24px;
+  border-radius: 18px;
+  background: var(--bg2);
+  border: 2px solid var(--border);
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  transition: box-shadow 0.2s;
+  line-height: 1.4;
+}
+.swipe-card.active-card { z-index: 10; }
+.swipe-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: center;
+  margin-top: 8px;
+  font-family: 'Syne', sans-serif;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0;
+  animation: fadeUp 0.5s ease 0.5s forwards;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 0.7; transform: translateY(0); }
+}
+.swipe-indicator {
+  position: absolute;
+  top: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 4px 14px;
+  border-radius: 20px;
+  opacity: 0;
+  pointer-events: none;
+  font-family: 'Syne', sans-serif;
+  letter-spacing: 1px;
+  z-index: 20;
+}
+.swipe-indicator.pick { right: 12px; background: rgba(34,197,94,0.2); color: #22c55e; }
+.swipe-indicator.nope { left: 12px; background: rgba(239,68,68,0.2); color: #ef4444; }
+
+/* --- MODE: RANKING (drag-to-rank) --- */
+.rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rank-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.rank-item .rank-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent-1-bg);
+  border: 1.5px solid var(--accent-1-border);
+  color: var(--accent-1);
+  font-size: 12px;
+  font-weight: 800;
+  font-family: 'Syne', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.25s;
+}
+.rank-item.picked {
+  border-color: var(--accent-1);
+  background: var(--accent-1-bg);
+}
+.rank-item.picked .rank-num {
+  background: var(--accent-1);
+  color: #fff;
+}
+.rank-item.dimmed { opacity: 0.35; }
+.rank-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
 .quiz-footer {
   padding: 16px 24px 40px;
   display: flex;
@@ -1088,61 +1725,71 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
 
 /* Hero */
 .story-hero {
-  padding: 64px 28px 40px;
+  padding: 32px 24px 28px;
   text-align: center;
   background: linear-gradient(160deg, var(--accent-1), var(--accent-2));
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 .story-hero::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.15) 0%, transparent 50%);
+  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.12) 0%, transparent 50%);
 }
-.story-hero-emoji { font-size: 52px; position: relative; }
+.story-hero-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+.story-hero-emoji { font-size: 32px; }
 .story-hero-score {
   font-family: 'Syne', sans-serif;
   font-weight: 800;
-  font-size: 80px;
+  font-size: 56px;
   color: white;
-  letter-spacing: -4px;
+  letter-spacing: -3px;
   line-height: 1;
-  position: relative;
-  margin: 8px 0;
 }
 .story-hero-names {
-  font-size: 15px;
-  color: rgba(255,255,255,0.7);
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
   position: relative;
   font-weight: 500;
+  letter-spacing: 0.3px;
 }
 .story-hero-vibe {
   font-family: 'Syne', sans-serif;
   font-weight: 800;
-  font-size: 20px;
+  font-size: 17px;
   color: white;
   position: relative;
-  margin-top: 14px;
+  margin-top: 6px;
+  letter-spacing: -0.3px;
 }
 .story-hero-sub {
-  font-size: 13px;
-  color: rgba(255,255,255,0.55);
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
   position: relative;
-  margin-top: 4px;
-  font-style: italic;
+  margin-top: 2px;
 }
 
 /* Narrative intro */
 .story-intro {
-  padding: 28px 24px;
+  padding: 16px 24px;
   text-align: center;
   border-bottom: 1px solid var(--border);
 }
 .story-intro p {
-  font-size: 15px;
-  line-height: 1.65;
+  font-size: 13px;
+  line-height: 1.55;
   color: var(--text-mid);
+  margin: 0;
 }
 .story-intro strong { color: var(--text); }
 
@@ -1202,22 +1849,6 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
 .ch-ans.ch-them .ch-label { color: var(--accent-2); }
 
 /* Narrative comment bubble */
-.ch-comment {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px 14px;
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-}
-.ch-comment .ch-emoji { font-size: 20px; flex-shrink: 0; line-height: 1.3; }
-.ch-comment .ch-msg {
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--text-mid);
-}
-.ch-comment .ch-msg strong { color: var(--text); font-weight: 600; }
-
 /* Outro */
 .story-outro {
   padding: 32px 24px;
@@ -1773,12 +2404,9 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
         <button class="theme-toggle" onclick="cycleLang()" title="Language" id="langCycleBtn" style="font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif">
           <span id="langCycleFlag"></span>
         </button>
-        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <button class="theme-toggle" onclick="toggleSettings()" title="Customize">
           <span class="icon-moon">🌙</span>
           <span class="icon-sun">☀️</span>
-        </button>
-        <button class="theme-toggle" onclick="toggleSettings()" title="Customize" style="font-size:14px">
-          <span>🎨</span>
         </button>
         <button class="theme-toggle" onclick="switchUser()" title="Logout" style="font-size:14px">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -1786,6 +2414,11 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
       </div>
     </div>
 
+    <div class="home-tabs" id="homeTabs">
+      <button class="home-tab active" data-filter="all" onclick="setHomeFilter('all')" data-i18n="home_all">All</button>
+      <button class="home-tab" data-filter="active" onclick="setHomeFilter('active')" data-i18n="home_active">Active</button>
+      <button class="home-tab" data-filter="completed" onclick="setHomeFilter('completed')" data-i18n="home_completed">Completed</button>
+    </div>
     <div id="homeSessions"></div>
 
     <div class="fab-wrap">
@@ -1812,8 +2445,29 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
         <h2 data-i18n="nav_packs">packs</h2>
       </div>
       <p data-i18n="packs_subtitle">pick one, send it, see what happens</p>
+
+      <!-- Scrolling marquee -->
+      <div class="packs-marquee">
+        <div class="packs-marquee-inner" id="packsMarquee"></div>
+      </div>
     </div>
 
+    <!-- Category filter pills -->
+    <div class="packs-filters" id="packsFilters"></div>
+
+    <!-- Featured / trending carousel -->
+    <div class="packs-featured" id="packsFeaturedSection">
+      <div class="packs-featured-label">
+        <span class="pulse-dot"></span>
+        <span data-i18n="packs_trending">trending now</span>
+      </div>
+      <div class="featured-scroll" id="packsFeatured"></div>
+    </div>
+
+    <!-- All packs section label -->
+    <div class="packs-section-label" data-i18n="packs_all">all packs</div>
+
+    <!-- Pack grid -->
     <div class="packs-grid" id="packsGrid"></div>
 
     <nav class="bottom-nav">
@@ -1916,6 +2570,17 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
     </div>
   </div>
 
+  <!-- DELETE CONFIRMATION MODAL -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal-box">
+      <div style="font-size:36px">🗑️</div>
+      <h3 class="syne" data-i18n="delete_title">remove this session?</h3>
+      <p data-i18n="delete_desc">this will remove the session from your list. this can't be undone.</p>
+      <button class="btn btn-primary" style="background:#ef4444" onclick="confirmDeleteSession()" data-i18n="delete_confirm">remove</button>
+      <button class="btn btn-ghost" onclick="closeDeleteModal()" data-i18n="delete_cancel">cancel</button>
+    </div>
+  </div>
+
   <!-- SETTINGS PANEL -->
   <div class="settings-backdrop" id="settingsBackdrop" onclick="toggleSettings()"></div>
   <div class="settings-panel" id="settingsPanel">
@@ -1981,6 +2646,7 @@ const i18n = {
       onboarding_step3_desc: 'answers unlock only when you\'ve both submitted',
       onboarding_cta: 'let\'s go',
       // Home
+      home_all: 'All',
       home_active: 'Active',
       home_completed: 'Completed',
       home_invite_sent: 'invite sent',
@@ -2021,6 +2687,34 @@ const i18n = {
       nav_packs: 'Packs',
       // Packs
       packs_subtitle: 'pick one, send it, see what happens',
+      packs_trending: 'trending now',
+      packs_all: 'all packs',
+      packs_played: 'played',
+      // Pack descriptions (featured cards)
+      pack_desc_36questions: 'the viral study that makes strangers fall in love. are you brave enough?',
+      pack_desc_hottakes: 'spicy opinions only. no fence-sitting allowed.',
+      pack_desc_redflags: 'judge each other\'s takes. no mercy.',
+      // Category filters
+      cat_all: 'All',
+      cat_love: 'Love',
+      cat_friends: 'Friends',
+      cat_spicy: 'Spicy',
+      cat_deep: 'Deep',
+      cat_work: 'Work',
+      // Badges
+      badge_trending: 'Trending',
+      badge_viral: 'Viral',
+      badge_hot: 'Hot',
+      badge_new: 'New',
+      badge_popular: 'Popular',
+      'badge_new-badge': 'New',
+      // Marquee
+      marquee_trending: 'Trending now',
+      marquee_plays: '50k+ rounds played',
+      marquee_new: '3 new packs',
+      marquee_dare: 'dare to be honest?',
+      marquee_viral: 'Going viral',
+      marquee_send: 'send it to your person',
       // Invite
       invite_title: 'share with your person',
       invite_desc: 'they\'ll get the same questions. no one sees answers until you both finish.',
@@ -2064,6 +2758,12 @@ const i18n = {
       feedback_copied: 'copied!',
       feedback_nudge_sent: '✅ nudge sent!',
       feedback_link_copied: '✅ link copied!',
+      // Delete
+      delete_title: 'remove this session?',
+      delete_desc: 'this will remove the session from your list. this can\'t be undone.',
+      delete_confirm: 'remove',
+      delete_cancel: 'cancel',
+      delete_label: 'Delete',
     },
 
     tr: {
@@ -2078,6 +2778,7 @@ const i18n = {
       onboarding_step3_title: 'birlikte aç',
       onboarding_step3_desc: 'cevaplar ancak ikiniz de gönderdikten sonra açılır',
       onboarding_cta: 'hadi başlayalım',
+      home_all: 'Tümü',
       home_active: 'Aktif',
       home_completed: 'Tamamlanan',
       home_invite_sent: 'davet gönderildi',
@@ -2114,6 +2815,30 @@ const i18n = {
       nav_home: 'Ana Sayfa',
       nav_packs: 'Paketler',
       packs_subtitle: 'birini seç, gönder, neler olacak gör',
+      packs_trending: 'şu an trend',
+      packs_all: 'tüm paketler',
+      packs_played: 'oynandı',
+      pack_desc_36questions: 'yabancıları aşık eden viral çalışma. cesaret eder misin?',
+      pack_desc_hottakes: 'sadece keskin fikirler. çit üstü yok.',
+      pack_desc_redflags: 'birbirinizi yargılayın. merhamet yok.',
+      cat_all: 'Tümü',
+      cat_love: 'Aşk',
+      cat_friends: 'Arkadaş',
+      cat_spicy: 'Ateşli',
+      cat_deep: 'Derin',
+      cat_work: 'İş',
+      badge_trending: 'Trend',
+      badge_viral: 'Viral',
+      badge_hot: 'Popüler',
+      badge_new: 'Yeni',
+      badge_popular: 'Sevilen',
+      'badge_new-badge': 'Yeni',
+      marquee_trending: 'Şu an trend',
+      marquee_plays: '50k+ tur oynandı',
+      marquee_new: '3 yeni paket',
+      marquee_dare: 'dürüst olmaya cesaretin var mı?',
+      marquee_viral: 'Viral oluyor',
+      marquee_send: 'kişine gönder',
       invite_title: 'kişinle paylaş',
       invite_desc: 'aynı soruları alacak. ikiniz de bitirene kadar kimse cevapları göremez.',
       invite_copy: 'kopyala',
@@ -2149,6 +2874,11 @@ const i18n = {
       feedback_copied: 'kopyalandı!',
       feedback_nudge_sent: '✅ dürtü gönderildi!',
       feedback_link_copied: '✅ link kopyalandı!',
+      delete_title: 'bu oturumu kaldır?',
+      delete_desc: 'bu oturumu listenden kaldıracak. bu işlem geri alınamaz.',
+      delete_confirm: 'kaldır',
+      delete_cancel: 'iptal',
+      delete_label: 'Sil',
     },
 
     es: {
@@ -2163,6 +2893,7 @@ const i18n = {
       onboarding_step3_title: 'revelen juntos',
       onboarding_step3_desc: 'las respuestas se desbloquean solo cuando ambos hayan enviado',
       onboarding_cta: 'vamos',
+      home_all: 'Todos',
       home_active: 'Activo',
       home_completed: 'Completado',
       home_invite_sent: 'invitación enviada',
@@ -2199,6 +2930,30 @@ const i18n = {
       nav_home: 'Inicio',
       nav_packs: 'Packs',
       packs_subtitle: 'elige uno, envíalo, y mira qué pasa',
+      packs_trending: 'tendencia ahora',
+      packs_all: 'todos los packs',
+      packs_played: 'jugado',
+      pack_desc_36questions: 'el estudio viral que enamora desconocidos. ¿te atreves?',
+      pack_desc_hottakes: 'solo opiniones picantes. sin medias tintas.',
+      pack_desc_redflags: 'juzga los takes del otro. sin piedad.',
+      cat_all: 'Todo',
+      cat_love: 'Amor',
+      cat_friends: 'Amigos',
+      cat_spicy: 'Picante',
+      cat_deep: 'Profundo',
+      cat_work: 'Trabajo',
+      badge_trending: 'Tendencia',
+      badge_viral: 'Viral',
+      badge_hot: 'Hot',
+      badge_new: 'Nuevo',
+      badge_popular: 'Popular',
+      'badge_new-badge': 'Nuevo',
+      marquee_trending: 'Tendencia ahora',
+      marquee_plays: '50k+ rondas jugadas',
+      marquee_new: '3 packs nuevos',
+      marquee_dare: '¿te atreves a ser honesto?',
+      marquee_viral: 'Se hace viral',
+      marquee_send: 'envíalo a tu persona',
       invite_title: 'comparte con tu persona',
       invite_desc: 'recibirán las mismas preguntas. nadie ve las respuestas hasta que ambos terminen.',
       invite_copy: 'copiar',
@@ -2234,6 +2989,11 @@ const i18n = {
       feedback_copied: '¡copiado!',
       feedback_nudge_sent: '✅ ¡empujón enviado!',
       feedback_link_copied: '✅ ¡link copiado!',
+      delete_title: '¿eliminar esta sesión?',
+      delete_desc: 'esto eliminará la sesión de tu lista. no se puede deshacer.',
+      delete_confirm: 'eliminar',
+      delete_cancel: 'cancelar',
+      delete_label: 'Eliminar',
     },
 
     th: {
@@ -2248,6 +3008,7 @@ const i18n = {
       onboarding_step3_title: 'เปิดเผยด้วยกัน',
       onboarding_step3_desc: 'คำตอบจะเปิดเผยเมื่อทั้งสองคนส่งแล้วเท่านั้น',
       onboarding_cta: 'เริ่มเลย',
+      home_all: 'ทั้งหมด',
       home_active: 'กำลังดำเนินการ',
       home_completed: 'เสร็จสิ้น',
       home_invite_sent: 'ส่งคำเชิญแล้ว',
@@ -2284,6 +3045,30 @@ const i18n = {
       nav_home: 'หน้าแรก',
       nav_packs: 'ชุดคำถาม',
       packs_subtitle: 'เลือกชุด ส่งไป แล้วดูผลลัพธ์',
+      packs_trending: 'กำลังฮิต',
+      packs_all: 'ชุดทั้งหมด',
+      packs_played: 'เล่นแล้ว',
+      pack_desc_36questions: 'งานวิจัยไวรัลที่ทำให้คนแปลกหน้าตกหลุมรัก กล้าไหม?',
+      pack_desc_hottakes: 'ความเห็นแบบจัดจ้านเท่านั้น ห้ามอยู่กลางๆ',
+      pack_desc_redflags: 'ตัดสินกันเลย ไม่ต้องเกรงใจ',
+      cat_all: 'ทั้งหมด',
+      cat_love: 'รัก',
+      cat_friends: 'เพื่อน',
+      cat_spicy: 'แซ่บ',
+      cat_deep: 'ลึก',
+      cat_work: 'งาน',
+      badge_trending: 'ฮิต',
+      badge_viral: 'ไวรัล',
+      badge_hot: 'ฮอต',
+      badge_new: 'ใหม่',
+      badge_popular: 'ยอดนิยม',
+      'badge_new-badge': 'ใหม่',
+      marquee_trending: 'กำลังฮิต',
+      marquee_plays: '50k+ รอบที่เล่น',
+      marquee_new: '3 ชุดใหม่',
+      marquee_dare: 'กล้าพูดตรงไหม?',
+      marquee_viral: 'กำลังไวรัล',
+      marquee_send: 'ส่งให้คนของคุณ',
       invite_title: 'แชร์ให้คนของคุณ',
       invite_desc: 'พวกเขาจะได้คำถามเดียวกัน ไม่มีใครเห็นคำตอบจนกว่าทั้งคู่จะตอบเสร็จ',
       invite_copy: 'คัดลอก',
@@ -2319,6 +3104,11 @@ const i18n = {
       feedback_copied: 'คัดลอกแล้ว!',
       feedback_nudge_sent: '✅ เตือนแล้ว!',
       feedback_link_copied: '✅ คัดลอกลิงก์แล้ว!',
+      delete_title: 'ลบเซสชันนี้?',
+      delete_desc: 'เซสชันจะถูกลบออกจากรายการของคุณ ไม่สามารถย้อนกลับได้',
+      delete_confirm: 'ลบ',
+      delete_cancel: 'ยกเลิก',
+      delete_label: 'ลบ',
     },
   },
 
@@ -2495,15 +3285,26 @@ let joinCode = null; // set when joining via URL
 
 // Pack definitions — language-independent metadata
 const packDefs = [
-  { key: '36questions',  emoji: '❤️‍🔥', nameKey: 'pack_36questions', countKey: 'pack_count_36questions', wide: true },
-  { key: 'couples',      emoji: '💕', nameKey: 'pack_couples',      countKey: 'pack_count_couples' },
-  { key: 'bestfriends',  emoji: '👯', nameKey: 'pack_bestfriends',  countKey: 'pack_count_bestfriends' },
-  { key: 'deeptalk',     emoji: '🌊', nameKey: 'pack_deeptalk',     countKey: 'pack_count_deeptalk' },
-  { key: 'coworkers',    emoji: '💼', nameKey: 'pack_coworkers',    countKey: 'pack_count_coworkers' },
-  { key: 'hottakes',    emoji: '🌶️', nameKey: 'pack_hottakes',    countKey: 'pack_count_hottakes' },
-  { key: 'redflags',    emoji: '🚩', nameKey: 'pack_redflags',    countKey: 'pack_count_redflags' },
-  { key: 'chaotic',     emoji: '🎲', nameKey: 'pack_chaotic',     countKey: 'pack_count_chaotic' },
+  { key: '36questions', emoji: '❤️‍🔥', nameKey: 'pack_36questions', countKey: 'pack_count_36questions', wide: true, cat: 'love', badge: 'trending', plays: '24.1k', featured: true, featuredBadge: 'trending', descKey: 'pack_desc_36questions' },
+  { key: 'couples',     emoji: '💕', nameKey: 'pack_couples',      countKey: 'pack_count_couples',      cat: 'love', badge: 'hot', plays: '18.3k' },
+  { key: 'bestfriends', emoji: '👯', nameKey: 'pack_bestfriends',  countKey: 'pack_count_bestfriends',  cat: 'friends', badge: 'popular', plays: '12.7k' },
+  { key: 'deeptalk',    emoji: '🌊', nameKey: 'pack_deeptalk',     countKey: 'pack_count_deeptalk',     cat: 'deep', plays: '9.4k' },
+  { key: 'coworkers',   emoji: '💼', nameKey: 'pack_coworkers',    countKey: 'pack_count_coworkers',    cat: 'work', plays: '5.2k' },
+  { key: 'hottakes',    emoji: '🌶️', nameKey: 'pack_hottakes',    countKey: 'pack_count_hottakes',    cat: 'spicy', badge: 'hot', plays: '21.5k', featured: true, featuredBadge: 'viral', descKey: 'pack_desc_hottakes' },
+  { key: 'redflags',    emoji: '🚩', nameKey: 'pack_redflags',    countKey: 'pack_count_redflags',    cat: 'spicy', badge: 'new', plays: '15.8k', featured: true, featuredBadge: 'new-badge', descKey: 'pack_desc_redflags' },
+  { key: 'chaotic',     emoji: '🎲', nameKey: 'pack_chaotic',     countKey: 'pack_count_chaotic',     cat: 'spicy', badge: 'new', plays: '11.2k' },
 ];
+
+// Category definitions for filter pills
+const packCategories = [
+  { key: 'all',     labelKey: 'cat_all',     icon: '' },
+  { key: 'love',    labelKey: 'cat_love',    icon: '' },
+  { key: 'friends', labelKey: 'cat_friends', icon: '' },
+  { key: 'spicy',   labelKey: 'cat_spicy',   icon: '' },
+  { key: 'deep',    labelKey: 'cat_deep',    icon: '' },
+  { key: 'work',    labelKey: 'cat_work',    icon: '' },
+];
+let activePackFilter = 'all';
 
 // Question packs per language — partnerAnswerIndex stores index so it works across languages
 const questionPacks = {
@@ -2888,16 +3689,26 @@ function switchUser() {
 
 // ==================== HOME SESSIONS ====================
 let _cachedSessions = null;
+let _homeFilter = 'all';
+
+function setHomeFilter(filter) {
+  _homeFilter = filter;
+  document.querySelectorAll('.home-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === filter);
+  });
+  renderHomeSessions();
+}
 
 function renderHomeSessions() {
   const container = document.getElementById('homeSessions');
   if (!container) return;
-  const sessions = _cachedSessions;
-
-  if (sessions === null) {
+  if (_cachedSessions === null) {
     container.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-dim)">${i18n.t('home_loading')}</div>`;
     return;
   }
+  const hidden = getHiddenSessions();
+  const sessions = _cachedSessions.filter(s => !hidden.includes(s.code));
+
   if (sessions.length === 0) {
     container.innerHTML = `
       <div style="text-align:center;padding:40px 20px;color:var(--text-dim)">
@@ -2912,8 +3723,11 @@ function renderHomeSessions() {
   const active = sessions.filter(s => s.status !== 'complete');
   const done = sessions.filter(s => s.status === 'complete');
 
-  if (active.length) {
-    html += `<div class="section-label">${i18n.t('home_active')}</div>`;
+  const showActive = _homeFilter === 'all' || _homeFilter === 'active';
+  const showDone = _homeFilter === 'all' || _homeFilter === 'completed';
+
+  if (showActive && active.length) {
+    if (_homeFilter === 'all') html += `<div class="section-label">${i18n.t('home_active')}</div>`;
     active.forEach(s => {
       const partner = s.creator_id === currentUser.id ? s.partner_username : s.creator_username;
       const emoji = packEmojis[s.pack_key] || '📦';
@@ -2922,35 +3736,50 @@ function renderHomeSessions() {
       if (s.status === 'waiting') badge = `<div class="s-badge badge-waiting">${i18n.t('badge_waiting')}</div>`;
       else if (s.status === 'active') badge = `<div class="s-badge badge-progress">${i18n.t('badge_progress')}</div>`;
 
-      html += `<div class="session-card glass" onclick="resumeSession('${s.code}')">
-        <div class="s-icon" style="background:rgba(124,58,237,0.1)">${emoji}</div>
-        <div class="s-info">
-          <div class="s-title">${packName}</div>
-          <div class="s-sub">${partner ? i18n.t('home_with') + ' ' + partner : i18n.t('home_waiting_partner')} · ${s.code}</div>
+      html += `<div class="session-card-wrap" data-code="${s.code}">
+        <div class="session-card glass" onclick="resumeSession('${s.code}')">
+          <div class="s-icon" style="background:rgba(124,58,237,0.1)">${emoji}</div>
+          <div class="s-info">
+            <div class="s-title">${packName}</div>
+            <div class="s-sub">${partner ? i18n.t('home_with') + ' ' + partner : i18n.t('home_waiting_partner')} · ${s.code}</div>
+          </div>
+          ${badge}
         </div>
-        ${badge}
+        <button class="delete-btn" onclick="openDeleteModal('${s.code}')">${i18n.t('delete_label')}</button>
       </div>`;
     });
   }
 
-  if (done.length) {
-    html += `<div class="section-label">${i18n.t('home_completed')}</div>`;
+  if (showDone && done.length) {
+    if (_homeFilter === 'all') html += `<div class="section-label">${i18n.t('home_completed')}</div>`;
     done.forEach(s => {
       const partner = s.creator_id === currentUser.id ? s.partner_username : s.creator_username;
       const emoji = packEmojis[s.pack_key] || '📦';
       const packName = i18n.t('pack_' + s.pack_key) || s.pack_key;
-      html += `<div class="session-card glass" onclick="viewResults('${s.code}')">
-        <div class="s-icon" style="background:var(--surface)">${emoji}</div>
-        <div class="s-info">
-          <div class="s-title">${packName}</div>
-          <div class="s-sub">${i18n.t('home_with')} ${partner || '?'}</div>
+      html += `<div class="session-card-wrap" data-code="${s.code}">
+        <div class="session-card glass" onclick="viewResults('${s.code}')">
+          <div class="s-icon" style="background:var(--surface)">${emoji}</div>
+          <div class="s-info">
+            <div class="s-title">${packName}</div>
+            <div class="s-sub">${i18n.t('home_with')} ${partner || '?'}</div>
+          </div>
+          <div class="s-badge badge-done">${i18n.t('home_done')}</div>
         </div>
-        <div class="s-badge badge-done">${i18n.t('home_done')}</div>
+        <button class="delete-btn" onclick="openDeleteModal('${s.code}')">${i18n.t('delete_label')}</button>
       </div>`;
     });
   }
 
+  if (!html) {
+    const emptyKey = _homeFilter === 'active' ? 'home_active' : _homeFilter === 'completed' ? 'home_completed' : '';
+    html = `<div style="text-align:center;padding:40px 20px;color:var(--text-dim)">
+      <div style="font-size:36px;margin-bottom:12px">🫣</div>
+      <p>${i18n.t('home_no_sessions')}</p>
+    </div>`;
+  }
+
   container.innerHTML = html;
+  initSwipeToDelete();
 }
 
 async function loadHomeSessions() {
@@ -2996,6 +3825,7 @@ async function resumeSession(code) {
     // Start/continue quiz
     currentQuestion = 0;
     selectedAnswers = {};
+    questionModes = [];
     goTo('quiz');
   } catch (e) {
     alert('Could not load session');
@@ -3088,6 +3918,7 @@ async function handleJoinCode(code) {
 
     currentQuestion = 0;
     selectedAnswers = {};
+    questionModes = [];
     goTo('quiz');
   } catch (e) {
     alert('Could not join session');
@@ -3095,17 +3926,85 @@ async function handleJoinCode(code) {
   }
 }
 
-// Render packs grid
-function renderPacksGrid() {
-  const grid = document.getElementById('packsGrid');
-  if (!grid) return;
-  grid.innerHTML = packDefs.map(p =>
-    `<div class="pack-card glass"${p.wide ? ' style="grid-column:1/-1"' : ''} onclick="selectPack('${p.key}')">
-      <div class="pack-emoji">${p.emoji}</div>
-      <div class="pack-title">${i18n.t(p.nameKey)}</div>
-      <div class="pack-count">${i18n.t(p.countKey)}</div>
+// Render marquee
+function renderPacksMarquee() {
+  const el = document.getElementById('packsMarquee');
+  if (!el) return;
+  const items = [
+    `<span class="marquee-hot">${i18n.t('marquee_trending')}</span>`,
+    `<span>${i18n.t('marquee_plays')}</span>`,
+    `<span class="marquee-hot">${i18n.t('marquee_new')}</span>`,
+    `<span>${i18n.t('marquee_dare')}</span>`,
+    `<span class="marquee-hot">${i18n.t('marquee_viral')}</span>`,
+    `<span>${i18n.t('marquee_send')}</span>`,
+  ];
+  el.innerHTML = items.join('') + items.join('');
+}
+
+// Render filter pills
+function renderPacksFilters() {
+  const el = document.getElementById('packsFilters');
+  if (!el) return;
+  el.innerHTML = packCategories.map(c =>
+    `<button class="filter-pill${c.key === activePackFilter ? ' active' : ''}" onclick="filterPacks('${c.key}')">${c.icon ? c.icon + ' ' : ''}${i18n.t(c.labelKey)}</button>`
+  ).join('');
+}
+
+function filterPacks(catKey) {
+  activePackFilter = catKey;
+  renderPacksFilters();
+  renderPacksGridCards();
+  const featuredSection = document.getElementById('packsFeaturedSection');
+  const sectionLabel = document.querySelector('.packs-section-label');
+  if (featuredSection) featuredSection.style.display = catKey === 'all' ? '' : 'none';
+  if (sectionLabel) sectionLabel.style.display = catKey === 'all' ? '' : 'none';
+}
+
+// Render featured carousel
+function renderPacksFeatured() {
+  const el = document.getElementById('packsFeatured');
+  if (!el) return;
+  const featured = packDefs.filter(p => p.featured);
+  el.innerHTML = featured.map((p, idx) =>
+    `<div class="featured-card" style="animation-delay:${idx * 0.1}s" onclick="selectPack('${p.key}')">
+      <div class="featured-badge ${p.featuredBadge}">${i18n.t('badge_' + p.featuredBadge)}</div>
+      <div class="featured-emoji">${p.emoji}</div>
+      <div class="featured-title">${i18n.t(p.nameKey)}</div>
+      <div class="featured-desc">${i18n.t(p.descKey)}</div>
+      <div class="featured-meta">
+        <span class="meta-plays">${p.plays} ${i18n.t('packs_played')}</span>
+      </div>
     </div>`
   ).join('');
+}
+
+// Render pack grid cards
+function renderPacksGridCards() {
+  const grid = document.getElementById('packsGrid');
+  if (!grid) return;
+  const filtered = activePackFilter === 'all'
+    ? packDefs
+    : packDefs.filter(p => p.cat === activePackFilter);
+  grid.innerHTML = filtered.map((p, idx) => {
+    const badgeHtml = p.badge
+      ? `<span class="pack-badge badge-${p.badge}">${i18n.t('badge_' + p.badge)}</span>`
+      : '';
+    return `<div class="pack-card glass" style="animation-delay:${idx * 0.06}s" onclick="selectPack('${p.key}')">
+      ${badgeHtml}
+      <div class="pack-emoji">${p.emoji}</div>
+      <div class="pack-title">${i18n.t(p.nameKey)}</div>
+      <div class="pack-plays">${p.plays} ${i18n.t('packs_played')}</div>
+      <div class="pack-count">${i18n.t(p.countKey)}</div>
+    </div>`;
+  }).join('');
+}
+
+// Full packs render
+function renderPacksGrid() {
+  renderPacksMarquee();
+  renderPacksFilters();
+  renderPacksFeatured();
+  renderPacksGridCards();
 }
 renderPacksGrid();
 
@@ -3162,14 +4061,31 @@ async function selectPack(key) {
 function startQuizAsCreator() {
   currentQuestion = 0;
   selectedAnswers = {};
+  questionModes = [];
   goTo('quiz');
 }
 
-// Quiz
+// Quiz — Mini-game modes
+const QUIZ_MODES = ['classic', 'thisOrThat', 'bubblePop', 'blitz', 'swipe'];
+const MODE_LABELS = { classic: '✏️', thisOrThat: '⚔️ This or That', bubblePop: '🫧 Bubble Pop', blitz: '⚡ Blitz', swipe: '👆 Swipe Pick' };
+let questionModes = [];
+let blitzInterval = null;
+
+function assignQuestionModes() {
+  questionModes = [];
+  for (let i = 0; i < questions.length; i++) {
+    if (i === 0) { questionModes.push('classic'); continue; }
+    const av = QUIZ_MODES.filter(m => m !== questionModes[i - 1]);
+    questionModes.push(av[Math.floor(Math.random() * av.length)]);
+  }
+}
+
 function renderQuestion() {
+  if (!questionModes.length) assignQuestionModes();
   const q = questions[currentQuestion];
   const total = questions.length;
   const progress = ((currentQuestion) / total) * 100;
+  const mode = questionModes[currentQuestion];
 
   document.getElementById('quizProgress').style.width = progress + '%';
   document.getElementById('quizCount').textContent = `${currentQuestion + 1} / ${total}`;
@@ -3180,7 +4096,20 @@ function renderQuestion() {
   nextBtn.disabled = selectedAnswers[currentQuestion] === undefined;
   document.getElementById('quizBackBtn').style.display = currentQuestion > 0 ? '' : 'none';
 
+  if (blitzInterval) { clearInterval(blitzInterval); blitzInterval = null; }
   const body = document.getElementById('quizBody');
+
+  switch (mode) {
+    case 'thisOrThat': renderThisOrThat(body, q); break;
+    case 'bubblePop': renderBubblePop(body, q); break;
+    case 'blitz': renderBlitz(body, q); break;
+    case 'swipe': renderSwipe(body, q); break;
+    default: renderClassic(body, q);
+  }
+}
+
+// --- CLASSIC ---
+function renderClassic(body, q) {
   body.innerHTML = `
     <div class="question-card" key="${currentQuestion}">
       <div class="question-label">${i18n.t('quiz_question')} ${currentQuestion + 1}</div>
@@ -3193,15 +4122,219 @@ function renderQuestion() {
           </button>
         `).join('')}
       </div>
-    </div>
-  `;
+    </div>`;
+}
+
+// --- THIS OR THAT ---
+function renderThisOrThat(body, q) {
+  const opts = q.options, s = selectedAnswers[currentQuestion];
+  body.innerHTML = `
+    <div class="question-card" key="${currentQuestion}">
+      <div class="mode-badge">${MODE_LABELS.thisOrThat}</div>
+      <div class="question-text" style="font-size:19px">${q.q}</div>
+      <div class="tot-container">
+        <div class="tot-matchup">
+          ${opts.slice(0, 2).map((opt, i) =>
+            `<div class="tot-side ${s === i ? 'selected' : (s !== undefined && s !== i ? 'dimmed' : '')}"
+                  onclick="selectTot(${currentQuestion}, ${i})">${opt}</div>`
+          ).join('<div class="tot-vs">VS</div>')}
+        </div>
+        <div class="tot-matchup">
+          ${opts.slice(2).map((opt, i) =>
+            `<div class="tot-side ${s === (i+2) ? 'selected' : (s !== undefined && s !== (i+2) ? 'dimmed' : '')}"
+                  onclick="selectTot(${currentQuestion}, ${i+2})">${opt}</div>`
+          ).join('<div class="tot-vs">VS</div>')}
+        </div>
+      </div>
+    </div>`;
+}
+function selectTot(qi, ans) {
+  selectedAnswers[qi] = ans;
+  document.getElementById('quizNextBtn').disabled = false;
+  document.querySelectorAll('.tot-side').forEach((el, i) => {
+    el.classList.remove('selected', 'dimmed');
+    if (i === ans) el.classList.add('selected');
+    else el.classList.add('dimmed');
+  });
+}
+
+// --- BUBBLE POP ---
+function renderBubblePop(body, q) {
+  const pos = [
+    { top: '5%', left: '8%', size: 120 },
+    { top: '2%', left: '55%', size: 110 },
+    { top: '50%', left: '5%', size: 115 },
+    { top: '48%', left: '52%', size: 125 }
+  ];
+  const s = selectedAnswers[currentQuestion];
+  body.innerHTML = `
+    <div class="question-card" key="${currentQuestion}">
+      <div class="mode-badge">${MODE_LABELS.bubblePop}</div>
+      <div class="question-text" style="font-size:19px">${q.q}</div>
+      <div class="bubble-field">
+        ${q.options.map((opt, oi) => {
+          const p = pos[oi];
+          return `<div class="bubble ${s === oi ? 'selected' : ''} ${s !== undefined && s !== oi ? 'dimmed' : ''}"
+                       style="top:${p.top};left:${p.left};width:${p.size}px;height:${p.size}px"
+                       onclick="selectBubble(${currentQuestion}, ${oi})">${opt}</div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+function selectBubble(qi, ans) {
+  selectedAnswers[qi] = ans;
+  document.getElementById('quizNextBtn').disabled = false;
+  document.querySelectorAll('.bubble').forEach((el, i) => {
+    el.classList.remove('selected', 'dimmed');
+    if (i === ans) el.classList.add('selected');
+    else el.classList.add('dimmed');
+  });
+}
+
+// --- BLITZ ---
+function renderBlitz(body, q) {
+  const BT = 10;
+  body.innerHTML = `
+    <div class="question-card" key="${currentQuestion}">
+      <div class="mode-badge">${MODE_LABELS.blitz}</div>
+      <div class="blitz-label" id="blitzCount">${BT}</div>
+      <div class="blitz-timer-bar"><div class="blitz-timer-fill" id="blitzFill"></div></div>
+      <div class="question-text" style="font-size:19px">${q.q}</div>
+      <div class="answer-options blitz-mode">
+        ${q.options.map((opt, oi) => `
+          <button class="answer-opt ${selectedAnswers[currentQuestion] === oi ? 'selected' : ''}"
+                  onclick="selectAnswer(${currentQuestion}, ${oi}, this)">
+            ${opt}
+          </button>
+        `).join('')}
+      </div>
+    </div>`;
+  if (selectedAnswers[currentQuestion] !== undefined) return;
+  let rem = BT * 10;
+  const fill = document.getElementById('blitzFill'), label = document.getElementById('blitzCount');
+  blitzInterval = setInterval(() => {
+    rem--;
+    const pct = (rem / (BT * 10)) * 100;
+    if (fill) fill.style.width = pct + '%';
+    if (label) label.textContent = Math.ceil(rem / 10);
+    if (rem <= 30) {
+      if (fill) fill.classList.add('urgent');
+      if (label) label.classList.add('urgent');
+    }
+    if (rem <= 0) {
+      clearInterval(blitzInterval); blitzInterval = null;
+      if (selectedAnswers[currentQuestion] === undefined) {
+        const ri = Math.floor(Math.random() * q.options.length);
+        selectedAnswers[currentQuestion] = ri;
+        document.getElementById('quizNextBtn').disabled = false;
+        const btns = document.querySelectorAll('.blitz-mode .answer-opt');
+        if (btns[ri]) btns[ri].classList.add('selected');
+        if (label) { label.textContent = '\u23F0'; label.style.fontSize = '36px'; }
+      }
+    }
+  }, 100);
+}
+
+// --- SWIPE ---
+let swipeDeckData = [];
+function renderSwipe(body, q) {
+  swipeDeckData = q.options.map((opt, i) => ({ text: opt, index: i }));
+  const prev = selectedAnswers[currentQuestion];
+  body.innerHTML = `
+    <div class="question-card" key="${currentQuestion}">
+      <div class="mode-badge">${MODE_LABELS.swipe}</div>
+      <div class="question-text" style="font-size:19px">${q.q}</div>
+      <div class="swipe-deck" id="swipeDeck"></div>
+      <div class="swipe-hint">\u2190 skip \u00B7 swipe right to pick \u2192</div>
+    </div>`;
+  const deck = document.getElementById('swipeDeck');
+  for (let i = swipeDeckData.length - 1; i >= 0; i--) {
+    const card = document.createElement('div');
+    card.className = 'swipe-card';
+    card.textContent = swipeDeckData[i].text;
+    card.style.zIndex = swipeDeckData.length - i;
+    const d = swipeDeckData.length - 1 - i;
+    card.style.transform = `scale(${1 - d * 0.04}) translateY(${d * 6}px)`;
+    card.dataset.optIndex = i;
+    deck.appendChild(card);
+  }
+  if (prev !== undefined) {
+    deck.innerHTML = `<div class="swipe-card" style="border-color:var(--accent-1);box-shadow:0 0 24px var(--accent-1-glow)">${q.options[prev]}</div>`;
+    return;
+  }
+  initSwipeDeckGestures(deck);
+}
+
+function initSwipeDeckGestures(deck) {
+  const cards = Array.from(deck.querySelectorAll('.swipe-card'));
+  let topIdx = 0;
+  function attachSwipe(card) {
+    let startX = 0, dx = 0, dragging = false;
+    const onStart = (e) => {
+      const pt = e.touches ? e.touches[0] : e;
+      startX = pt.clientX; dragging = true;
+      card.style.transition = 'none';
+    };
+    const onMove = (e) => {
+      if (!dragging) return;
+      const pt = e.touches ? e.touches[0] : e;
+      dx = pt.clientX - startX;
+      card.style.transform = `translateX(${dx}px) rotate(${dx * 0.08}deg)`;
+      if (!card.querySelector('.pick-indicator')) {
+        card.insertAdjacentHTML('afterbegin',
+          '<div class="swipe-indicator pick pick-indicator">PICK</div><div class="swipe-indicator nope nope-indicator">SKIP</div>');
+      }
+      const pi = card.querySelector('.pick-indicator'), ni = card.querySelector('.nope-indicator');
+      if (pi) pi.style.opacity = Math.max(0, Math.min(1, dx / 80));
+      if (ni) ni.style.opacity = Math.max(0, Math.min(1, -dx / 80));
+    };
+    const onEnd = () => {
+      if (!dragging) return;
+      dragging = false;
+      card.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+      if (dx > 70) {
+        card.style.transform = 'translateX(400px) rotate(20deg)';
+        card.style.opacity = '0';
+        const oi = parseInt(card.dataset.optIndex);
+        selectedAnswers[currentQuestion] = oi;
+        document.getElementById('quizNextBtn').disabled = false;
+        setTimeout(() => {
+          deck.innerHTML = `<div class="swipe-card" style="border-color:var(--accent-1);box-shadow:0 0 24px var(--accent-1-glow);opacity:0;animation:cardIn 0.3s ease forwards">${swipeDeckData[oi].text}</div>`;
+        }, 250);
+      } else if (dx < -70) {
+        card.style.transform = 'translateX(-400px) rotate(-20deg)';
+        card.style.opacity = '0';
+        topIdx++;
+        if (topIdx >= cards.length) {
+          topIdx = 0;
+          setTimeout(() => { renderSwipe(document.getElementById('quizBody'), questions[currentQuestion]); }, 300);
+        }
+      } else {
+        card.style.transform = '';
+        const pi = card.querySelector('.pick-indicator'), ni = card.querySelector('.nope-indicator');
+        if (pi) pi.style.opacity = '0';
+        if (ni) ni.style.opacity = '0';
+      }
+      dx = 0;
+    };
+    card.addEventListener('touchstart', onStart, { passive: true });
+    card.addEventListener('touchmove', onMove, { passive: true });
+    card.addEventListener('touchend', onEnd);
+    card.addEventListener('mousedown', onStart);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
+  }
+  cards.forEach(c => attachSwipe(c));
 }
 
 function selectAnswer(qIndex, answer, el) {
   selectedAnswers[qIndex] = answer;
-  el.parentElement.querySelectorAll('.answer-opt').forEach(b => b.classList.remove('selected'));
-  el.classList.add('selected');
+  if (el && el.parentElement) {
+    el.parentElement.querySelectorAll('.answer-opt').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+  }
   document.getElementById('quizNextBtn').disabled = false;
+  if (blitzInterval) { clearInterval(blitzInterval); blitzInterval = null; }
 }
 
 function nextQuestion() {
@@ -3229,6 +4362,106 @@ function confirmQuit() {
 
 function closeModal() {
   document.getElementById('submitModal').classList.remove('show');
+}
+
+// Session delete
+let pendingDeleteCode = null;
+
+function initSwipeToDelete() {
+  document.querySelectorAll('.session-card-wrap').forEach(wrap => {
+    const card = wrap.querySelector('.session-card');
+    let startX = 0, currentX = 0, dragging = false;
+
+    card.addEventListener('touchstart', e => {
+      startX = e.touches[0].clientX;
+      currentX = startX;
+      dragging = true;
+      card.style.transition = 'none';
+    }, { passive: true });
+
+    card.addEventListener('touchmove', e => {
+      if (!dragging) return;
+      currentX = e.touches[0].clientX;
+      const dx = Math.min(0, currentX - startX);
+      if (dx < -10) {
+        card.style.transform = `translateX(${Math.max(dx, -80)}px)`;
+      }
+    }, { passive: true });
+
+    card.addEventListener('touchend', () => {
+      dragging = false;
+      card.style.transition = '';
+      const dx = currentX - startX;
+      if (dx < -40) {
+        wrap.classList.add('swiped');
+        card.style.transform = '';
+        closeSiblingSwipes(wrap);
+      } else {
+        wrap.classList.remove('swiped');
+        card.style.transform = '';
+      }
+    });
+  });
+
+  // Click outside to close any swiped card
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.session-card-wrap')) {
+      document.querySelectorAll('.session-card-wrap.swiped').forEach(w => w.classList.remove('swiped'));
+    }
+  });
+}
+
+function closeSiblingSwipes(except) {
+  document.querySelectorAll('.session-card-wrap.swiped').forEach(w => {
+    if (w !== except) w.classList.remove('swiped');
+  });
+}
+
+function openDeleteModal(code) {
+  pendingDeleteCode = code;
+  document.getElementById('deleteModal').classList.add('show');
+}
+
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.remove('show');
+  pendingDeleteCode = null;
+}
+
+function getHiddenSessions() {
+  try { return JSON.parse(localStorage.getItem('bs-hidden-sessions') || '[]'); } catch { return []; }
+}
+
+function hideSession(code) {
+  const hidden = getHiddenSessions();
+  if (!hidden.includes(code)) {
+    hidden.push(code);
+    localStorage.setItem('bs-hidden-sessions', JSON.stringify(hidden));
+  }
+}
+
+function confirmDeleteSession() {
+  if (!pendingDeleteCode) return;
+  const code = pendingDeleteCode;
+  closeDeleteModal();
+
+  // Persist in localStorage
+  hideSession(code);
+
+  const wrap = document.querySelector(`.session-card-wrap[data-code="${code}"]`);
+  if (wrap) {
+    wrap.classList.add('removing');
+    wrap.addEventListener('animationend', () => wrap.remove());
+  }
+
+  // Remove from cached sessions
+  if (_cachedSessions) {
+    _cachedSessions = _cachedSessions.filter(s => s.code !== code);
+  }
+
+  // Re-render if all sessions removed
+  if (_cachedSessions && _cachedSessions.length === 0) {
+    renderHomeSessions();
+  }
 }
 
 async function submitAnswers() {
@@ -3495,24 +4728,6 @@ function spawnConfetti() {
 }
 
 // Vibe Receipt builder
-// Narrative comments per question - match vs diff
-const matchComments = [
-  (q, a) => `🔥 <strong>Same energy.</strong> You both went with "${a}" without hesitation. That's not luck — that's a wavelength.`,
-  (q, a) => `🧠 <strong>Telepathic.</strong> "${a}" from both of you. Either you rehearsed this or you're genuinely in sync.`,
-  (q, a) => `💫 <strong>No notes.</strong> You both said "${a}" — and honestly? Perfect answer.`,
-  (q, a) => `⚡ <strong>Connected.</strong> "${a}" — same page, same chapter, same book.`,
-  (q, a) => `🎯 <strong>Bullseye.</strong> Of all the options, you both landed on "${a}". The universe is paying attention.`,
-  (q, a) => `✨ <strong>In sync.</strong> "${a}" — when you know, you know.`,
-];
-// Note: diffComments use a 4th param `name` for partner name in live sessions
-const diffComments = [
-  (q, y, t, name) => `👀 You said <strong>"${y}"</strong>, ${name} said <strong>"${t}"</strong>. Different chapters, but still a good story.`,
-  (q, y, t, name) => `😏 <strong>"${y}"</strong> vs <strong>"${t}"</strong> — this is the kind of debate that could last hours.`,
-  (q, y, t, name) => `🌀 You went with <strong>"${y}"</strong> while ${name} chose <strong>"${t}"</strong>. Interesting plot twist.`,
-  (q, y, t, name) => `💭 <strong>"${y}"</strong> meets <strong>"${t}"</strong> — different instincts, but that's what makes it interesting.`,
-  (q, y, t, name) => `🤷 You: <strong>"${y}"</strong>. ${name}: <strong>"${t}"</strong>. Agree to disagree? Or discuss over dinner?`,
-  (q, y, t, name) => `🎭 <strong>"${y}"</strong> and <strong>"${t}"</strong> — two sides of something worth exploring.`,
-];
 
 // ==================== AI VIBE REPORT ====================
 function getVibeReportLoadingHtml() {
@@ -3695,10 +4910,6 @@ function buildReceiptWithName(partnerName) {
 
   let chaptersHtml = '';
   data.forEach((d, i) => {
-    const comment = d.matched
-      ? matchComments[i % matchComments.length](d.q, d.userAns)
-      : diffComments[i % diffComments.length](d.q, d.userAns, d.partnerAns, partnerName);
-
     chaptersHtml += `
       <div class="story-chapter">
         <div class="ch-num">${i + 1} ${i18n.t('results_of')} ${total}</div>
@@ -3713,7 +4924,6 @@ function buildReceiptWithName(partnerName) {
             <div class="ch-text">${d.partnerAns}</div>
           </div>
         </div>
-        <div class="ch-comment"><div class="ch-msg">${comment}</div></div>
       </div>
     `;
   });
@@ -3721,14 +4931,16 @@ function buildReceiptWithName(partnerName) {
   const scroll = document.getElementById('storyScroll');
   scroll.innerHTML = `
     <div class="story-hero">
-      <div class="story-hero-emoji">${vibe.emoji}</div>
-      <div class="story-hero-score">${pct}%</div>
-      <div class="story-hero-names">${i18n.t('results_you')} & ${partnerName}</div>
+      <div class="story-hero-top">
+        <div class="story-hero-emoji">${vibe.emoji}</div>
+        <div class="story-hero-score">${pct}%</div>
+      </div>
       <div class="story-hero-vibe">${vibe.title}</div>
       <div class="story-hero-sub">${vibe.desc}</div>
+      <div class="story-hero-names">${i18n.t('results_you')} & ${partnerName}</div>
     </div>
     <div class="story-intro"><p>${vibe.intro}</p></div>
-    <div id="vibeReportSlot">${getVibeReportLoadingHtml()}</div>
+    <!-- <div id="vibeReportSlot">${getVibeReportLoadingHtml()}</div> -->
     ${chaptersHtml}
     <div class="story-outro">
       <div class="story-stats">
@@ -3747,8 +4959,8 @@ function buildReceiptWithName(partnerName) {
   `;
   scroll.scrollTop = 0;
   spawnConfetti();
-  // Fire AI vibe report generation (async, non-blocking)
-  loadVibeReport(data, partnerName, pct, selectedPackKey);
+  // AI vibe report disabled for now
+  // loadVibeReport(data, partnerName, pct, selectedPackKey);
 }
 
 function buildReceipt() {
@@ -3778,10 +4990,6 @@ function buildReceipt() {
   // Build chapters
   let chaptersHtml = '';
   data.forEach((d, i) => {
-    const comment = d.matched
-      ? matchComments[i % matchComments.length](d.q, d.userAns)
-      : diffComments[i % diffComments.length](d.q, d.userAns, d.partnerAns, 'Alex');
-
     chaptersHtml += `
       <div class="story-chapter">
         <div class="ch-num">${i + 1} ${i18n.t('results_of')} ${total}</div>
@@ -3796,9 +5004,6 @@ function buildReceipt() {
             <div class="ch-text">${d.partnerAns}</div>
           </div>
         </div>
-        <div class="ch-comment">
-          <div class="ch-msg">${comment}</div>
-        </div>
       </div>
     `;
   });
@@ -3806,18 +5011,20 @@ function buildReceipt() {
   const scroll = document.getElementById('storyScroll');
   scroll.innerHTML = `
     <div class="story-hero">
-      <div class="story-hero-emoji">${vibe.emoji}</div>
-      <div class="story-hero-score">${pct}%</div>
-      <div class="story-hero-names">${i18n.t('results_you')} & Alex</div>
+      <div class="story-hero-top">
+        <div class="story-hero-emoji">${vibe.emoji}</div>
+        <div class="story-hero-score">${pct}%</div>
+      </div>
       <div class="story-hero-vibe">${vibe.title}</div>
       <div class="story-hero-sub">${vibe.desc}</div>
+      <div class="story-hero-names">${i18n.t('results_you')} & Alex</div>
     </div>
 
     <div class="story-intro">
       <p>${vibe.intro}</p>
     </div>
 
-    <div id="vibeReportSlot">${getVibeReportLoadingHtml()}</div>
+    <!-- <div id="vibeReportSlot">${getVibeReportLoadingHtml()}</div> -->
 
     ${chaptersHtml}
 
@@ -3849,8 +5056,8 @@ function buildReceipt() {
 
   scroll.scrollTop = 0;
   spawnConfetti();
-  // Fire AI vibe report generation (async, non-blocking)
-  loadVibeReport(data, 'Alex', pct, selectedPackKey);
+  // AI vibe report disabled for now
+  // loadVibeReport(data, 'Alex', pct, selectedPackKey);
 }
 
 function shareReceipt() {
