@@ -1287,7 +1287,7 @@ function renderVibeReport(report) {
 
 async function generateVibeReport(data, partnerName, pct, packKey) {
   const lang = localStorage.getItem('bs-lang') || 'en';
-  const langNames = { en: 'English', tr: 'Turkish', es: 'Spanish', th: 'Thai' };
+  const langNames = { en: 'English', tr: 'Turkish', th: 'Thai' };
 
   const qaList = data.map((d, i) =>
     `Q${i+1}: "${d.q}" — You: "${d.userAns}", ${partnerName}: "${d.partnerAns}" [${d.matched ? 'MATCH' : 'DIFFERENT'}]`
