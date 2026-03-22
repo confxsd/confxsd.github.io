@@ -56,8 +56,8 @@
   --cyan: #06B6D4;
   --match-green: #22c55e;
   --mismatch-red: #ef4444;
-  --radius: 20px;
-  --radius-sm: 12px;
+  --radius: 14px;
+  --radius-sm: 10px;
   --radius-xs: 8px;
 }
 
@@ -311,6 +311,7 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
   gap: 6px;
   flex-wrap: wrap;
   justify-content: center;
+  margin-top: 24px;
 }
 .lang-btn {
   display: flex;
@@ -407,7 +408,17 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
   align-items: center;
   justify-content: space-between;
 }
+.home-header .home-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 .home-header h1 { font-size: 28px; letter-spacing: -1px; }
+.home-header .home-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
 .home-header .avatar {
   width: 36px; height: 36px;
   border-radius: 50%;
@@ -637,6 +648,27 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
   transition: all 0.2s;
 }
 .link-box .copy-btn:active { transform: scale(0.95); }
+.auth-input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 16px;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+  text-align: center;
+}
+.auth-input:focus { border-color: var(--accent1); }
+.auth-input::placeholder { color: var(--text-dim); }
+.auth-error {
+  color: #ef4444;
+  font-size: 12px;
+  min-height: 18px;
+  margin-top: 6px;
+}
 .share-row {
   display: flex;
   gap: 12px;
@@ -1504,28 +1536,38 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
     <h1 class="syne logo-text">blindside.</h1>
     <p class="tagline" data-i18n="splash_tagline">same questions. blind answers. one reveal.</p>
     <div class="splash-cta">
-      <button class="btn btn-primary" onclick="goTo('onboarding')" data-i18n="splash_get_started">get started</button>
-      <button class="btn btn-ghost" onclick="goTo('home')" data-i18n="splash_have_account">i have an account</button>
+      <button class="btn btn-primary" onclick="showAuth('onboarding')" data-i18n="splash_get_started">get started</button>
+      <button class="btn btn-ghost" onclick="showAuth('home')" data-i18n="splash_have_account">i have an account</button>
     </div>
+    <div class="lang-selector" id="langSelector"></div>
+  </div>
+
+  <!-- AUTH -->
+  <div id="auth" class="screen">
+    <div class="logo-mark" style="font-size:48px">🫣</div>
+    <h2 class="syne" style="font-size:22px;letter-spacing:-0.5px">pick a username</h2>
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:24px">just a name so your partner knows it's you</p>
+    <input type="text" id="authUsername" class="auth-input" placeholder="your name..." maxlength="20" autocomplete="off" autocapitalize="off">
+    <div id="authError" class="auth-error"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="doAuth()" id="authBtn">continue</button>
   </div>
 
   <!-- ONBOARDING -->
   <div id="onboarding" class="screen">
-    <div class="lang-selector" id="langSelector"></div>
     <h2 class="syne" style="font-size:22px;letter-spacing:-0.5px;" data-i18n="onboarding_title">how it works</h2>
     <div class="onboarding-slides">
       <div class="onboarding-slide">
-        <div class="slide-emoji">📦</div>
+        <div class="slide-emoji">🎯</div>
         <div class="slide-title" data-i18n="onboarding_step1_title">pick a pack</div>
         <div class="slide-desc" data-i18n="onboarding_step1_desc">choose a question pack that matches your vibe</div>
       </div>
       <div class="onboarding-slide">
-        <div class="slide-emoji">🔒</div>
+        <div class="slide-emoji">🤫</div>
         <div class="slide-title" data-i18n="onboarding_step2_title">answer privately</div>
         <div class="slide-desc" data-i18n="onboarding_step2_desc">both of you answer the same questions — no peeking</div>
       </div>
       <div class="onboarding-slide">
-        <div class="slide-emoji">✨</div>
+        <div class="slide-emoji">🔮</div>
         <div class="slide-title" data-i18n="onboarding_step3_title">reveal together</div>
         <div class="slide-desc" data-i18n="onboarding_step3_desc">answers unlock only when you've both submitted</div>
       </div>
@@ -1536,8 +1578,11 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
   <!-- HOME -->
   <div id="home" class="screen">
     <div class="home-header">
-      <h1>blindside.</h1>
-      <div style="display:flex;gap:8px;align-items:center">
+      <div class="home-brand">
+        <h1>blindside.</h1>
+        <span id="homeUsername" style="font-size:13px;color:var(--text-dim)"></span>
+      </div>
+      <div class="home-actions">
         <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
           <span class="icon-moon">🌙</span>
           <span class="icon-sun">☀️</span>
@@ -1548,45 +1593,7 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
       </div>
     </div>
 
-    <div class="section-label" data-i18n="home_active">Active</div>
-
-    <div class="session-card glass" onclick="goTo('reveal-flow')">
-      <div class="s-icon" style="background:rgba(132,204,22,0.1)">💚</div>
-      <div class="s-info">
-        <div class="s-title" data-i18n="pack_couples">Couples Edition</div>
-        <div class="s-sub" data-i18n="home_with_alex">with Alex</div>
-      </div>
-      <div class="s-badge badge-reveal" data-i18n="badge_reveal">Reveal!</div>
-    </div>
-
-    <div class="session-card glass">
-      <div class="s-icon" style="background:rgba(124,58,237,0.1)">💜</div>
-      <div class="s-info">
-        <div class="s-title" data-i18n="pack_bestfriends">Best Friends</div>
-        <div class="s-sub" data-i18n="home_with_jordan">with Jordan</div>
-      </div>
-      <div class="s-badge badge-progress" data-i18n="badge_progress">In progress</div>
-    </div>
-
-    <div class="session-card glass">
-      <div class="s-icon" style="background:rgba(249,115,22,0.1)">🧡</div>
-      <div class="s-info">
-        <div class="s-title" data-i18n="pack_deeptalk">Deep Talk</div>
-        <div class="s-sub" data-i18n="home_invite_sent">invite sent</div>
-      </div>
-      <div class="s-badge badge-waiting" data-i18n="badge_waiting">Waiting</div>
-    </div>
-
-    <div class="section-label" data-i18n="home_completed">Completed</div>
-
-    <div class="session-card glass">
-      <div class="s-icon" style="background:var(--surface)">🩶</div>
-      <div class="s-info">
-        <div class="s-title" data-i18n="pack_friendship_deep_dive">Friendship Deep Dive</div>
-        <div class="s-sub" data-i18n="home_with_taylor_match">with Taylor · 83% match</div>
-      </div>
-      <div class="s-badge badge-done">Mar 15</div>
-    </div>
+    <div id="homeSessions"></div>
 
     <div class="fab-wrap">
       <button class="fab" onclick="goTo('packs')" data-i18n="home_new_session">+ new session</button>
@@ -1645,17 +1652,17 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
     <p style="font-size:13px;color:var(--text-dim)" data-i18n="invite_desc">they'll get the same questions. no one sees answers until you both finish.</p>
 
     <div class="link-box glass">
-      <span class="link-text">blindside.app/join/x7k2m9</span>
-      <button class="copy-btn" onclick="copyLink(this)" data-i18n="invite_copy">copy</button>
+      <span class="link-text" id="inviteLink">...</span>
+      <button class="copy-btn" onclick="copyInviteLink(this)" data-i18n="invite_copy">copy</button>
     </div>
 
     <div class="share-row">
-      <button class="share-btn" title="WhatsApp">💬</button>
-      <button class="share-btn" title="iMessage">📱</button>
-      <button class="share-btn" title="More">📤</button>
+      <button class="share-btn" title="WhatsApp" onclick="shareInvite('whatsapp')">💬</button>
+      <button class="share-btn" title="iMessage" onclick="shareInvite('sms')">📱</button>
+      <button class="share-btn" title="More" onclick="shareInvite('share')">📤</button>
     </div>
 
-    <button class="btn btn-primary" style="width:100%;margin-top:auto" onclick="simulateJoin()" data-i18n="invite_simulate">simulate: partner joins →</button>
+    <button class="btn btn-primary" style="width:100%;margin-top:auto" onclick="startQuizAsCreator()">start answering →</button>
   </div>
 
   <!-- QUIZ -->
@@ -1681,14 +1688,17 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
       <div class="orb orb-2"></div>
       <div class="orb-line"></div>
     </div>
-    <h2 class="syne" style="font-size:24px;letter-spacing:-0.5px" data-i18n="waiting_title">you're locked in 🔒</h2>
-    <p style="font-size:14px;color:var(--text-dim);line-height:1.5" data-i18n="waiting_desc">waiting for <strong style="color:var(--text)">Alex</strong> to finish answering...</p>
+    <h2 class="syne" style="font-size:24px;letter-spacing:-0.5px">you're locked in 🔒</h2>
+    <p id="waitingDesc" style="font-size:14px;color:var(--text-dim);line-height:1.5">waiting for your partner to finish answering...</p>
     <div class="waiting-partner-progress">
       <div class="dot-pulse"></div>
-      <span data-i18n="waiting_progress">Alex is on question 3 of 5</span>
+      <span id="waitingStatus">checking...</span>
     </div>
-    <button class="nudge-btn" onclick="sendNudge(this)" data-i18n="waiting_nudge">👉 send a nudge</button>
-    <button class="btn btn-primary" style="width:100%;margin-top:auto" onclick="startReveal()" data-i18n="waiting_simulate">simulate: partner done →</button>
+    <p style="font-size:12px;color:var(--text-dim);margin-top:24px">share this code with your partner:</p>
+    <div class="link-box glass" style="margin-top:8px">
+      <span class="link-text" id="waitingCode" style="font-size:20px;letter-spacing:4px;font-weight:700"></span>
+      <button class="copy-btn" onclick="copyInviteLink(this)">copy link</button>
+    </div>
   </div>
 
   <!-- REVEAL -->
@@ -2160,19 +2170,80 @@ function toggleSettings() {
 initTheme();
 i18n.init();
 
-// State
+// ==================== API MODULE ====================
+const API_URL = 'https://api.rome.markets';
+
+const blindApi = {
+  _userId() { return localStorage.getItem('bs-user-id') || ''; },
+
+  async _fetch(path, options = {}) {
+    const res = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': this._userId(),
+        ...options.headers
+      }
+    });
+    return res.json();
+  },
+
+  auth(username) {
+    return this._fetch('/api/blind/auth', {
+      method: 'POST',
+      body: JSON.stringify({ username })
+    });
+  },
+
+  createSession(pack_key, lang) {
+    return this._fetch('/api/blind/sessions', {
+      method: 'POST',
+      body: JSON.stringify({ pack_key, lang })
+    });
+  },
+
+  getSession(code) {
+    return this._fetch(`/api/blind/sessions/${code}`);
+  },
+
+  joinSession(code) {
+    return this._fetch(`/api/blind/sessions/${code}/join`, { method: 'POST' });
+  },
+
+  submitAnswers(code, answers) {
+    return this._fetch(`/api/blind/sessions/${code}/answers`, {
+      method: 'POST',
+      body: JSON.stringify({ answers })
+    });
+  },
+
+  getResults(code) {
+    return this._fetch(`/api/blind/sessions/${code}/results`);
+  },
+
+  getUserSessions() {
+    return this._fetch('/api/blind/sessions/user');
+  }
+};
+
+// ==================== STATE ====================
 let currentScreen = 'splash';
 let currentQuestion = 0;
 let selectedAnswers = {};
 let selectedPackKey = 'couples';
+let currentUser = JSON.parse(localStorage.getItem('bs-user') || 'null');
+let currentSession = null;
+let pollTimer = null;
+let afterAuthTarget = 'home';
+let joinCode = null; // set when joining via URL
 
 // Pack definitions — language-independent metadata
 const packDefs = [
+  { key: '36questions',  emoji: '❤️‍🔥', nameKey: 'pack_36questions', countKey: 'pack_count_36questions', wide: true },
   { key: 'couples',      emoji: '💕', nameKey: 'pack_couples',      countKey: 'pack_count_couples' },
   { key: 'bestfriends',  emoji: '👯', nameKey: 'pack_bestfriends',  countKey: 'pack_count_bestfriends' },
   { key: 'deeptalk',     emoji: '🌊', nameKey: 'pack_deeptalk',     countKey: 'pack_count_deeptalk' },
   { key: 'coworkers',    emoji: '💼', nameKey: 'pack_coworkers',    countKey: 'pack_count_coworkers' },
-  { key: '36questions',  emoji: '❤️‍🔥', nameKey: 'pack_36questions', countKey: 'pack_count_36questions', wide: true },
 ];
 
 // Question packs per language — partnerAnswerIndex stores index so it works across languages
@@ -2344,6 +2415,229 @@ function getQuestions(packKey) {
 
 let questions = getQuestions('couples');
 
+// ==================== AUTH FLOW ====================
+function showAuth(target) {
+  afterAuthTarget = target;
+  if (currentUser) {
+    // Already logged in
+    goTo(afterAuthTarget);
+    if (afterAuthTarget === 'home') loadHomeSessions();
+    return;
+  }
+  goTo('auth');
+  setTimeout(() => document.getElementById('authUsername')?.focus(), 300);
+}
+
+async function doAuth() {
+  const input = document.getElementById('authUsername');
+  const err = document.getElementById('authError');
+  const btn = document.getElementById('authBtn');
+  const username = input.value.trim();
+
+  if (username.length < 2) {
+    err.textContent = 'at least 2 characters';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '...';
+  err.textContent = '';
+
+  try {
+    const data = await blindApi.auth(username);
+    if (data.error) { err.textContent = data.error; return; }
+
+    currentUser = data.user;
+    localStorage.setItem('bs-user', JSON.stringify(currentUser));
+    localStorage.setItem('bs-user-id', currentUser.id);
+
+    // If joining via URL code
+    if (joinCode) {
+      await handleJoinCode(joinCode);
+      joinCode = null;
+      return;
+    }
+
+    goTo(afterAuthTarget);
+    if (afterAuthTarget === 'home') loadHomeSessions();
+  } catch (e) {
+    err.textContent = 'connection error, try again';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'continue';
+  }
+}
+
+// Enter key on auth input
+document.getElementById('authUsername')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') doAuth();
+});
+
+// ==================== HOME SESSIONS ====================
+async function loadHomeSessions() {
+  const container = document.getElementById('homeSessions');
+  const usernameEl = document.getElementById('homeUsername');
+  if (currentUser) usernameEl.textContent = '@' + currentUser.username;
+
+  container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-dim)">loading...</div>';
+
+  try {
+    const data = await blindApi.getUserSessions();
+    const sessions = data.sessions || [];
+
+    if (sessions.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center;padding:40px 20px;color:var(--text-dim)">
+          <div style="font-size:36px;margin-bottom:12px">🫣</div>
+          <p>no sessions yet — start one!</p>
+        </div>`;
+      return;
+    }
+
+    const packEmojis = { couples: '💕', bestfriends: '👯', deeptalk: '🌊', coworkers: '💼', '36questions': '❤️‍🔥' };
+
+    let html = '';
+    const active = sessions.filter(s => s.status !== 'complete');
+    const done = sessions.filter(s => s.status === 'complete');
+
+    if (active.length) {
+      html += '<div class="section-label">Active</div>';
+      active.forEach(s => {
+        const partner = s.creator_id === currentUser.id ? s.partner_username : s.creator_username;
+        const emoji = packEmojis[s.pack_key] || '📦';
+        const packName = i18n.t('pack_' + s.pack_key) || s.pack_key;
+        let badge = '';
+        if (s.status === 'waiting') badge = '<div class="s-badge badge-waiting">Waiting</div>';
+        else if (s.status === 'active') badge = '<div class="s-badge badge-progress">In progress</div>';
+
+        html += `<div class="session-card glass" onclick="resumeSession('${s.code}')">
+          <div class="s-icon" style="background:rgba(124,58,237,0.1)">${emoji}</div>
+          <div class="s-info">
+            <div class="s-title">${packName}</div>
+            <div class="s-sub">${partner ? 'with ' + partner : 'waiting for partner'} · ${s.code}</div>
+          </div>
+          ${badge}
+        </div>`;
+      });
+    }
+
+    if (done.length) {
+      html += '<div class="section-label">Completed</div>';
+      done.forEach(s => {
+        const partner = s.creator_id === currentUser.id ? s.partner_username : s.creator_username;
+        const emoji = packEmojis[s.pack_key] || '📦';
+        const packName = i18n.t('pack_' + s.pack_key) || s.pack_key;
+        html += `<div class="session-card glass" onclick="viewResults('${s.code}')">
+          <div class="s-icon" style="background:var(--surface)">${emoji}</div>
+          <div class="s-info">
+            <div class="s-title">${packName}</div>
+            <div class="s-sub">with ${partner || '?'}</div>
+          </div>
+          <div class="s-badge badge-done">done</div>
+        </div>`;
+      });
+    }
+
+    container.innerHTML = html;
+  } catch (e) {
+    container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-dim)">could not load sessions</div>';
+  }
+}
+
+async function resumeSession(code) {
+  try {
+    const data = await blindApi.getSession(code);
+    const s = data.session;
+    currentSession = s;
+    selectedPackKey = s.pack_key;
+    questions = getQuestions(s.pack_key);
+
+    if (s.status === 'complete') {
+      viewResults(code);
+      return;
+    }
+
+    if (s.user_submitted) {
+      // Already submitted, go to waiting
+      goTo('waiting');
+      document.getElementById('waitingCode').textContent = s.code;
+      startPolling();
+      return;
+    }
+
+    // Start/continue quiz
+    currentQuestion = 0;
+    selectedAnswers = {};
+    goTo('quiz');
+  } catch (e) {
+    alert('Could not load session');
+  }
+}
+
+async function viewResults(code) {
+  try {
+    currentSession = (await blindApi.getSession(code)).session;
+    selectedPackKey = currentSession.pack_key;
+    questions = getQuestions(currentSession.pack_key);
+    goTo('results');
+    await buildReceiptFromApi(code);
+  } catch (e) {
+    alert('Could not load results');
+  }
+}
+
+// ==================== SESSION CREATION ====================
+function getInviteUrl() {
+  if (!currentSession) return '';
+  const base = window.location.origin + window.location.pathname;
+  return base + '?join=' + currentSession.code;
+}
+
+function copyInviteLink(btn) {
+  const url = getInviteUrl();
+  navigator.clipboard.writeText(url).catch(() => {});
+  const orig = btn.textContent;
+  btn.textContent = 'copied!';
+  btn.style.background = 'var(--lime)';
+  btn.style.color = '#000';
+  setTimeout(() => {
+    btn.textContent = orig;
+    btn.style.background = '';
+    btn.style.color = '';
+  }, 2000);
+}
+
+function shareInvite(method) {
+  const url = getInviteUrl();
+  const text = 'take this blind quiz with me!';
+  if (method === 'share' && navigator.share) {
+    navigator.share({ title: 'blindside.', text, url }).catch(() => {});
+  } else if (method === 'whatsapp') {
+    window.open('https://wa.me/?text=' + encodeURIComponent(text + ' ' + url));
+  } else if (method === 'sms') {
+    window.open('sms:?body=' + encodeURIComponent(text + ' ' + url));
+  }
+}
+
+// ==================== JOIN VIA URL ====================
+async function handleJoinCode(code) {
+  try {
+    const data = await blindApi.joinSession(code);
+    if (data.error) { alert(data.error); goTo('home'); loadHomeSessions(); return; }
+
+    currentSession = data.session;
+    selectedPackKey = currentSession.pack_key;
+    questions = getQuestions(currentSession.pack_key);
+
+    currentQuestion = 0;
+    selectedAnswers = {};
+    goTo('quiz');
+  } catch (e) {
+    alert('Could not join session');
+    goTo('home');
+  }
+}
+
 // Render packs grid
 function renderPacksGrid() {
   const grid = document.getElementById('packsGrid');
@@ -2374,7 +2668,7 @@ function goTo(screenId) {
 
     if (screenId === 'quiz') renderQuestion();
     if (screenId === 'results') animateResults();
-    if (screenId === 'home') updateNav('home');
+    if (screenId === 'home') { updateNav('home'); loadHomeSessions(); stopPolling(); }
     if (screenId === 'packs') { updateNav('packs'); renderPacksGrid(); }
   }, 200);
 }
@@ -2385,28 +2679,25 @@ function updateNav(active) {
 }
 
 // Pack selection
-function selectPack(key) {
+async function selectPack(key) {
   selectedPackKey = key;
   const def = packDefs.find(p => p.key === key);
   questions = getQuestions(key);
   document.getElementById('invitePackName').textContent = i18n.t(def.nameKey);
-  goTo('invite');
+
+  // Create session via API
+  try {
+    const data = await blindApi.createSession(key, i18n.current);
+    if (data.error) { alert(data.error); return; }
+    currentSession = data.session;
+    document.getElementById('inviteLink').textContent = getInviteUrl();
+    goTo('invite');
+  } catch (e) {
+    alert('Could not create session');
+  }
 }
 
-// Copy link
-function copyLink(btn) {
-  btn.textContent = i18n.t('feedback_copied');
-  btn.style.background = 'var(--lime)';
-  btn.style.color = '#000';
-  setTimeout(() => {
-    btn.textContent = i18n.t('invite_copy');
-    btn.style.background = '';
-    btn.style.color = '';
-  }, 2000);
-}
-
-// Simulate partner joining
-function simulateJoin() {
+function startQuizAsCreator() {
   currentQuestion = 0;
   selectedAnswers = {};
   goTo('quiz');
@@ -2478,20 +2769,73 @@ function closeModal() {
   document.getElementById('submitModal').classList.remove('show');
 }
 
-function submitAnswers() {
+async function submitAnswers() {
   closeModal();
   document.getElementById('quizProgress').style.width = '100%';
-  setTimeout(() => goTo('waiting'), 300);
+
+  if (currentSession) {
+    try {
+      const data = await blindApi.submitAnswers(currentSession.code, selectedAnswers);
+      if (data.both_done) {
+        // Both done! Go straight to reveal
+        goTo('reveal');
+        runCountdown();
+        return;
+      }
+    } catch (e) {
+      console.error('Submit failed:', e);
+    }
+  }
+
+  // Go to waiting screen
+  goTo('waiting');
+  if (currentSession) {
+    document.getElementById('waitingCode').textContent = currentSession.code;
+    const partner = currentSession.creator_id === currentUser?.id
+      ? currentSession.partner_username
+      : currentSession.creator_username;
+    document.getElementById('waitingDesc').innerHTML = partner
+      ? `waiting for <strong style="color:var(--text)">${partner}</strong> to finish answering...`
+      : 'waiting for your partner to join and answer...';
+    startPolling();
+  }
 }
 
-// Nudge
-function sendNudge(btn) {
-  btn.textContent = i18n.t('feedback_nudge_sent');
-  btn.style.color = 'var(--lime)';
-  setTimeout(() => {
-    btn.textContent = i18n.t('waiting_nudge');
-    btn.style.color = '';
-  }, 2000);
+function startPolling() {
+  stopPolling();
+  document.getElementById('waitingStatus').textContent = 'checking...';
+
+  pollTimer = setInterval(async () => {
+    if (!currentSession) return;
+    try {
+      const data = await blindApi.getSession(currentSession.code);
+      const s = data.session;
+      currentSession = s;
+
+      if (s.partner_id && !s.partner_username) {
+        document.getElementById('waitingStatus').textContent = 'partner joined, answering...';
+      }
+
+      if (s.status === 'complete' || (s.user_submitted && s.partner_submitted)) {
+        stopPolling();
+        document.getElementById('waitingStatus').textContent = 'both done!';
+        setTimeout(() => {
+          goTo('reveal');
+          runCountdown();
+        }, 500);
+      } else if (s.partner_submitted) {
+        document.getElementById('waitingStatus').textContent = 'partner is done! waiting for you...';
+      } else if (s.partner_id) {
+        document.getElementById('waitingStatus').textContent = 'partner is answering...';
+      } else {
+        document.getElementById('waitingStatus').textContent = 'waiting for partner to join...';
+      }
+    } catch (e) { /* silent */ }
+  }, 3000);
+}
+
+function stopPolling() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
 }
 
 // Reveal
@@ -2516,7 +2860,11 @@ function runCountdown() {
     } else {
       // Skip per-card reveal, go straight to receipt
       goTo('results');
-      setTimeout(buildReceipt, 300);
+      if (currentSession) {
+        setTimeout(() => buildReceiptFromApi(currentSession.code), 300);
+      } else {
+        setTimeout(buildReceipt, 300);
+      }
     }
   }
   showNum();
@@ -2699,6 +3047,105 @@ const diffComments = [
   (q, y, t) => `🎭 <strong>"${y}"</strong> and <strong>"${t}"</strong> — two sides of something worth exploring.`,
 ];
 
+async function buildReceiptFromApi(code) {
+  try {
+    const result = await blindApi.getResults(code);
+    if (result.error) { buildReceipt(); return; }
+
+    const s = result.session;
+    const answers = result.answers;
+    const isCreator = currentUser && s.creator_id === currentUser.id;
+    const myId = currentUser?.id;
+    const partnerId = isCreator ? s.partner_id : s.creator_id;
+    const partnerName = isCreator ? s.partner_username : s.creator_username;
+
+    // Build reveal data from real answers
+    revealData = questions.map((q, i) => {
+      const qAnswers = answers[i] || {};
+      const userAns = qAnswers[myId] || selectedAnswers[i] || '?';
+      const partnerAns = qAnswers[partnerId] || '?';
+      return { q: q.q, userAns, partnerAns, matched: userAns === partnerAns };
+    });
+
+    buildReceiptWithName(partnerName || 'partner');
+  } catch (e) {
+    console.error('Failed to load results:', e);
+    buildReceipt();
+  }
+}
+
+function buildReceiptWithName(partnerName) {
+  const data = revealData;
+  const matches = data.filter(d => d.matched).length;
+  const total = data.length;
+  const pct = Math.round((matches / total) * 100);
+  const vibeLabels = [
+    { min: 0,  emoji: '🫠', title: 'Wildly Different', desc: 'opposites attract...right?', intro: 'Well, this was... <strong>eventful</strong>. You two see the world through very different lenses — and honestly, that might be the most interesting part.' },
+    { min: 20, emoji: '🌀', title: 'Unpredictable Duo', desc: 'never a boring moment', intro: 'You two are <strong>unpredictable</strong> in the best way. Not always on the same page, but always an interesting read.' },
+    { min: 40, emoji: '🤝', title: 'Getting There', desc: 'common ground exists', intro: 'There\'s real <strong>overlap</strong> here — and where there isn\'t, there\'s curiosity. That counts for a lot.' },
+    { min: 60, emoji: '💜', title: 'Real Ones', desc: 'you get each other', intro: 'You two <strong>get each other</strong>. Not perfectly, not always — but more than most. And the differences? That\'s where the good conversations live.' },
+    { min: 80, emoji: '🔮', title: 'Mind Readers', desc: 'basically the same person', intro: 'OK this is getting <strong>suspicious</strong>. You two are answering like you share a brain. Who copied who?' },
+    { min: 100, emoji: '👽', title: 'Literally Telepathic', desc: 'this is actually scary', intro: '<strong>Every. Single. One.</strong> You matched on all of them. This is either beautiful or terrifying. Probably both.' },
+  ];
+  const vibe = [...vibeLabels].reverse().find(v => pct >= v.min);
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  let chaptersHtml = '';
+  data.forEach((d, i) => {
+    const comment = d.matched
+      ? matchComments[i % matchComments.length](d.q, d.userAns)
+      : diffComments[i % diffComments.length](d.q, d.userAns, d.partnerAns);
+
+    chaptersHtml += `
+      <div class="story-chapter">
+        <div class="ch-num">${i + 1} ${i18n.t('results_of')} ${total}</div>
+        <div class="ch-question">${d.q}</div>
+        <div class="ch-answers">
+          <div class="ch-ans ch-you">
+            <div class="ch-label">${i18n.t('results_you')}</div>
+            <div class="ch-text">${d.userAns}</div>
+          </div>
+          <div class="ch-ans ch-them">
+            <div class="ch-label">${partnerName}</div>
+            <div class="ch-text">${d.partnerAns}</div>
+          </div>
+        </div>
+        <div class="ch-comment"><div class="ch-msg">${comment}</div></div>
+      </div>
+    `;
+  });
+
+  const scroll = document.getElementById('storyScroll');
+  scroll.innerHTML = `
+    <div class="story-hero">
+      <div class="story-hero-emoji">${vibe.emoji}</div>
+      <div class="story-hero-score">${pct}%</div>
+      <div class="story-hero-names">${i18n.t('results_you')} & ${partnerName}</div>
+      <div class="story-hero-vibe">${vibe.title}</div>
+      <div class="story-hero-sub">${vibe.desc}</div>
+    </div>
+    <div class="story-intro"><p>${vibe.intro}</p></div>
+    ${chaptersHtml}
+    <div class="story-outro">
+      <div class="story-stats">
+        <div><div class="story-stat-val">${matches}</div><div class="story-stat-lbl">${i18n.t('results_matches')}</div></div>
+        <div><div class="story-stat-val">${total - matches}</div><div class="story-stat-lbl">${i18n.t('results_plot_twists')}</div></div>
+        <div><div class="story-stat-val">${pct}%</div><div class="story-stat-lbl">${i18n.t('results_sync_rate')}</div></div>
+      </div>
+      <div class="story-brand">blindside.</div>
+      <div class="story-date">${dateStr}</div>
+    </div>
+    <div class="story-actions">
+      <button class="btn-share" onclick="shareReceipt()">${i18n.t('results_share')}</button>
+      <button class="btn btn-primary" style="width:100%" onclick="goTo('packs')">${i18n.t('results_play_another')}</button>
+      <button class="btn btn-ghost" onclick="goTo('home');loadHomeSessions()">${i18n.t('results_back_home')}</button>
+    </div>
+  `;
+  scroll.scrollTop = 0;
+  spawnConfetti();
+}
+
 function buildReceipt() {
   const data = revealData.length ? revealData : questions.map((q, i) => {
     const userAns = selectedAnswers[i] || q.options[0];
@@ -2811,6 +3258,31 @@ function shareReceipt() {
 
 // Keep animateResults as alias for backward compat
 function animateResults() { buildReceipt(); }
+
+// ==================== INIT: URL JOIN + AUTO-LOGIN ====================
+(function init() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('join');
+
+  if (code) {
+    joinCode = code;
+    if (currentUser) {
+      // Already logged in, join directly
+      handleJoinCode(code);
+      joinCode = null;
+    } else {
+      // Need to auth first
+      goTo('auth');
+      setTimeout(() => document.getElementById('authUsername')?.focus(), 300);
+    }
+    // Clean URL
+    window.history.replaceState({}, '', window.location.pathname);
+  } else if (currentUser) {
+    // Auto-login: skip splash, go to home
+    goTo('home');
+    loadHomeSessions();
+  }
+})();
 </script>
 
 </body>
