@@ -1805,6 +1805,12 @@ const i18n = {
       home_completed: 'Completed',
       home_invite_sent: 'invite sent',
       home_new_session: '+ new session',
+      home_loading: 'loading...',
+      home_no_sessions: 'no sessions yet — start one!',
+      home_with: 'with',
+      home_waiting_partner: 'waiting for partner',
+      home_done: 'done',
+      home_load_error: 'could not load sessions',
       home_with_alex: 'with Alex',
       home_with_jordan: 'with Jordan',
       home_with_taylor_match: 'with Taylor · 83% match',
@@ -1896,6 +1902,12 @@ const i18n = {
       home_completed: 'Tamamlanan',
       home_invite_sent: 'davet gönderildi',
       home_new_session: '+ yeni oturum',
+      home_loading: 'yükleniyor...',
+      home_no_sessions: 'henüz oturum yok — bir tane başlat!',
+      home_with: 'ile',
+      home_waiting_partner: 'partner bekleniyor',
+      home_done: 'tamamlandı',
+      home_load_error: 'oturumlar yüklenemedi',
       home_with_alex: 'Alex ile',
       home_with_jordan: 'Jordan ile',
       home_with_taylor_match: 'Taylor ile · %83 eşleşme',
@@ -1975,6 +1987,12 @@ const i18n = {
       home_completed: 'Completado',
       home_invite_sent: 'invitación enviada',
       home_new_session: '+ nueva sesión',
+      home_loading: 'cargando...',
+      home_no_sessions: 'aún no hay sesiones — ¡empieza una!',
+      home_with: 'con',
+      home_waiting_partner: 'esperando pareja',
+      home_done: 'hecho',
+      home_load_error: 'no se pudieron cargar las sesiones',
       home_with_alex: 'con Alex',
       home_with_jordan: 'con Jordan',
       home_with_taylor_match: 'con Taylor · 83% coincidencia',
@@ -2054,6 +2072,12 @@ const i18n = {
       home_completed: 'เสร็จสิ้น',
       home_invite_sent: 'ส่งคำเชิญแล้ว',
       home_new_session: '+ เซสชันใหม่',
+      home_loading: 'กำลังโหลด...',
+      home_no_sessions: 'ยังไม่มีเซสชัน — เริ่มเลย!',
+      home_with: 'กับ',
+      home_waiting_partner: 'รอคู่หู',
+      home_done: 'เสร็จแล้ว',
+      home_load_error: 'ไม่สามารถโหลดเซสชันได้',
       home_with_alex: 'กับ Alex',
       home_with_jordan: 'กับ Jordan',
       home_with_taylor_match: 'กับ Taylor · ตรงกัน 83%',
@@ -2136,6 +2160,7 @@ const i18n = {
     if (typeof updateLangCycleBtn === 'function') updateLangCycleBtn();
     // Re-render dynamic content
     if (typeof renderPacksGrid === 'function') renderPacksGrid();
+    if (typeof loadHomeSessions === 'function' && currentScreen === 'home') loadHomeSessions();
     if (typeof getQuestions === 'function') {
       questions = getQuestions(selectedPackKey || 'couples');
     }
@@ -2687,7 +2712,7 @@ async function loadHomeSessions() {
   const usernameEl = document.getElementById('homeUsername');
   if (currentUser) usernameEl.textContent = '@' + currentUser.username;
 
-  container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-dim)">loading...</div>';
+  container.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-dim)">${i18n.t('home_loading')}</div>`;
 
   try {
     const data = await blindApi.getUserSessions();
@@ -2697,7 +2722,7 @@ async function loadHomeSessions() {
       container.innerHTML = `
         <div style="text-align:center;padding:40px 20px;color:var(--text-dim)">
           <div style="font-size:36px;margin-bottom:12px">🫣</div>
-          <p>no sessions yet — start one!</p>
+          <p>${i18n.t('home_no_sessions')}</p>
         </div>`;
       return;
     }
@@ -2709,20 +2734,20 @@ async function loadHomeSessions() {
     const done = sessions.filter(s => s.status === 'complete');
 
     if (active.length) {
-      html += '<div class="section-label">Active</div>';
+      html += `<div class="section-label">${i18n.t('home_active')}</div>`;
       active.forEach(s => {
         const partner = s.creator_id === currentUser.id ? s.partner_username : s.creator_username;
         const emoji = packEmojis[s.pack_key] || '📦';
         const packName = i18n.t('pack_' + s.pack_key) || s.pack_key;
         let badge = '';
-        if (s.status === 'waiting') badge = '<div class="s-badge badge-waiting">Waiting</div>';
-        else if (s.status === 'active') badge = '<div class="s-badge badge-progress">In progress</div>';
+        if (s.status === 'waiting') badge = `<div class="s-badge badge-waiting">${i18n.t('badge_waiting')}</div>`;
+        else if (s.status === 'active') badge = `<div class="s-badge badge-progress">${i18n.t('badge_progress')}</div>`;
 
         html += `<div class="session-card glass" onclick="resumeSession('${s.code}')">
           <div class="s-icon" style="background:rgba(124,58,237,0.1)">${emoji}</div>
           <div class="s-info">
             <div class="s-title">${packName}</div>
-            <div class="s-sub">${partner ? 'with ' + partner : 'waiting for partner'} · ${s.code}</div>
+            <div class="s-sub">${partner ? i18n.t('home_with') + ' ' + partner : i18n.t('home_waiting_partner')} · ${s.code}</div>
           </div>
           ${badge}
         </div>`;
@@ -2730,7 +2755,7 @@ async function loadHomeSessions() {
     }
 
     if (done.length) {
-      html += '<div class="section-label">Completed</div>';
+      html += `<div class="section-label">${i18n.t('home_completed')}</div>`;
       done.forEach(s => {
         const partner = s.creator_id === currentUser.id ? s.partner_username : s.creator_username;
         const emoji = packEmojis[s.pack_key] || '📦';
@@ -2739,16 +2764,16 @@ async function loadHomeSessions() {
           <div class="s-icon" style="background:var(--surface)">${emoji}</div>
           <div class="s-info">
             <div class="s-title">${packName}</div>
-            <div class="s-sub">with ${partner || '?'}</div>
+            <div class="s-sub">${i18n.t('home_with')} ${partner || '?'}</div>
           </div>
-          <div class="s-badge badge-done">done</div>
+          <div class="s-badge badge-done">${i18n.t('home_done')}</div>
         </div>`;
       });
     }
 
     container.innerHTML = html;
   } catch (e) {
-    container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-dim)">could not load sessions</div>';
+    container.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-dim)">${i18n.t('home_load_error')}</div>`;
   }
 }
 
