@@ -400,7 +400,7 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
 }
 
 /* ========== HOME ========== */
-#home { padding-bottom: 100px; }
+#home { padding-bottom: 0; }
 .home-header {
   padding: 60px 24px 20px;
   display: flex;
@@ -505,19 +505,18 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
 
 /* Bottom Nav */
 .bottom-nav {
-  position: fixed;
+  position: sticky;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
   width: 100%;
-  max-width: 390px;
+  margin-top: auto;
   background: var(--nav-bg);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
   border-top: 1px solid var(--border);
   display: flex;
-  padding: 10px 0 30px;
+  padding: 10px 0 env(safe-area-inset-bottom, 20px);
   z-index: 60;
+  flex-shrink: 0;
 }
 .nav-item {
   flex: 1;
@@ -540,7 +539,7 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
 .nav-item.active { color: var(--purple); }
 
 /* ========== PACKS ========== */
-#packs { padding-bottom: 100px; }
+#packs { padding-bottom: 0; }
 .packs-header {
   padding: 0 24px 8px;
   flex-shrink: 0;
@@ -1760,7 +1759,7 @@ const i18n = {
     en: { flag: '🇬🇧', label: 'EN' },
     tr: { flag: '🇹🇷', label: 'TR' },
     es: { flag: '🇪🇸', label: 'ES' },
-    de: { flag: '🇩🇪', label: 'DE' },
+    th: { flag: '🇹🇭', label: 'TH' },
   },
 
   translations: {
@@ -1998,77 +1997,77 @@ const i18n = {
       feedback_link_copied: '✅ ¡link copiado!',
     },
 
-    de: {
-      splash_tagline: 'gleiche Fragen. blinde Antworten. eine Enthüllung.',
-      splash_get_started: 'los geht\'s',
-      splash_have_account: 'ich habe ein Konto',
-      onboarding_title: 'so funktioniert\'s',
-      onboarding_step1_title: 'wähle ein Pack',
-      onboarding_step1_desc: 'wähle ein Fragenpaket, das zu dir passt',
-      onboarding_step2_title: 'antworte privat',
-      onboarding_step2_desc: 'ihr beantwortet beide die gleichen Fragen — kein Spähen',
-      onboarding_step3_title: 'gemeinsam enthüllen',
-      onboarding_step3_desc: 'Antworten werden erst freigeschaltet, wenn beide gesendet haben',
-      onboarding_cta: 'los geht\'s',
-      home_active: 'Aktiv',
-      home_completed: 'Abgeschlossen',
-      home_invite_sent: 'Einladung gesendet',
-      home_new_session: '+ neue Sitzung',
-      home_with_alex: 'mit Alex',
-      home_with_jordan: 'mit Jordan',
-      home_with_taylor_match: 'mit Taylor · 83% Übereinstimmung',
-      badge_reveal: 'Enthüllen!',
-      badge_progress: 'Läuft',
-      badge_waiting: 'Wartet',
-      pack_couples: 'Paar-Edition',
-      pack_bestfriends: 'Beste Freunde',
-      pack_deeptalk: 'Tiefes Gespräch',
-      pack_coworkers: 'Kollegen',
-      pack_36questions: '36 Fragen zum Verlieben',
-      pack_friendship_deep_dive: 'Freundschafts-Analyse',
-      pack_count_couples: '10 Fragen',
-      pack_count_bestfriends: '8 Fragen',
-      pack_count_deeptalk: '12 Fragen',
-      pack_count_coworkers: '5 Fragen',
-      pack_count_36questions: '6 Fragen · basierend auf Arthur Arons Studie',
-      nav_home: 'Start',
-      nav_packs: 'Packs',
-      packs_subtitle: 'wähle eins, sende es, schau was passiert',
-      invite_title: 'teile es mit deiner Person',
-      invite_desc: 'sie bekommen die gleichen Fragen. niemand sieht Antworten, bis beide fertig sind.',
-      invite_copy: 'kopieren',
-      invite_simulate: 'Simulation: Partner tritt bei →',
-      quiz_back: 'zurück',
-      quiz_next: 'weiter',
-      quiz_submit: 'absenden',
-      quiz_question: 'Frage',
-      waiting_title: 'du bist drin 🔒',
-      waiting_desc: 'warte auf <strong style="color:var(--text)">Alex</strong>...',
-      waiting_progress: 'Alex ist bei Frage 3 von 5',
-      waiting_nudge: '👉 anstupsen',
-      waiting_simulate: 'Simulation: Partner fertig →',
-      modal_title: 'Antworten festlegen?',
-      modal_desc: 'nach dem Absenden gibt es kein Zurück. Deine Person wird benachrichtigt.',
-      modal_confirm: 'festlegen',
-      modal_cancel: 'warte, zurück',
-      settings_mode: 'Modus',
-      settings_accent: 'Akzentfarbe',
-      results_matches: 'Übereinstimmungen',
-      results_plot_twists: 'Überraschungen',
-      results_sync_rate: 'Sync-Rate',
-      results_share: '📤 Vibe-Check teilen',
-      results_play_another: 'anderes Pack spielen',
-      results_back_home: 'zurück zum Start',
-      results_you: 'du',
-      results_of: 'von',
-      reveal_question_of: 'Frage {n} von {total}',
-      reveal_you: 'Du',
-      reveal_tap_reveal: 'tippen zum Enthüllen',
-      reveal_tap_continue: 'tippen zum Fortfahren →',
-      reveal_get_ready: 'mach dich bereit',
-      feedback_copied: 'kopiert!',
-      feedback_nudge_sent: '✅ angestupst!',
-      feedback_link_copied: '✅ Link kopiert!',
+    th: {
+      splash_tagline: 'คำถามเดียวกัน คำตอบลับ เปิดเผยพร้อมกัน',
+      splash_get_started: 'เริ่มเลย',
+      splash_have_account: 'ฉันมีบัญชีแล้ว',
+      onboarding_title: 'วิธีใช้งาน',
+      onboarding_step1_title: 'เลือกชุดคำถาม',
+      onboarding_step1_desc: 'เลือกชุดคำถามที่เข้ากับคุณ',
+      onboarding_step2_title: 'ตอบแบบส่วนตัว',
+      onboarding_step2_desc: 'ทั้งคู่ตอบคำถามเดียวกัน — ห้ามแอบดู',
+      onboarding_step3_title: 'เปิดเผยด้วยกัน',
+      onboarding_step3_desc: 'คำตอบจะเปิดเผยเมื่อทั้งสองคนส่งแล้วเท่านั้น',
+      onboarding_cta: 'เริ่มเลย',
+      home_active: 'กำลังดำเนินการ',
+      home_completed: 'เสร็จสิ้น',
+      home_invite_sent: 'ส่งคำเชิญแล้ว',
+      home_new_session: '+ เซสชันใหม่',
+      home_with_alex: 'กับ Alex',
+      home_with_jordan: 'กับ Jordan',
+      home_with_taylor_match: 'กับ Taylor · ตรงกัน 83%',
+      badge_reveal: 'เปิดเผย!',
+      badge_progress: 'กำลังทำ',
+      badge_waiting: 'รอ',
+      pack_couples: 'คู่รัก',
+      pack_bestfriends: 'เพื่อนซี้',
+      pack_deeptalk: 'คุยลึก',
+      pack_coworkers: 'เพื่อนร่วมงาน',
+      pack_36questions: '36 คำถามเพื่อตกหลุมรัก',
+      pack_friendship_deep_dive: 'เจาะลึกมิตรภาพ',
+      pack_count_couples: '10 คำถาม',
+      pack_count_bestfriends: '8 คำถาม',
+      pack_count_deeptalk: '12 คำถาม',
+      pack_count_coworkers: '5 คำถาม',
+      pack_count_36questions: '6 คำถาม · อ้างอิงจากงานวิจัยของ Arthur Aron',
+      nav_home: 'หน้าแรก',
+      nav_packs: 'ชุดคำถาม',
+      packs_subtitle: 'เลือกชุด ส่งไป แล้วดูผลลัพธ์',
+      invite_title: 'แชร์ให้คนของคุณ',
+      invite_desc: 'พวกเขาจะได้คำถามเดียวกัน ไม่มีใครเห็นคำตอบจนกว่าทั้งคู่จะตอบเสร็จ',
+      invite_copy: 'คัดลอก',
+      invite_simulate: 'จำลอง: คู่หูเข้าร่วม →',
+      quiz_back: 'กลับ',
+      quiz_next: 'ถัดไป',
+      quiz_submit: 'ส่ง',
+      quiz_question: 'คำถาม',
+      waiting_title: 'คุณพร้อมแล้ว 🔒',
+      waiting_desc: 'รอ <strong style="color:var(--text)">Alex</strong>...',
+      waiting_progress: 'Alex ตอบถึงข้อ 3 จาก 5',
+      waiting_nudge: '👉 เตือน',
+      waiting_simulate: 'จำลอง: คู่หูตอบเสร็จ →',
+      modal_title: 'ยืนยันคำตอบ?',
+      modal_desc: 'เมื่อส่งแล้วจะแก้ไม่ได้ คู่หูของคุณจะได้รับแจ้ง',
+      modal_confirm: 'ยืนยัน',
+      modal_cancel: 'เดี๋ยวก่อน กลับไป',
+      settings_mode: 'โหมด',
+      settings_accent: 'สีเน้น',
+      results_matches: 'ตรงกัน',
+      results_plot_twists: 'เซอร์ไพรส์',
+      results_sync_rate: 'อัตราซิงค์',
+      results_share: '📤 แชร์ไวบ์เช็ค',
+      results_play_another: 'เล่นชุดอื่น',
+      results_back_home: 'กลับหน้าแรก',
+      results_you: 'คุณ',
+      results_of: 'จาก',
+      reveal_question_of: 'คำถาม {n} จาก {total}',
+      reveal_you: 'คุณ',
+      reveal_tap_reveal: 'แตะเพื่อเปิดเผย',
+      reveal_tap_continue: 'แตะเพื่อไปต่อ →',
+      reveal_get_ready: 'เตรียมตัว',
+      feedback_copied: 'คัดลอกแล้ว!',
+      feedback_nudge_sent: '✅ เตือนแล้ว!',
+      feedback_link_copied: '✅ คัดลอกลิงก์แล้ว!',
     },
   },
 
@@ -2292,42 +2291,42 @@ const questionPacks = {
       { q: "Si pudieras vivir hasta los 90, ¿conservarías la mente o el cuerpo de los 30?", options: ["La mente, 100%", "El cuerpo, sin duda", "La mente — mis pensamientos soy yo", "El cuerpo — el resto lo resuelvo"], pi: 0 },
     ],
   },
-  de: {
+  th: {
     couples: [
-      { q: "Was ist dir als Erstes an der anderen Person aufgefallen?", options: ["Ihr Lächeln", "Ihre Energie", "Ihr Stil", "Ihr Humor"], pi: 1 },
-      { q: "Wenn ihr einen Song hättet, welches Genre?", options: ["R&B / Soul", "Pop", "Indie", "Lo-fi Beats"], pi: 2 },
-      { q: "Was bewunderst du heimlich am meisten?", options: ["Ihr Selbstbewusstsein", "Ihre Freundlichkeit", "Ihre Kreativität", "Ihre Stärke"], pi: 1 },
-      { q: "Wähle einen Vibe für euer ideales Treffen:", options: ["Sonnenuntergang auf dem Dach", "Nächtliche Autofahrt", "Gemütlicher Filmabend", "Spontanes Abenteuer"], pi: 1 },
-      { q: "Ein Wort für eure Verbindung:", options: ["Chaotisch", "Elektrisch", "Geborgen", "Unvergleichlich"], pi: 1 },
+      { q: "สิ่งแรกที่คุณสังเกตเห็นในตัวอีกคนคืออะไร?", options: ["รอยยิ้ม", "พลังงาน", "สไตล์", "อารมณ์ขัน"], pi: 1 },
+      { q: "ถ้าเรามีเพลงประจำคู่ จะเป็นแนวอะไร?", options: ["R&B / Soul", "Pop", "Indie", "Lo-fi Beats"], pi: 2 },
+      { q: "สิ่งที่คุณแอบชื่นชมมากที่สุดคืออะไร?", options: ["ความมั่นใจ", "ความใจดี", "ความคิดสร้างสรรค์", "ความแข็งแกร่ง"], pi: 1 },
+      { q: "เลือกบรรยากาศสำหรับเดทในฝัน:", options: ["พระอาทิตย์ตกบนดาดฟ้า", "ขับรถกลางคืน", "ดูหนังอบอุ่น", "ผจญภัยแบบไม่มีแผน"], pi: 1 },
+      { q: "อธิบายความสัมพันธ์เราด้วยคำเดียว:", options: ["วุ่นวาย", "มีประกายไฟ", "อบอุ่น", "ไม่เหมือนใคร"], pi: 1 },
     ],
     bestfriends: [
-      { q: "Dein Lieblings-Comfort-Food?", options: ["Pizza", "Ramen", "Tacos", "Eiscreme"], pi: 1 },
-      { q: "Wähle einen Wochenendplan:", options: ["Brunch + Shoppen", "Netflix-Marathon", "Roadtrip", "Absolut gar nichts"], pi: 2 },
-      { q: "Die beste Eigenschaft bei einem Freund?", options: ["Loyalität", "Humor", "Ehrlichkeit", "Spontanität"], pi: 1 },
-      { q: "Genre eurer Freundschafts-Hymne:", options: ["Pop-Hits", "Retro-Klassiker", "Indie Vibes", "Hip-Hop"], pi: 1 },
-      { q: "Wie muntert ihr euch gegenseitig auf?", options: ["Memes", "Essen bestellen", "Unangekündigt auftauchen", "Lange Sprachnachrichten"], pi: 0 },
+      { q: "อาหารคอมฟอร์ตฟู้ดที่ชอบที่สุด?", options: ["พิซซ่า", "ราเมน", "ทาโก้", "ไอศกรีม"], pi: 1 },
+      { q: "เลือกแผนวันหยุดสุดสัปดาห์:", options: ["บรันช์ + ช้อปปิ้ง", "ดูซีรีส์ยาว", "โรดทริป", "ไม่ทำอะไรเลย"], pi: 2 },
+      { q: "คุณสมบัติที่ดีที่สุดของเพื่อน?", options: ["ความซื่อสัตย์", "อารมณ์ขัน", "ความจริงใจ", "ความเป็นธรรมชาติ"], pi: 1 },
+      { q: "แนวเพลงประจำมิตรภาพ:", options: ["Pop Hits", "เพลงย้อนยุค", "Indie Vibes", "Hip-Hop"], pi: 1 },
+      { q: "ปลอบใจกันยังไง?", options: ["ส่งมีม", "สั่งอาหาร", "ไปหาแบบไม่บอก", "ส่งข้อความเสียงยาว"], pi: 0 },
     ],
     deeptalk: [
-      { q: "Was ist dir im Leben am wichtigsten?", options: ["Freiheit", "Verbindung", "Wachstum", "Sicherheit"], pi: 1 },
-      { q: "Deine größte Angst:", options: ["Vergessen zu werden", "Allein zu sein", "Zeit zu verschwenden", "Mich selbst zu verlieren"], pi: 2 },
-      { q: "Wie sieht Liebe für dich aus?", options: ["Kleine tägliche Gesten", "Große Gesten", "Einfach da sein", "Worte der Bestätigung"], pi: 0 },
-      { q: "Wenn du eine Sache an der Welt ändern könntest:", options: ["Mehr Empathie", "Mehr Ehrlichkeit", "Mehr Gleichheit", "Mehr Neugier"], pi: 0 },
-      { q: "Was ist deine emotionale Superkraft?", options: ["Den Raum lesen", "Ruhig bleiben", "Menschen zum Lachen bringen", "Tiefes Zuhören"], pi: 3 },
+      { q: "อะไรสำคัญที่สุดในชีวิตคุณ?", options: ["อิสรภาพ", "ความผูกพัน", "การเติบโต", "ความมั่นคง"], pi: 1 },
+      { q: "ความกลัวที่สุดของคุณ:", options: ["ถูกลืม", "อยู่คนเดียว", "เสียเวลาเปล่า", "สูญเสียตัวเอง"], pi: 2 },
+      { q: "ความรักเป็นยังไงสำหรับคุณ?", options: ["สิ่งเล็กๆ ทุกวัน", "ท่าทางยิ่งใหญ่", "แค่อยู่ตรงนั้น", "คำพูดที่ยืนยัน"], pi: 0 },
+      { q: "ถ้าเปลี่ยนโลกได้หนึ่งอย่าง:", options: ["ความเห็นอกเห็นใจ", "ความซื่อสัตย์", "ความเท่าเทียม", "ความอยากรู้อยากเห็น"], pi: 0 },
+      { q: "พลังพิเศษด้านอารมณ์ของคุณคืออะไร?", options: ["อ่านบรรยากาศ", "ใจเย็น", "ทำให้คนหัวเราะ", "ฟังอย่างลึกซึ้ง"], pi: 3 },
     ],
     coworkers: [
-      { q: "Morgenmensch oder Nachteule?", options: ["Um 6 Uhr auf", "100% Nachteule", "Kommt auf den Tag an", "Dauerhaft müde"], pi: 3 },
-      { q: "Ideales Arbeits-Setup:", options: ["Café", "Home Office", "Großraumbüro", "Bibliotheks-Stille"], pi: 1 },
-      { q: "Dein Meeting-Stil:", options: ["Kamera an, engagiert", "Kamera aus, Multitasking", "Das hätte eine E-Mail sein können", "Whiteboard-Fan"], pi: 2 },
-      { q: "Nachrichtenstil:", options: ["Ein langer Absatz", "20 kurze Nachrichten", "Sprachnachricht", "Nur Emojis"], pi: 3 },
-      { q: "Mittagspause:", options: ["Am Schreibtisch essen", "Draußen spazieren", "Gruppenessen", "Power Nap"], pi: 1 },
+      { q: "คนตื่นเช้าหรือนกฮูก?", options: ["ตื่น 6 โมง", "นกฮูก 100%", "แล้วแต่วัน", "เหนื่อยตลอด"], pi: 3 },
+      { q: "สถานที่ทำงานในฝัน:", options: ["คาเฟ่", "ทำงานที่บ้าน", "ออฟฟิศเปิดโล่ง", "เงียบแบบห้องสมุด"], pi: 1 },
+      { q: "สไตล์การประชุมของคุณ:", options: ["เปิดกล้อง ตั้งใจ", "ปิดกล้อง ทำหลายอย่าง", "ส่งอีเมลก็ได้", "ชอบไวท์บอร์ด"], pi: 2 },
+      { q: "สไตล์การส่งข้อความ:", options: ["พิมพ์ยาวย่อหนึ่ง", "20 ข้อความสั้นๆ", "ข้อความเสียง", "แค่อีโมจิ"], pi: 3 },
+      { q: "พักเที่ยง:", options: ["กินที่โต๊ะ", "ออกไปเดินเล่น", "กินเป็นกลุ่ม", "งีบ"], pi: 1 },
     ],
     '36questions': [
-      { q: "Wen auf der Welt würdest du gerne zum Abendessen einladen?", options: ["Einen Kindheitshelden", "Eine historische Figur", "Jemand, den ich aus den Augen verloren habe", "Einen Prominenten, den ich bewundere"], pi: 1 },
-      { q: "Möchtest du berühmt sein? Auf welche Weise?", options: ["Ja — für mein Talent", "Ja — um etwas zu bewirken", "Vielleicht — ein bisschen bekannt", "Nein — ich bevorzuge Privatsphäre"], pi: 1 },
-      { q: "Probst du vor einem Telefonat, was du sagen willst?", options: ["Jedes einzelne Mal", "Nur bei wichtigen Anrufen", "Selten", "Nie — ich improvisiere"], pi: 1 },
-      { q: "Wie würde ein perfekter Tag für dich aussehen?", options: ["Langsamer Morgen, keine Pläne", "Abenteuer von früh bis spät", "Zeit mit geliebten Menschen", "Etwas Bedeutsames schaffen"], pi: 0 },
-      { q: "Wann hast du zuletzt für dich selbst gesungen?", options: ["Heute — ich singe ständig", "Diese Woche, unter der Dusche", "Kann mich nicht erinnern", "Ich summe, zählt das?"], pi: 0 },
-      { q: "Wenn du 90 werden könntest — den Geist oder Körper eines 30-Jährigen behalten?", options: ["Den Geist, 100%", "Den Körper, keine Frage", "Geist — meine Gedanken sind ich", "Körper — den Rest krieg ich hin"], pi: 0 },
+      { q: "ถ้าเชิญใครก็ได้มาทานข้าวเย็น จะเชิญใคร?", options: ["ฮีโร่ในวัยเด็ก", "บุคคลในประวัติศาสตร์", "คนที่ขาดการติดต่อ", "คนดังที่ชื่นชม"], pi: 1 },
+      { q: "อยากมีชื่อเสียงไหม? แบบไหน?", options: ["ใช่ — ด้วยความสามารถ", "ใช่ — เพื่อสร้างความเปลี่ยนแปลง", "อาจจะ — แค่นิดหน่อย", "ไม่ — ชอบความเป็นส่วนตัว"], pi: 1 },
+      { q: "ก่อนโทรศัพท์ คุณซ้อมสิ่งที่จะพูดไหม?", options: ["ทุกครั้ง", "เฉพาะเรื่องสำคัญ", "นานๆ ที", "ไม่เลย — ด้นสด"], pi: 1 },
+      { q: "วันที่สมบูรณ์แบบของคุณเป็นยังไง?", options: ["เช้าช้าๆ ไม่มีแผน", "ผจญภัยทั้งวัน", "อยู่กับคนที่รัก", "สร้างสรรค์สิ่งมีความหมาย"], pi: 0 },
+      { q: "ครั้งสุดท้ายที่ร้องเพลงให้ตัวเองฟังคือเมื่อไหร่?", options: ["วันนี้ — ร้องตลอด", "สัปดาห์นี้ ตอนอาบน้ำ", "จำไม่ได้แล้ว", "ฮัมเพลง นับไหม?"], pi: 0 },
+      { q: "ถ้าอายุถึง 90 — จะเลือกเก็บจิตใจหรือร่างกายของคนอายุ 30?", options: ["จิตใจ แน่นอน", "ร่างกาย ไม่ต้องคิด", "จิตใจ — ความคิดคือตัวฉัน", "ร่างกาย — ที่เหลือจัดการได้"], pi: 0 },
     ],
   },
 };
