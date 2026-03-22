@@ -95,6 +95,10 @@ const blindApi = {
 
   getUserSessions() {
     return this._fetch('/api/blind/sessions/user');
+  },
+
+  deleteSession(code) {
+    return this._fetch(`/api/blind/sessions/${code}`, { method: 'DELETE' });
   }
 };
 
@@ -231,7 +235,7 @@ function renderHomeSessions() {
     return;
   }
 
-  const packEmojis = { couples: '💕', bestfriends: '👯', deeptalk: '🌊', coworkers: '💼', '36questions': '❤️‍🔥', hottakes: '🌶️', redflags: '🚩', chaotic: '🎲', fungames: '🎉', worldtaste: '🌍', ethics: '⚖️', situations: '😱', livingtogether: '🏠', soulspirit: '🕊️', attachment: '🔗', innermirror: '🪞', stresstype: '🧊' };
+  const packEmojis = { couples: '💕', bestfriends: '👯', deeptalk: '🌊', coworkers: '💼', '36questions': '❤️‍🔥', hottakes: '🌶️', redflags: '🚩', chaotic: '🎲', fungames: '🎉', worldtaste: '🌍', ethics: '⚖️', situations: '😱', livingtogether: '🏠', soulspirit: '🕊️', attachment: '🔗', innermirror: '🪞', stresstype: '🧊', lovelang: '💌', shadow: '🌑', emotionalage: '🎭', boundaries: '🚧', selfsabotage: '🪤' };
   let html = '';
   const active = sessions.filter(s => s.status !== 'complete');
   const done = sessions.filter(s => s.status === 'complete');
@@ -992,7 +996,10 @@ function confirmDeleteSession() {
   const code = pendingDeleteCode;
   closeDeleteModal();
 
-  // Persist in localStorage
+  // Delete on server
+  blindApi.deleteSession(code).catch(() => {});
+
+  // Persist in localStorage as fallback
   hideSession(code);
 
   const wrap = document.querySelector(`.session-card-wrap[data-code="${code}"]`);
@@ -1546,6 +1553,52 @@ const soloResultDefs = {
       freeze: { emoji: '🧊', title: 'Freeze Response', desc: 'Overwhelm makes you still. You go quiet, numb, and wait for the storm to pass — often from the inside.', advice: 'Stillness can be wisdom. But practice small movements when frozen — one action can break the spell.' },
     }
   },
+  lovelang: {
+    traits: ['touch', 'words', 'acts', 'gifts', 'time'],
+    results: {
+      touch: { emoji: '🤲', title: 'Physical Touch', tagline: 'your love speaks through skin', desc: 'You communicate love through closeness — a hand on the back, a long hug, sitting pressed together on the couch. Words can lie. Touch doesn\'t. For you, presence is physical.', advice: 'Not everyone expresses love this way. Tell people what you need — they can\'t read your body if they speak a different love language.', youProbably: ['Hold people a beat longer than expected', 'Reach for someone\'s hand without thinking', 'Feel most hurt when someone flinches away', 'Judge relationships by how much physical warmth exists'] },
+      words: { emoji: '💬', title: 'Words of Affirmation', tagline: 'you hear love before you feel it', desc: 'A well-timed "I\'m proud of you" can carry you for weeks. You remember compliments word-for-word, and silence from someone you love feels deafening.', advice: 'You give what you need — so you probably over-compliment and under-ask. Say it: "I need to hear that you value me."', youProbably: ['Screenshot meaningful texts', 'Remember exact words of a compliment from years ago', 'Feel crushed by a passive-aggressive tone', 'Write long heartfelt messages at 2am'] },
+      acts: { emoji: '🔧', title: 'Acts of Service', tagline: 'love is a verb, not a word', desc: 'You don\'t want to hear "I love you" — you want to see it. A filled gas tank, a meal when you\'re tired, a solved problem you didn\'t ask for help with. That\'s romance.', advice: 'Be careful not to over-give and resent the imbalance. Notice when someone serves you in their own language, even if it\'s not yours.', youProbably: ['Do things for people without being asked', 'Feel deeply loved when someone handles your stress', 'Get frustrated by empty promises', 'Show love by fixing, carrying, handling logistics'] },
+      gifts: { emoji: '🎁', title: 'Receiving Gifts', tagline: 'it\'s the thought that proves the love', desc: 'It was never about the price tag. It\'s the proof that someone thought of you when you weren\'t there. A random snack, a playlist, a "saw this and thought of you" — that\'s everything.', advice: 'People might misread this as materialism. Help them understand: the gift is evidence of attention, not transaction.', youProbably: ['Keep small meaningful objects forever', 'Feel hurt when someone forgets an occasion', 'Notice when someone remembers a tiny thing you mentioned', 'Put thought into every gift you give'] },
+      time: { emoji: '⏳', title: 'Quality Time', tagline: 'your love currency is undivided attention', desc: 'A phone on the table during dinner is a rejection. You don\'t need activities — you need someone fully present, with nowhere else to be and no one else to text.', advice: 'In a distracted world, this is the hardest language to have. Be explicit: "I need your eyes, not your schedule."', youProbably: ['Notice immediately when someone checks their phone mid-conversation', 'Treasure lazy mornings with no plans', 'Feel rejected by chronic busyness', 'Fall hardest for people who make time stop'] },
+    }
+  },
+  shadow: {
+    traits: ['repressed_selfishness', 'repressed_vulnerability', 'repressed_authenticity', 'repressed_need'],
+    results: {
+      repressed_selfishness: { emoji: '👹', title: 'The Repressed Self', tagline: 'the part of you that wants without guilt', desc: 'You learned early that wanting things for yourself is dangerous. So you became the giver, the selfless one. But underneath, there\'s a version of you that\'s exhausted from never taking.', advice: 'Selfishness isn\'t your shadow — it\'s your unmet need for reciprocity. Start with small acts of self-priority. Taking doesn\'t make you bad.', youProbably: ['Say "I don\'t mind" when you absolutely do', 'Feel rage when someone takes without asking', 'Resent being "the reliable one"', 'Judge selfish people hardest because you envy their freedom'] },
+      repressed_vulnerability: { emoji: '🥀', title: 'The Hidden Softness', tagline: 'strength was never a choice — it was survival', desc: 'You\'ve built an identity around being strong, capable, unbreakable. But your shadow holds the tears you never let fall, the help you never asked for, the softness you buried because someone once made it feel unsafe.', advice: 'Vulnerability isn\'t the opposite of strength — it\'s the upgrade. Let one person see the real weight. You don\'t have to shatter. Just crack the door.', youProbably: ['Cry alone but never in front of people', 'Feel uncomfortable when someone takes care of you', 'Get praised for "handling it so well" and feel like screaming', 'Attract people who lean on you but never ask how you are'] },
+      repressed_authenticity: { emoji: '🎭', title: 'The Curated Self', tagline: 'the mask fits so well you forgot it\'s there', desc: 'You\'re not lying — you\'re performing. A version of you that\'s palatable, agreeable, conflict-free. Your shadow holds your real opinions, your anger, your "actually, no." You\'re so good at reading rooms that you forgot you\'re allowed to disrupt them.', advice: 'Honesty doesn\'t require cruelty. Start by noticing the moments you edit yourself. What would you say if you couldn\'t lose anyone for saying it?', youProbably: ['Agree with opinions you don\'t hold', 'Feel exhausted after social events from performing', 'Have different personalities for different groups', 'Fear being "too much" more than "not enough"'] },
+      repressed_need: { emoji: '🕳️', title: 'The Hidden Need', tagline: 'you need people more than you let anyone see', desc: 'Independence is your brand. But it\'s also your prison. You\'ve convinced everyone — and almost yourself — that you\'re fine alone. Your shadow holds the ache for connection and the quiet loneliness of proving you don\'t need anyone.', advice: 'Needing someone doesn\'t make you weak. It makes you alive. Try saying "I missed you" without deflecting. Let it land.', youProbably: ['Leave conversations feeling disconnected but can\'t name why', 'Feel relief and panic in equal measure when someone gets close', 'Have acquaintances everywhere but few deep bonds', 'Push away people who try to check in'] },
+    }
+  },
+  emotionalage: {
+    traits: ['child', 'teen', 'adult', 'elder'],
+    results: {
+      child: { emoji: '🧒', title: 'The Inner Child', tagline: 'you feel everything at full volume', desc: 'Your emotional world is vivid, raw, and unfiltered. Joy is electric, rejection is catastrophic, and the need for safety drives more of your decisions than you realize. This isn\'t immaturity — it\'s a sign that some part of you is still waiting to be seen.', advice: 'You don\'t need to grow up faster. You need to parent yourself the way you deserved to be parented. Safety first. Then the feelings get quieter.', youProbably: ['Take things very personally', 'Need reassurance after any sign of distance', 'Feel emotions in your body — stomach drops, chest tightness', 'Have a younger voice that speaks loudest when tired or scared'] },
+      teen: { emoji: '⚡', title: 'The Rebel', tagline: 'proving, pushing, performing — always', desc: 'You\'re in the era of proving yourself. To the world, to doubters, maybe to yourself. There\'s a restless energy — achievement feels urgent, rest feels lazy, and identity is still something you\'re building in real time.', advice: 'You don\'t have to earn your place. You\'re already here. The grinding, the proving — it\'s exhausting because it\'s not sustainable. Stop performing and still be valued.', youProbably: ['Compare yourself to people constantly', 'Struggle to sit still without productivity guilt', 'Have a harsh inner critic that sounds like someone from your past', 'Alternate between overconfidence and deep self-doubt'] },
+      adult: { emoji: '🌿', title: 'The Grounded One', tagline: 'you feel it, name it, and choose what to do', desc: 'You can hold difficult emotions without drowning. You communicate, reflect, and take responsibility without collapsing into guilt. You\'re not perfect, but you\'re present.', advice: 'Don\'t let emotional maturity become emotional suppression. Grounded doesn\'t mean numb. Keep making room for messiness — that\'s where aliveness lives.', youProbably: ['Apologize without needing the other person to apologize first', 'Hold space for others without losing yourself', 'Recognize childhood patterns without being ruled by them', 'Feel proud of how far you\'ve come, quietly'] },
+      elder: { emoji: '🦉', title: 'The Wise Observer', tagline: 'you\'ve stopped fighting the river', desc: 'You see the bigger picture. Emotions arrive and you watch them instead of becoming them. There\'s a calm from having survived enough storms to know: this too passes. People are drawn to your presence because it feels like rest.', advice: 'Don\'t detach so far that you stop feeling. Wisdom without warmth becomes distance. Stay close to people who still surprise you.', youProbably: ['Rarely feel urgency about things that used to destroy you', 'Give advice that lands because you\'ve earned it', 'Feel occasional loneliness from being emotionally "ahead"', 'Value peace over passion — and sometimes miss the fire'] },
+    }
+  },
+  boundaries: {
+    traits: ['porous', 'passive', 'healthy', 'rigid'],
+    results: {
+      porous: { emoji: '🫗', title: 'Porous Boundaries', tagline: 'you let everyone in — and it costs you', desc: 'You absorb other people\'s emotions, take on their problems, and struggle to tell where you end and someone else begins. Saying no feels like a betrayal. You over-share, over-give, and then wonder why you feel hollow.', advice: 'A boundary isn\'t a wall — it\'s a filter. Start with one small "no" this week. The discomfort fades but the self-respect doesn\'t.', youProbably: ['Feel responsible for other people\'s emotions', 'Over-share personal details with strangers', 'Attract people who take more than they give', 'Feel guilty for having needs'] },
+      passive: { emoji: '😶', title: 'Passive Boundaries', tagline: 'you know what you need — you just can\'t say it', desc: 'You have the words. You even rehearse them in the shower. But in the moment, they dissolve. You hint, you hope, you swallow. The boundary exists inside you — it just hasn\'t made it to your mouth yet.', advice: 'Start with low-stakes situations. Text the boundary before saying it face-to-face. Every rep makes the next one easier. Your voice deserves volume.', youProbably: ['Say "it\'s fine" when it absolutely is not', 'Rehearse confrontations that never happen', 'Build resentment silently until you explode', 'Feel surprised when people cross lines you never voiced'] },
+      healthy: { emoji: '💚', title: 'Healthy Boundaries', tagline: 'you can love and still say no', desc: 'You\'ve learned — maybe the hard way — that protecting your energy isn\'t selfish. You say no without cruelty, yes without resentment, and hold space without losing yourself.', advice: 'Boundaries are muscles, not achievements. They need maintenance. Watch for situations where old patterns creep back — usually with the people who matter most.', youProbably: ['Leave conversations feeling intact', 'Disagree without it becoming a crisis', 'Know when to engage and when to walk away', 'Attract people who respect your space because you model it'] },
+      rigid: { emoji: '🧱', title: 'Rigid Boundaries', tagline: 'the walls work — but they\'re lonely', desc: 'You built your defenses for a reason, and they work. Almost too well. People can\'t hurt you, but they also can\'t reach you. Intimacy feels like a security risk, and vulnerability is a door you sealed shut.', advice: 'The walls kept you safe once. Ask yourself if they still need to be this high, or if they\'re protecting you from a threat that\'s no longer there.', youProbably: ['Cut people off cleanly and quickly', 'Prefer independence over connection when stressed', 'Have very few close relationships', 'Feel proud of needing no one — and sometimes empty because of it'] },
+    }
+  },
+  selfsabotage: {
+    traits: ['doom', 'unworthiness', 'perfectionism', 'impostor'],
+    results: {
+      doom: { emoji: '🌪️', title: 'The Doom Pattern', tagline: 'you leave before the leaving happens to you', desc: 'Somewhere along the way, you learned that good things end — and it\'s better to brace than to trust. So you pull away, self-destruct, or wait for the crash. It\'s not pessimism. It\'s preemptive grief.', advice: 'You\'re time-traveling to a pain that hasn\'t happened yet. Try staying in the present — even if it feels dangerously good. Not every good thing is a setup.', youProbably: ['Mentally prepare for breakups during happy moments', 'Leave jobs or cities before they can disappoint you', 'Feel suspicious when life is calm', 'Say "I knew it" when things go wrong, like you predicted it'] },
+      unworthiness: { emoji: '🪫', title: 'The Unworthiness Pattern', tagline: 'you dim yourself so the light doesn\'t scare you', desc: 'You sabotage because deep down, you believe you don\'t deserve the good thing. So you make yourself small, give it away, or let it slip — because keeping it feels like stealing.', advice: 'You don\'t need to earn your place at the table. You were invited. Start treating yourself like someone whose happiness matters.', youProbably: ['Deflect compliments like they\'re attacks', 'Give away credit for your own work', 'Feel uncomfortable when things are going well', 'Believe other people deserve things more'] },
+      perfectionism: { emoji: '🔬', title: 'The Perfectionism Pattern', tagline: 'nothing is ever finished because nothing is ever enough', desc: 'You don\'t procrastinate from laziness — you procrastinate from fear. If it\'s not perfect, it reflects on your worth. So you tweak, redo, delay, and polish until the deadline forces a release you\'re never happy with.', advice: 'Perfectionism isn\'t high standards — it\'s fear of being seen as flawed. Done is better than perfect. Ship it. The people who love you aren\'t grading you.', youProbably: ['Spend 3 hours on an email that takes 10 minutes', 'Feel physical discomfort at "good enough"', 'Criticize your own work before anyone else can', 'Have unfinished projects everywhere'] },
+      impostor: { emoji: '🎪', title: 'The Impostor Pattern', tagline: 'everyone else belongs here — you just snuck in', desc: 'You look around and see people who know what they\'re doing. Then you look at yourself and see a convincing act. Every success is luck, every compliment a mistake, and every room one question away from exposure.', advice: 'The impostor feeling is, ironically, a sign that you care about quality and truth. The actual impostors don\'t feel this way. Your seat is yours. Sit in it.', youProbably: ['Over-prepare for everything because winging it feels dangerous', 'Attribute success to timing, luck, or other people', 'Feel anxious in rooms of "more qualified" people', 'Keep waiting for the day someone calls you out'] },
+    }
+  },
 };
 
 function buildSoloReceipt() {
@@ -1610,9 +1663,21 @@ function buildSoloReceipt() {
     `;
   });
 
+  // "You probably" list (if available)
+  let youProbablyHtml = '';
+  if (result.youProbably && result.youProbably.length) {
+    youProbablyHtml = `
+      <div class="solo-youprobably glass">
+        <div class="solo-youprobably-title">${i18n.t('solo_you_probably')}</div>
+        ${result.youProbably.map(item => `<div class="solo-yp-item"><span class="solo-yp-dot"></span>${item}</div>`).join('')}
+      </div>
+    `;
+  }
+
   const packDef = packDefs.find(p => p.key === selectedPackKey);
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const taglineHtml = result.tagline ? `<div class="solo-tagline">${result.tagline}</div>` : '';
 
   const scroll = document.getElementById('storyScroll');
   scroll.innerHTML = `
@@ -1621,11 +1686,14 @@ function buildSoloReceipt() {
         <div class="story-hero-emoji">${result.emoji}</div>
       </div>
       <div class="story-hero-vibe">${result.title}</div>
+      ${taglineHtml}
       <div class="story-hero-sub">${i18n.t(packDef.nameKey)}</div>
       <div class="story-hero-names"><span class="solo-badge-tag">${i18n.t('solo_badge')}</span></div>
     </div>
     <div class="story-intro"><p>${result.desc}</p></div>
+    ${youProbablyHtml}
     <div class="solo-advice-card glass">
+      <div class="solo-advice-label">${i18n.t('solo_note_to_self')}</div>
       <div class="solo-advice-text">${result.advice}</div>
     </div>
     <div class="solo-breakdown-section">

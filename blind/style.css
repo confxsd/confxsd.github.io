@@ -674,6 +674,46 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
   background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
   color: #fff;
 }
+.solo-tagline {
+  font-size: 14px;
+  color: var(--text-dim);
+  font-style: italic;
+  margin-top: 4px;
+  letter-spacing: 0.3px;
+}
+.solo-youprobably {
+  margin: 0 20px 20px;
+  padding: 20px;
+  border-radius: 16px;
+}
+.solo-youprobably-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  text-transform: lowercase;
+  background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.solo-yp-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.solo-yp-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-1);
+  margin-top: 6px;
+}
 .solo-advice-card {
   margin: 0 20px 20px;
   padding: 20px;
@@ -682,6 +722,15 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
   line-height: 1.6;
   color: var(--text);
   border-left: 3px solid var(--accent-1);
+}
+.solo-advice-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent-1);
+  margin-bottom: 8px;
 }
 .solo-breakdown-section {
   padding: 0 20px 12px;
