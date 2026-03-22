@@ -579,8 +579,8 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
 /* FAB — full width */
 .fab-wrap {
   padding: 0 24px;
-  margin-top: 20px;
-  margin-bottom: 8px;
+  margin-top: 8px;
+  margin-bottom: 12px;
 }
 .fab {
   width: 100%;
@@ -2421,11 +2421,12 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
       <button class="home-tab" data-filter="active" onclick="setHomeFilter('active')" data-i18n="home_active">Active</button>
       <button class="home-tab" data-filter="completed" onclick="setHomeFilter('completed')" data-i18n="home_completed">Completed</button>
     </div>
-    <div id="homeSessions"></div>
 
     <div class="fab-wrap">
       <button class="fab" onclick="goTo('packs')" data-i18n="home_new_session">+ new session</button>
     </div>
+
+    <div id="homeSessions"></div>
 
     <nav class="bottom-nav" id="bottomNav">
       <button class="nav-item active" onclick="goTo('home')">
