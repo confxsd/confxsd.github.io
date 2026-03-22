@@ -711,7 +711,8 @@ function renderBubblePop(body, q) {
     { top: '5%', left: '8%', size: 120 },
     { top: '2%', left: '55%', size: 110 },
     { top: '50%', left: '5%', size: 115 },
-    { top: '48%', left: '52%', size: 125 }
+    { top: '48%', left: '52%', size: 125 },
+    { top: '28%', left: '30%', size: 105 }
   ];
   const s = selectedAnswers[currentQuestion];
   body.innerHTML = `
