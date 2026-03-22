@@ -343,6 +343,16 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
 }
 
 /* ========== ONBOARDING ========== */
+#auth {
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 32px;
+  text-align: center;
+}
+#auth .logo-mark { margin-bottom: 8px; }
+#auth .btn { margin-top: 16px; }
+
 #onboarding {
   align-items: center;
   justify-content: center;
@@ -1580,7 +1590,7 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
     <div class="home-header">
       <div class="home-brand">
         <h1>blindside.</h1>
-        <span id="homeUsername" style="font-size:13px;color:var(--text-dim)"></span>
+        <span id="homeUsername" style="font-size:13px;color:var(--text-dim);cursor:pointer" onclick="switchUser()" title="switch user"></span>
       </div>
       <div class="home-actions">
         <button class="theme-toggle" onclick="cycleLang()" title="Language" id="langCycleBtn" style="font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif">
@@ -1814,6 +1824,12 @@ const i18n = {
       pack_count_deeptalk: '12 questions',
       pack_count_coworkers: '5 questions',
       pack_count_36questions: '6 questions · based on Arthur Aron\'s study',
+      pack_hottakes: 'Hot Takes',
+      pack_redflags: 'Red Flag or Nah',
+      pack_chaotic: 'Chaotic Energy',
+      pack_count_hottakes: '10 questions · spicy opinions only',
+      pack_count_redflags: '10 questions · judge freely',
+      pack_count_chaotic: '10 questions · unhinged vibes',
       // Nav
       nav_home: 'Home',
       nav_packs: 'Packs',
@@ -1897,6 +1913,12 @@ const i18n = {
       pack_count_deeptalk: '12 soru',
       pack_count_coworkers: '5 soru',
       pack_count_36questions: '6 soru · Arthur Aron\'un çalışmasına dayanır',
+      pack_hottakes: 'Keskin Yorumlar',
+      pack_redflags: 'Red Flag mı Değil mi',
+      pack_chaotic: 'Kaotik Enerji',
+      pack_count_hottakes: '10 soru · sadece cesur fikirler',
+      pack_count_redflags: '10 soru · yargıla rahatça',
+      pack_count_chaotic: '10 soru · çılgın vibes',
       nav_home: 'Ana Sayfa',
       nav_packs: 'Paketler',
       packs_subtitle: 'birini seç, gönder, neler olacak gör',
@@ -1970,6 +1992,12 @@ const i18n = {
       pack_count_deeptalk: '12 preguntas',
       pack_count_coworkers: '5 preguntas',
       pack_count_36questions: '6 preguntas · basado en el estudio de Arthur Aron',
+      pack_hottakes: 'Opiniones Picantes',
+      pack_redflags: 'Red Flag o No',
+      pack_chaotic: 'Energía Caótica',
+      pack_count_hottakes: '10 preguntas · solo opiniones atrevidas',
+      pack_count_redflags: '10 preguntas · juzga libremente',
+      pack_count_chaotic: '10 preguntas · vibras descontroladas',
       nav_home: 'Inicio',
       nav_packs: 'Packs',
       packs_subtitle: 'elige uno, envíalo, y mira qué pasa',
@@ -2043,6 +2071,12 @@ const i18n = {
       pack_count_deeptalk: '12 คำถาม',
       pack_count_coworkers: '5 คำถาม',
       pack_count_36questions: '6 คำถาม · อ้างอิงจากงานวิจัยของ Arthur Aron',
+      pack_hottakes: 'ความเห็นแรง',
+      pack_redflags: 'Red Flag หรือเปล่า',
+      pack_chaotic: 'พลังวุ่นวาย',
+      pack_count_hottakes: '10 คำถาม · ความเห็นแบบจัดจ้าน',
+      pack_count_redflags: '10 คำถาม · ตัดสินได้เลย',
+      pack_count_chaotic: '10 คำถาม · ไวบ์บ้าบอ',
       nav_home: 'หน้าแรก',
       nav_packs: 'ชุดคำถาม',
       packs_subtitle: 'เลือกชุด ส่งไป แล้วดูผลลัพธ์',
@@ -2261,6 +2295,9 @@ const packDefs = [
   { key: 'bestfriends',  emoji: '👯', nameKey: 'pack_bestfriends',  countKey: 'pack_count_bestfriends' },
   { key: 'deeptalk',     emoji: '🌊', nameKey: 'pack_deeptalk',     countKey: 'pack_count_deeptalk' },
   { key: 'coworkers',    emoji: '💼', nameKey: 'pack_coworkers',    countKey: 'pack_count_coworkers' },
+  { key: 'hottakes',    emoji: '🌶️', nameKey: 'pack_hottakes',    countKey: 'pack_count_hottakes' },
+  { key: 'redflags',    emoji: '🚩', nameKey: 'pack_redflags',    countKey: 'pack_count_redflags' },
+  { key: 'chaotic',     emoji: '🎲', nameKey: 'pack_chaotic',     countKey: 'pack_count_chaotic' },
 ];
 
 // Question packs per language — partnerAnswerIndex stores index so it works across languages
@@ -2293,6 +2330,42 @@ const questionPacks = {
       { q: "Your meeting style:", options: ["Camera on, engaged", "Camera off, multitask", "This could be an email", "Love a whiteboard"], pi: 2 },
       { q: "Slack message style:", options: ["One long paragraph", "20 short messages", "Voice note", "Just emojis"], pi: 3 },
       { q: "Lunch break move:", options: ["Desk lunch", "Walk outside", "Group lunch", "Power nap"], pi: 1 },
+    ],
+    hottakes: [
+      { q: "Pineapple on pizza?", options: ["Elite tier", "Absolutely not", "Depends on the mood", "Never tried it"], pi: 0 },
+      { q: "Double texting is:", options: ["Brave and iconic", "A cry for help", "Totally normal", "Depends who it is"], pi: 2 },
+      { q: "Crying in public:", options: ["Powerful", "Mortifying", "Depends on the cry", "I've done it today"], pi: 0 },
+      { q: "The best era of music:", options: ["Right now", "2000s nostalgia", "90s forever", "70s/80s classics"], pi: 1 },
+      { q: "Astrology is:", options: ["Scarily accurate", "Fun but fake", "Total nonsense", "I don't know my sign"], pi: 1 },
+      { q: "Situationships are:", options: ["The worst invention", "Kinda valid", "Just vibing", "A red flag factory"], pi: 1 },
+      { q: "Reply time matters?", options: ["Yes 100%", "Nah I forget too", "Only at the start", "If you care you reply"], pi: 3 },
+      { q: "The ick is:", options: ["Real and valid", "Overused", "Just an excuse", "I'm the ick"], pi: 0 },
+      { q: "AI taking over:", options: ["Already happened", "Kinda scared", "Bring it on", "I for one welcome it"], pi: 1 },
+      { q: "Ghosting someone:", options: ["Sometimes necessary", "Always wrong", "Depends on context", "I've been the ghost"], pi: 2 },
+    ],
+    redflags: [
+      { q: "They take 3 days to reply:", options: ["Red flag", "Maybe they're busy", "I do that too", "Depends how good the text is"], pi: 0 },
+      { q: "They don't like dogs:", options: ["Instant dealbreaker", "Cats > dogs anyway", "Not everyone's thing", "Suspicious but ok"], pi: 3 },
+      { q: "They post everything on social:", options: ["Love the confidence", "Major red flag", "As long as I'm in it", "I do the same lol"], pi: 1 },
+      { q: "They're still friends with their ex:", options: ["Mature king/queen", "Absolutely not", "Case by case", "I need more info"], pi: 2 },
+      { q: "They eat cereal with water:", options: ["Call the police", "I'm leaving", "Curiosity respected", "I pretend I didn't see"], pi: 0 },
+      { q: "They never initiate plans:", options: ["Red flag", "Maybe they're shy", "I'm the planner anyway", "We'd never hang out"], pi: 0 },
+      { q: "They have zero social media:", options: ["Green flag honestly", "What are they hiding", "Mysterious vibes", "Same tbh"], pi: 0 },
+      { q: "They fall asleep during movies:", options: ["Adorable", "Disrespectful", "Only if it's boring", "Wake them up dramatically"], pi: 0 },
+      { q: "They order for you at restaurants:", options: ["Romantic", "Controlling energy", "Only if they know me", "Bold move"], pi: 2 },
+      { q: "They say 'I'm fine' when they're not:", options: ["I'll dig deeper", "Give them space", "Same I do that", "Red flag if always"], pi: 0 },
+    ],
+    chaotic: [
+      { q: "Last thing you'd grab in a fire:", options: ["Phone charger", "Snacks", "My dignity", "I'd just stand there"], pi: 2 },
+      { q: "Your Roman Empire:", options: ["That one embarrassing memory", "Unrequited love", "Alternate timelines", "Dinosaurs honestly"], pi: 0 },
+      { q: "You're a villain. Your weapon:", options: ["Passive aggressive texts", "Weaponized silence", "Chaotic playlists", "Spoiling show endings"], pi: 3 },
+      { q: "Survival skill you actually have:", options: ["Can nap anywhere", "Eating questionable leftovers", "Parallel parking", "Crying on command"], pi: 0 },
+      { q: "Pick a fake job title:", options: ["Chief Overthinker", "Professional Yapper", "Vibe Consultant", "Nap Architect"], pi: 1 },
+      { q: "Your FBI agent thinks you're:", options: ["Unhinged", "Boring honestly", "Concerning", "Their favorite assignment"], pi: 3 },
+      { q: "3am thought:", options: ["What if gravity stops", "I should text my ex", "Am I real", "I need cheese"], pi: 3 },
+      { q: "Your catchphrase:", options: ["It is what it is", "No thoughts head empty", "Anyways—", "That's crazy"], pi: 0 },
+      { q: "In a horror movie you'd:", options: ["Die first", "Be the final survivor", "Be the killer", "Trip and fall immediately"], pi: 3 },
+      { q: "Your toxic trait:", options: ["Main character syndrome", "Overthinking everything", "Laughing at the wrong time", "Saying 'we should hang' and never following up"], pi: 1 },
     ],
     '36questions': [
       { q: "Given the choice of anyone in the world, whom would you want as a dinner guest?", options: ["A childhood hero", "A historical figure", "Someone I've lost touch with", "A celebrity I admire"], pi: 1 },
@@ -2332,6 +2405,42 @@ const questionPacks = {
       { q: "Mesaj tarzın:", options: ["Tek uzun paragraf", "20 kısa mesaj", "Sesli mesaj", "Sadece emoji"], pi: 3 },
       { q: "Öğle arası tercihin:", options: ["Masada yemek", "Dışarıda yürüyüş", "Grup yemeği", "Kısa uyku"], pi: 1 },
     ],
+    hottakes: [
+      { q: "Pizzaya ananas?", options: ["Efsane", "Kesinlikle hayır", "Ruh haline bağlı", "Hiç denemedim"], pi: 0 },
+      { q: "Üst üste mesaj atmak:", options: ["Cesur ve ikonik", "Çaresizlik", "Gayet normal", "Kime attığına bağlı"], pi: 2 },
+      { q: "Toplum içinde ağlamak:", options: ["Güçlü", "Utanç verici", "Ağlamaya bağlı", "Bugün yaptım zaten"], pi: 0 },
+      { q: "En iyi müzik dönemi:", options: ["Şu an", "2000'ler nostaljisi", "90'lar sonsuza dek", "70/80'ler klasikleri"], pi: 1 },
+      { q: "Astroloji:", options: ["Ürkütücü derecede doğru", "Eğlenceli ama sahte", "Tamamen saçmalık", "Burcumu bilmiyorum"], pi: 1 },
+      { q: "Belirsiz ilişkiler:", options: ["En kötü icat", "Bi yere kadar ok", "Sadece takılmak", "Red flag fabrikası"], pi: 1 },
+      { q: "Cevap süresi önemli mi?", options: ["Evet kesinlikle", "Yok ben de unuturum", "Sadece başlarda", "Önemsiyorsan yazarsın"], pi: 3 },
+      { q: "Ick gerçek mi?", options: ["Gerçek ve geçerli", "Çok abartılıyor", "Sadece bir bahane", "Ben ick'in ta kendisiyim"], pi: 0 },
+      { q: "Yapay zeka ele geçiriyor:", options: ["Çoktan oldu", "Biraz korkuyorum", "Gelsin", "Hoş geldin diyorum"], pi: 1 },
+      { q: "Birini ghostlamak:", options: ["Bazen gerekli", "Her zaman yanlış", "Duruma bağlı", "Ghost olan bendim"], pi: 2 },
+    ],
+    redflags: [
+      { q: "3 gün sonra cevap yazıyor:", options: ["Red flag", "Belki meşguldür", "Ben de yaparım", "Mesaja bağlı"], pi: 0 },
+      { q: "Köpekleri sevmiyor:", options: ["Anında biter", "Kediler > köpekler zaten", "Herkesin olayı değil", "Şüpheli ama tamam"], pi: 3 },
+      { q: "Her şeyi sosyal medyaya atıyor:", options: ["Özgüvene bak", "Büyük red flag", "Ben de varım yeter", "Ben de aynısını yaparım"], pi: 1 },
+      { q: "Eski sevgilisiyle hâlâ arkadaş:", options: ["Olgun hamle", "Kesinlikle olmaz", "Duruma göre", "Daha fazla bilgi lazım"], pi: 2 },
+      { q: "Gevreği suyla yiyor:", options: ["Polisi ara", "Gidiyorum", "Merakı saygıyla karşılarım", "Görmedim bile"], pi: 0 },
+      { q: "Hiç plan yapmıyor:", options: ["Red flag", "Belki utangaçtır", "Plancı zaten benim", "Hiç buluşamayız"], pi: 0 },
+      { q: "Hiç sosyal medyası yok:", options: ["Green flag aslında", "Ne saklıyor", "Gizemli vibes", "Ben de öyle"], pi: 0 },
+      { q: "Film izlerken uyuyor:", options: ["Tatlı", "Saygısızlık", "Film sıkıcıysa tamam", "Dramatik uyandır"], pi: 0 },
+      { q: "Restoranda senin yerine sipariş veriyor:", options: ["Romantik", "Kontrol manyağı", "Beni tanıyorsa tamam", "Cesur hamle"], pi: 2 },
+      { q: "'İyiyim' diyor ama değil:", options: ["Derinleşirim", "Alan bırakırım", "Ben de yaparım aynısını", "Hep yapıyorsa red flag"], pi: 0 },
+    ],
+    chaotic: [
+      { q: "Yangında son alacağın şey:", options: ["Şarj aleti", "Atıştırmalık", "Onurum", "Öylece dururdum"], pi: 2 },
+      { q: "Sürekli düşündüğün şey:", options: ["O utanç verici anı", "Karşılıksız aşk", "Alternatif evrenler", "Dinozorlar cidden"], pi: 0 },
+      { q: "Kötü karakter olsan silahın:", options: ["Pasif agresif mesajlar", "Silah olarak sessizlik", "Kaotik playlist", "Dizi finalini spoylama"], pi: 3 },
+      { q: "Gerçek hayatta kalma becerin:", options: ["Her yerde uyuyabilirim", "Şüpheli yemek yeme", "Paralel park", "İstediğimde ağlarım"], pi: 0 },
+      { q: "Sahte iş unvanı seç:", options: ["Baş Overthinker", "Profesyonel Geveze", "Vibe Danışmanı", "Uyku Mimarı"], pi: 1 },
+      { q: "FBI ajanın seni nasıl görüyor:", options: ["Çılgın", "Sıkıcı açıkçası", "Endişe verici", "En sevdiği görev"], pi: 3 },
+      { q: "Gece 3 düşüncesi:", options: ["Ya yerçekimi durursa", "Eski sevgilime yazmalıyım", "Gerçek miyim", "Peynir lazım"], pi: 3 },
+      { q: "Ağız alışkanlığın:", options: ["Olan olmuş", "Kafamda sıfır düşünce", "Neyse—", "Çıldırıyorum"], pi: 0 },
+      { q: "Korku filminde sen:", options: ["İlk ölen", "Son hayatta kalan", "Katil", "Hemen düşüp yere seren"], pi: 3 },
+      { q: "Toksik özelliğin:", options: ["Ana karakter sendromu", "Her şeyi aşırı düşünmek", "Yanlış anda gülmek", "'Buluşalım' deyip hiç buluşmamak"], pi: 1 },
+    ],
     '36questions': [
       { q: "Dünyadaki herhangi biriyle akşam yemeği yiyebilsen, kim olurdu?", options: ["Çocukluk kahramanım", "Tarihi bir figür", "İletişimi kopan biri", "Hayran olduğum bir ünlü"], pi: 1 },
       { q: "Ünlü olmak ister misin? Nasıl?", options: ["Evet — yeteneğimle", "Evet — fark yaratarak", "Belki — biraz tanınan", "Hayır — gizliliği tercih ederim"], pi: 1 },
@@ -2369,6 +2478,42 @@ const questionPacks = {
       { q: "Tu estilo en reuniones:", options: ["Cámara encendida", "Cámara apagada, multitask", "Esto podía ser un email", "Me encanta la pizarra"], pi: 2 },
       { q: "Estilo de mensajes:", options: ["Un párrafo largo", "20 mensajes cortos", "Nota de voz", "Solo emojis"], pi: 3 },
       { q: "En la hora de almuerzo:", options: ["Como en el escritorio", "Caminar afuera", "Almuerzo grupal", "Siesta rápida"], pi: 1 },
+    ],
+    hottakes: [
+      { q: "¿Piña en la pizza?", options: ["De lo mejor", "Jamás", "Depende del mood", "Nunca la probé"], pi: 0 },
+      { q: "Enviar doble mensaje es:", options: ["Valiente e icónico", "Grito de ayuda", "Totalmente normal", "Depende de quién"], pi: 2 },
+      { q: "Llorar en público:", options: ["Poderoso", "Mortificante", "Depende del llanto", "Lo hice hoy"], pi: 0 },
+      { q: "La mejor era musical:", options: ["Ahora mismo", "Nostalgia 2000s", "Los 90s forever", "Clásicos 70s/80s"], pi: 1 },
+      { q: "La astrología es:", options: ["Terroríficamente precisa", "Divertida pero falsa", "Total tontería", "No sé mi signo"], pi: 1 },
+      { q: "Los situationships son:", options: ["El peor invento", "Algo válido", "Solo vibing", "Fábrica de red flags"], pi: 1 },
+      { q: "¿Importa el tiempo de respuesta?", options: ["Sí 100%", "Nah yo también olvido", "Solo al principio", "Si te importa respondes"], pi: 3 },
+      { q: "El ick es:", options: ["Real y válido", "Muy sobreusado", "Solo una excusa", "Yo soy el ick"], pi: 0 },
+      { q: "La IA tomando el control:", options: ["Ya pasó", "Me asusta un poco", "Que venga", "Les doy la bienvenida"], pi: 1 },
+      { q: "Ghostear a alguien:", options: ["A veces necesario", "Siempre mal", "Depende del contexto", "Yo fui el ghost"], pi: 2 },
+    ],
+    redflags: [
+      { q: "Tarda 3 días en responder:", options: ["Red flag", "Quizás está ocupado", "Yo hago lo mismo", "Depende del mensaje"], pi: 0 },
+      { q: "No le gustan los perros:", options: ["Dealbreaker", "Gatos > perros", "No es para todos", "Sospechoso pero ok"], pi: 3 },
+      { q: "Publica todo en redes:", options: ["Amo la confianza", "Gran red flag", "Si salgo yo ok", "Yo hago lo mismo jaja"], pi: 1 },
+      { q: "Sigue siendo amigo de su ex:", options: ["Madurez total", "Ni de broma", "Caso por caso", "Necesito más info"], pi: 2 },
+      { q: "Come cereal con agua:", options: ["Llama a la policía", "Me voy", "Respeto la curiosidad", "Finjo que no vi"], pi: 0 },
+      { q: "Nunca propone planes:", options: ["Red flag", "Quizás es tímido", "Yo planeo todo igual", "Nunca saldríamos"], pi: 0 },
+      { q: "Cero redes sociales:", options: ["Green flag la verdad", "Qué esconde", "Vibes misteriosas", "Yo tampoco tengo"], pi: 0 },
+      { q: "Se duerme viendo pelis:", options: ["Adorable", "Irrespetuoso", "Solo si es aburrida", "Despiértalo dramáticamente"], pi: 0 },
+      { q: "Pide por ti en restaurantes:", options: ["Romántico", "Energía controladora", "Solo si me conoce", "Movimiento audaz"], pi: 2 },
+      { q: "Dice 'estoy bien' pero no lo está:", options: ["Voy más profundo", "Le doy espacio", "Yo hago lo mismo", "Red flag si es siempre"], pi: 0 },
+    ],
+    chaotic: [
+      { q: "Lo último que agarras en un incendio:", options: ["Cargador del cel", "Snacks", "Mi dignidad", "Me quedo parado"], pi: 2 },
+      { q: "Tu Roman Empire:", options: ["Ese recuerdo vergonzoso", "Amor no correspondido", "Líneas de tiempo alternas", "Dinosaurios en serio"], pi: 0 },
+      { q: "Eres villano. Tu arma:", options: ["Mensajes pasivo-agresivos", "Silencio como arma", "Playlists caóticas", "Spoilear finales"], pi: 3 },
+      { q: "Habilidad de supervivencia real:", options: ["Dormir en cualquier lado", "Comer sobras dudosas", "Estacionar en paralelo", "Llorar cuando quiera"], pi: 0 },
+      { q: "Elige un título falso:", options: ["Chief Overthinker", "Profesional del Chisme", "Consultor de Vibes", "Arquitecto de Siestas"], pi: 1 },
+      { q: "Tu agente del FBI piensa que eres:", options: ["Desquiciado", "Aburrido la verdad", "Preocupante", "Su asignación favorita"], pi: 3 },
+      { q: "Pensamiento de las 3am:", options: ["¿Y si la gravedad para?", "Debería textear a mi ex", "¿Soy real?", "Necesito queso"], pi: 3 },
+      { q: "Tu muletilla:", options: ["Es lo que es", "Cero pensamientos", "En fin—", "Qué loco"], pi: 0 },
+      { q: "En una peli de terror tú:", options: ["Muero primero", "Sobrevivo al final", "Soy el asesino", "Me tropiezo de inmediato"], pi: 3 },
+      { q: "Tu rasgo tóxico:", options: ["Síndrome de protagonista", "Sobrepensar todo", "Reírme en mal momento", "Decir 'hay que vernos' y nunca hacerlo"], pi: 1 },
     ],
     '36questions': [
       { q: "Si pudieras elegir a cualquier persona del mundo, ¿a quién invitarías a cenar?", options: ["Un héroe de infancia", "Una figura histórica", "Alguien con quien perdí contacto", "Una celebridad que admiro"], pi: 1 },
@@ -2408,6 +2553,42 @@ const questionPacks = {
       { q: "สไตล์การส่งข้อความ:", options: ["พิมพ์ยาวย่อหนึ่ง", "20 ข้อความสั้นๆ", "ข้อความเสียง", "แค่อีโมจิ"], pi: 3 },
       { q: "พักเที่ยง:", options: ["กินที่โต๊ะ", "ออกไปเดินเล่น", "กินเป็นกลุ่ม", "งีบ"], pi: 1 },
     ],
+    hottakes: [
+      { q: "สับปะรดบนพิซซ่า?", options: ["ระดับเทพ", "ไม่มีทาง", "แล้วแต่อารมณ์", "ไม่เคยลอง"], pi: 0 },
+      { q: "ส่งข้อความซ้ำคือ:", options: ["กล้าหาญและไอคอนิก", "ร้องขอความช่วยเหลือ", "ปกติมาก", "แล้วแต่คน"], pi: 2 },
+      { q: "ร้องไห้ในที่สาธารณะ:", options: ["ทรงพลัง", "อายมาก", "แล้วแต่การร้องไห้", "ทำไปแล้ววันนี้"], pi: 0 },
+      { q: "ยุคเพลงที่ดีที่สุด:", options: ["ตอนนี้เลย", "2000s นอสทัลเจีย", "90s ตลอดกาล", "70s/80s คลาสสิก"], pi: 1 },
+      { q: "โหราศาสตร์คือ:", options: ["แม่นจนน่ากลัว", "สนุกแต่เฟค", "ไร้สาระสิ้นดี", "ไม่รู้ราศีตัวเอง"], pi: 1 },
+      { q: "ความสัมพันธ์คลุมเครือ:", options: ["สิ่งประดิษฐ์ที่แย่ที่สุด", "ก็โอเค", "แค่ใช้ชีวิต", "โรงงาน Red Flag"], pi: 1 },
+      { q: "เวลาตอบสำคัญไหม?", options: ["ใช่ 100%", "เปล่า ฉันก็ลืม", "ตอนแรกๆ เท่านั้น", "ถ้าแคร์ก็ตอบ"], pi: 3 },
+      { q: "The ick คือ:", options: ["จริงและสมเหตุสมผล", "ใช้เยอะไป", "แค่ข้ออ้าง", "ฉันคือ ick เอง"], pi: 0 },
+      { q: "AI ครองโลก:", options: ["เกิดขึ้นแล้ว", "กลัวนิดหน่อย", "มาเลย", "ยินดีต้อนรับ"], pi: 1 },
+      { q: "Ghost คน:", options: ["บางทีก็จำเป็น", "ผิดเสมอ", "แล้วแต่สถานการณ์", "ฉันเป็นคน ghost"], pi: 2 },
+    ],
+    redflags: [
+      { q: "ตอบช้า 3 วัน:", options: ["Red flag", "อาจจะยุ่ง", "ฉันก็ทำแบบนั้น", "แล้วแต่ข้อความ"], pi: 0 },
+      { q: "ไม่ชอบหมา:", options: ["จบเลย", "แมว > หมา อยู่แล้ว", "ไม่ใช่ทุกคน", "น่าสงสัยแต่โอเค"], pi: 3 },
+      { q: "โพสต์ทุกอย่างในโซเชียล:", options: ["ชอบความมั่นใจ", "Red flag ใหญ่", "ขอแค่มีเราด้วย", "ฉันก็ทำเหมือนกัน"], pi: 1 },
+      { q: "ยังเป็นเพื่อนกับแฟนเก่า:", options: ["เป็นผู้ใหญ่", "ไม่ได้เลย", "แล้วแต่กรณี", "ขอข้อมูลเพิ่ม"], pi: 2 },
+      { q: "กินซีเรียลกับน้ำเปล่า:", options: ["เรียกตำรวจ", "ฉันไปละ", "เคารพความอยากรู้", "ทำเป็นไม่เห็น"], pi: 0 },
+      { q: "ไม่เคยชวนไปไหน:", options: ["Red flag", "อาจจะขี้อาย", "ฉันเป็นคนวางแผนอยู่แล้ว", "ไม่ได้เจอกันแน่"], pi: 0 },
+      { q: "ไม่มีโซเชียลเลย:", options: ["Green flag จริงๆ", "ซ่อนอะไร", "ไวบ์ลึกลับ", "ฉันก็เหมือนกัน"], pi: 0 },
+      { q: "หลับระหว่างดูหนัง:", options: ["น่ารัก", "ไม่ให้เกียรติ", "ถ้าหนังน่าเบื่อก็ได้", "ปลุกแบบดราม่า"], pi: 0 },
+      { q: "สั่งอาหารแทนเรา:", options: ["โรแมนติก", "ควบคุมเกินไป", "ถ้ารู้จักเราดีก็โอเค", "กล้าดี"], pi: 2 },
+      { q: "บอก 'ไม่เป็นไร' แต่เป็น:", options: ["ถามต่อ", "ให้พื้นที่", "ฉันก็ทำแบบนั้น", "ถ้าทำตลอดคือ red flag"], pi: 0 },
+    ],
+    chaotic: [
+      { q: "ของชิ้นสุดท้ายที่หยิบตอนไฟไหม้:", options: ["ที่ชาร์จมือถือ", "ขนม", "ศักดิ์ศรี", "ยืนเฉยๆ"], pi: 2 },
+      { q: "Roman Empire ของคุณ:", options: ["ความทรงจำน่าอาย", "รักข้างเดียว", "ไทม์ไลน์คู่ขนาน", "ไดโนเสาร์จริงๆ"], pi: 0 },
+      { q: "เป็นตัวร้าย อาวุธคือ:", options: ["ข้อความ passive aggressive", "ความเงียบเป็นอาวุธ", "เพลย์ลิสต์วุ่นวาย", "สปอยล์ตอนจบ"], pi: 3 },
+      { q: "ทักษะเอาตัวรอดจริงๆ:", options: ["นอนได้ทุกที่", "กินของเหลือได้", "จอดรถขนาน", "ร้องไห้ตามสั่ง"], pi: 0 },
+      { q: "เลือกตำแหน่งปลอม:", options: ["Chief Overthinker", "นักพูดมืออาชีพ", "ที่ปรึกษาไวบ์", "สถาปนิกงีบ"], pi: 1 },
+      { q: "สายลับ FBI คิดว่าคุณ:", options: ["บ้า", "น่าเบื่อจริงๆ", "น่าเป็นห่วง", "งานที่ชอบที่สุด"], pi: 3 },
+      { q: "ความคิดตอนตี 3:", options: ["ถ้าแรงโน้มถ่วงหยุด", "ควรทักแฟนเก่า", "ฉันมีจริงไหม", "อยากกินชีส"], pi: 3 },
+      { q: "คำติดปาก:", options: ["มันก็คือมัน", "ไม่มีความคิดในหัว", "เอาเถอะ—", "บ้าไปแล้ว"], pi: 0 },
+      { q: "ในหนังสยองขวัญคุณจะ:", options: ["ตายก่อน", "รอดคนสุดท้าย", "เป็นฆาตกร", "สะดุดล้มทันที"], pi: 3 },
+      { q: "นิสัย toxic ของคุณ:", options: ["ซินโดรมตัวเอก", "คิดมากทุกเรื่อง", "หัวเราะผิดจังหวะ", "บอก 'ไว้เจอกัน' แต่ไม่เจอ"], pi: 1 },
+    ],
     '36questions': [
       { q: "ถ้าเชิญใครก็ได้มาทานข้าวเย็น จะเชิญใคร?", options: ["ฮีโร่ในวัยเด็ก", "บุคคลในประวัติศาสตร์", "คนที่ขาดการติดต่อ", "คนดังที่ชื่นชม"], pi: 1 },
       { q: "อยากมีชื่อเสียงไหม? แบบไหน?", options: ["ใช่ — ด้วยความสามารถ", "ใช่ — เพื่อสร้างความเปลี่ยนแปลง", "อาจจะ — แค่นิดหน่อย", "ไม่ — ชอบความเป็นส่วนตัว"], pi: 1 },
@@ -2436,9 +2617,7 @@ let questions = getQuestions('couples');
 function showAuth(target) {
   afterAuthTarget = target;
   if (currentUser) {
-    // Already logged in
     goTo(afterAuthTarget);
-    if (afterAuthTarget === 'home') loadHomeSessions();
     return;
   }
   goTo('auth');
@@ -2476,7 +2655,6 @@ async function doAuth() {
     }
 
     goTo(afterAuthTarget);
-    if (afterAuthTarget === 'home') loadHomeSessions();
   } catch (e) {
     err.textContent = 'connection error, try again';
   } finally {
@@ -2489,6 +2667,19 @@ async function doAuth() {
 document.getElementById('authUsername')?.addEventListener('keydown', e => {
   if (e.key === 'Enter') doAuth();
 });
+
+function switchUser() {
+  currentUser = null;
+  currentSession = null;
+  localStorage.removeItem('bs-user');
+  localStorage.removeItem('bs-user-id');
+  stopPolling();
+  document.getElementById('authUsername').value = '';
+  document.getElementById('authError').textContent = '';
+  afterAuthTarget = 'home';
+  goTo('auth');
+  setTimeout(() => document.getElementById('authUsername')?.focus(), 300);
+}
 
 // ==================== HOME SESSIONS ====================
 async function loadHomeSessions() {
@@ -2511,7 +2702,7 @@ async function loadHomeSessions() {
       return;
     }
 
-    const packEmojis = { couples: '💕', bestfriends: '👯', deeptalk: '🌊', coworkers: '💼', '36questions': '❤️‍🔥' };
+    const packEmojis = { couples: '💕', bestfriends: '👯', deeptalk: '🌊', coworkers: '💼', '36questions': '❤️‍🔥', hottakes: '🌶️', redflags: '🚩', chaotic: '🎲' };
 
     let html = '';
     const active = sessions.filter(s => s.status !== 'complete');
@@ -2639,8 +2830,32 @@ function shareInvite(method) {
 // ==================== JOIN VIA URL ====================
 async function handleJoinCode(code) {
   try {
+    // First check session status
+    const check = await blindApi.getSession(code);
+    if (check.error) { alert('Session not found'); goTo('home'); return; }
+
+    const session = check.session;
+
+    // If already complete, just show results
+    if (session.status === 'complete') {
+      viewResults(code);
+      return;
+    }
+
+    // If user already submitted for this session, go to waiting
+    if (session.user_submitted) {
+      currentSession = session;
+      selectedPackKey = session.pack_key;
+      questions = getQuestions(session.pack_key);
+      goTo('waiting');
+      document.getElementById('waitingCode').textContent = session.code;
+      startPolling();
+      return;
+    }
+
+    // Join the session
     const data = await blindApi.joinSession(code);
-    if (data.error) { alert(data.error); goTo('home'); loadHomeSessions(); return; }
+    if (data.error) { alert(data.error); goTo('home'); return; }
 
     currentSession = data.session;
     selectedPackKey = currentSession.pack_key;
@@ -2673,7 +2888,12 @@ renderPacksGrid();
 function goTo(screenId) {
   const prev = document.getElementById(currentScreen);
   const next = document.getElementById(screenId);
-  if (!next || currentScreen === screenId) return;
+  if (!next) return;
+  if (currentScreen === screenId) {
+    // Allow re-triggering side effects for home
+    if (screenId === 'home') { stopPolling(); loadHomeSessions(); }
+    return;
+  }
 
   prev.classList.remove('active');
   prev.classList.add('slide-out');
@@ -2684,8 +2904,8 @@ function goTo(screenId) {
     currentScreen = screenId;
 
     if (screenId === 'quiz') renderQuestion();
-    if (screenId === 'results') animateResults();
-    if (screenId === 'home') { updateNav('home'); loadHomeSessions(); stopPolling(); }
+    if (screenId === 'results') { /* receipt built by caller */ }
+    if (screenId === 'home') { updateNav('home'); stopPolling(); loadHomeSessions(); }
     if (screenId === 'packs') { updateNav('packs'); renderPacksGrid(); }
   }, 200);
 }
@@ -2829,10 +3049,6 @@ function startPolling() {
       const s = data.session;
       currentSession = s;
 
-      if (s.partner_id && !s.partner_username) {
-        document.getElementById('waitingStatus').textContent = 'partner joined, answering...';
-      }
-
       if (s.status === 'complete' || (s.user_submitted && s.partner_submitted)) {
         stopPolling();
         document.getElementById('waitingStatus').textContent = 'both done!';
@@ -2843,7 +3059,10 @@ function startPolling() {
       } else if (s.partner_submitted) {
         document.getElementById('waitingStatus').textContent = 'partner is done! waiting for you...';
       } else if (s.partner_id) {
-        document.getElementById('waitingStatus').textContent = 'partner is answering...';
+        const pName = s.creator_id === currentUser?.id ? s.partner_username : s.creator_username;
+        document.getElementById('waitingStatus').textContent = (pName || 'partner') + ' is answering...';
+        document.getElementById('waitingDesc').innerHTML =
+          `waiting for <strong style="color:var(--text)">${pName || 'partner'}</strong> to finish answering...`;
       } else {
         document.getElementById('waitingStatus').textContent = 'waiting for partner to join...';
       }
@@ -2876,11 +3095,12 @@ function runCountdown() {
       setTimeout(showNum, 800);
     } else {
       // Skip per-card reveal, go straight to receipt
-      goTo('results');
       if (currentSession) {
-        setTimeout(() => buildReceiptFromApi(currentSession.code), 300);
+        goTo('results');
+        buildReceiptFromApi(currentSession.code);
       } else {
-        setTimeout(buildReceipt, 300);
+        goTo('results');
+        buildReceipt();
       }
     }
   }
