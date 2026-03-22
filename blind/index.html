@@ -1583,6 +1583,9 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
         <span id="homeUsername" style="font-size:13px;color:var(--text-dim)"></span>
       </div>
       <div class="home-actions">
+        <button class="theme-toggle" onclick="cycleLang()" title="Language" id="langCycleBtn" style="font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif">
+          <span id="langCycleFlag"></span>
+        </button>
         <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
           <span class="icon-moon">🌙</span>
           <span class="icon-sun">☀️</span>
@@ -2096,6 +2099,7 @@ const i18n = {
     document.documentElement.setAttribute('lang', lang);
     this.applyAll();
     this.renderSelector();
+    if (typeof updateLangCycleBtn === 'function') updateLangCycleBtn();
     // Re-render dynamic content
     if (typeof renderPacksGrid === 'function') renderPacksGrid();
     if (typeof getQuestions === 'function') {
@@ -2125,6 +2129,7 @@ const i18n = {
     document.documentElement.setAttribute('lang', this.current);
     this.applyAll();
     this.renderSelector();
+    if (typeof updateLangCycleBtn === 'function') updateLangCycleBtn();
   }
 };
 
@@ -2135,6 +2140,18 @@ let currentAccent = localStorage.getItem('bs-accent') || 'sunset';
 function initTheme() {
   setTheme(currentThemeMode, true);
   setAccent(currentAccent, true);
+}
+
+function cycleLang() {
+  const codes = Object.keys(i18n.languages);
+  const idx = codes.indexOf(i18n.current);
+  const next = codes[(idx + 1) % codes.length];
+  i18n.setLanguage(next);
+}
+
+function updateLangCycleBtn() {
+  const flag = document.getElementById('langCycleFlag');
+  if (flag) flag.textContent = i18n.languages[i18n.current]?.flag || '🌐';
 }
 
 function toggleTheme() {
