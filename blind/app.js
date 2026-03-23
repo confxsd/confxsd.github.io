@@ -770,16 +770,13 @@ function renderThisOrThat(body, q) {
   const opts = q.options.slice(0, 2); // VS always uses first 2 options
   const s = selectedAnswers[currentQuestion];
   body.innerHTML = `
-    <div class="question-card" key="${currentQuestion}">
-      <div class="mode-badge">${MODE_LABELS.thisOrThat}</div>
+    <div class="tot-layout" key="${currentQuestion}">
       <div class="question-text" style="font-size:19px">${q.q}</div>
-      <div class="tot-container">
-        <div class="tot-matchup tot-single">
-          ${opts.map((opt, i) =>
-            `<div class="tot-side ${s === i ? 'selected' : (s !== undefined && s !== i ? 'dimmed' : '')}"
-                  onclick="selectTot(${currentQuestion}, ${i})">${opt}</div>`
-          ).join('<div class="tot-vs">VS</div>')}
-        </div>
+      <div class="tot-matchup tot-single">
+        ${opts.map((opt, i) =>
+          `<div class="tot-side ${s === i ? 'selected' : (s !== undefined && s !== i ? 'dimmed' : '')}"
+                onclick="selectTot(${currentQuestion}, ${i})">${opt}</div>`
+        ).join('<div class="tot-vs">VS</div>')}
       </div>
     </div>`;
 }
@@ -1490,22 +1487,35 @@ async function buildReceiptFromApi(code) {
     const partnerName = isCreator ? s.partner_username : s.creator_username;
 
     // Build reveal data from real answers — compare by index, display in viewer's language
-    // Helper: parse answer as option index if it's a number (int or float like 0.0)
+    // Helper: parse answer — handles single index, array of indices, or string
     function toIdx(raw) {
       if (typeof raw === 'number') return Math.round(raw);
       if (typeof raw === 'string' && /^\d+(\.\d+)?$/.test(raw.trim())) return Math.round(parseFloat(raw));
       return null;
     }
+    function resolveAnswer(raw, q) {
+      if (Array.isArray(raw)) {
+        const texts = raw.map(r => {
+          const idx = toIdx(r);
+          return idx != null && q.options[idx] ? q.options[idx] : String(r);
+        });
+        return { text: texts.join(', '), indices: raw.map(r => toIdx(r)) };
+      }
+      const idx = toIdx(raw);
+      const text = idx != null && q.options[idx] ? q.options[idx] : String(raw);
+      return { text, indices: idx != null ? [idx] : [] };
+    }
     revealData = questions.map((q, i) => {
       const qAnswers = answers[i] || {};
       const rawUser = qAnswers[myId] != null ? qAnswers[myId] : (selectedAnswers[i] != null ? selectedAnswers[i] : '?');
       const rawPartner = qAnswers[partnerId] != null ? qAnswers[partnerId] : '?';
-      const userIdx = toIdx(rawUser);
-      const partnerIdx = toIdx(rawPartner);
-      const userAns = userIdx != null && q.options[userIdx] ? q.options[userIdx] : String(rawUser);
-      const partnerAns = partnerIdx != null && q.options[partnerIdx] ? q.options[partnerIdx] : String(rawPartner);
-      const matched = (userIdx != null && partnerIdx != null) ? userIdx === partnerIdx : userAns === partnerAns;
-      return { q: q.q, userAns, partnerAns, matched };
+      const user = resolveAnswer(rawUser, q);
+      const partner = resolveAnswer(rawPartner, q);
+      // Match: any overlap between user's and partner's selected indices
+      const matched = user.indices.length && partner.indices.length
+        ? user.indices.some(idx => partner.indices.includes(idx))
+        : user.text === partner.text;
+      return { q: q.q, userAns: user.text, partnerAns: partner.text, matched };
     });
 
     buildReceiptWithName(partnerName || 'partner');

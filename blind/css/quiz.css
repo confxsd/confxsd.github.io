@@ -152,19 +152,25 @@
 }
 
 /* ===== MODE: THIS OR THAT (2-card VS) ===== */
-.tot-container {
+.tot-layout {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(40px) rotate(2deg);
+  animation: cardIn 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 .tot-matchup {
   display: flex;
   gap: 10px;
-  flex: 1;
-  min-height: 0;
+  width: 100%;
+  align-items: stretch;
 }
-.tot-matchup.tot-single {
+.tot-matchup.tot-single .tot-side {
   min-height: 180px;
 }
 .tot-side {
