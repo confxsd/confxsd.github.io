@@ -451,40 +451,9 @@ function setPackMode(mode) {
   document.querySelectorAll('.mode-toggle-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.mode === mode);
   });
-  // Reset category filter
-  activePackFilter = 'all';
-  renderPacksFilters();
   renderPacksFeatured();
+  renderCollections();
   renderPacksGridCards();
-  // Hide/show featured and section label based on mode
-  const featuredSection = document.getElementById('packsFeaturedSection');
-  const sectionLabel = document.querySelector('.packs-section-label');
-  const hasFeatured = packDefs.filter(p => p.featured && (mode === 'self' ? p.solo : !p.solo)).length > 0;
-  if (featuredSection) featuredSection.style.display = hasFeatured ? '' : 'none';
-  if (sectionLabel) sectionLabel.style.display = '';
-}
-
-// Render filter pills — only show categories relevant to the active mode
-function renderPacksFilters() {
-  const el = document.getElementById('packsFilters');
-  if (!el) return;
-  const isSelf = activePackMode === 'self';
-  const relevantPacks = packDefs.filter(p => isSelf ? p.solo : !p.solo);
-  const relevantCats = new Set(relevantPacks.map(p => p.cat));
-  const cats = packCategories.filter(c => c.key === 'all' || relevantCats.has(c.key));
-  el.innerHTML = cats.map(c =>
-    `<button class="filter-pill${c.key === activePackFilter ? ' active' : ''}" onclick="filterPacks('${c.key}')">${c.icon ? c.icon + ' ' : ''}${i18n.t(c.labelKey)}</button>`
-  ).join('');
-}
-
-function filterPacks(catKey) {
-  activePackFilter = catKey;
-  renderPacksFilters();
-  renderPacksGridCards();
-  const featuredSection = document.getElementById('packsFeaturedSection');
-  const sectionLabel = document.querySelector('.packs-section-label');
-  if (featuredSection) featuredSection.style.display = catKey === 'all' ? '' : 'none';
-  if (sectionLabel) sectionLabel.style.display = '';
 }
 
 // Render featured carousel
@@ -508,15 +477,99 @@ function renderPacksFeatured() {
   ).join('');
 }
 
-// Render pack list cards
+// Render collection cards
+function renderCollections() {
+  const grid = document.getElementById('collectionsGrid');
+  if (!grid) return;
+  const isSelf = activePackMode === 'self';
+  const collections = packCollections.filter(c => isSelf ? c.mode === 'self' : c.mode === 'partner');
+  grid.innerHTML = collections.map((c, idx) => {
+    const deckCount = c.packs.length;
+    const totalPlays = c.packs.reduce((sum, key) => {
+      const def = packDefs.find(p => p.key === key);
+      if (!def) return sum;
+      const num = parseFloat(def.plays.replace('k', ''));
+      return sum + num;
+    }, 0);
+    const badgeHtml = c.badge
+      ? `<span class="coll-badge badge-${c.badge}">${i18n.t('badge_' + c.badge)}</span>`
+      : '';
+    const emojiPreview = c.packs.slice(0, 3).map(key => {
+      const def = packDefs.find(p => p.key === key);
+      return def ? def.emoji : '';
+    }).join('');
+    return `<div class="collection-card" style="animation-delay:${idx * 0.06}s" onclick="openCollection('${c.key}')">
+      <div class="coll-card-bg" style="background:linear-gradient(135deg,${c.gradient[0]},${c.gradient[1]})"></div>
+      <div class="coll-card-content">
+        <div class="coll-card-top">
+          <span class="coll-emoji">${c.emoji}</span>
+          ${badgeHtml}
+        </div>
+        <div class="coll-card-title">${i18n.t(c.nameKey)}</div>
+        <div class="coll-card-desc">${i18n.t(c.descKey)}</div>
+        <div class="coll-card-footer">
+          <span class="coll-deck-count">${deckCount} ${i18n.t('coll_decks')}</span>
+          <span class="coll-preview-emojis">${emojiPreview}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Open a collection detail screen
+let currentCollectionKey = null;
+function openCollection(key) {
+  currentCollectionKey = key;
+  const coll = packCollections.find(c => c.key === key);
+  if (!coll) return;
+  goTo('collectionDetail');
+}
+
+function renderCollectionDetail() {
+  const coll = packCollections.find(c => c.key === currentCollectionKey);
+  if (!coll) return;
+
+  const header = document.getElementById('collDetailHeader');
+  const grid = document.getElementById('collDetailGrid');
+
+  header.innerHTML = `
+    <div class="coll-detail-hero" style="background:linear-gradient(135deg,${coll.gradient[0]},${coll.gradient[1]})">
+      <button class="btn-icon coll-back-btn" onclick="goTo('packs')">←</button>
+      <div class="coll-hero-emoji">${coll.emoji}</div>
+      <h2 class="coll-hero-title">${i18n.t(coll.nameKey)}</h2>
+      <p class="coll-hero-desc">${i18n.t(coll.descKey)}</p>
+      <div class="coll-hero-meta">
+        <span>${coll.packs.length} ${i18n.t('coll_decks')}</span>
+      </div>
+    </div>
+  `;
+
+  const packs = coll.packs.map(key => packDefs.find(p => p.key === key)).filter(Boolean);
+  grid.innerHTML = packs.map((p, idx) => {
+    const badgeHtml = p.badge
+      ? `<span class="pack-badge badge-${p.badge}">${i18n.t('badge_' + p.badge)}</span>`
+      : '';
+    return `<div class="pack-card glass" style="animation-delay:${idx * 0.04}s" onclick="selectPack('${p.key}')">
+      <div class="pack-emoji">${p.emoji}</div>
+      <div class="pack-info">
+        <div class="pack-title">${i18n.t(p.nameKey)}</div>
+        <div class="pack-meta-row">
+          <span class="pack-plays">${p.plays} ${i18n.t('packs_played')}</span>
+          <span class="pack-count">${i18n.t(p.countKey)}</span>
+          ${badgeHtml}
+        </div>
+      </div>
+      <span class="pack-arrow">›</span>
+    </div>`;
+  }).join('');
+}
+
+// Render all packs list (below collections)
 function renderPacksGridCards() {
   const grid = document.getElementById('packsGrid');
   if (!grid) return;
   const isSelf = activePackMode === 'self';
   let filtered = packDefs.filter(p => isSelf ? p.solo : !p.solo);
-  if (activePackFilter !== 'all') {
-    filtered = filtered.filter(p => p.cat === activePackFilter);
-  }
   grid.innerHTML = filtered.map((p, idx) => {
     const badgeHtml = p.badge
       ? `<span class="pack-badge badge-${p.badge}">${i18n.t('badge_' + p.badge)}</span>`
@@ -538,8 +591,8 @@ function renderPacksGridCards() {
 
 // Full packs render
 function renderPacksGrid() {
-  renderPacksFilters();
   renderPacksFeatured();
+  renderCollections();
   renderPacksGridCards();
 }
 renderPacksGrid();
@@ -567,6 +620,7 @@ function goTo(screenId) {
     if (screenId === 'results') { /* receipt built by caller */ }
     if (screenId === 'home') { updateNav('home'); stopPolling(); loadHomeSessions(); }
     if (screenId === 'packs') { updateNav('packs'); renderPacksGrid(); }
+    if (screenId === 'collectionDetail') { updateNav('packs'); renderCollectionDetail(); }
   }, 200);
 }
 
