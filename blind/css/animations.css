@@ -138,13 +138,6 @@
   50% { transform: translateY(-3px); }
 }
 
-/* Collection hero orb drift */
-@keyframes collOrbFloat {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(10px, -15px) scale(1.05); }
-  66% { transform: translate(-8px, 8px) scale(0.95); }
-}
-
 /* Spirit ring spin */
 @keyframes spiritSpin {
   0% { transform: rotate(0deg); }

@@ -561,16 +561,15 @@ function renderCollectionDetail() {
 
   header.innerHTML = `
     <div class="coll-detail-hero" style="--coll-g1:${coll.gradient[0]};--coll-g2:${coll.gradient[1]}">
-      <div class="coll-hero-bg"></div>
-      <div class="coll-hero-grain"></div>
-      <div class="coll-hero-orb orb-1"></div>
-      <div class="coll-hero-orb orb-2"></div>
       <button class="btn-icon coll-back-btn" onclick="goTo('packs')">←</button>
-      <div class="coll-hero-emoji">${coll.emoji}</div>
+      <div class="coll-hero-icon-wrap">
+        <div class="coll-hero-icon-glow"></div>
+        <div class="coll-hero-icon">${coll.emoji}</div>
+      </div>
       <h2 class="coll-hero-title">${i18n.t(coll.nameKey)}</h2>
       <p class="coll-hero-desc">${i18n.t(coll.descKey)}</p>
-      <div class="coll-hero-meta">
-        <span>${coll.packs.length} ${i18n.t('coll_decks')}</span>
+      <div class="coll-hero-chips">
+        <span class="coll-chip">${coll.packs.length} ${i18n.t('coll_decks')}</span>
       </div>
     </div>
   `;
