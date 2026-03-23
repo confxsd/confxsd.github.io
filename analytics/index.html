@@ -281,8 +281,10 @@
       <h1><a href="../">confxsd</a> <span>/</span> analytics</h1>
       <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
         <div class="site-filter">
-          <button data-site="" class="active">All</button>
-          <button data-site="/vhunter/">VHunter</button>
+          <button data-site="" data-host="" class="active">All</button>
+          <button data-site="" data-host="confxsd.github.io">confxsd</button>
+          <button data-site="/vhunter/" data-host="confxsd.github.io">VHunter</button>
+          <button data-site="" data-host="blindside.to">Blindside</button>
         </div>
         <div class="controls">
           <button data-days="7">7d</button>
@@ -302,6 +304,7 @@
     const API = 'https://api.rome.markets/api/analytics';
     let currentDays = 30;
     let currentSite = '';
+    let currentHost = '';
     let chartMode = 'visitors'; // or 'views'
 
     async function load(days) {
@@ -310,6 +313,7 @@
 
       try {
         let url = `${API}?days=${days}`;
+        if (currentHost) url += `&hostname=${encodeURIComponent(currentHost)}`;
         if (currentSite) url += `&pathPrefix=${encodeURIComponent(currentSite)}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error('Failed to load');
@@ -507,6 +511,7 @@
         document.querySelectorAll('.site-filter button').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentSite = btn.dataset.site;
+        currentHost = btn.dataset.host;
         load(currentDays);
       });
     });
