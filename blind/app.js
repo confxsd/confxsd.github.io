@@ -122,16 +122,43 @@ function isSoloPack(key) {
   return def && def.solo === true;
 }
 
-// Get current language questions for a pack
+// Get current language questions for a pack, sorted so swipe-format questions come last
 function getQuestions(packKey) {
   const lang = i18n.current;
   const pack = questionPacks[lang]?.[packKey] || questionPacks.en[packKey];
-  return pack.map(q => ({
+  const mapped = pack.map(q => ({
     q: q.q,
     options: q.options,
     partnerAnswerIndex: q.pi,
-    traits: q.traits || null
+    traits: q.traits || null,
+    format: q.format || null
   }));
+  // Sort: non-swipe first, swipe last
+  const normal = mapped.filter(q => q.format !== 'swipe');
+  const swipe = mapped.filter(q => q.format === 'swipe');
+  return [...normal, ...swipe];
+}
+
+// Check if a question index has a valid answer (handles both single and multi-select)
+function hasAnswer(qi) {
+  const a = selectedAnswers[qi];
+  if (Array.isArray(a)) return a.length > 0;
+  return a !== undefined && a !== null;
+}
+
+// Get display text for an answer (handles both single index and array of indices)
+function getAnswerText(qi, q) {
+  const a = selectedAnswers[qi];
+  if (a == null) return '—';
+  if (Array.isArray(a)) return a.map(idx => q.options[idx]).join(', ');
+  return q.options[a] || '—';
+}
+
+// Check if a multi-select answer includes the partner's pick
+function answerMatches(qi, partnerIdx) {
+  const a = selectedAnswers[qi];
+  if (Array.isArray(a)) return a.includes(partnerIdx);
+  return a === partnerIdx;
 }
 
 let questions = getQuestions('couples');
@@ -533,7 +560,11 @@ function renderCollectionDetail() {
   const grid = document.getElementById('collDetailGrid');
 
   header.innerHTML = `
-    <div class="coll-detail-hero" style="background:linear-gradient(135deg,${coll.gradient[0]},${coll.gradient[1]})">
+    <div class="coll-detail-hero" style="--coll-g1:${coll.gradient[0]};--coll-g2:${coll.gradient[1]}">
+      <div class="coll-hero-bg"></div>
+      <div class="coll-hero-grain"></div>
+      <div class="coll-hero-orb orb-1"></div>
+      <div class="coll-hero-orb orb-2"></div>
       <button class="btn-icon coll-back-btn" onclick="goTo('packs')">←</button>
       <div class="coll-hero-emoji">${coll.emoji}</div>
       <h2 class="coll-hero-title">${i18n.t(coll.nameKey)}</h2>
@@ -668,6 +699,7 @@ function startQuizAsCreator() {
 
 // Quiz — Mini-game modes
 const QUIZ_MODES = ['classic', 'thisOrThat', 'bubblePop', 'blitz', 'swipe'];
+const FORMAT_TO_MODE = { vs: 'thisOrThat', bubble: 'bubblePop', swipe: 'swipe' };
 const MODE_LABELS = { classic: '✏️', thisOrThat: '⚔️ This or That', bubblePop: '🫧 Bubble Pop', blitz: '⚡ Blitz', swipe: '👆 Swipe Pick' };
 let questionModes = [];
 let blitzInterval = null;
@@ -675,9 +707,17 @@ let blitzInterval = null;
 function assignQuestionModes() {
   questionModes = [];
   for (let i = 0; i < questions.length; i++) {
-    if (i === 0) { questionModes.push('classic'); continue; }
-    const av = QUIZ_MODES.filter(m => m !== questionModes[i - 1]);
-    questionModes.push(av[Math.floor(Math.random() * av.length)]);
+    const q = questions[i];
+    // If question has explicit format, use it
+    if (q.format && FORMAT_TO_MODE[q.format]) {
+      questionModes.push(FORMAT_TO_MODE[q.format]);
+      continue;
+    }
+    // Otherwise alternate between classic and blitz, no repeats
+    if (i === 0 || questionModes.length === 0) { questionModes.push('classic'); continue; }
+    const last = questionModes[questionModes.length - 1];
+    const available = ['classic', 'blitz'].filter(m => m !== last);
+    questionModes.push(available[Math.floor(Math.random() * available.length)]);
   }
 }
 
@@ -694,7 +734,7 @@ function renderQuestion() {
   const isLast = currentQuestion === total - 1;
   const nextBtn = document.getElementById('quizNextBtn');
   nextBtn.textContent = isLast ? i18n.t('quiz_submit') : i18n.t('quiz_next');
-  nextBtn.disabled = selectedAnswers[currentQuestion] === undefined;
+  nextBtn.disabled = !hasAnswer(currentQuestion);
   document.getElementById('quizBackBtn').style.display = currentQuestion > 0 ? '' : 'none';
 
   if (blitzInterval) { clearInterval(blitzInterval); blitzInterval = null; }
@@ -726,24 +766,19 @@ function renderClassic(body, q) {
     </div>`;
 }
 
-// --- THIS OR THAT ---
+// --- THIS OR THAT (2-option VS) ---
 function renderThisOrThat(body, q) {
-  const opts = q.options, s = selectedAnswers[currentQuestion];
+  const opts = q.options.slice(0, 2); // VS always uses first 2 options
+  const s = selectedAnswers[currentQuestion];
   body.innerHTML = `
     <div class="question-card" key="${currentQuestion}">
       <div class="mode-badge">${MODE_LABELS.thisOrThat}</div>
       <div class="question-text" style="font-size:19px">${q.q}</div>
       <div class="tot-container">
-        <div class="tot-matchup">
-          ${opts.slice(0, 2).map((opt, i) =>
+        <div class="tot-matchup tot-single">
+          ${opts.map((opt, i) =>
             `<div class="tot-side ${s === i ? 'selected' : (s !== undefined && s !== i ? 'dimmed' : '')}"
                   onclick="selectTot(${currentQuestion}, ${i})">${opt}</div>`
-          ).join('<div class="tot-vs">VS</div>')}
-        </div>
-        <div class="tot-matchup">
-          ${opts.slice(2).map((opt, i) =>
-            `<div class="tot-side ${s === (i+2) ? 'selected' : (s !== undefined && s !== (i+2) ? 'dimmed' : '')}"
-                  onclick="selectTot(${currentQuestion}, ${i+2})">${opt}</div>`
           ).join('<div class="tot-vs">VS</div>')}
         </div>
       </div>
@@ -759,7 +794,7 @@ function selectTot(qi, ans) {
   });
 }
 
-// --- BUBBLE POP ---
+// --- BUBBLE POP (multi-select) ---
 function renderBubblePop(body, q) {
   const pos = [
     { top: '5%', left: '8%', size: 120 },
@@ -768,15 +803,16 @@ function renderBubblePop(body, q) {
     { top: '48%', left: '52%', size: 125 },
     { top: '28%', left: '30%', size: 105 }
   ];
-  const s = selectedAnswers[currentQuestion];
+  const sel = Array.isArray(selectedAnswers[currentQuestion]) ? selectedAnswers[currentQuestion] : [];
   body.innerHTML = `
     <div class="question-card" key="${currentQuestion}">
       <div class="mode-badge">${MODE_LABELS.bubblePop}</div>
       <div class="question-text" style="font-size:19px">${q.q}</div>
+      <div class="bubble-hint">${i18n.t('bubble_hint') || 'tap all that apply'}</div>
       <div class="bubble-field">
         ${q.options.map((opt, oi) => {
           const p = pos[oi];
-          return `<div class="bubble ${s === oi ? 'selected' : ''} ${s !== undefined && s !== oi ? 'dimmed' : ''}"
+          return `<div class="bubble ${sel.includes(oi) ? 'selected' : ''}"
                        style="top:${p.top};left:${p.left};width:${p.size}px;height:${p.size}px"
                        onclick="selectBubble(${currentQuestion}, ${oi})">${opt}</div>`;
         }).join('')}
@@ -784,12 +820,15 @@ function renderBubblePop(body, q) {
     </div>`;
 }
 function selectBubble(qi, ans) {
-  selectedAnswers[qi] = ans;
-  document.getElementById('quizNextBtn').disabled = false;
+  if (!Array.isArray(selectedAnswers[qi])) selectedAnswers[qi] = [];
+  const arr = selectedAnswers[qi];
+  const idx = arr.indexOf(ans);
+  if (idx >= 0) arr.splice(idx, 1);
+  else arr.push(ans);
+  document.getElementById('quizNextBtn').disabled = arr.length === 0;
   document.querySelectorAll('.bubble').forEach((el, i) => {
-    el.classList.remove('selected', 'dimmed');
-    if (i === ans) el.classList.add('selected');
-    else el.classList.add('dimmed');
+    el.classList.remove('selected');
+    if (arr.includes(i)) el.classList.add('selected');
   });
 }
 
@@ -837,96 +876,39 @@ function renderBlitz(body, q) {
   }, 100);
 }
 
-// --- SWIPE ---
-let swipeDeckData = [];
+// --- SWIPE PICK (full-card multi-select list) ---
 function renderSwipe(body, q) {
-  swipeDeckData = q.options.map((opt, i) => ({ text: opt, index: i }));
-  const prev = selectedAnswers[currentQuestion];
+  const sel = Array.isArray(selectedAnswers[currentQuestion]) ? selectedAnswers[currentQuestion] : [];
   body.innerHTML = `
-    <div class="question-card" key="${currentQuestion}">
+    <div class="question-card swipe-card-question" key="${currentQuestion}">
       <div class="mode-badge">${MODE_LABELS.swipe}</div>
       <div class="question-text" style="font-size:19px">${q.q}</div>
-      <div class="swipe-deck" id="swipeDeck"></div>
-      <div class="swipe-hint">\u2190 skip \u00B7 swipe right to pick \u2192</div>
+      <div class="swipe-hint">${i18n.t('swipe_hint') || 'pick all that fit'}</div>
+      <div class="swipe-list" id="swipeList">
+        ${q.options.map((opt, oi) => `
+          <div class="swipe-list-card ${sel.includes(oi) ? 'selected' : ''}"
+               onclick="toggleSwipeCard(${currentQuestion}, ${oi})" data-idx="${oi}">
+            <span class="swipe-list-text">${opt}</span>
+            <span class="swipe-list-check">${sel.includes(oi) ? '✓' : ''}</span>
+          </div>
+        `).join('')}
+      </div>
     </div>`;
-  const deck = document.getElementById('swipeDeck');
-  for (let i = swipeDeckData.length - 1; i >= 0; i--) {
-    const card = document.createElement('div');
-    card.className = 'swipe-card';
-    card.textContent = swipeDeckData[i].text;
-    card.style.zIndex = swipeDeckData.length - i;
-    const d = swipeDeckData.length - 1 - i;
-    card.style.transform = `scale(${1 - d * 0.04}) translateY(${d * 6}px)`;
-    card.dataset.optIndex = i;
-    deck.appendChild(card);
-  }
-  if (prev !== undefined) {
-    deck.innerHTML = `<div class="swipe-card" style="border-color:var(--accent-1);box-shadow:var(--card-shadow-hover)">${q.options[prev]}</div>`;
-    return;
-  }
-  initSwipeDeckGestures(deck);
 }
 
-function initSwipeDeckGestures(deck) {
-  const cards = Array.from(deck.querySelectorAll('.swipe-card'));
-  let topIdx = 0;
-  function attachSwipe(card) {
-    let startX = 0, dx = 0, dragging = false;
-    const onStart = (e) => {
-      const pt = e.touches ? e.touches[0] : e;
-      startX = pt.clientX; dragging = true;
-      card.style.transition = 'none';
-    };
-    const onMove = (e) => {
-      if (!dragging) return;
-      const pt = e.touches ? e.touches[0] : e;
-      dx = pt.clientX - startX;
-      card.style.transform = `translateX(${dx}px) rotate(${dx * 0.08}deg)`;
-      if (!card.querySelector('.pick-indicator')) {
-        card.insertAdjacentHTML('afterbegin',
-          '<div class="swipe-indicator pick pick-indicator">PICK</div><div class="swipe-indicator nope nope-indicator">SKIP</div>');
-      }
-      const pi = card.querySelector('.pick-indicator'), ni = card.querySelector('.nope-indicator');
-      if (pi) pi.style.opacity = Math.max(0, Math.min(1, dx / 80));
-      if (ni) ni.style.opacity = Math.max(0, Math.min(1, -dx / 80));
-    };
-    const onEnd = () => {
-      if (!dragging) return;
-      dragging = false;
-      card.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
-      if (dx > 70) {
-        card.style.transform = 'translateX(400px) rotate(20deg)';
-        card.style.opacity = '0';
-        const oi = parseInt(card.dataset.optIndex);
-        selectedAnswers[currentQuestion] = oi;
-        document.getElementById('quizNextBtn').disabled = false;
-        setTimeout(() => {
-          deck.innerHTML = `<div class="swipe-card" style="border-color:var(--accent-1);box-shadow:var(--card-shadow-hover);opacity:0;animation:cardIn 0.3s ease forwards">${swipeDeckData[oi].text}</div>`;
-        }, 250);
-      } else if (dx < -70) {
-        card.style.transform = 'translateX(-400px) rotate(-20deg)';
-        card.style.opacity = '0';
-        topIdx++;
-        if (topIdx >= cards.length) {
-          topIdx = 0;
-          setTimeout(() => { renderSwipe(document.getElementById('quizBody'), questions[currentQuestion]); }, 300);
-        }
-      } else {
-        card.style.transform = '';
-        const pi = card.querySelector('.pick-indicator'), ni = card.querySelector('.nope-indicator');
-        if (pi) pi.style.opacity = '0';
-        if (ni) ni.style.opacity = '0';
-      }
-      dx = 0;
-    };
-    card.addEventListener('touchstart', onStart, { passive: true });
-    card.addEventListener('touchmove', onMove, { passive: true });
-    card.addEventListener('touchend', onEnd);
-    card.addEventListener('mousedown', onStart);
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onEnd);
-  }
-  cards.forEach(c => attachSwipe(c));
+function toggleSwipeCard(qi, ans) {
+  if (!Array.isArray(selectedAnswers[qi])) selectedAnswers[qi] = [];
+  const arr = selectedAnswers[qi];
+  const idx = arr.indexOf(ans);
+  if (idx >= 0) arr.splice(idx, 1);
+  else arr.push(ans);
+  document.getElementById('quizNextBtn').disabled = arr.length === 0;
+  document.querySelectorAll('.swipe-list-card').forEach(el => {
+    const i = parseInt(el.dataset.idx);
+    const isSelected = arr.includes(i);
+    el.classList.toggle('selected', isSelected);
+    el.querySelector('.swipe-list-check').textContent = isSelected ? '✓' : '';
+  });
 }
 
 function selectAnswer(qIndex, answer, el) {
@@ -940,7 +922,7 @@ function selectAnswer(qIndex, answer, el) {
 }
 
 function nextQuestion() {
-  if (selectedAnswers[currentQuestion] === undefined) return;
+  if (!hasAnswer(currentQuestion)) return;
 
   if (currentQuestion === questions.length - 1) {
     // Solo packs skip the confirmation modal — submit directly
@@ -1107,9 +1089,20 @@ async function submitAnswers() {
   goTo('waiting');
   if (currentSession) {
     document.getElementById('waitingCode').textContent = currentSession.code;
+    // Set avatar initials
+    const myName = currentUser?.username || '?';
+    document.getElementById('waitingAvatarYou').textContent = myName.charAt(0).toUpperCase();
     const partner = currentSession.creator_id === currentUser?.id
       ? currentSession.partner_username
       : currentSession.creator_username;
+    const themCircle = document.querySelector('.duo-circle.them');
+    if (partner) {
+      document.getElementById('waitingAvatarThem').textContent = partner.charAt(0).toUpperCase();
+      themCircle.classList.add('active');
+    } else {
+      document.getElementById('waitingAvatarThem').textContent = '?';
+      themCircle.classList.remove('active');
+    }
     document.getElementById('waitingDesc').innerHTML = partner
       ? `waiting for <strong style="color:var(--text)">${partner}</strong> to finish answering...`
       : 'waiting for your partner to join and answer...';
@@ -1142,6 +1135,12 @@ function startPolling() {
         document.getElementById('waitingStatus').textContent = (pName || 'partner') + ' is answering...';
         document.getElementById('waitingDesc').innerHTML =
           `waiting for <strong style="color:var(--text)">${pName || 'partner'}</strong> to finish answering...`;
+        // Activate partner circle
+        const themCircle = document.querySelector('.duo-circle.them');
+        if (themCircle && !themCircle.classList.contains('active')) {
+          document.getElementById('waitingAvatarThem').textContent = (pName || '?').charAt(0).toUpperCase();
+          themCircle.classList.add('active');
+        }
       } else {
         document.getElementById('waitingStatus').textContent = 'waiting for partner to join...';
       }
@@ -1208,9 +1207,18 @@ const diffReactions = [
 function showRevealCards() {
   revealIndex = 0;
   revealData = questions.map((q, i) => {
-    const userIdx = selectedAnswers[i] != null ? selectedAnswers[i] : 0;
+    const raw = selectedAnswers[i];
     const partnerIdx = q.partnerAnswerIndex;
-    return { q: q.q, userAns: q.options[userIdx], partnerAns: q.options[partnerIdx], matched: userIdx === partnerIdx };
+    let userAns, matched;
+    if (Array.isArray(raw)) {
+      userAns = raw.map(idx => q.options[idx]).join(', ');
+      matched = raw.includes(partnerIdx);
+    } else {
+      const userIdx = raw != null ? raw : 0;
+      userAns = q.options[userIdx];
+      matched = userIdx === partnerIdx;
+    }
+    return { q: q.q, userAns, partnerAns: q.options[partnerIdx], matched };
   });
   showRevealCard(0);
 }
@@ -1694,15 +1702,18 @@ const soloResultDefs = {
 };
 
 function buildSoloReceipt() {
-  // Tally trait scores
+  // Tally trait scores (handles both single and multi-select answers)
   const scores = {};
   questions.forEach((q, i) => {
-    const ansIdx = selectedAnswers[i];
-    if (ansIdx == null || !q.traits) return;
-    const traitMap = q.traits[ansIdx];
-    if (!traitMap) return;
-    Object.entries(traitMap).forEach(([trait, val]) => {
-      scores[trait] = (scores[trait] || 0) + val;
+    const raw = selectedAnswers[i];
+    if (raw == null || !q.traits) return;
+    const indices = Array.isArray(raw) ? raw : [raw];
+    indices.forEach(ansIdx => {
+      const traitMap = q.traits[ansIdx];
+      if (!traitMap) return;
+      Object.entries(traitMap).forEach(([trait, val]) => {
+        scores[trait] = (scores[trait] || 0) + val;
+      });
     });
   });
 
@@ -1739,8 +1750,8 @@ function buildSoloReceipt() {
   // Build answer review
   let answersHtml = '';
   questions.forEach((q, i) => {
-    const ansIdx = selectedAnswers[i];
-    const ansText = ansIdx != null ? q.options[ansIdx] : '—';
+    const raw = selectedAnswers[i];
+    const ansText = raw != null ? (Array.isArray(raw) ? raw.map(idx => q.options[idx]).join(', ') : q.options[raw]) : '—';
     answersHtml += `
       <div class="story-chapter">
         <div class="ch-num">${i + 1} ${i18n.t('results_of')} ${questions.length}</div>
@@ -1809,9 +1820,18 @@ function buildSoloReceipt() {
 
 function buildReceipt() {
   const data = revealData.length ? revealData : questions.map((q, i) => {
-    const userIdx = selectedAnswers[i] != null ? selectedAnswers[i] : 0;
+    const raw = selectedAnswers[i];
     const partnerIdx = q.partnerAnswerIndex;
-    return { q: q.q, userAns: q.options[userIdx], partnerAns: q.options[partnerIdx], matched: userIdx === partnerIdx };
+    let userAns, matched;
+    if (Array.isArray(raw)) {
+      userAns = raw.map(idx => q.options[idx]).join(', ');
+      matched = raw.includes(partnerIdx);
+    } else {
+      const userIdx = raw != null ? raw : 0;
+      userAns = q.options[userIdx];
+      matched = userIdx === partnerIdx;
+    }
+    return { q: q.q, userAns, partnerAns: q.options[partnerIdx], matched };
   });
 
   const matches = data.filter(d => d.matched).length;

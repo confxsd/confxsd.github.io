@@ -338,22 +338,45 @@
 .collections-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 16px 10px;
   padding: 0 16px 8px;
 }
 .collection-card {
   position: relative;
   border-radius: var(--radius);
-  overflow: hidden;
+  overflow: visible;
   cursor: pointer;
   transition: transform 0.2s;
-  min-height: 140px;
+  min-height: 180px;
   display: flex;
   opacity: 0;
   transform: translateY(12px);
   animation: packFadeIn 0.4s ease forwards;
 }
 .collection-card:active { transform: scale(0.96); }
+/* Stacked deck lines behind card */
+.collection-card::before,
+.collection-card::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  height: 100%;
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  z-index: -1;
+}
+.collection-card::before {
+  bottom: -6px;
+  opacity: 0.5;
+}
+.collection-card::after {
+  bottom: -3px;
+  left: 2px;
+  right: 2px;
+  opacity: 0.75;
+}
 .coll-card-bg {
   position: absolute;
   inset: 0;
@@ -373,6 +396,7 @@
   border-radius: var(--radius);
   background: var(--card-bg);
   box-shadow: var(--card-shadow);
+  overflow: hidden;
 }
 .coll-card-top {
   display: flex;
@@ -447,16 +471,63 @@
   padding: 20px 24px 24px;
   color: #fff;
   border-radius: 0 0 var(--radius) var(--radius);
+  overflow: hidden;
+  background: var(--bg2);
+}
+/* Soft gradient base — muted, not a full blast */
+.coll-hero-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, var(--coll-g1), var(--coll-g2));
+  opacity: 0.55;
+}
+/* Film grain texture overlay */
+.coll-hero-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+  pointer-events: none;
+}
+/* Floating orbs for depth */
+.coll-hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  pointer-events: none;
+}
+.coll-hero-orb.orb-1 {
+  width: 160px; height: 160px;
+  background: var(--coll-g1);
+  top: -40px; right: -30px;
+  opacity: 0.5;
+  animation: collOrbFloat 6s ease-in-out infinite;
+}
+.coll-hero-orb.orb-2 {
+  width: 120px; height: 120px;
+  background: var(--coll-g2);
+  bottom: -20px; left: -20px;
+  opacity: 0.4;
+  animation: collOrbFloat 8s ease-in-out infinite reverse;
+}
+/* Content above layers */
+.coll-detail-hero > *:not(.coll-hero-bg):not(.coll-hero-grain):not(.coll-hero-orb) {
+  position: relative;
+  z-index: 2;
 }
 .coll-back-btn {
   color: #fff !important;
-  background: rgba(255,255,255,0.15) !important;
-  border: none !important;
+  background: rgba(255,255,255,0.12) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.1) !important;
   margin-bottom: 8px;
 }
 .coll-hero-emoji {
   font-size: 42px;
   margin-bottom: 8px;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
 }
 .coll-hero-title {
   font-family: 'Syne', sans-serif;
@@ -464,6 +535,7 @@
   font-weight: 800;
   letter-spacing: -0.5px;
   margin-bottom: 6px;
+  text-shadow: 0 1px 12px rgba(0,0,0,0.25);
 }
 .coll-hero-desc {
   font-size: 13px;

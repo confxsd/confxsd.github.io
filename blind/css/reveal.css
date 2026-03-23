@@ -37,57 +37,185 @@
   color: var(--text-dim);
 }
 
-/* ===== WAITING — Card table vibes ===== */
+/* ===== WAITING — Duo spirit energy ===== */
 #waiting {
   align-items: center;
   justify-content: center;
-  gap: 28px;
+  gap: 24px;
   padding: 40px 32px;
   text-align: center;
+  overflow: hidden;
 }
-#waiting::before {
-  content: '';
+
+/* Big ambient glow */
+.waiting-duo {
+  position: relative;
+  width: 220px; height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.duo-glow-bg {
   position: absolute;
-  width: 300px; height: 300px;
-  background: radial-gradient(circle, var(--accent-1-glow) 0%, transparent 70%);
-  top: 30%; left: 50%;
-  transform: translateX(-50%);
+  width: 280px; height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    var(--accent-1) 0%,
+    var(--accent-2) 30%,
+    transparent 70%
+  );
+  opacity: 0.12;
+  animation: duoGlowPulse 4s ease-in-out infinite;
   pointer-events: none;
 }
-/* Waiting — two face-down cards orbiting */
-.waiting-anim {
-  position: relative;
-  width: 140px; height: 140px;
-}
-.waiting-anim .orb {
+
+/* Energy beam connecting the two */
+.duo-energy-beam {
   position: absolute;
-  border-radius: var(--radius-sm);
-  animation: orbit 3s ease-in-out infinite;
-  border: 1px solid var(--card-border);
-}
-.waiting-anim .orb-1 {
-  width: 56px; height: 72px;
-  background: var(--accent-1);
-  top: 8px; left: 14px;
-  animation-delay: 0s;
-  box-shadow: var(--card-shadow);
-}
-.waiting-anim .orb-2 {
-  width: 56px; height: 72px;
-  background: var(--card-bg);
-  bottom: 8px; right: 14px;
-  animation-delay: -1.5s;
-  box-shadow: var(--card-shadow);
-  border: 1.5px solid var(--card-border);
-}
-.waiting-anim .orb-line {
-  position: absolute;
-  top: 50%; left: 50%;
+  width: 60px; height: 2px;
+  left: 50%; top: 50%;
   transform: translate(-50%, -50%);
-  width: 32px; height: 1.5px;
-  background: var(--orb-line);
-  border-radius: 1px;
+  background: linear-gradient(90deg, var(--accent-1), var(--accent-2), var(--accent-1));
+  background-size: 200% 100%;
+  border-radius: 2px;
+  animation: beamFlow 2s linear infinite;
+  opacity: 0.5;
+  z-index: 1;
 }
+.duo-energy-beam::before,
+.duo-energy-beam::after {
+  content: '';
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent-1);
+  box-shadow: 0 0 8px var(--accent-1), 0 0 16px var(--accent-1-glow);
+}
+.duo-energy-beam::before { left: -3px; animation: beamDotPulse 1.5s ease-in-out infinite; }
+.duo-energy-beam::after { right: -3px; animation: beamDotPulse 1.5s ease-in-out infinite 0.75s; }
+
+/* Circles */
+.duo-circle {
+  position: relative;
+  width: 100px; height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+.duo-circle.you { margin-right: -10px; }
+.duo-circle.them { margin-left: -10px; }
+
+/* Avatar */
+.duo-avatar {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 22px;
+  position: relative;
+  z-index: 3;
+  border: 3px solid var(--bg);
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.duo-circle.you .duo-avatar {
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  color: white;
+  box-shadow:
+    0 0 20px var(--accent-1-glow),
+    0 4px 12px rgba(0,0,0,0.3);
+}
+.duo-circle.them .duo-avatar {
+  background: var(--surface);
+  color: var(--text-dim);
+  border: 3px dashed var(--dashed-border);
+  box-shadow: var(--card-shadow);
+}
+
+/* Ripple waves expanding outward */
+.duo-ripple {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-1);
+  opacity: 0;
+  animation: rippleExpand 3s ease-out infinite;
+}
+.duo-ripple.r2 {
+  animation-delay: 1.5s;
+}
+.duo-circle.you .duo-ripple { border-color: var(--accent-1); }
+.duo-circle.them .duo-ripple { border-color: var(--text-dim); opacity: 0; animation: rippleExpandDim 3s ease-out infinite; }
+.duo-circle.them .duo-ripple.r2 { animation-delay: 1.5s; }
+
+/* Orbiting dots */
+.duo-orbit-track {
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  animation: spiritSpin 4s linear infinite;
+}
+.duo-orbit-dot {
+  position: absolute;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--accent-1);
+  box-shadow: 0 0 6px var(--accent-1);
+}
+.duo-circle.you .duo-orbit-dot { background: var(--accent-1); box-shadow: 0 0 6px var(--accent-1); }
+.duo-circle.them .duo-orbit-dot { background: var(--text-dim); box-shadow: none; opacity: 0.3; }
+.duo-orbit-dot:first-child { top: 0; left: 50%; transform: translateX(-50%); }
+.duo-orbit-dot.d2 { bottom: 10%; right: 0; }
+.duo-orbit-dot.d3 { bottom: 10%; left: 0; }
+.duo-circle.you .duo-orbit-track { animation-direction: normal; }
+.duo-circle.them .duo-orbit-track { animation-direction: reverse; animation-duration: 5s; }
+
+/* Floating particles */
+.duo-particles {
+  position: absolute;
+  inset: -30px;
+  pointer-events: none;
+  z-index: 0;
+}
+.particle {
+  position: absolute;
+  width: 3px; height: 3px;
+  border-radius: 50%;
+  background: var(--accent-1);
+  opacity: 0;
+  animation: particleFloat 5s ease-in-out infinite;
+}
+.particle.p1 { left: 10%; top: 20%; animation-delay: 0s; }
+.particle.p2 { right: 15%; top: 10%; animation-delay: 0.8s; }
+.particle.p3 { left: 5%; bottom: 30%; animation-delay: 1.6s; }
+.particle.p4 { right: 8%; bottom: 20%; animation-delay: 2.4s; background: var(--accent-2); }
+.particle.p5 { left: 40%; top: 5%; animation-delay: 3.2s; background: var(--accent-2); }
+.particle.p6 { right: 35%; bottom: 10%; animation-delay: 4s; }
+
+/* === Partner joined states === */
+.duo-circle.them.active .duo-avatar {
+  background: linear-gradient(135deg, var(--accent-2), var(--accent-1));
+  color: white;
+  border: 3px solid var(--bg);
+  box-shadow:
+    0 0 20px var(--accent-2-glow),
+    0 4px 12px rgba(0,0,0,0.3);
+}
+.duo-circle.them.active .duo-ripple {
+  border-color: var(--accent-2);
+  animation: rippleExpand 3s ease-out infinite;
+}
+.duo-circle.them.active .duo-ripple.r2 { animation-delay: 1.5s; }
+.duo-circle.them.active .duo-orbit-dot {
+  background: var(--accent-2);
+  box-shadow: 0 0 6px var(--accent-2);
+  opacity: 1;
+}
+.duo-circle.them.active ~ .duo-particles .particle { background: var(--accent-2); }
 .waiting-partner-progress {
   display: flex;
   align-items: center;

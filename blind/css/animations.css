@@ -138,5 +138,54 @@
   50% { transform: translateY(-3px); }
 }
 
+/* Collection hero orb drift */
+@keyframes collOrbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(10px, -15px) scale(1.05); }
+  66% { transform: translate(-8px, 8px) scale(0.95); }
+}
+
+/* Spirit ring spin */
+@keyframes spiritSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Duo glow ambient pulse */
+@keyframes duoGlowPulse {
+  0%, 100% { transform: scale(1); opacity: 0.12; }
+  50% { transform: scale(1.15); opacity: 0.2; }
+}
+
+/* Ripple expanding outward */
+@keyframes rippleExpand {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+@keyframes rippleExpandDim {
+  0% { transform: scale(1); opacity: 0.15; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* Energy beam gradient flow */
+@keyframes beamFlow {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 200% 0%; }
+}
+
+/* Beam endpoint pulse */
+@keyframes beamDotPulse {
+  0%, 100% { transform: translateY(-50%) scale(1); opacity: 0.6; }
+  50% { transform: translateY(-50%) scale(1.5); opacity: 1; }
+}
+
+/* Floating particles */
+@keyframes particleFloat {
+  0% { opacity: 0; transform: translateY(0) scale(0); }
+  20% { opacity: 0.7; transform: translateY(-8px) scale(1); }
+  80% { opacity: 0.4; transform: translateY(-24px) scale(0.8); }
+  100% { opacity: 0; transform: translateY(-32px) scale(0); }
+}
+
 /* Shake utility class */
 .shake { animation: shake 0.4s ease; }
