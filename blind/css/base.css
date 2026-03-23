@@ -1,0 +1,160 @@
+/* ========================================
+   BASE — Reset, Variables, Themes, Typography, Utilities
+   ======================================== */
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ===== THEME VARIABLES (Dark default) ===== */
+:root {
+  --bg: #0a0a0b;
+  --bg2: #131316;
+  --surface: rgba(255,255,255,0.04);
+  --surface-hover: rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.06);
+  --text: #f0f0f0;
+  --text-dim: rgba(255,255,255,0.45);
+  --text-mid: rgba(255,255,255,0.7);
+  --nav-bg: rgba(10,10,11,0.85);
+  --modal-bg: rgba(0,0,0,0.6);
+  --dashed-border: rgba(255,255,255,0.15);
+  --answer-hover-border: rgba(255,255,255,0.12);
+  --orb-line: rgba(255,255,255,0.1);
+
+  /* Accent colors */
+  --accent-1: #7C3AED;
+  --accent-2: #EC4899;
+  --accent-1-glow: rgba(124,58,237,0.3);
+  --accent-2-glow: rgba(236,72,153,0.25);
+  --accent-1-bg: rgba(124,58,237,0.1);
+  --accent-1-border: rgba(124,58,237,0.2);
+  --accent-2-bg: rgba(236,72,153,0.1);
+  --accent-2-border: rgba(236,72,153,0.2);
+
+  /* Semantic */
+  --purple: var(--accent-1);
+  --purple-glow: var(--accent-1-glow);
+  --pink: var(--accent-2);
+  --pink-glow: var(--accent-2-glow);
+  --lime: #84CC16;
+  --lime-glow: rgba(132,204,22,0.25);
+  --orange: #F97316;
+  --cyan: #06B6D4;
+  --match-green: #22c55e;
+  --mismatch-red: #ef4444;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --radius-xs: 8px;
+}
+
+/* ===== LIGHT THEME ===== */
+[data-theme="light"] {
+  --bg: #F5F3F0;
+  --bg2: #FFFFFF;
+  --surface: rgba(0,0,0,0.03);
+  --surface-hover: rgba(0,0,0,0.06);
+  --border: rgba(0,0,0,0.07);
+  --text: #1a1a1a;
+  --text-dim: rgba(0,0,0,0.4);
+  --text-mid: rgba(0,0,0,0.65);
+  --nav-bg: rgba(245,243,240,0.88);
+  --modal-bg: rgba(255,255,255,0.7);
+  --dashed-border: rgba(0,0,0,0.15);
+  --answer-hover-border: rgba(0,0,0,0.15);
+  --orb-line: rgba(0,0,0,0.08);
+}
+
+/* ===== ACCENT THEMES ===== */
+[data-accent="sunset"] {
+  --accent-1: #7C3AED; --accent-2: #EC4899;
+  --accent-1-glow: rgba(124,58,237,0.3); --accent-2-glow: rgba(236,72,153,0.25);
+  --accent-1-bg: rgba(124,58,237,0.1); --accent-1-border: rgba(124,58,237,0.2);
+  --accent-2-bg: rgba(236,72,153,0.1); --accent-2-border: rgba(236,72,153,0.2);
+}
+[data-accent="ocean"] {
+  --accent-1: #0EA5E9; --accent-2: #6366F1;
+  --accent-1-glow: rgba(14,165,233,0.3); --accent-2-glow: rgba(99,102,241,0.25);
+  --accent-1-bg: rgba(14,165,233,0.1); --accent-1-border: rgba(14,165,233,0.2);
+  --accent-2-bg: rgba(99,102,241,0.1); --accent-2-border: rgba(99,102,241,0.2);
+}
+[data-accent="ember"] {
+  --accent-1: #F97316; --accent-2: #EF4444;
+  --accent-1-glow: rgba(249,115,22,0.3); --accent-2-glow: rgba(239,68,68,0.25);
+  --accent-1-bg: rgba(249,115,22,0.1); --accent-1-border: rgba(249,115,22,0.2);
+  --accent-2-bg: rgba(239,68,68,0.1); --accent-2-border: rgba(239,68,68,0.2);
+}
+[data-accent="mint"] {
+  --accent-1: #10B981; --accent-2: #06B6D4;
+  --accent-1-glow: rgba(16,185,129,0.3); --accent-2-glow: rgba(6,182,212,0.25);
+  --accent-1-bg: rgba(16,185,129,0.1); --accent-1-border: rgba(16,185,129,0.2);
+  --accent-2-bg: rgba(6,182,212,0.1); --accent-2-border: rgba(6,182,212,0.2);
+}
+[data-accent="candy"] {
+  --accent-1: #E879F9; --accent-2: #FB923C;
+  --accent-1-glow: rgba(232,121,249,0.3); --accent-2-glow: rgba(251,146,60,0.25);
+  --accent-1-bg: rgba(232,121,249,0.1); --accent-1-border: rgba(232,121,249,0.2);
+  --accent-2-bg: rgba(251,146,60,0.1); --accent-2-border: rgba(251,146,60,0.2);
+}
+
+/* ===== BASE ELEMENTS ===== */
+html {
+  transition: background-color 0.35s ease, color 0.35s ease;
+}
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  height: 100%;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* App Shell */
+#app {
+  width: 100%;
+  max-width: 600px;
+  height: 100dvh;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* Screens */
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  transform: translateY(12px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.screen::-webkit-scrollbar { display: none; }
+.screen.active {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0);
+}
+.screen.slide-out {
+  opacity: 0;
+  transform: translateY(-12px);
+}
+
+/* Typography */
+.syne { font-family: 'Syne', sans-serif; }
+h1 { font-family: 'Syne', sans-serif; font-weight: 800; }
+h2 { font-family: 'Syne', sans-serif; font-weight: 700; }
+h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
+
+/* Utility */
+.pad { padding: 0 24px; }
+.center { text-align: center; }
+.flex-1 { flex: 1; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+.gap-16 { gap: 16px; }
