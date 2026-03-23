@@ -7,336 +7,493 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>confxsd</title>
   <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Funnel+Display">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap">
   <style>
-    /* Base styles with 8px grid system */
     :root {
-      --spacing-unit: 8px;
-      --max-width: 640px;
-      --color-text: #1a1a1a;
-      --color-bg: rgb(254, 253, 251);
-      --color-accent: #00FF41;
+      --felt: #0a0a0a;
+      --felt-subtle: #111111;
+      --card-bg: #f5f2eb;
+      --card-border: #d4d0c8;
+      --card-shadow: rgba(0, 0, 0, 0.45);
+      --text: #1a1a1a;
+      --text-dim: #6b6560;
+      --accent: #c8c3b8;
+      --suit-dim: rgba(255, 255, 255, 0.025);
     }
 
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
     body {
-      background: var(--color-bg);
-      padding: 0;
-      margin: 0;
+      background: var(--felt);
       min-height: 100vh;
-      font-family: 'Archivo', -apple-system, system-ui, sans-serif;
-      font-size: 16px;
-      line-height: 1.6;
-      color: var(--color-text);
+      font-family: 'Inter', -apple-system, system-ui, sans-serif;
+      font-size: 15px;
+      color: var(--text);
+      overflow-x: hidden;
     }
 
-    /* Typography scale */
-    h1 {
-      font-family: 'Funnel Display', serif;
-      font-size: clamp(2rem, 5vw, 3rem);
-      line-height: 1.1;
-      letter-spacing: -0.02em;
-      margin: 0 0 calc(var(--spacing-unit) * 3) 0;
-      font-weight: 600;
+    /* felt table texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 50% 30%, rgba(30, 30, 30, 0.4) 0%, transparent 70%),
+        repeating-conic-gradient(rgba(255, 255, 255, 0.008) 0% 25%, transparent 0% 50%) 0 0 / 3px 3px;
+      pointer-events: none;
+      z-index: 0;
     }
 
-    h2 {
-      font-family: 'Funnel Display', serif;
-      font-size: 1.5rem;
-      line-height: 1.3;
-      letter-spacing: -0.01em;
-      margin: calc(var(--spacing-unit) * 8) 0 calc(var(--spacing-unit) * 3) 0;
-      font-weight: 600;
-    }
-
-    p {
-      margin: 0 0 calc(var(--spacing-unit) * 3) 0;
-      font-size: 1rem;
-      line-height: 1.6;
-    }
-
-    a {
-      color: var(--color-text);
-      text-decoration: none;
-      transition: all 0.2s ease;
-    }
-
-    a:hover {
-      cursor: pointer;
-      text-decoration: underline;
-      text-decoration-color: var(--color-accent);
-      text-decoration-thickness: 2px;
-      text-underline-offset: 3px;
-    }
-
-    /* Layout */
-    main {
-      display: flex;
-      flex-direction: column;
-      padding: calc(var(--spacing-unit) * 3) calc(var(--spacing-unit) * 3) calc(var(--spacing-unit) * 12);
-    }
-
-    .container {
-      max-width: var(--max-width);
+    /* layout */
+    .table {
+      position: relative;
+      z-index: 1;
+      max-width: 780px;
       margin: 0 auto;
+      padding: 48px 24px 120px;
+    }
+
+    /* --- HEADER: identity card --- */
+    .identity {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 64px;
+    }
+
+    .identity-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 2px solid rgba(255, 255, 255, 0.08);
+      flex-shrink: 0;
+    }
+
+    .identity-avatar img {
       width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
-    header {
-      margin-bottom: calc(var(--spacing-unit) * 6);
-    }
-
-    header img {
-      width: 100%;
-      height: auto;
-      display: block;
-      margin-bottom: calc(var(--spacing-unit) * 4);
-    }
-
-    /* Sections */
-    section {
-      margin-bottom: calc(var(--spacing-unit) * 6);
-    }
-
-    section:first-child h2 {
-      margin-top: 0;
-    }
-
-    #main {
-      margin-bottom: calc(var(--spacing-unit) * 8);
-    }
-
-    #content {
+    .identity-info {
       display: flex;
       flex-direction: column;
-      gap: calc(var(--spacing-unit) * 4);
+      gap: 4px;
     }
 
-    /* Lists */
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
+    .identity-name {
+      font-family: 'Space Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.9);
+      letter-spacing: -0.01em;
+    }
+
+    .identity-tagline {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.25);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* social chips */
+    .social-row {
       display: flex;
-      flex-direction: column;
-      gap: calc(var(--spacing-unit) * 2);
-    }
-
-    li {
-      font-size: 1rem;
-      line-height: 1.6;
-    }
-
-    /* Social links */
-    #main ul {
-      flex-direction: row;
       flex-wrap: wrap;
-      gap: calc(var(--spacing-unit) * 3);
-      font-size: 0.875rem;
-      margin-top: calc(var(--spacing-unit) * 3);
+      gap: 8px;
+      margin-bottom: 56px;
     }
 
-    #main ul a {
-      text-decoration: underline;
-      text-decoration-color: var(--color-accent);
-      text-decoration-thickness: 1px;
-    }
-
-    #main ul a:hover {
-      text-decoration-thickness: 2px;
-    }
-
-    /* Project cards */
-    .card {
-      display: block;
-      border: none;
-      border-radius: 0.5rem;
-      padding: calc(var(--spacing-unit) * 2);
-      padding-left: 0.5em;
-      transition: all 0.2s ease;
+    .social-chip {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.35);
+      padding: 6px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 100px;
       text-decoration: none;
+      transition: all 0.25s ease;
+      letter-spacing: 0.02em;
+    }
+
+    .social-chip:hover {
+      color: rgba(255, 255, 255, 0.8);
+      border-color: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.04);
+      text-decoration: none;
+    }
+
+    /* --- SECTION LABELS --- */
+    .section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.15);
+      margin-bottom: 24px;
+      padding-left: 4px;
+    }
+
+    /* --- THE DECK: stacked cards --- */
+    .deck {
+      position: relative;
+      margin-bottom: 72px;
+    }
+
+    .card-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      perspective: 1200px;
+    }
+
+    /* --- PLAYING CARD --- */
+    .card {
+      position: relative;
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 28px 28px 24px;
+      cursor: pointer;
+      text-decoration: none;
+      display: block;
+      transform-origin: center bottom;
+      transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+      box-shadow:
+        0 1px 2px var(--card-shadow),
+        0 4px 12px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      margin-bottom: -8px;
+      z-index: 1;
+    }
+
+    .card:last-child {
+      margin-bottom: 0;
+    }
+
+    /* stacked shadow cards behind */
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 3px;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      pointer-events: none;
+      opacity: 0.4;
+    }
+
+    /* card corner suit */
+    .card::after {
+      content: attr(data-suit);
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      font-size: 16px;
+      opacity: 0.12;
+      pointer-events: none;
     }
 
     .card:hover {
-      border-color: var(--color-accent);
+      transform: translateY(-16px) rotate(-0.5deg);
+      box-shadow:
+        0 8px 25px var(--card-shadow),
+        0 20px 40px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+      z-index: 10;
       text-decoration: none;
-      transform: translateY(-2px);
+    }
+
+    .card-number {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+      letter-spacing: 0.03em;
     }
 
     .card-title {
-      font-weight: 600;
-      margin-bottom: calc(var(--spacing-unit) * 1);
-      color: var(--color-text);
+      font-family: 'Space Mono', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+      line-height: 1.3;
     }
 
-    .card-description {
-      color: rgba(26, 26, 26, 0.7);
-      font-size: 0.9375rem;
+    .card-desc {
+      font-size: 13px;
+      color: var(--text-dim);
+      line-height: 1.55;
+    }
+
+    .card-tag {
+      display: inline-block;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      border: 1px solid var(--card-border);
+      border-radius: 3px;
+      padding: 3px 8px;
+      margin-top: 14px;
+    }
+
+    /* card bottom suit mark */
+    .card-suit-bottom {
+      position: absolute;
+      bottom: 12px;
+      left: 16px;
+      font-size: 14px;
+      opacity: 0.08;
+      transform: rotate(180deg);
+    }
+
+    /* --- DEALT ANIMATION --- */
+    .card.dealt {
+      opacity: 0;
+      transform: translateY(40px) rotate(2deg);
+    }
+
+    .card.deal-in {
+      opacity: 1;
+      transform: translateY(0) rotate(0deg);
+    }
+
+    /* --- MINOR CARDS (articles, artworks) --- */
+    .minor-deck {
+      margin-bottom: 56px;
+    }
+
+    .minor-card {
+      display: block;
+      text-decoration: none;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      transition: all 0.25s ease;
+      position: relative;
+    }
+
+    .minor-card:first-child {
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .minor-card:hover {
+      padding-left: 12px;
+      text-decoration: none;
+    }
+
+    .minor-card:hover .minor-title {
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .minor-title {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.45);
+      transition: color 0.25s ease;
       line-height: 1.5;
     }
 
-    #code ul {
-      gap: calc(var(--spacing-unit) * 3);
+    .minor-meta {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.12);
+      letter-spacing: 0.06em;
+      margin-top: 2px;
     }
 
-    /* Desktop adjustments */
-    @media screen and (min-width: 768px) {
-      main {
-        padding: calc(var(--spacing-unit) * 6) calc(var(--spacing-unit) * 4) calc(var(--spacing-unit) * 16);
-      }
-
-      header {
-        margin-bottom: calc(var(--spacing-unit) * 8);
-      }
-
-      header img {
-        margin-bottom: calc(var(--spacing-unit) * 6);
-      }
-
-      #main {
-        margin-bottom: calc(var(--spacing-unit) * 12);
-      }
-
-      #main ul {
-        text-decoration: none;
-      }
-
-      #content {
-        gap: calc(var(--spacing-unit) * 8);
-      }
-    }
-  </style>
-
-  <style>
-    #animatedText {
-      cursor: pointer;
-      user-select: none;
+    .minor-inline {
+      display: inline;
     }
 
-    .animate {
-      display: inline-block;
-      position: relative;
-      transition: transform 0.6s ease-in-out;
-      white-space: pre;
-      user-select: none;
+    .minor-inline a {
+      color: rgba(255, 255, 255, 0.35);
+      text-decoration: none;
+      transition: color 0.2s ease;
     }
 
-    .animate.clicked {
-      color: black;
+    .minor-inline a:hover {
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
     }
 
-    .animate:hover {
-      transform: translateX(var(--x-move)) translateY(var(--y-move));
+    .minor-sep {
+      color: rgba(255, 255, 255, 0.1);
+      margin: 0 6px;
+    }
+
+    /* --- FOOTER --- */
+    .table-edge {
+      margin-top: 48px;
+      text-align: center;
+    }
+
+    .table-edge-text {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.06);
+    }
+
+    /* --- RESPONSIVE --- */
+    @media (max-width: 600px) {
+      .table {
+        padding: 32px 16px 80px;
+      }
+
+      .identity {
+        margin-bottom: 48px;
+      }
+
+      .card {
+        padding: 22px 20px 20px;
+        border-radius: 10px;
+      }
+
+      .card-title {
+        font-size: 14px;
+      }
+
+      .card-desc {
+        font-size: 12px;
+      }
+
+      .social-row {
+        gap: 6px;
+      }
+
+      .social-chip {
+        font-size: 10px;
+        padding: 5px 11px;
+      }
+    }
+
+    /* selection */
+    ::selection {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
     }
   </style>
 </head>
 
 <body>
-  <main>
-    <div class="container">
-      <header>
-        <img src="img/cover.gif" alt="Cover" />
-      </header>
+  <div class="table">
 
-      <section id="main">
-        <p><span id="animatedText"
-            style="color: #00FF41; background-color: #1a1a1a; padding: 0.25rem 0.5rem; margin-right: 0.75rem;">entangling
-            unknowns</span></p>
-        <ul>
-          <a href="https://github.com/confxsd">
-            <li>github</li>
-          </a>
-          <a href="https://www.linkedin.com/in/itsserhat">
-            <li>linkedin</li>
-          </a>
-          <a href="https://twitter.com/confxsd">
-            <li>twitter</li>
-          </a>
-          <a href="https://instagram.com/confxsd">
-            <li>instagram</li>
-          </a>
-          <a href="https://www.goodreads.com/confxsd">
-            <li>goodreads</li>
-          </a>
-          <a href="https://confxsd.substack.com">
-            <li>substack</li>
-          </a>
-        </ul>
-      </section>
-
-      <div id="content">
-        <section id="code">
-          <h2>created</h2>
-          <ul>
-            <li>
-              <a href="https://confxsd.github.io/vhunter" class="card">
-                <div class="card-title">VHunter | Signal Terminal</div>
-                <div class="card-description">AI stock market assistant that helps you understand markets, analyze investments, and make informed decisions.</div>
-              </a>
-            </li>
-            <li>
-              <a href="https://epifani.now" class="card">
-                <div class="card-title">EPIFANI | Interactive art experience</div>
-                <div class="card-description">Interactive map exploring London's art scene, galleries, and cultural spaces.</div>
-              </a>
-            </li>
-            <li>
-              <a href="blind/" class="card">
-                <div class="card-title">Blindside | Social discovery game</div>
-                <div class="card-description">Same questions. Blind answers. One reveal. Find out how well you really know each other.</div>
-              </a>
-            </li>
-          </ul>
-        </section>
-
-        <section id="works">
-          <h2>artworks</h2>
-          <ul>
-            <a href="works/1-reality">
-              <li>reality</li>
-            </a>
-            <li><a href="works/3-affirmations">affirmations</a>
-              <a href="works/3-affirmations/affirmations.apk">(download)</a>
-            </li>
-            <li>color studies:
-              <a href="works/4-color-studies/2-wound/index.html">Wound</a>,
-              <a href="works/4-color-studies/3-fire/index.html">Fire</a>,
-              <a href="works/4-color-studies/4-spring/index.html">Spring</a>
-            </li>
-            <a href="works/5-values-wheel/index.html">
-              <li>values wheel</li>
-            </a>
-            <a href="works/6-run-karma-run/index.html">
-              <li>run, karma. run!</li>
-            </a>
-          </ul>
-        </section>
-
-        <section id="articles">
-          <h2>articles</h2>
-          <ul>
-            <a href="https://confxsd.substack.com/p/understanding-a-chronic-crisis-last">
-              <li>Understanding a Chronic Crisis: Last 50 Years of Türkiye's Economy</li>
-            </a>
-            <a href="https://confxsd.substack.com/p/web3-from-the-perspective-of-a-computer">
-              <li>Crypto-world from a computer engineer perspective</li>
-            </a>
-            <a href="https://confxsd.substack.com/p/what-is-wrong-with-digital-currencies">
-              <li>What's wrong with digital currencies?</li>
-            </a>
-          </ul>
-        </section>
+    <!-- identity -->
+    <div class="identity">
+      <div class="identity-avatar">
+        <img src="img/cover.gif" alt="confxsd" />
+      </div>
+      <div class="identity-info">
+        <div class="identity-name">confxsd</div>
+        <div class="identity-tagline">entangling unknowns</div>
       </div>
     </div>
-  </main>
+
+    <!-- socials -->
+    <div class="social-row">
+      <a href="https://github.com/confxsd" class="social-chip">github</a>
+      <a href="https://www.linkedin.com/in/itsserhat" class="social-chip">linkedin</a>
+      <a href="https://twitter.com/confxsd" class="social-chip">twitter</a>
+      <a href="https://instagram.com/confxsd" class="social-chip">instagram</a>
+      <a href="https://www.goodreads.com/confxsd" class="social-chip">goodreads</a>
+      <a href="https://confxsd.substack.com" class="social-chip">substack</a>
+    </div>
+
+    <!-- projects deck -->
+    <div class="deck">
+      <div class="section-label">&#9827; created</div>
+      <div class="card-stack" id="mainDeck">
+        <a href="https://confxsd.github.io/vhunter" class="card dealt" data-suit="&#9824;">
+          <div class="card-number">01</div>
+          <div class="card-title">VHunter</div>
+          <div class="card-desc">AI stock market assistant that helps you understand markets, analyze investments, and
+            make informed decisions.</div>
+          <div class="card-tag">signal terminal</div>
+          <span class="card-suit-bottom">&#9824;</span>
+        </a>
+        <a href="https://epifani.now" class="card dealt" data-suit="&#9830;">
+          <div class="card-number">02</div>
+          <div class="card-title">EPIFANI</div>
+          <div class="card-desc">Interactive map exploring London's art scene, galleries, and cultural spaces.</div>
+          <div class="card-tag">interactive art</div>
+          <span class="card-suit-bottom">&#9830;</span>
+        </a>
+        <a href="blind/" class="card dealt" data-suit="&#9829;">
+          <div class="card-number">03</div>
+          <div class="card-title">Blindside</div>
+          <div class="card-desc">Same questions. Blind answers. One reveal. Find out how well you really know each
+            other.</div>
+          <div class="card-tag">social game</div>
+          <span class="card-suit-bottom">&#9829;</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- artworks -->
+    <div class="minor-deck">
+      <div class="section-label">&#9830; artworks</div>
+      <a href="works/1-reality" class="minor-card">
+        <div class="minor-title">reality</div>
+      </a>
+      <div class="minor-card">
+        <div class="minor-inline">
+          <a href="works/3-affirmations" class="minor-title" style="display:inline">affirmations</a>
+          <span class="minor-sep">/</span>
+          <a href="works/3-affirmations/affirmations.apk"
+            style="font-size:11px;color:rgba(255,255,255,0.2)">download</a>
+        </div>
+      </div>
+      <div class="minor-card">
+        <div class="minor-title" style="display:inline;color:rgba(255,255,255,0.25)">color studies</div>
+        <div class="minor-inline" style="margin-left: 4px;">
+          <a href="works/4-color-studies/2-wound/index.html">wound</a>
+          <span class="minor-sep">,</span>
+          <a href="works/4-color-studies/3-fire/index.html">fire</a>
+          <span class="minor-sep">,</span>
+          <a href="works/4-color-studies/4-spring/index.html">spring</a>
+        </div>
+      </div>
+      <a href="works/5-values-wheel/index.html" class="minor-card">
+        <div class="minor-title">values wheel</div>
+      </a>
+      <a href="works/6-run-karma-run/index.html" class="minor-card">
+        <div class="minor-title">run, karma. run!</div>
+      </a>
+    </div>
+
+    <!-- articles -->
+    <div class="minor-deck">
+      <div class="section-label">&#9827; articles</div>
+      <a href="https://confxsd.substack.com/p/understanding-a-chronic-crisis-last" class="minor-card">
+        <div class="minor-title">Understanding a Chronic Crisis: Last 50 Years of Türkiye's Economy</div>
+      </a>
+      <a href="https://confxsd.substack.com/p/web3-from-the-perspective-of-a-computer" class="minor-card">
+        <div class="minor-title">Crypto-world from a computer engineer perspective</div>
+      </a>
+      <a href="https://confxsd.substack.com/p/what-is-wrong-with-digital-currencies" class="minor-card">
+        <div class="minor-title">What's wrong with digital currencies?</div>
+      </a>
+    </div>
+
+    <!-- table edge -->
+    <div class="table-edge">
+      <div class="table-edge-text">&#9824; &#9829; &#9827; &#9830;</div>
+    </div>
+
+  </div>
 
   <script src="script.js"></script>
   <script src="t.js"></script>
-
 </body>
 
 </html>
