@@ -36,12 +36,50 @@
 
   <!-- AUTH -->
   <div id="auth" class="screen">
-    <div class="logo-mark" style="font-size:48px">🫣</div>
-    <h2 class="syne" style="font-size:22px;letter-spacing:-0.5px">pick a username</h2>
-    <p style="font-size:13px;color:var(--text-dim);margin-bottom:24px">just a name so your partner knows it's you</p>
-    <input type="text" id="authUsername" class="auth-input" placeholder="your name..." maxlength="20" autocomplete="off" autocapitalize="off">
-    <div id="authError" class="auth-error"></div>
-    <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="doAuth()" id="authBtn">continue</button>
+    <!-- Step 1: Username -->
+    <div id="authStep1" class="auth-step">
+      <div class="logo-mark" style="font-size:48px">🫣</div>
+      <h2 class="syne" style="font-size:22px;letter-spacing:-0.5px">pick a username</h2>
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:24px">just a name so your partner knows it's you</p>
+      <input type="text" id="authUsername" class="auth-input" placeholder="your name..." maxlength="20" autocomplete="off" autocapitalize="off">
+      <div id="authError" class="auth-error"></div>
+      <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="doAuthStep1()" id="authBtn">continue</button>
+    </div>
+
+    <!-- Step 2: Login (existing user) -->
+    <div id="authStep2Login" class="auth-step" style="display:none">
+      <div style="font-size:48px;margin-bottom:8px">👋</div>
+      <h2 class="syne" style="font-size:22px;letter-spacing:-0.5px">welcome back</h2>
+      <p class="auth-greeting" id="loginGreeting" style="font-size:14px;color:var(--text-mid);margin-bottom:20px"></p>
+      <input type="password" id="loginPassword" class="auth-input" placeholder="your password..." autocomplete="current-password">
+      <div id="loginError" class="auth-error"></div>
+      <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="doLogin()" id="loginBtn">sign in</button>
+      <button class="btn btn-ghost" style="width:100%" onclick="authGoBack()">back</button>
+    </div>
+
+    <!-- Step 2: Signup (new user) -->
+    <div id="authStep2Signup" class="auth-step" style="display:none">
+      <div style="font-size:48px;margin-bottom:8px">✌️</div>
+      <h2 class="syne" style="font-size:22px;letter-spacing:-0.5px">create your account</h2>
+      <p class="auth-greeting" id="signupGreeting" style="font-size:14px;color:var(--text-mid);margin-bottom:20px"></p>
+      <input type="password" id="signupPassword" class="auth-input" placeholder="create a password..." autocomplete="new-password">
+      <input type="password" id="signupPasswordConfirm" class="auth-input" placeholder="confirm password..." autocomplete="new-password" style="margin-top:8px">
+      <div id="signupError" class="auth-error"></div>
+      <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="doSignup()" id="signupBtn">create account</button>
+      <button class="btn btn-ghost" style="width:100%" onclick="authGoBack()">back</button>
+    </div>
+  </div>
+
+  <!-- GUEST AUTH (join via invite link) -->
+  <div id="guestAuth" class="screen">
+    <div class="invite-pill">you've been invited! 🎉</div>
+    <div style="font-size:48px;margin-bottom:8px">🤝</div>
+    <h2 class="syne" style="font-size:22px;letter-spacing:-0.5px">join the game</h2>
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:24px">enter a display name to start playing</p>
+    <input type="text" id="guestName" class="auth-input" placeholder="your name..." maxlength="20" autocomplete="off" autocapitalize="off">
+    <div id="guestAuthError" class="auth-error"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="doGuestAuth()" id="guestAuthBtn">play as guest</button>
+    <button class="btn btn-ghost" style="width:100%" onclick="guestToFullAuth()">i have an account</button>
   </div>
 
   <!-- ONBOARDING -->
@@ -303,6 +341,20 @@
       <p data-i18n="delete_desc">this will remove the session from your list. this can't be undone.</p>
       <button class="btn btn-primary" style="background:#ef4444" onclick="confirmDeleteSession()" data-i18n="delete_confirm">remove</button>
       <button class="btn btn-ghost" onclick="closeDeleteModal()" data-i18n="delete_cancel">cancel</button>
+    </div>
+  </div>
+
+  <!-- SAVE ACCOUNT MODAL (for guests after session) -->
+  <div class="modal-overlay" id="saveAccountModal">
+    <div class="modal-box">
+      <div style="font-size:36px">💾</div>
+      <h3 class="syne">keep your account?</h3>
+      <p>set a password so you can come back, see your history, and start new sessions anytime.</p>
+      <input type="password" id="saveAccPassword" class="auth-input" placeholder="create a password..." autocomplete="new-password" style="text-align:left">
+      <input type="password" id="saveAccPasswordConfirm" class="auth-input" placeholder="confirm password..." autocomplete="new-password" style="text-align:left;margin-top:8px">
+      <div id="saveAccError" class="auth-error"></div>
+      <button class="btn btn-primary" onclick="saveGuestAccount()">save account</button>
+      <button class="btn btn-ghost" onclick="closeSaveAccountModal()">skip for now</button>
     </div>
   </div>
 

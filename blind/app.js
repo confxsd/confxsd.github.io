@@ -60,10 +60,31 @@ const blindApi = {
     return res.json();
   },
 
-  auth(username) {
+  auth(username, password) {
     return this._fetch('/api/blind/auth', {
       method: 'POST',
+      body: JSON.stringify({ username, password })
+    });
+  },
+
+  checkUsername(username) {
+    return this._fetch('/api/blind/auth/check', {
+      method: 'POST',
       body: JSON.stringify({ username })
+    });
+  },
+
+  guestAuth(displayName) {
+    return this._fetch('/api/blind/auth/guest', {
+      method: 'POST',
+      body: JSON.stringify({ displayName })
+    });
+  },
+
+  upgradeGuest(password) {
+    return this._fetch('/api/blind/auth/upgrade', {
+      method: 'POST',
+      body: JSON.stringify({ password })
     });
   },
 
@@ -112,6 +133,8 @@ let currentSession = null;
 let pollTimer = null;
 let afterAuthTarget = 'home';
 let joinCode = null; // set when joining via URL
+let isGuest = JSON.parse(localStorage.getItem('bs-guest') || 'false');
+let pendingAuthUsername = null; // holds username between auth step 1 and step 2
 
 
 // packDefs + questionPacks are loaded from packs.js
@@ -170,11 +193,31 @@ function showAuth(target) {
     goTo(afterAuthTarget);
     return;
   }
+  // If joining via invite, show guest auth
+  if (joinCode) {
+    goTo('guestAuth');
+    setTimeout(() => document.getElementById('guestName')?.focus(), 300);
+    return;
+  }
   goTo('auth');
+  resetAuthSteps();
   setTimeout(() => document.getElementById('authUsername')?.focus(), 300);
 }
 
-async function doAuth() {
+function resetAuthSteps() {
+  document.getElementById('authStep1').style.display = '';
+  document.getElementById('authStep2Login').style.display = 'none';
+  document.getElementById('authStep2Signup').style.display = 'none';
+  document.getElementById('authError').textContent = '';
+  document.getElementById('loginError').textContent = '';
+  document.getElementById('signupError').textContent = '';
+  const pwFields = document.querySelectorAll('#auth input[type="password"]');
+  pwFields.forEach(f => f.value = '');
+  pendingAuthUsername = null;
+}
+
+// Step 1: Check if username exists
+async function doAuthStep1() {
   const input = document.getElementById('authUsername');
   const err = document.getElementById('authError');
   const btn = document.getElementById('authBtn');
@@ -190,21 +233,27 @@ async function doAuth() {
   err.textContent = '';
 
   try {
-    const data = await blindApi.auth(username);
-    if (data.error) { err.textContent = data.error; return; }
+    const check = await blindApi.checkUsername(username);
+    if (check.error) { err.textContent = check.error; return; }
 
-    currentUser = data.user;
-    localStorage.setItem('bs-user', JSON.stringify(currentUser));
-    localStorage.setItem('bs-user-id', currentUser.id);
+    pendingAuthUsername = username;
+    document.getElementById('authStep1').style.display = 'none';
 
-    // If joining via URL code
-    if (joinCode) {
-      await handleJoinCode(joinCode);
-      joinCode = null;
-      return;
+    if (check.exists) {
+      document.getElementById('loginGreeting').innerHTML = `signing in as <strong>${username}</strong>`;
+      document.getElementById('authStep2Login').style.display = '';
+      setTimeout(() => document.getElementById('loginPassword')?.focus(), 200);
+
+      // If user has no password (legacy), skip password step
+      if (!check.has_password) {
+        const data = await blindApi.auth(username);
+        if (data.user) { finishAuth(data.user); return; }
+      }
+    } else {
+      document.getElementById('signupGreeting').innerHTML = `nice to meet you, <strong>${username}</strong>`;
+      document.getElementById('authStep2Signup').style.display = '';
+      setTimeout(() => document.getElementById('signupPassword')?.focus(), 200);
     }
-
-    goTo(afterAuthTarget);
   } catch (e) {
     err.textContent = 'connection error, try again';
   } finally {
@@ -213,19 +262,201 @@ async function doAuth() {
   }
 }
 
-// Enter key on auth input
+// Step 2a: Login with password
+async function doLogin() {
+  const password = document.getElementById('loginPassword').value;
+  const err = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+
+  if (!password) { err.textContent = 'enter your password'; return; }
+
+  btn.disabled = true;
+  btn.textContent = '...';
+  err.textContent = '';
+
+  try {
+    const data = await blindApi.auth(pendingAuthUsername, password);
+    if (data.error) { err.textContent = data.error; return; }
+
+    finishAuth(data.user);
+  } catch (e) {
+    err.textContent = 'connection error, try again';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'sign in';
+  }
+}
+
+// Step 2b: Signup with password
+async function doSignup() {
+  const password = document.getElementById('signupPassword').value;
+  const confirm = document.getElementById('signupPasswordConfirm').value;
+  const err = document.getElementById('signupError');
+  const btn = document.getElementById('signupBtn');
+
+  if (password.length < 4) { err.textContent = 'password must be at least 4 characters'; return; }
+  if (password !== confirm) { err.textContent = 'passwords don\'t match'; return; }
+
+  btn.disabled = true;
+  btn.textContent = '...';
+  err.textContent = '';
+
+  try {
+    const data = await blindApi.auth(pendingAuthUsername, password);
+    if (data.error) { err.textContent = data.error; return; }
+
+    finishAuth(data.user);
+  } catch (e) {
+    err.textContent = 'connection error, try again';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'create account';
+  }
+}
+
+function authGoBack() {
+  document.getElementById('authStep2Login').style.display = 'none';
+  document.getElementById('authStep2Signup').style.display = 'none';
+  document.getElementById('authStep1').style.display = '';
+  document.getElementById('loginError').textContent = '';
+  document.getElementById('signupError').textContent = '';
+  const pwFields = document.querySelectorAll('#auth input[type="password"]');
+  pwFields.forEach(f => f.value = '');
+  setTimeout(() => document.getElementById('authUsername')?.focus(), 200);
+}
+
+// Shared: finish auth and proceed
+function finishAuth(user) {
+  currentUser = user;
+  localStorage.setItem('bs-user', JSON.stringify(currentUser));
+  localStorage.setItem('bs-user-id', currentUser.id);
+  localStorage.removeItem('bs-guest');
+  isGuest = false;
+
+  if (joinCode) {
+    handleJoinCode(joinCode);
+    joinCode = null;
+    return;
+  }
+
+  goTo(afterAuthTarget);
+}
+
+// Guest auth (join via invite link without account)
+async function doGuestAuth() {
+  const input = document.getElementById('guestName');
+  const err = document.getElementById('guestAuthError');
+  const btn = document.getElementById('guestAuthBtn');
+  const displayName = input.value.trim();
+
+  if (displayName.length < 2) {
+    err.textContent = 'at least 2 characters';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '...';
+  err.textContent = '';
+
+  try {
+    const data = await blindApi.guestAuth(displayName);
+    if (data.error) { err.textContent = data.error; return; }
+
+    currentUser = data.user;
+    localStorage.setItem('bs-user', JSON.stringify(currentUser));
+    localStorage.setItem('bs-user-id', currentUser.id);
+    localStorage.setItem('bs-guest', 'true');
+    isGuest = true;
+
+    if (joinCode) {
+      await handleJoinCode(joinCode);
+      joinCode = null;
+      return;
+    }
+    goTo('home');
+  } catch (e) {
+    err.textContent = 'connection error, try again';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'play as guest';
+  }
+}
+
+function guestToFullAuth() {
+  goTo('auth');
+  resetAuthSteps();
+  setTimeout(() => document.getElementById('authUsername')?.focus(), 300);
+}
+
+// Enter key handlers
 document.getElementById('authUsername')?.addEventListener('keydown', e => {
-  if (e.key === 'Enter') doAuth();
+  if (e.key === 'Enter') doAuthStep1();
 });
+document.getElementById('loginPassword')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+document.getElementById('signupPasswordConfirm')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSignup();
+});
+document.getElementById('signupPassword')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('signupPasswordConfirm')?.focus();
+});
+document.getElementById('guestName')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') doGuestAuth();
+});
+
+// Save guest account (after session)
+async function saveGuestAccount() {
+  const password = document.getElementById('saveAccPassword').value;
+  const confirm = document.getElementById('saveAccPasswordConfirm').value;
+  const err = document.getElementById('saveAccError');
+
+  if (password.length < 4) { err.textContent = 'password must be at least 4 characters'; return; }
+  if (password !== confirm) { err.textContent = 'passwords don\'t match'; return; }
+
+  err.textContent = '';
+
+  try {
+    const data = await blindApi.upgradeGuest(password);
+    if (data.error) { err.textContent = data.error; return; }
+
+    localStorage.removeItem('bs-guest');
+    isGuest = false;
+    closeSaveAccountModal();
+
+    // Update user if returned
+    if (data.user) {
+      currentUser = data.user;
+      localStorage.setItem('bs-user', JSON.stringify(currentUser));
+    }
+  } catch (e) {
+    err.textContent = 'connection error, try again';
+  }
+}
+
+function showSaveAccountModal() {
+  if (sessionStorage.getItem('bs-save-prompt-dismissed')) return;
+  document.getElementById('saveAccPassword').value = '';
+  document.getElementById('saveAccPasswordConfirm').value = '';
+  document.getElementById('saveAccError').textContent = '';
+  document.getElementById('saveAccountModal').classList.add('show');
+}
+
+function closeSaveAccountModal() {
+  document.getElementById('saveAccountModal').classList.remove('show');
+  sessionStorage.setItem('bs-save-prompt-dismissed', 'true');
+}
 
 function switchUser() {
   currentUser = null;
   currentSession = null;
+  isGuest = false;
   localStorage.removeItem('bs-user');
   localStorage.removeItem('bs-user-id');
+  localStorage.removeItem('bs-guest');
   stopPolling();
   document.getElementById('authUsername').value = '';
-  document.getElementById('authError').textContent = '';
+  resetAuthSteps();
   afterAuthTarget = 'home';
   goTo('auth');
   setTimeout(() => document.getElementById('authUsername')?.focus(), 300);
@@ -1595,6 +1826,9 @@ function buildReceiptWithName(partnerName) {
   spawnConfetti();
   // AI vibe report disabled for now
   // loadVibeReport(data, partnerName, pct, selectedPackKey);
+
+  // Prompt guests to save their account
+  if (isGuest) setTimeout(showSaveAccountModal, 2000);
 }
 
 // ==================== SOLO RESULT DEFINITIONS ====================
@@ -1961,9 +2195,9 @@ function animateResults() { buildReceipt(); }
       handleJoinCode(code);
       joinCode = null;
     } else {
-      // Need to auth first
-      goTo('auth');
-      setTimeout(() => document.getElementById('authUsername')?.focus(), 300);
+      // Show guest-friendly auth for invite links
+      goTo('guestAuth');
+      setTimeout(() => document.getElementById('guestName')?.focus(), 300);
     }
     // Clean URL
     window.history.replaceState({}, '', window.location.pathname);

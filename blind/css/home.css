@@ -81,12 +81,59 @@
 #auth {
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 0;
   padding: 40px 32px;
   text-align: center;
 }
 #auth .logo-mark { margin-bottom: 8px; }
 #auth .btn { margin-top: 16px; }
+
+/* Auth multi-step */
+.auth-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  animation: authStepIn 0.3s ease forwards;
+}
+@keyframes authStepIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.auth-greeting strong {
+  color: var(--accent-1);
+}
+
+/* ===== GUEST AUTH ===== */
+#guestAuth {
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 32px;
+  text-align: center;
+}
+.invite-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  border-radius: 100px;
+  background: var(--accent-1-bg);
+  color: var(--accent-1);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.3px;
+  margin-bottom: 12px;
+  border: 1px solid var(--accent-1-border);
+  animation: authStepIn 0.4s ease forwards;
+}
+#guestAuth .btn { margin-top: 16px; }
+
+/* Save account modal inputs */
+#saveAccountModal .auth-input {
+  text-align: left;
+}
 
 /* ===== ONBOARDING ===== */
 #onboarding {
