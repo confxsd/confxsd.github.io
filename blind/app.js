@@ -861,7 +861,7 @@ function renderSwipe(body, q) {
     deck.appendChild(card);
   }
   if (prev !== undefined) {
-    deck.innerHTML = `<div class="swipe-card" style="border-color:var(--accent-1);box-shadow:0 0 24px var(--accent-1-glow)">${q.options[prev]}</div>`;
+    deck.innerHTML = `<div class="swipe-card" style="border-color:var(--accent-1);box-shadow:var(--card-shadow-hover)">${q.options[prev]}</div>`;
     return;
   }
   initSwipeDeckGestures(deck);
@@ -901,7 +901,7 @@ function initSwipeDeckGestures(deck) {
         selectedAnswers[currentQuestion] = oi;
         document.getElementById('quizNextBtn').disabled = false;
         setTimeout(() => {
-          deck.innerHTML = `<div class="swipe-card" style="border-color:var(--accent-1);box-shadow:0 0 24px var(--accent-1-glow);opacity:0;animation:cardIn 0.3s ease forwards">${swipeDeckData[oi].text}</div>`;
+          deck.innerHTML = `<div class="swipe-card" style="border-color:var(--accent-1);box-shadow:var(--card-shadow-hover);opacity:0;animation:cardIn 0.3s ease forwards">${swipeDeckData[oi].text}</div>`;
         }, 250);
       } else if (dx < -70) {
         card.style.transform = 'translateX(-400px) rotate(-20deg)';

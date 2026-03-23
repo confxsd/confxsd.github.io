@@ -1,5 +1,6 @@
 /* ========================================
    QUIZ — Questions, Answers, Mini-Game Modes
+   Card Game Minimal Edition
    ======================================== */
 
 /* ===== QUIZ SCREEN ===== */
@@ -16,14 +17,14 @@
 }
 .progress-wrap {
   flex: 1;
-  height: 4px;
+  height: 3px;
   background: var(--surface);
   border-radius: 2px;
   overflow: hidden;
 }
 .progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, var(--purple), var(--pink));
+  background: var(--accent-1);
   border-radius: 2px;
   transition: width 0.4s ease;
 }
@@ -47,41 +48,73 @@
 }
 .quiz-footer .btn { flex: 1; }
 
-/* Question card */
+/* Question card — physical card feel */
 .question-card {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 24px;
   opacity: 0;
-  transform: translateX(30px);
-  animation: cardIn 0.35s ease forwards;
+  transform: translateY(40px) rotate(2deg);
+  animation: cardIn 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 28px 22px;
+  box-shadow: var(--card-shadow-lg);
+  position: relative;
 }
+/* Subtle card corner marks */
+.question-card::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  width: 16px;
+  height: 16px;
+  border-top: 2px solid var(--accent-1);
+  border-left: 2px solid var(--accent-1);
+  border-radius: 3px 0 0 0;
+  opacity: 0.25;
+}
+.question-card::after {
+  content: '';
+  position: absolute;
+  bottom: 10px;
+  right: 14px;
+  width: 16px;
+  height: 16px;
+  border-bottom: 2px solid var(--accent-1);
+  border-right: 2px solid var(--accent-1);
+  border-radius: 0 0 3px 0;
+  opacity: 0.25;
+}
+
 .question-label {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-dim);
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
   font-family: 'Syne', sans-serif;
   font-weight: 600;
 }
 .question-text {
   font-family: 'DM Sans', sans-serif;
   font-weight: 700;
-  font-size: 22px;
+  font-size: 20px;
   line-height: 1.4;
   letter-spacing: -0.3px;
 }
 
-/* Answer options */
+/* Answer options — card-like chips */
 .answer-options {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 8px;
+  gap: 8px;
+  margin-top: 4px;
 }
 .answer-opt {
-  padding: 16px 18px;
+  padding: 14px 16px;
   border-radius: var(--radius-sm);
   background: var(--surface);
   border: 1.5px solid var(--border);
@@ -92,11 +125,13 @@
   transition: all 0.2s;
   text-align: left;
   font-family: 'DM Sans', sans-serif;
+  position: relative;
 }
 .answer-opt:hover { border-color: var(--answer-hover-border); }
 .answer-opt.selected {
   border-color: var(--accent-1);
   background: var(--accent-1-bg);
+  box-shadow: 0 0 0 1px var(--accent-1-border);
 }
 .answer-opt:active { transform: scale(0.98); }
 
@@ -137,8 +172,8 @@
   text-align: center;
   padding: 16px 12px;
   border-radius: var(--radius);
-  background: var(--surface);
-  border: 2px solid var(--border);
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
   color: var(--text);
   font-size: 15px;
   font-weight: 600;
@@ -150,21 +185,22 @@
   user-select: none;
   -webkit-user-select: none;
   line-height: 1.35;
+  box-shadow: var(--card-shadow);
 }
 .tot-side::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  background: var(--accent-1);
   opacity: 0;
   transition: opacity 0.3s;
 }
 .tot-side.selected {
   border-color: var(--accent-1);
-  transform: scale(1.03);
-  box-shadow: 0 0 24px var(--accent-1-glow);
+  transform: scale(1.02);
+  box-shadow: var(--card-shadow-hover);
 }
-.tot-side.selected::before { opacity: 0.15; }
+.tot-side.selected::before { opacity: 0.08; }
 .tot-side.dimmed {
   opacity: 0.35;
   transform: scale(0.96);
@@ -195,8 +231,8 @@
   justify-content: center;
   text-align: center;
   border-radius: 50%;
-  background: var(--surface);
-  border: 2px solid var(--border);
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
   color: var(--text);
   font-size: 13px;
   font-weight: 600;
@@ -208,6 +244,7 @@
   padding: 12px;
   animation: bubbleFloat 3s ease-in-out infinite;
   line-height: 1.25;
+  box-shadow: var(--card-shadow);
 }
 .bubble:nth-child(1) { animation-delay: 0s; }
 .bubble:nth-child(2) { animation-delay: 0.5s; }
@@ -216,7 +253,7 @@
 .bubble.selected {
   border-color: var(--accent-1);
   background: var(--accent-1-bg);
-  box-shadow: 0 0 28px var(--accent-1-glow);
+  box-shadow: var(--card-shadow-hover);
   animation: bubblePop 0.4s ease forwards;
 }
 .bubble.dimmed {
@@ -228,7 +265,7 @@
 /* ===== MODE: COUNTDOWN BLITZ ===== */
 .blitz-timer-bar {
   width: 100%;
-  height: 5px;
+  height: 4px;
   background: var(--surface);
   border-radius: 3px;
   overflow: hidden;
@@ -238,11 +275,11 @@
   height: 100%;
   width: 100%;
   border-radius: 3px;
-  background: linear-gradient(90deg, var(--accent-2), var(--accent-1));
+  background: var(--accent-1);
   transition: width 0.1s linear;
 }
 .blitz-timer-fill.urgent {
-  background: linear-gradient(90deg, #ef4444, #f97316);
+  background: #ef4444;
 }
 .blitz-label {
   font-family: 'Syne', sans-serif;
@@ -262,7 +299,7 @@
 .answer-options.blitz-mode .answer-opt:nth-child(3) { animation-delay: 0.25s; }
 .answer-options.blitz-mode .answer-opt:nth-child(4) { animation-delay: 0.35s; }
 
-/* ===== MODE: SWIPE CARDS ===== */
+/* ===== MODE: SWIPE CARDS — Physical card deck ===== */
 .swipe-deck {
   position: relative;
   flex: 1;
@@ -276,9 +313,9 @@
   width: 85%;
   max-width: 340px;
   padding: 32px 24px;
-  border-radius: 18px;
-  background: var(--bg2);
-  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  border: 1.5px solid var(--card-border);
   text-align: center;
   font-size: 16px;
   font-weight: 600;
@@ -290,6 +327,7 @@
   touch-action: none;
   transition: box-shadow 0.2s;
   line-height: 1.4;
+  box-shadow: var(--card-shadow-lg);
 }
 .swipe-card.active-card { z-index: 10; }
 .swipe-hint {
@@ -316,8 +354,8 @@
   letter-spacing: 1px;
   z-index: 20;
 }
-.swipe-indicator.pick { right: 12px; background: rgba(34,197,94,0.2); color: #22c55e; }
-.swipe-indicator.nope { left: 12px; background: rgba(239,68,68,0.2); color: #ef4444; }
+.swipe-indicator.pick { right: 12px; background: rgba(34,197,94,0.15); color: #22c55e; }
+.swipe-indicator.nope { left: 12px; background: rgba(239,68,68,0.15); color: #ef4444; }
 
 /* ===== MODE: RANKING ===== */
 .rank-list {
@@ -331,8 +369,8 @@
   gap: 12px;
   padding: 14px 16px;
   border-radius: var(--radius-sm);
-  background: var(--surface);
-  border: 1.5px solid var(--border);
+  background: var(--card-bg);
+  border: 1.5px solid var(--card-border);
   color: var(--text);
   font-size: 14px;
   font-weight: 500;
@@ -341,6 +379,7 @@
   transition: all 0.2s;
   user-select: none;
   -webkit-user-select: none;
+  box-shadow: var(--card-shadow);
 }
 .rank-item .rank-num {
   width: 26px;

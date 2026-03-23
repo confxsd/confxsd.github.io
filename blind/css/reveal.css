@@ -1,5 +1,6 @@
 /* ========================================
    REVEAL — Invite, Waiting, Reveal, Results, Vibe Report
+   Card Game Minimal Edition
    ======================================== */
 
 /* ===== INVITE ===== */
@@ -16,16 +17,18 @@
 }
 .invite-avatar {
   width: 72px; height: 72px;
-  border-radius: 50%;
+  border-radius: var(--radius);
   display: flex; align-items: center; justify-content: center;
   font-size: 28px;
+  box-shadow: var(--card-shadow);
 }
 .invite-avatar.you {
-  background: linear-gradient(135deg, var(--purple), var(--pink));
+  background: var(--accent-1);
+  color: white;
 }
 .invite-avatar.them {
   border: 2px dashed var(--dashed-border);
-  background: var(--surface);
+  background: var(--card-bg);
 }
 .invite-vs {
   font-family: 'Syne', sans-serif;
@@ -34,7 +37,7 @@
   color: var(--text-dim);
 }
 
-/* ===== WAITING ===== */
+/* ===== WAITING — Card table vibes ===== */
 #waiting {
   align-items: center;
   justify-content: center;
@@ -45,40 +48,43 @@
 #waiting::before {
   content: '';
   position: absolute;
-  width: 400px; height: 400px;
-  background: radial-gradient(circle, var(--accent-2-glow) 0%, transparent 70%);
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, var(--accent-1-glow) 0%, transparent 70%);
   top: 30%; left: 50%;
   transform: translateX(-50%);
   pointer-events: none;
 }
+/* Waiting — two face-down cards orbiting */
 .waiting-anim {
   position: relative;
   width: 140px; height: 140px;
 }
 .waiting-anim .orb {
   position: absolute;
-  border-radius: 50%;
+  border-radius: var(--radius-sm);
   animation: orbit 3s ease-in-out infinite;
+  border: 1px solid var(--card-border);
 }
 .waiting-anim .orb-1 {
-  width: 64px; height: 64px;
-  background: linear-gradient(135deg, var(--purple), var(--pink));
-  top: 10px; left: 10px;
+  width: 56px; height: 72px;
+  background: var(--accent-1);
+  top: 8px; left: 14px;
   animation-delay: 0s;
-  box-shadow: 0 0 40px var(--purple-glow);
+  box-shadow: var(--card-shadow);
 }
 .waiting-anim .orb-2 {
-  width: 64px; height: 64px;
-  background: linear-gradient(135deg, var(--pink), var(--orange));
-  bottom: 10px; right: 10px;
+  width: 56px; height: 72px;
+  background: var(--card-bg);
+  bottom: 8px; right: 14px;
   animation-delay: -1.5s;
-  box-shadow: 0 0 40px var(--pink-glow);
+  box-shadow: var(--card-shadow);
+  border: 1.5px solid var(--card-border);
 }
 .waiting-anim .orb-line {
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  width: 40px; height: 2px;
+  width: 32px; height: 1.5px;
   background: var(--orb-line);
   border-radius: 1px;
 }
@@ -88,10 +94,11 @@
   gap: 8px;
   padding: 10px 18px;
   border-radius: 20px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
   font-size: 13px;
   color: var(--text-mid);
+  box-shadow: var(--card-shadow);
 }
 .waiting-partner-progress .dot-pulse {
   width: 6px; height: 6px;
@@ -100,8 +107,8 @@
   animation: pulse 1.5s ease-in-out infinite;
 }
 .nudge-btn {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
   color: var(--text);
   padding: 12px 24px;
   border-radius: var(--radius);
@@ -110,10 +117,11 @@
   transition: all 0.2s;
   font-family: 'DM Sans', sans-serif;
   font-weight: 500;
+  box-shadow: var(--card-shadow);
 }
 .nudge-btn:active { transform: scale(0.95); }
 
-/* ===== REVEAL ===== */
+/* ===== REVEAL — Card flip moment ===== */
 #reveal {
   padding: 0;
   align-items: center;
@@ -133,10 +141,7 @@
   font-weight: 800;
   font-size: 120px;
   line-height: 1;
-  background: linear-gradient(135deg, var(--purple), var(--pink), var(--orange));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--accent-1);
   animation: countPop 0.4s ease;
 }
 .countdown-label {
@@ -148,7 +153,7 @@
   font-family: 'Syne', sans-serif;
 }
 
-/* Full-screen reveal card */
+/* Full-screen reveal card — card flip in */
 .reveal-fullscreen {
   position: absolute;
   inset: 0;
@@ -159,18 +164,18 @@
   padding: 40px 28px;
   text-align: center;
   opacity: 0;
-  transform: scale(0.92);
-  transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: perspective(800px) rotateY(20deg) scale(0.92);
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
   pointer-events: none;
 }
 .reveal-fullscreen.active {
   opacity: 1;
-  transform: scale(1);
+  transform: perspective(800px) rotateY(0deg) scale(1);
   pointer-events: all;
 }
 .reveal-fullscreen.exit {
   opacity: 0;
-  transform: scale(0.88) translateY(-30px);
+  transform: perspective(800px) rotateY(-20deg) scale(0.88);
 }
 .reveal-q-num {
   font-family: 'Syne', sans-serif;
@@ -191,7 +196,7 @@
   max-width: 80%;
 }
 
-/* VS cards */
+/* VS cards — two physical cards side by side */
 .reveal-vs-block {
   display: flex;
   align-items: stretch;
@@ -206,6 +211,7 @@
   text-align: center;
   position: relative;
   overflow: hidden;
+  box-shadow: var(--card-shadow);
 }
 .reveal-vs-card .rv-label {
   font-size: 10px;
@@ -227,10 +233,10 @@
 }
 .reveal-vs-card.you-card .rv-label { color: var(--accent-1); }
 .reveal-vs-card.them-card {
-  background: var(--accent-2-bg);
-  border: 1.5px solid var(--accent-2-border);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
 }
-.reveal-vs-card.them-card .rv-label { color: var(--accent-2); }
+.reveal-vs-card.them-card .rv-label { color: var(--text-mid); }
 
 /* Answer hidden state */
 .reveal-vs-card .rv-answer-hidden {
@@ -249,7 +255,7 @@
 .reveal-reaction {
   margin: 8px 0 4px;
   opacity: 0;
-  transform: scale(0) rotate(-20deg);
+  transform: scale(0) rotate(-15deg);
   transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .reveal-reaction.pop {
@@ -269,10 +275,7 @@
   letter-spacing: -0.3px;
 }
 .reveal-reaction .reaction-text.matched-text {
-  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--accent-1);
 }
 .reveal-reaction .reaction-text.diff-text {
   color: var(--text-dim);
@@ -300,14 +303,14 @@
   animation: cardConfettiBurst 0.8s ease-out forwards;
 }
 
-/* ===== RESULTS / STORY ===== */
+/* ===== RESULTS / STORY — Receipt card style ===== */
 #results {
   padding: 0;
 }
 #results::before {
   content: '';
   position: absolute;
-  width: 400px; height: 400px;
+  width: 300px; height: 300px;
   background: radial-gradient(circle, var(--accent-1-glow) 0%, transparent 70%);
   top: 10%; left: 50%;
   transform: translateX(-50%);
@@ -323,11 +326,11 @@
 }
 .story-scroll::-webkit-scrollbar { display: none; }
 
-/* Hero */
+/* Hero — muted, card-like */
 .story-hero {
-  padding: 32px 24px 28px;
+  padding: 36px 24px 28px;
   text-align: center;
-  background: linear-gradient(160deg, var(--accent-1), var(--accent-2));
+  background: var(--accent-1);
   position: relative;
   overflow: hidden;
   display: flex;
@@ -339,7 +342,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.12) 0%, transparent 50%);
+  background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.08) 0%, transparent 50%);
 }
 .story-hero-top {
   display: flex;
@@ -358,7 +361,7 @@
 }
 .story-hero-names {
   font-size: 13px;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255,255,255,0.55);
   position: relative;
   font-weight: 500;
   letter-spacing: 0.3px;
@@ -374,7 +377,7 @@
 }
 .story-hero-sub {
   font-size: 12px;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.45);
   position: relative;
   margin-top: 2px;
 }
@@ -393,7 +396,7 @@
 }
 .story-intro strong { color: var(--text); }
 
-/* Chapter per question */
+/* Chapter per question — card-like sections */
 .story-chapter {
   padding: 24px;
   border-bottom: 1px solid var(--border);
@@ -423,6 +426,7 @@
   padding: 12px;
   border-radius: var(--radius-sm);
   text-align: center;
+  box-shadow: var(--card-shadow);
 }
 .ch-ans .ch-label {
   font-size: 9px;
@@ -443,10 +447,10 @@
 }
 .ch-ans.ch-you .ch-label { color: var(--accent-1); }
 .ch-ans.ch-them {
-  background: var(--accent-2-bg);
-  border: 1px solid var(--accent-2-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
-.ch-ans.ch-them .ch-label { color: var(--accent-2); }
+.ch-ans.ch-them .ch-label { color: var(--text-mid); }
 
 /* Outro */
 .story-outro {
@@ -464,10 +468,7 @@
   font-weight: 800;
   font-size: 28px;
   letter-spacing: -1px;
-  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--accent-1);
 }
 .story-stat-lbl {
   font-size: 10px;
@@ -500,18 +501,16 @@
   gap: 10px;
 }
 
-/* ===== VIBE REPORT CARD ===== */
+/* ===== VIBE REPORT CARD — Clean card style ===== */
 .vibe-report {
   margin: 0 16px 8px;
-  padding: 2px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, var(--accent-1), var(--accent-2), var(--accent-1));
-  background-size: 200% 200%;
-  animation: vibeGradient 4s ease infinite;
+  padding: 1.5px;
+  border-radius: var(--radius);
+  background: var(--accent-1);
 }
 .vibe-report-inner {
-  background: var(--bg2);
-  border-radius: 14px;
+  background: var(--card-bg);
+  border-radius: calc(var(--radius) - 1.5px);
   padding: 24px 20px;
   position: relative;
   overflow: hidden;
@@ -520,8 +519,8 @@
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 80px;
-  background: linear-gradient(160deg, var(--accent-1-bg), var(--accent-2-bg));
+  height: 60px;
+  background: var(--accent-1-bg);
   opacity: 0.5;
   pointer-events: none;
 }
@@ -586,7 +585,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--accent-1-bg);
 }
 .vibe-award-content { flex: 1; min-width: 0; }
@@ -611,7 +610,7 @@
   text-align: center;
   padding: 16px;
   border-radius: var(--radius-sm);
-  background: linear-gradient(135deg, var(--accent-1-bg), var(--accent-2-bg));
+  background: var(--accent-1-bg);
   border: 1px solid var(--accent-1-border);
   position: relative;
 }
@@ -621,7 +620,7 @@
   letter-spacing: 1.5px;
   font-weight: 700;
   font-family: 'Syne', sans-serif;
-  color: var(--accent-2);
+  color: var(--accent-1);
   margin-bottom: 6px;
 }
 .vibe-metaphor-text {
