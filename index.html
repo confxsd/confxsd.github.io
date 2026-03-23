@@ -1,342 +1,384 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>confxsd</title>
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Funnel+Display"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo"
+    />
+    <style>
+      /* Base styles with 8px grid system */
+      :root {
+        --spacing-unit: 8px;
+        --max-width: 640px;
+        --color-text: #1a1a1a;
+        --color-bg: rgb(254, 253, 251);
+        --color-accent: #00ff41;
+      }
 
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>confxsd</title>
-  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Funnel+Display">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo">
-  <style>
-    /* Base styles with 8px grid system */
-    :root {
-      --spacing-unit: 8px;
-      --max-width: 640px;
-      --color-text: #1a1a1a;
-      --color-bg: rgb(254, 253, 251);
-      --color-accent: #00FF41;
-    }
+      * {
+        box-sizing: border-box;
+      }
 
-    * {
-      box-sizing: border-box;
-    }
+      body {
+        background: var(--color-bg);
+        padding: 0;
+        margin: 0;
+        min-height: 100vh;
+        font-family:
+          "Archivo",
+          -apple-system,
+          system-ui,
+          sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+        color: var(--color-text);
+      }
 
-    body {
-      background: var(--color-bg);
-      padding: 0;
-      margin: 0;
-      min-height: 100vh;
-      font-family: 'Archivo', -apple-system, system-ui, sans-serif;
-      font-size: 16px;
-      line-height: 1.6;
-      color: var(--color-text);
-    }
+      /* Typography scale */
+      h1 {
+        font-family: "Funnel Display", serif;
+        font-size: clamp(2rem, 5vw, 3rem);
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        margin: 0 0 calc(var(--spacing-unit) * 3) 0;
+        font-weight: 600;
+      }
 
-    /* Typography scale */
-    h1 {
-      font-family: 'Funnel Display', serif;
-      font-size: clamp(2rem, 5vw, 3rem);
-      line-height: 1.1;
-      letter-spacing: -0.02em;
-      margin: 0 0 calc(var(--spacing-unit) * 3) 0;
-      font-weight: 600;
-    }
+      h2 {
+        font-family: "Funnel Display", serif;
+        font-size: 1.5rem;
+        line-height: 1.3;
+        letter-spacing: -0.01em;
+        margin: calc(var(--spacing-unit) * 8) 0 calc(var(--spacing-unit) * 3) 0;
+        font-weight: 600;
+      }
 
-    h2 {
-      font-family: 'Funnel Display', serif;
-      font-size: 1.5rem;
-      line-height: 1.3;
-      letter-spacing: -0.01em;
-      margin: calc(var(--spacing-unit) * 8) 0 calc(var(--spacing-unit) * 3) 0;
-      font-weight: 600;
-    }
+      p {
+        margin: 0 0 calc(var(--spacing-unit) * 3) 0;
+        font-size: 1rem;
+        line-height: 1.6;
+      }
 
-    p {
-      margin: 0 0 calc(var(--spacing-unit) * 3) 0;
-      font-size: 1rem;
-      line-height: 1.6;
-    }
+      a {
+        color: var(--color-text);
+        text-decoration: none;
+        transition: all 0.2s ease;
+      }
 
-    a {
-      color: var(--color-text);
-      text-decoration: none;
-      transition: all 0.2s ease;
-    }
+      a:hover {
+        cursor: pointer;
+        text-decoration: underline;
+        text-decoration-color: var(--color-accent);
+        text-decoration-thickness: 2px;
+        text-underline-offset: 3px;
+      }
 
-    a:hover {
-      cursor: pointer;
-      text-decoration: underline;
-      text-decoration-color: var(--color-accent);
-      text-decoration-thickness: 2px;
-      text-underline-offset: 3px;
-    }
-
-    /* Layout */
-    main {
-      display: flex;
-      flex-direction: column;
-      padding: calc(var(--spacing-unit) * 3) calc(var(--spacing-unit) * 3) calc(var(--spacing-unit) * 12);
-    }
-
-    .container {
-      max-width: var(--max-width);
-      margin: 0 auto;
-      width: 100%;
-    }
-
-    header {
-      margin-bottom: calc(var(--spacing-unit) * 6);
-    }
-
-    header img {
-      width: 100%;
-      height: auto;
-      display: block;
-      margin-bottom: calc(var(--spacing-unit) * 4);
-    }
-
-    /* Sections */
-    section {
-      margin-bottom: calc(var(--spacing-unit) * 6);
-    }
-
-    section:first-child h2 {
-      margin-top: 0;
-    }
-
-    #main {
-      margin-bottom: calc(var(--spacing-unit) * 8);
-    }
-
-    #content {
-      display: flex;
-      flex-direction: column;
-      gap: calc(var(--spacing-unit) * 4);
-    }
-
-    /* Lists */
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      gap: calc(var(--spacing-unit) * 2);
-    }
-
-    li {
-      font-size: 1rem;
-      line-height: 1.6;
-    }
-
-    /* Social links */
-    #main ul {
-      flex-direction: row;
-      flex-wrap: wrap;
-      gap: calc(var(--spacing-unit) * 3);
-      font-size: 0.875rem;
-      margin-top: calc(var(--spacing-unit) * 3);
-    }
-
-    #main ul a {
-      text-decoration: underline;
-      text-decoration-color: var(--color-accent);
-      text-decoration-thickness: 1px;
-    }
-
-    #main ul a:hover {
-      text-decoration-thickness: 2px;
-    }
-
-    /* Project cards */
-    .card {
-      display: block;
-      border: none;
-      border-radius: 0.5rem;
-      padding: calc(var(--spacing-unit) * 2);
-      padding-left: 0.5em;
-      transition: all 0.2s ease;
-      text-decoration: none;
-    }
-
-    .card:hover {
-      border-color: var(--color-accent);
-      text-decoration: none;
-      transform: translateY(-2px);
-    }
-
-    .card-title {
-      font-weight: 600;
-      margin-bottom: calc(var(--spacing-unit) * 1);
-      color: var(--color-text);
-    }
-
-    .card-description {
-      color: rgba(26, 26, 26, 0.7);
-      font-size: 0.9375rem;
-      line-height: 1.5;
-    }
-
-    #code ul {
-      gap: calc(var(--spacing-unit) * 3);
-    }
-
-    /* Desktop adjustments */
-    @media screen and (min-width: 768px) {
+      /* Layout */
       main {
-        padding: calc(var(--spacing-unit) * 6) calc(var(--spacing-unit) * 4) calc(var(--spacing-unit) * 16);
+        display: flex;
+        flex-direction: column;
+        padding: calc(var(--spacing-unit) * 3) calc(var(--spacing-unit) * 3)
+          calc(var(--spacing-unit) * 12);
+      }
+
+      .container {
+        max-width: var(--max-width);
+        margin: 0 auto;
+        width: 100%;
       }
 
       header {
-        margin-bottom: calc(var(--spacing-unit) * 8);
-      }
-
-      header img {
         margin-bottom: calc(var(--spacing-unit) * 6);
       }
 
-      #main {
-        margin-bottom: calc(var(--spacing-unit) * 12);
+      header img {
+        width: 100%;
+        height: auto;
+        display: block;
+        margin-bottom: calc(var(--spacing-unit) * 4);
       }
 
-      #main ul {
-        text-decoration: none;
+      /* Sections */
+      section {
+        margin-bottom: calc(var(--spacing-unit) * 6);
+      }
+
+      section:first-child h2 {
+        margin-top: 0;
+      }
+
+      #main {
+        margin-bottom: calc(var(--spacing-unit) * 8);
       }
 
       #content {
-        gap: calc(var(--spacing-unit) * 8);
+        display: flex;
+        flex-direction: column;
+        gap: calc(var(--spacing-unit) * 4);
       }
-    }
-  </style>
 
-  <style>
-    #animatedText {
-      cursor: pointer;
-      user-select: none;
-    }
+      /* Lists */
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: calc(var(--spacing-unit) * 2);
+      }
 
-    .animate {
-      display: inline-block;
-      position: relative;
-      transition: transform 0.6s ease-in-out;
-      white-space: pre;
-      user-select: none;
-    }
+      li {
+        font-size: 1rem;
+        line-height: 1.6;
+      }
 
-    .animate.clicked {
-      color: black;
-    }
+      /* Social links */
+      #main ul {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: calc(var(--spacing-unit) * 3);
+        font-size: 0.875rem;
+        margin-top: calc(var(--spacing-unit) * 3);
+      }
 
-    .animate:hover {
-      transform: translateX(var(--x-move)) translateY(var(--y-move));
-    }
-  </style>
-</head>
+      #main ul a {
+        text-decoration: underline;
+        text-decoration-color: var(--color-accent);
+        text-decoration-thickness: 1px;
+      }
 
-<body>
-  <main>
-    <div class="container">
-      <header>
-        <img src="img/cover.gif" alt="Cover" />
-      </header>
+      #main ul a:hover {
+        text-decoration-thickness: 2px;
+      }
 
-      <section id="main">
-        <p><span id="animatedText"
-            style="color: #00FF41; background-color: #1a1a1a; padding: 0.25rem 0.5rem; margin-right: 0.75rem;">entangling
-            unknowns</span></p>
-        <ul>
-          <a href="https://github.com/confxsd">
-            <li>github</li>
-          </a>
-          <a href="https://www.linkedin.com/in/itsserhat">
-            <li>linkedin</li>
-          </a>
-          <a href="https://twitter.com/confxsd">
-            <li>twitter</li>
-          </a>
-          <a href="https://instagram.com/confxsd">
-            <li>instagram</li>
-          </a>
-          <a href="https://www.goodreads.com/confxsd">
-            <li>goodreads</li>
-          </a>
-          <a href="https://confxsd.substack.com">
-            <li>substack</li>
-          </a>
-        </ul>
-      </section>
+      /* Project cards */
+      .card {
+        display: block;
+        border: none;
+        border-radius: 0.5rem;
+        padding: calc(var(--spacing-unit) * 2);
+        padding-left: 0.5em;
+        transition: all 0.2s ease;
+        text-decoration: none;
+      }
 
-      <div id="content">
-        <section id="code">
-          <h2>created</h2>
+      .card:hover {
+        border-color: var(--color-accent);
+        text-decoration: none;
+        transform: translateY(-2px);
+      }
+
+      .card-title {
+        font-weight: 600;
+        margin-bottom: calc(var(--spacing-unit) * 1);
+        color: var(--color-text);
+      }
+
+      .card-description {
+        color: rgba(26, 26, 26, 0.7);
+        font-size: 0.9375rem;
+        line-height: 1.5;
+      }
+
+      #code ul {
+        gap: calc(var(--spacing-unit) * 3);
+      }
+
+      /* Desktop adjustments */
+      @media screen and (min-width: 768px) {
+        main {
+          padding: calc(var(--spacing-unit) * 6) calc(var(--spacing-unit) * 4)
+            calc(var(--spacing-unit) * 16);
+        }
+
+        header {
+          margin-bottom: calc(var(--spacing-unit) * 8);
+        }
+
+        header img {
+          margin-bottom: calc(var(--spacing-unit) * 6);
+        }
+
+        #main {
+          margin-bottom: calc(var(--spacing-unit) * 12);
+        }
+
+        #main ul {
+          text-decoration: none;
+        }
+
+        #content {
+          gap: calc(var(--spacing-unit) * 8);
+        }
+      }
+    </style>
+
+    <style>
+      #animatedText {
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .animate {
+        display: inline-block;
+        position: relative;
+        transition: transform 0.6s ease-in-out;
+        white-space: pre;
+        user-select: none;
+      }
+
+      .animate.clicked {
+        color: black;
+      }
+
+      .animate:hover {
+        transform: translateX(var(--x-move)) translateY(var(--y-move));
+      }
+    </style>
+  </head>
+
+  <body>
+    <main>
+      <div class="container">
+        <header>
+          <img src="img/cover.gif" alt="Cover" />
+        </header>
+
+        <section id="main">
+          <p>
+            <span
+              id="animatedText"
+              style="
+                color: #00ff41;
+                background-color: #1a1a1a;
+                padding: 0.25rem 0.5rem;
+                margin-right: 0.75rem;
+              "
+              >entangling unknowns</span
+            >
+          </p>
           <ul>
-            <li>
-              <a href="https://confxsd.github.io/vhunter" class="card">
-                <div class="card-title">VHunter | Signal Terminal</div>
-                <div class="card-description">AI stock market assistant that helps you understand markets, analyze investments, and make informed decisions.</div>
-              </a>
-            </li>
-            <li>
-              <a href="https://epifani.now" class="card">
-                <div class="card-title">EPIFANI | Interactive art experience</div>
-                <div class="card-description">Interactive map exploring London's art scene, galleries, and cultural spaces.</div>
-              </a>
-            </li>
-            <li>
-              <a href="blind/" class="card">
-                <div class="card-title">Blindside | Social discovery game</div>
-                <div class="card-description">Same questions. Blind answers. One reveal. Find out how well you really know each other.</div>
-              </a>
-            </li>
+            <a href="https://github.com/confxsd">
+              <li>github</li>
+            </a>
+            <a href="https://www.linkedin.com/in/itsserhat">
+              <li>linkedin</li>
+            </a>
+            <a href="https://twitter.com/confxsd">
+              <li>twitter</li>
+            </a>
+            <a href="https://instagram.com/confxsd">
+              <li>instagram</li>
+            </a>
+            <a href="https://www.goodreads.com/confxsd">
+              <li>goodreads</li>
+            </a>
+            <a href="https://confxsd.substack.com">
+              <li>substack</li>
+            </a>
           </ul>
         </section>
 
-        <section id="works">
-          <h2>artworks</h2>
-          <ul>
-            <a href="works/1-reality">
-              <li>reality</li>
-            </a>
-            <li><a href="works/3-affirmations">affirmations</a>
-              <a href="works/3-affirmations/affirmations.apk">(download)</a>
-            </li>
-            <li>color studies:
-              <a href="works/4-color-studies/2-wound/index.html">Wound</a>,
-              <a href="works/4-color-studies/3-fire/index.html">Fire</a>,
-              <a href="works/4-color-studies/4-spring/index.html">Spring</a>
-            </li>
-            <a href="works/5-values-wheel/index.html">
-              <li>values wheel</li>
-            </a>
-            <a href="works/6-run-karma-run/index.html">
-              <li>run, karma. run!</li>
-            </a>
-          </ul>
-        </section>
+        <div id="content">
+          <section id="code">
+            <h2>created</h2>
+            <ul>
+              <li>
+                <a href="https://confxsd.github.io/vhunter" class="card">
+                  <div class="card-title">VHunter | Signal Terminal</div>
+                  <div class="card-description">
+                    AI stock market assistant that helps you understand markets,
+                    analyze investments, and make informed decisions.
+                  </div>
+                </a>
+              </li>
+              <li>
+                <a href="https://epifani.now" class="card">
+                  <div class="card-title">
+                    EPIFANI | Interactive art experience
+                  </div>
+                  <div class="card-description">
+                    Interactive map exploring London's art scene, galleries, and
+                    cultural spaces.
+                  </div>
+                </a>
+              </li>
+              <li>
+                <a href="www.blindside.to" class="card">
+                  <div class="card-title">
+                    Blindside | Social discovery game
+                  </div>
+                  <div class="card-description">
+                    Same questions. Blind answers. One reveal. Find out how well
+                    you really know each other.
+                  </div>
+                </a>
+              </li>
+            </ul>
+          </section>
 
-        <section id="articles">
-          <h2>articles</h2>
-          <ul>
-            <a href="https://confxsd.substack.com/p/understanding-a-chronic-crisis-last">
-              <li>Understanding a Chronic Crisis: Last 50 Years of Türkiye's Economy</li>
-            </a>
-            <a href="https://confxsd.substack.com/p/web3-from-the-perspective-of-a-computer">
-              <li>Crypto-world from a computer engineer perspective</li>
-            </a>
-            <a href="https://confxsd.substack.com/p/what-is-wrong-with-digital-currencies">
-              <li>What's wrong with digital currencies?</li>
-            </a>
-          </ul>
-        </section>
+          <section id="works">
+            <h2>artworks</h2>
+            <ul>
+              <a href="works/1-reality">
+                <li>reality</li>
+              </a>
+              <li>
+                <a href="works/3-affirmations">affirmations</a>
+                <a href="works/3-affirmations/affirmations.apk">(download)</a>
+              </li>
+              <li>
+                color studies:
+                <a href="works/4-color-studies/2-wound/index.html">Wound</a>,
+                <a href="works/4-color-studies/3-fire/index.html">Fire</a>,
+                <a href="works/4-color-studies/4-spring/index.html">Spring</a>
+              </li>
+              <a href="works/5-values-wheel/index.html">
+                <li>values wheel</li>
+              </a>
+              <a href="works/6-run-karma-run/index.html">
+                <li>run, karma. run!</li>
+              </a>
+            </ul>
+          </section>
+
+          <section id="articles">
+            <h2>articles</h2>
+            <ul>
+              <a
+                href="https://confxsd.substack.com/p/understanding-a-chronic-crisis-last"
+              >
+                <li>
+                  Understanding a Chronic Crisis: Last 50 Years of Türkiye's
+                  Economy
+                </li>
+              </a>
+              <a
+                href="https://confxsd.substack.com/p/web3-from-the-perspective-of-a-computer"
+              >
+                <li>Crypto-world from a computer engineer perspective</li>
+              </a>
+              <a
+                href="https://confxsd.substack.com/p/what-is-wrong-with-digital-currencies"
+              >
+                <li>What's wrong with digital currencies?</li>
+              </a>
+            </ul>
+          </section>
+        </div>
       </div>
-    </div>
-  </main>
+    </main>
 
-  <script src="script.js"></script>
-  <script src="t.js"></script>
-
-</body>
-
+    <script src="script.js"></script>
+    <script src="t.js"></script>
+  </body>
 </html>
