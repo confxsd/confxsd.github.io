@@ -1075,6 +1075,152 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; }
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* --- Collections grid --- */
+.collections-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0 16px 8px;
+}
+.collection-card {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s;
+  min-height: 140px;
+  display: flex;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: packFadeIn 0.4s ease forwards;
+}
+.collection-card:active { transform: scale(0.96); }
+.coll-card-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.15;
+  z-index: 0;
+}
+[data-theme="dark"] .coll-card-bg { opacity: 0.2; }
+.coll-card-content {
+  position: relative;
+  z-index: 1;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+.coll-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.coll-emoji { font-size: 28px; }
+.coll-badge {
+  padding: 2px 6px;
+  border-radius: 100px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.coll-badge.badge-hot {
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  color: #fff;
+}
+.coll-badge.badge-new {
+  background: rgba(132,204,22,0.15);
+  color: var(--lime);
+  border: 1px solid rgba(132,204,22,0.25);
+}
+.coll-badge.badge-popular {
+  background: rgba(6,182,212,0.12);
+  color: var(--cyan);
+  border: 1px solid rgba(6,182,212,0.25);
+}
+.coll-badge.badge-trending {
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  color: #fff;
+}
+.coll-card-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.2;
+  letter-spacing: -0.3px;
+}
+.coll-card-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.4;
+  flex: 1;
+}
+.coll-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+.coll-deck-count {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.coll-preview-emojis {
+  font-size: 14px;
+  letter-spacing: -2px;
+}
+
+/* --- Collection detail screen --- */
+#collectionDetail {
+  display: flex;
+  flex-direction: column;
+}
+.coll-detail-header {
+  flex-shrink: 0;
+}
+.coll-detail-hero {
+  position: relative;
+  padding: 20px 24px 24px;
+  color: #fff;
+  border-radius: 0 0 20px 20px;
+}
+.coll-back-btn {
+  color: #fff !important;
+  background: rgba(255,255,255,0.15) !important;
+  border: none !important;
+  margin-bottom: 8px;
+}
+.coll-hero-emoji {
+  font-size: 42px;
+  margin-bottom: 8px;
+}
+.coll-hero-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+.coll-hero-desc {
+  font-size: 13px;
+  opacity: 0.85;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+.coll-hero-meta {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+#collDetailGrid {
+  padding-top: 12px;
+}
+
 /* ========== INVITE ========== */
 #invite {
   padding: 60px 24px 40px;

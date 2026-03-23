@@ -112,7 +112,7 @@
     </nav>
   </div>
 
-  <!-- PACKS -->
+  <!-- PACKS (Collections Browse) -->
   <div id="packs" class="screen">
     <div class="packs-header">
       <div class="top-bar">
@@ -131,9 +131,6 @@
       </div>
     </div>
 
-    <!-- Category filter pills -->
-    <div class="packs-filters" id="packsFilters"></div>
-
     <!-- Featured / trending carousel -->
     <div class="packs-featured" id="packsFeaturedSection">
       <div class="packs-featured-label">
@@ -143,12 +140,34 @@
       <div class="featured-scroll" id="packsFeatured"></div>
     </div>
 
+    <!-- Collections section label -->
+    <div class="packs-section-label" data-i18n="packs_collections">collections</div>
+
+    <!-- Collection cards grid -->
+    <div class="collections-grid" id="collectionsGrid"></div>
+
     <!-- All packs section label -->
     <div class="packs-section-label" data-i18n="packs_all">all packs</div>
 
     <!-- Pack list -->
     <div class="packs-list" id="packsGrid"></div>
 
+    <nav class="bottom-nav">
+      <button class="nav-item" onclick="goTo('home')">
+        <span class="nav-icon">🏠</span>
+        <span data-i18n="nav_home">Home</span>
+      </button>
+      <button class="nav-item active" onclick="goTo('packs')">
+        <span class="nav-icon">🃏</span>
+        <span data-i18n="nav_packs">Decks</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- COLLECTION DETAIL -->
+  <div id="collectionDetail" class="screen">
+    <div class="coll-detail-header" id="collDetailHeader"></div>
+    <div class="packs-list" id="collDetailGrid"></div>
     <nav class="bottom-nav">
       <button class="nav-item" onclick="goTo('home')">
         <span class="nav-icon">🏠</span>

@@ -44,6 +44,99 @@ const packCategories = [
 ];
 let activePackFilter = 'all';
 
+// Collection definitions — curated groups of decks for browsable categories
+const packCollections = [
+  // Partner collections
+  {
+    key: 'date_night',
+    emoji: '🕯️',
+    gradient: ['#7C3AED', '#EC4899'],
+    nameKey: 'coll_date_night',
+    descKey: 'coll_desc_date_night',
+    packs: ['couples', '36questions', 'livingtogether'],
+    mode: 'partner',
+    badge: 'popular',
+  },
+  {
+    key: 'spicy_edition',
+    emoji: '🔥',
+    gradient: ['#EF4444', '#F97316'],
+    nameKey: 'coll_spicy_edition',
+    descKey: 'coll_desc_spicy_edition',
+    packs: ['hottakes', 'redflags', 'chaotic', 'situations'],
+    mode: 'partner',
+    badge: 'hot',
+  },
+  {
+    key: 'deep_bonds',
+    emoji: '🌊',
+    gradient: ['#0EA5E9', '#6366F1'],
+    nameKey: 'coll_deep_bonds',
+    descKey: 'coll_desc_deep_bonds',
+    packs: ['deeptalk', 'ethics', 'soulspirit'],
+    mode: 'partner',
+  },
+  {
+    key: 'friend_zone',
+    emoji: '👯',
+    gradient: ['#10B981', '#06B6D4'],
+    nameKey: 'coll_friend_zone',
+    descKey: 'coll_desc_friend_zone',
+    packs: ['bestfriends', 'fungames', 'coworkers'],
+    mode: 'partner',
+    badge: 'new',
+  },
+  {
+    key: 'culture_taste',
+    emoji: '🌍',
+    gradient: ['#F59E0B', '#EF4444'],
+    nameKey: 'coll_culture_taste',
+    descKey: 'coll_desc_culture_taste',
+    packs: ['worldtaste', 'soulspirit', 'livingtogether'],
+    mode: 'partner',
+  },
+  // Solo collections
+  {
+    key: 'know_yourself',
+    emoji: '🪞',
+    gradient: ['#8B5CF6', '#EC4899'],
+    nameKey: 'coll_know_yourself',
+    descKey: 'coll_desc_know_yourself',
+    packs: ['innermirror', 'shadow', 'emotionalage', 'boundaries'],
+    mode: 'self',
+    badge: 'trending',
+  },
+  {
+    key: 'love_decoded',
+    emoji: '💘',
+    gradient: ['#EC4899', '#F43F5E'],
+    nameKey: 'coll_love_decoded',
+    descKey: 'coll_desc_love_decoded',
+    packs: ['attachment', 'lovelang', 'hisarchetype', 'girlfriendera'],
+    mode: 'self',
+    badge: 'hot',
+  },
+  {
+    key: 'relationship_xray',
+    emoji: '🔍',
+    gradient: ['#6366F1', '#0EA5E9'],
+    nameKey: 'coll_relationship_xray',
+    descKey: 'coll_desc_relationship_xray',
+    packs: ['couplestory', 'whathehides', 'selfsabotage'],
+    mode: 'self',
+    badge: 'new',
+  },
+  {
+    key: 'inner_work',
+    emoji: '🧘',
+    gradient: ['#10B981', '#6366F1'],
+    nameKey: 'coll_inner_work',
+    descKey: 'coll_desc_inner_work',
+    packs: ['stresstype', 'boundaries', 'selfsabotage', 'shadow'],
+    mode: 'self',
+  },
+];
+
 // Question packs per language — partnerAnswerIndex stores index so it works across languages
 const questionPacks = {
   en: {
