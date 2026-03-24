@@ -224,22 +224,27 @@
       align-items: center;
       padding: 8px 0;
       border-bottom: 1px solid var(--border);
+      gap: 12px;
     }
 
     .row:last-child { border-bottom: none; }
 
-    .row-label {
+    .row-info {
       flex: 1;
+      min-width: 0;
+    }
+
+    .row-label {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      margin-right: 12px;
     }
 
     .row-value {
       font-variant-numeric: tabular-nums;
       color: var(--text-dim);
       white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .row-bar {
@@ -388,13 +393,14 @@
 
     function tableRows(items, labelKey, valueKey) {
       if (!items || items.length === 0) return '<div class="empty">No data yet</div>';
+      items = [...items].sort((a, b) => b[valueKey] - a[valueKey]);
       const max = Math.max(...items.map(i => i[valueKey]));
       return items.map(item => {
         const pct = max > 0 ? (item[valueKey] / max * 100) : 0;
         const label = item[labelKey] || '(direct)';
         return `
           <div class="row">
-            <div>
+            <div class="row-info">
               <div class="row-label" title="${esc(label)}">${esc(label)}</div>
               <div class="row-bar" style="width: ${pct}%"></div>
             </div>
