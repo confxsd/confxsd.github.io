@@ -142,7 +142,7 @@ function renderDashboard(stats) {
         <div class="at-stat">
           <div class="at-stat-val" style="color:#3b82f6">${stats.active_count}</div>
           <div class="at-stat-label">Active</div>
-          <div class="at-stat-sub">${stats.by_direction.long}L / ${stats.by_direction.short}S</div>
+          <div class="at-stat-sub">${stats.by_direction.long?.count ?? stats.by_direction.long ?? 0}L / ${stats.by_direction.short?.count ?? stats.by_direction.short ?? 0}S</div>
         </div>
         <div class="at-stat">
           <div class="at-stat-val" style="color:${pnlColor}">${fmtPct(stats.total_unrealized_pnl)}</div>
