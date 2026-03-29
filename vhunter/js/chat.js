@@ -247,7 +247,10 @@ async function sendMessage() {
           }
 
           case 'error': {
-            fullText += `\n\n**Error:** ${parsed.error}`;
+            const friendly = parsed.error?.includes('Too many tool iterations')
+              ? 'Reached the tool call limit — try asking a more specific question.'
+              : parsed.error;
+            fullText += `\n\n**Error:** ${friendly}`;
             contentEl.innerHTML = renderMarkdown(fullText);
             break;
           }
