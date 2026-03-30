@@ -4,22 +4,34 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>politics 3</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-  <script src="script.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       overflow: hidden;
-      background: #000;
+      background: #1a1a1a;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       width: 100vw;
     }
-    canvas { display: block; }
+    iframe {
+      border: none;
+      width: 100vw;
+      height: 100vh;
+    }
+    @media (min-width: 768px) {
+      iframe {
+        width: 430px;
+        height: 932px;
+        max-height: 90vh;
+        border-radius: 4px;
+        box-shadow: 0 0 60px rgba(0,0,0,0.5);
+      }
+    }
   </style>
 </head>
 <body>
+  <iframe src="sketch.html"></iframe>
 </body>
 </html>
