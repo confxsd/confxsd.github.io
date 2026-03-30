@@ -18,8 +18,23 @@
       width: 100vw;
     }
     canvas { display: block; }
+    #title {
+      color: white;
+      position: absolute;
+      left: 64px;
+      bottom: 64px;
+      font-family: sans-serif;
+      z-index: 9;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 0 1em;
+      border-radius: 1em;
+    }
+    @media (max-width: 480px) {
+      #title { left: 32px; bottom: 24px; }
+    }
   </style>
 </head>
 <body>
+  <div id="title"><p>flap flap!</p></div>
 </body>
 </html>
