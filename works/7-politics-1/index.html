@@ -21,16 +21,21 @@
     #title {
       color: white;
       position: absolute;
-      left: 64px;
-      bottom: 64px;
+      left: 24px;
+      bottom: 24px;
       font-family: sans-serif;
+      font-size: 14px;
+      letter-spacing: 0.02em;
       z-index: 9;
-      background: rgba(0, 0, 0, 0.8);
-      padding: 0 1em;
-      border-radius: 1em;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 6px 16px;
+      border-radius: 20px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
+    #title p { margin: 0; }
     @media (max-width: 480px) {
-      #title { left: 32px; bottom: 24px; }
+      #title { left: 16px; bottom: 16px; font-size: 13px; padding: 5px 14px; }
     }
   </style>
 </head>
