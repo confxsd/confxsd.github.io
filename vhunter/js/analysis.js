@@ -68,6 +68,7 @@ export async function run(forceRefresh = false, period = null) {
 
     loadNews(ticker);
     loadFinancials(ticker);
+    loadShortInterest(ticker);
 
     ui.setStatus('');
   } catch (e) {
@@ -573,6 +574,27 @@ async function loadFinancials(ticker, timeframe = 'annual') {
     });
   } catch (e) {
     container.innerHTML = `<div class="financials-error">Failed to load financials: ${e.message}</div>`;
+  }
+}
+
+async function loadShortInterest(ticker) {
+  const cell = document.getElementById('si-cell');
+  if (!cell) return;
+
+  try {
+    const res = await fetch(`${CONFIG.PROXY_URL}/api/short-interest/${ticker}`, {
+      headers: { 'X-User-Id': localStorage.getItem('vhunter_user_id') || 'vhunter-serhat' }
+    });
+    if (!res.ok) throw new Error('Failed');
+    const data = await res.json();
+    if (!data || (data.short_float_pct == null && data.short_ratio == null)) {
+      cell.style.display = 'none';
+      return;
+    }
+    cell.style.display = '';
+    ui.updateShortInterest(data);
+  } catch {
+    cell.style.display = 'none';
   }
 }
 

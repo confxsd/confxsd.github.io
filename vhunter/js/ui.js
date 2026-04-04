@@ -177,6 +177,54 @@ export function updateMoneyFlow(data) {
   $('adS').textContent = adlChange >= 0 ? 'Accum' : 'Distr';
 }
 
+export function updateShortInterest(data) {
+  const fmt = (n) => {
+    if (n == null) return '--';
+    if (Math.abs(n) >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+    if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return n.toLocaleString();
+  };
+
+  const si = data.short_float_pct;
+  const dtc = data.short_ratio;
+
+  $('siPct').textContent = si != null ? si.toFixed(1) + '%' : '--';
+  $('siPct').className = 'v ' + (si >= 20 ? 'r' : si >= 10 ? 'y' : 'g');
+
+  $('siDtc').textContent = dtc != null ? dtc.toFixed(1) : '--';
+  $('siDtc').className = 'v ' + (dtc >= 5 ? 'r' : dtc >= 3 ? 'y' : '');
+
+  $('siShares').textContent = fmt(data.shares_short);
+  if (data.si_change_pct != null) {
+    const ch = data.si_change_pct;
+    $('siChange').textContent = (ch >= 0 ? '+' : '') + ch.toFixed(1) + '% chg';
+    $('siChange').className = 's ' + (ch > 0 ? 'r' : ch < 0 ? 'g' : '');
+  } else {
+    $('siChange').textContent = '--';
+  }
+
+  $('siFloat').textContent = fmt(data.shares_float);
+  $('siInsider').textContent = data.insider_own_pct != null ? data.insider_own_pct.toFixed(1) : '--';
+  $('siInst').textContent = data.inst_own_pct != null ? data.inst_own_pct.toFixed(1) : '--';
+
+  // Squeeze risk assessment
+  let squeezeRisk = 'LOW';
+  let squeezeClass = 'g';
+  if (si >= 20 && dtc >= 4) { squeezeRisk = 'HIGH'; squeezeClass = 'r'; }
+  else if (si >= 15 || dtc >= 3) { squeezeRisk = 'MOD'; squeezeClass = 'y'; }
+  $('siSqueeze').textContent = squeezeRisk;
+  $('siSqueeze').className = 'v ' + squeezeClass;
+
+  // Report date
+  if (data.scraped_at) {
+    const d = new Date(data.scraped_at);
+    $('siDate').textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  } else {
+    $('siDate').textContent = '--';
+  }
+}
+
 export function updateOptions(data) {
   if (!data) {
     $('pc').textContent = 'N/A';
