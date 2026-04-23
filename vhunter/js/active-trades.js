@@ -1,6 +1,6 @@
 // Active Trades — portfolio of decided trades
 
-const API_BASE = (() => { try { return window.__PROXY_URL__ || 'https://api.rome.markets'; } catch (_) { return 'https://api.rome.markets'; } })();
+const API_BASE = (() => { try { return window.__PROXY_URL__ || 'https://vapi.heymira.co'; } catch (_) { return 'https://vapi.heymira.co'; } })();
 const USER_ID  = () => localStorage.getItem('vhunter_user_id') || 'vhunter-serhat';
 
 let cache = { trades: [], stats: null };

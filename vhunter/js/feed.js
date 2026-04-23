@@ -670,7 +670,7 @@ function renderFeed(container) {
 // Rewrite legacy workers.dev URLs to new custom domain
 function rewriteImageUrl(url) {
   if (!url) return url;
-  return url.replace('https://vhunter-proxy.vhunter.workers.dev/', 'https://api.rome.markets/');
+  return url.replace('https://vhunter-proxy.vhunter.workers.dev/', 'https://vapi.heymira.co/');
 }
 
 function parseJsonField(field) {

@@ -1,7 +1,7 @@
 // Signal Log & Accuracy Dashboard
 import { formatNum } from './utils.js';
 
-const API_BASE = (() => { try { return window.__PROXY_URL__ || 'https://api.rome.markets'; } catch (_) { return 'https://api.rome.markets'; } })();
+const API_BASE = (() => { try { return window.__PROXY_URL__ || 'https://vapi.heymira.co'; } catch (_) { return 'https://vapi.heymira.co'; } })();
 const USER_ID  = () => localStorage.getItem('vhunter_user_id') || 'vhunter-serhat';
 
 let logCache  = { entries: [], stats: null };
