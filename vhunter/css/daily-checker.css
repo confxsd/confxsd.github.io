@@ -242,9 +242,7 @@
   font-size: 0.8rem;
   padding: 4px;
   flex-shrink: 0;
-  transition: transform 0.2s;
 }
-.dc-expand-btn.open { transform: rotate(180deg); }
 
 /* Summary */
 .dc-summary {
@@ -255,15 +253,7 @@
   line-height: 1.4;
 }
 
-/* ── Expanded Panel ── */
-.dc-expanded {
-  display: none;
-  border-top: 1px solid var(--tv-bg-tertiary);
-  padding: 14px;
-  background: var(--tv-bg-secondary);
-}
-.dc-expanded.open { display: block; }
-
+/* ── Expanded grid (rendered inside detail drawer) ── */
 .dc-expanded-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

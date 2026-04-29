@@ -1,5 +1,8 @@
 // Memory Map Module - Semantic memory layer for market factors
 import { CONFIG } from './config.js';
+import { openDrawer, closeDrawer } from './drawer.js';
+
+const MEMORY_DRAWER_ID = 'memory-detail';
 
 let memories = [];
 let selectedMemory = null;
@@ -245,32 +248,31 @@ async function openMemoryDetail(id) {
   try {
     const fullMemory = await getMemory(id);
     selectedMemory = fullMemory;
-    renderDetailPanel(fullMemory);
-    showDetailPanel();
+    showDetailPanel(fullMemory);
   } catch (e) {
     console.error('Failed to load memory details:', e);
   }
 }
 
-function showDetailPanel() {
-  const overlay = document.getElementById('memoryDetailOverlay');
-  const panel = document.getElementById('memoryDetailPanel');
-  if (overlay) overlay.classList.add('active');
-  if (panel) panel.classList.add('active');
+function showDetailPanel(memory) {
+  openDrawer({
+    id: MEMORY_DRAWER_ID,
+    title: escapeHtml(memory.name),
+    subtitle: `
+      <span class="memory-card-category ${memory.category}">${memory.category}</span>
+      <span>${escapeHtml(memory.timeframe || '')}</span>
+      <span>${escapeHtml(memory.volatility_impact || '')} vol</span>
+    `,
+    content: renderDetailBody(memory),
+    onClose: () => { selectedMemory = null; }
+  });
 }
 
 function closeDetailPanel() {
-  const overlay = document.getElementById('memoryDetailOverlay');
-  const panel = document.getElementById('memoryDetailPanel');
-  if (overlay) overlay.classList.remove('active');
-  if (panel) panel.classList.remove('active');
-  selectedMemory = null;
+  closeDrawer(MEMORY_DRAWER_ID);
 }
 
-function renderDetailPanel(memory) {
-  const panel = document.getElementById('memoryDetailPanel');
-  if (!panel) return;
-
+function renderDetailBody(memory) {
   const sentiment = memory.sentiment_score || 0;
   const importance = memory.importance_score || 5;
   const confidence = memory.confidence || 5;
@@ -281,20 +283,7 @@ function renderDetailPanel(memory) {
   const sentimentClass = sentiment > 0 ? 'positive' : sentiment < 0 ? 'negative' : 'neutral';
   const sentimentWidth = Math.abs(sentiment) * 5; // Scale to 50% max
 
-  panel.innerHTML = `
-    <div class="memory-detail-header">
-      <button class="memory-detail-close" onclick="window.closeMemoryDetail()">×</button>
-      <div class="memory-detail-title">
-        <div class="memory-detail-name">${escapeHtml(memory.name)}</div>
-        <div class="memory-detail-meta">
-          <span class="memory-card-category ${memory.category}">${memory.category}</span>
-          <span style="color: #94a3b8; font-size: var(--t-xs);">${memory.timeframe}</span>
-          <span style="color: #94a3b8; font-size: var(--t-xs);">${memory.volatility_impact} vol</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="memory-detail-body">
+  return `
       <!-- Gauges -->
       <div class="memory-gauges">
         <div class="memory-gauge">
@@ -377,7 +366,6 @@ function renderDetailPanel(memory) {
           </div>
         ` : '<div class="memory-section-content">No updates yet</div>'}
       </div>
-    </div>
 
     <div class="memory-detail-actions">
       <button class="btn-edit" onclick="window.openMemoryModal('${memory.id}')">Edit</button>

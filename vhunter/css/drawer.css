@@ -1,0 +1,113 @@
+/* ============================================ */
+/* Common right-side drawer                       */
+/* Shared by memory-map, daily-checker, etc.      */
+/* Open via js/drawer.js openDrawer()             */
+/* ============================================ */
+
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.drawer-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.drawer-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 90vw;
+  max-width: 100%;
+  background: var(--tv-bg);
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.18);
+  z-index: 1001;
+  transform: translateX(100%);
+  transition: transform 0.28s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer-panel.active {
+  transform: translateX(0);
+}
+
+.drawer-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--tv-border);
+  background: var(--tv-bg);
+  flex-shrink: 0;
+}
+
+.drawer-title-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.drawer-title {
+  font-size: var(--t-lg);
+  font-weight: 700;
+  color: var(--tv-text-primary);
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.drawer-subtitle {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: var(--t-xs);
+  color: var(--tv-text-secondary);
+}
+
+.drawer-subtitle:empty {
+  display: none;
+}
+
+.drawer-close {
+  background: none;
+  border: none;
+  color: var(--tv-text-secondary);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.drawer-close:hover {
+  color: var(--tv-text-primary);
+  background: var(--tv-bg-secondary);
+}
+
+.drawer-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+/* Width modifiers */
+.drawer-panel.drawer-md { width: 560px; }
+.drawer-panel.drawer-sm { width: 420px; }
+
+@media (max-width: 640px) {
+  .drawer-panel,
+  .drawer-panel.drawer-md,
+  .drawer-panel.drawer-sm {
+    width: 100% !important;
+  }
+  .drawer-content { padding: 12px; }
+}

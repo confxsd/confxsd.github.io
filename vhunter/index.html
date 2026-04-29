@@ -157,6 +157,7 @@
     <link rel="stylesheet" href="css/base.css" />
     <link rel="stylesheet" href="css/layout.css?v=2" />
     <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/drawer.css" />
     <link rel="stylesheet" href="css/analyze.css" />
     <link rel="stylesheet" href="css/options.css" />
     <link rel="stylesheet" href="css/feed.css" />
@@ -188,6 +189,18 @@
         <nav class="sidebar-nav">
           <a
             href="#"
+            class="nav-item"
+            data-page="analyze"
+            onclick="
+              event.preventDefault();
+              switchPage('analyze');
+            "
+          >
+            <span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span>
+            <span class="nav-label">Technicals</span>
+          </a>
+          <a
+            href="#"
             class="nav-item active"
             data-page="dashboard"
             onclick="
@@ -200,15 +213,19 @@
           </a>
           <a
             href="#"
-            class="nav-item"
-            data-page="analyze"
+            class="nav-item nav-item-shortcut"
+            data-shortcut="briefing"
             onclick="
               event.preventDefault();
-              switchPage('analyze');
+              switchPage('dashboard');
+              setTimeout(() => {
+                const el = document.getElementById('dcBriefing');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }, 50);
             "
           >
-            <span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span>
-            <span class="nav-label">Technicals</span>
+            <span class="nav-icon"><i class="fa-solid fa-newspaper"></i></span>
+            <span class="nav-label">Briefing</span>
           </a>
           <a
             href="#"
@@ -892,14 +909,6 @@
               </div>
             </div>
           </div>
-
-          <!-- Detail Panel Overlay -->
-          <div
-            class="memory-detail-overlay"
-            id="memoryDetailOverlay"
-            onclick="closeMemoryDetail()"
-          ></div>
-          <div class="memory-detail-panel" id="memoryDetailPanel"></div>
 
           <!-- Create/Edit Modal -->
           <div class="memory-modal-overlay" id="memoryModalOverlay">

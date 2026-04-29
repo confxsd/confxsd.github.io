@@ -6,6 +6,9 @@ import {
 } from './db.js';
 import { formatNum } from './utils.js';
 import { registerStrip } from './history.js';
+import { openDrawer } from './drawer.js';
+
+const DC_DRAWER_ID = 'dc-detail';
 
 let checksCache = [];
 let isRunning = false;
@@ -107,15 +110,20 @@ function sortChecks(checks) {
 
 // ── Card rendering ────────────────────────────────────────────
 
-function renderCard(check) {
+function parseCheckResult(check) {
   const r = check.latest_result;
   let market = null, opts = null, analysis = null;
   try {
     const raw = r?.market_snapshot ? JSON.parse(r.market_snapshot) : null;
     market = raw?.price != null ? raw : (raw?.daily ?? null);
   } catch (_) {}
-  try { opts   = r?.options_snapshot ? JSON.parse(r.options_snapshot) : null; } catch (_) {}
+  try { opts = r?.options_snapshot ? JSON.parse(r.options_snapshot) : null; } catch (_) {}
   try { analysis = r?.ai_analysis ? JSON.parse(r.ai_analysis) : null; } catch (_) {}
+  return { r, market, opts, analysis };
+}
+
+function renderCard(check) {
+  const { r, market, opts, analysis } = parseCheckResult(check);
 
   const signal = r?.signal || null;
   const score  = r?.opportunity_score ?? null;
@@ -222,139 +230,6 @@ function renderCard(check) {
       <span class="dc-tf-dot ${tfClass(tfa.daily)}">D${tfArrow(tfa.daily)}</span>
     </div>` : '';
 
-  // ── Expanded: Thesis + validation ──
-  const thesisValidBadge = r
-    ? `<span class="dc-badge ${r.thesis_valid ? 'valid' : 'invalid'}">${r.thesis_valid ? '✓ Valid' : '✗ Broken'}</span>`
-    : '';
-  const macroAlignBadge = r?.macro_alignment
-    ? `<span class="dc-badge ${r.macro_alignment}">${r.macro_alignment}</span>`
-    : '';
-  const alignQualBadge = tfa?.alignment_quality
-    ? `<span class="dc-badge align-${tfa.alignment_quality}">${tfa.alignment_quality} alignment</span>`
-    : '';
-
-  // ── Expanded: Key levels ──
-  const levels = analysis?.key_levels;
-  const lvlTarget = levels ? (levels.target ?? levels.target_1 ?? null) : null;
-  const levelsHtml = levels ? `
-    <div class="dc-levels">
-      ${levels.entry != null ? `<div class="dc-level"><span class="dc-level-label">Entry</span><span class="dc-level-value">${fmtPrice(levels.entry)}</span></div>` : ''}
-      ${lvlTarget    != null ? `<div class="dc-level"><span class="dc-level-label">Target</span><span class="dc-level-value">${fmtPrice(lvlTarget)}</span></div>` : ''}
-      ${levels.stop  != null ? `<div class="dc-level"><span class="dc-level-label">Stop</span><span class="dc-level-value">${fmtPrice(levels.stop)}</span></div>` : ''}
-      ${levels.risk_reward != null ? `<div class="dc-level dc-level-rr"><span class="dc-level-label">R:R</span><span class="dc-level-value">${parseFloat(levels.risk_reward).toFixed(1)}x</span></div>` : ''}
-      ${levels.expected_hold_days != null ? `<div class="dc-level"><span class="dc-level-label">Hold</span><span class="dc-level-value">${levels.expected_hold_days}d</span></div>` : ''}
-    </div>
-    ${levels.entry_zone ? `<div class="dc-entry-zone">${levels.entry_zone}</div>` : ''}
-    ${levels.stop_basis ? `<div class="dc-stop-basis">Stop basis: ${levels.stop_basis}</div>` : ''}` : '';
-
-  // ── Expanded: Timeframe alignment visual ──
-  const tfDetailHtml = tfa ? `
-    <div class="dc-exp-block">
-      <div class="dc-exp-title">Timeframe Alignment</div>
-      <div class="dc-tf-grid">
-        <div class="dc-tf-item ${tfClass(tfa.monthly)}"><span class="dc-tf-label">Monthly</span><span class="dc-tf-arrow">${tfArrow(tfa.monthly)}</span><span class="dc-tf-bias">${tfa.monthly || '--'}</span></div>
-        <div class="dc-tf-item ${tfClass(tfa.weekly)}"><span class="dc-tf-label">Weekly</span><span class="dc-tf-arrow">${tfArrow(tfa.weekly)}</span><span class="dc-tf-bias">${tfa.weekly || '--'}</span></div>
-        <div class="dc-tf-item ${tfClass(tfa.daily)}"><span class="dc-tf-label">Daily</span><span class="dc-tf-arrow">${tfArrow(tfa.daily)}</span><span class="dc-tf-bias">${tfa.daily || '--'}</span></div>
-      </div>
-      ${tfa.notes ? `<div class="dc-exp-text" style="margin-top:6px">${tfa.notes}</div>` : ''}
-    </div>` : '';
-
-  // ── Expanded: Position sizing ──
-  const ps = analysis?.position_sizing;
-  const psHtml = ps ? `
-    <div class="dc-exp-block">
-      <div class="dc-exp-title">Position Sizing</div>
-      <div class="dc-sizing-row">
-        ${ps.suggested_size ? `<span class="dc-size-badge size-${ps.suggested_size}">${ps.suggested_size}</span>` : ''}
-        ${ps.max_risk_pct ? `<span class="dc-size-risk">Risk ${ps.max_risk_pct}</span>` : ''}
-      </div>
-      ${ps.size_rationale ? `<div class="dc-exp-text">${ps.size_rationale}</div>` : ''}
-      ${ps.scale_in_plan ? `<div class="dc-scale-plan"><span class="dc-scale-label">Scale-in:</span> ${ps.scale_in_plan}</div>` : ''}
-    </div>` : '';
-
-  // ── Expanded: Trade structure (enhanced) ──
-  const ts = analysis?.trade_structure;
-  const tradeHtml = ts ? `
-    <div class="dc-exp-block">
-      <div class="dc-exp-title">Trade Structure</div>
-      <div class="dc-exp-text">
-        <strong>${ts.instrument || ''}</strong>
-        ${ts.specific_structure ? ` — ${ts.specific_structure}` : ''}
-      </div>
-      ${ts.entry_condition ? `<div class="dc-trade-cond"><span class="dc-trade-cond-label">Entry trigger:</span> ${ts.entry_condition}</div>` : ''}
-      ${ts.exit_rules ? `<div class="dc-trade-cond"><span class="dc-trade-cond-label">Exit rules:</span> ${ts.exit_rules}</div>` : ''}
-      ${ts.avoid_if ? `<div class="dc-trade-avoid"><span class="dc-trade-cond-label">Avoid if:</span> ${ts.avoid_if}</div>` : ''}
-    </div>` : '';
-
-  // ── Expanded: Catalysts ──
-  const cat = analysis?.catalysts;
-  const cal = market?.catalystCalendar;
-  const riskEvents = cat?.upcoming_risk_events || analysis?.risk_events || [];
-  const riskBadges = riskEvents.map(e => `<span class="dc-badge risk">${e}</span>`).join('');
-  const calendarLines = (() => {
-    if (!cal) return '';
-    const items = [];
-    if (cal.earnings) items.push(`<div class="dc-cat-line"><span class="dc-cat-icon">📊</span> Earnings: ${cal.earnings.date} (${cal.earnings.days}d)</div>`);
-    if (cal.exDividend) items.push(`<div class="dc-cat-line"><span class="dc-cat-icon">💰</span> Ex-Div: ${cal.exDividend.date} (${cal.exDividend.days}d)${cal.exDividend.amount ? ` — $${cal.exDividend.amount}` : ''}</div>`);
-    if (cal.split) items.push(`<div class="dc-cat-line"><span class="dc-cat-icon">🔀</span> Split: ${cal.split.date} (${cal.split.days}d)${cal.split.ratio ? ` ${cal.split.ratio}` : ''}</div>`);
-    return items.length ? `<div class="dc-cat-calendar">${items.join('')}</div>` : '';
-  })();
-  const catHtml = (cat || calendarLines) ? `
-    <div class="dc-exp-block">
-      <div class="dc-exp-title">Catalysts & Timing</div>
-      ${calendarLines}
-      ${cat?.catalyst_impact ? `<div class="dc-exp-text" style="margin-top:4px"><strong>Impact:</strong> ${cat.catalyst_impact}</div>` : ''}
-      ${cat?.timing_edge ? `<div class="dc-exp-text" style="margin-top:4px"><strong>Edge:</strong> ${cat.timing_edge}</div>` : ''}
-      ${cat?.news_assessment ? `<div class="dc-exp-text" style="margin-top:4px">${cat.news_assessment}</div>` : ''}
-      ${riskBadges ? `<div class="dc-exp-badges" style="margin-top:6px">${riskBadges}</div>` : ''}
-    </div>` : (riskBadges ? `<div class="dc-exp-block">
-      <div class="dc-exp-title">Risk Events</div>
-      <div class="dc-exp-badges">${riskBadges}</div>
-    </div>` : '');
-
-  // ── Expanded: Memory relevance ──
-  const memHtml = analysis?.memory_relevance ? `
-    <div class="dc-exp-block">
-      <div class="dc-exp-title">Memory Context</div>
-      <div class="dc-exp-text">${analysis.memory_relevance}</div>
-    </div>` : '';
-
-  // ── Expanded: Counter-check review ──
-  const reviewHtml = review ? (() => {
-    const actionCls = review.action === 'PASS' ? 'pass' : review.action === 'REJECT' ? 'reject' : 'flag';
-    const flagItems = review.flags ? Object.entries(review.flags)
-      .filter(([, v]) => v?.found)
-      .map(([k, v]) => `<div class="dc-review-flag-item"><span class="dc-review-flag-name">${k.replace(/_/g, ' ')}</span><span class="dc-review-flag-detail">${v.detail}</span></div>`)
-      .join('') : '';
-    return `
-    <div class="dc-exp-block dc-review-block dc-review-${actionCls}">
-      <div class="dc-exp-title">Counter-Check Review</div>
-      <div class="dc-review-header">
-        <span class="dc-review-grade dc-review-${actionCls}">${review.grade}</span>
-        <span class="dc-review-action dc-review-${actionCls}">${review.action}</span>
-        ${review.adjusted_confidence != null ? `<span class="dc-review-conf">Adj. confidence: ${(review.adjusted_confidence * 100).toFixed(0)}%</span>` : ''}
-      </div>
-      ${review.key_concern ? `<div class="dc-review-concern">${review.key_concern}</div>` : ''}
-      ${review.counter_thesis ? `<div class="dc-review-counter"><strong>Counter-thesis:</strong> ${review.counter_thesis}</div>` : ''}
-      ${flagItems ? `<div class="dc-review-flags">${flagItems}</div>` : ''}
-    </div>`;
-  })() : '';
-
-  // ── Expanded: Validation demote notice ──
-  const validationHtml = analysis?._validation ? `
-    <div class="dc-exp-block">
-      <div class="dc-exp-title">Validation Override</div>
-      <div class="dc-exp-text" style="color:#dc2626">Signal demoted from <strong>${analysis._validation.original_signal}</strong> → <strong>${analysis._validation.demoted_to}</strong></div>
-    </div>` : '';
-
-  // ── Expanded: Macro notes ──
-  const macroHtml = analysis?.macro_notes ? `
-    <div class="dc-exp-block">
-      <div class="dc-exp-title">Macro</div>
-      <div class="dc-exp-badges" style="margin-bottom:6px">${macroAlignBadge}</div>
-      <div class="dc-exp-text">${analysis.macro_notes}</div>
-    </div>` : '';
-
   // ── Confirmation Conditions ──
   const confirmConds = analysis?.confirmation_conditions || [];
   const confirmEval = analysis?.confirmation_evaluation || {};
@@ -408,85 +283,242 @@ function renderCard(check) {
           <span class="dc-score-val">${score ?? '--'}</span>
         </div>
         <div class="dc-metrics-row">${metricsHtml}</div>
-        <button class="dc-expand-btn" id="dc-expand-${check.id}">▼</button>
+        <button class="dc-expand-btn" id="dc-expand-${check.id}" title="Show details">▼</button>
       </div>
       ${tags.length ? `<div class="dc-tags-row">${tags.map(t => `<span class="dc-tag">${t}</span>`).join('')}</div>` : ''}
       ${fundHtml}
       ${r?.ai_summary ? `<div class="dc-summary">"${r.ai_summary}"</div>` : ''}
-      <div class="dc-expanded" id="dc-exp-${check.id}">
-        <div class="dc-exp-actions">
-          <button class="btn btn-sm" onclick="window.dcGoAnalyze('${check.ticker}')">📊 Analyze</button>
-          <button class="btn btn-sm" onclick="window.dcGoOptions('${check.ticker}')">📈 Options</button>
-          <button class="btn btn-sm" onclick="window.dcRunOptionsRec('${check.id}')" id="dc-optrec-btn-${check.id}">🎯 Options Rec</button>
-          <button class="btn btn-sm" onclick="window.dcOpenModal('${check.id}')">✎ Edit</button>
-          <button class="btn btn-sm dc-copy-llm-btn" id="dc-copy-btn-${check.id}" onclick="window.dcCopyForLLM('${check.id}')">📋 Copy for LLM</button>
-        </div>
-        <div class="dc-expanded-grid">
-          <div id="dc-optrec-${check.id}" class="dc-optrec-container"></div>
-          <div class="dc-exp-block">
-            <div class="dc-exp-title">Thesis</div>
-            <div class="dc-exp-badges" style="margin-bottom:8px">${thesisValidBadge}${alignQualBadge}</div>
-            <div class="dc-exp-text">${analysis?.thesis_notes || check.thesis}</div>
-          </div>
-          <div class="dc-exp-block">
-            <div class="dc-exp-title">Signal Reason</div>
-            <div class="dc-exp-text">${analysis?.signal_reason || '--'}</div>
-            ${levelsHtml}
-          </div>
-          ${tfDetailHtml}
-          ${psHtml}
-          <div class="dc-exp-block">
-            <div class="dc-exp-title">Technical</div>
-            <div class="dc-exp-text">${analysis?.technical_summary || '--'}</div>
-          </div>
-          <div class="dc-exp-block">
-            <div class="dc-exp-title">Options</div>
-            <div class="dc-exp-text">${analysis?.options_summary || '--'}</div>
-          </div>
-          ${market?.shortInterest?.shortFloatPct != null ? (() => {
-            const si = market.shortInterest;
-            const sqRisk = si.shortFloatPct >= 20 ? 'HIGH' : si.shortFloatPct >= 10 ? 'MODERATE' : 'LOW';
-            const sqCls = sqRisk === 'HIGH' ? 'negative' : sqRisk === 'MODERATE' ? 'warn' : '';
-            const fmtShr = v => v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(0) + 'K' : v;
-            return `<div class="dc-exp-block">
-            <div class="dc-exp-title">Short Interest</div>
-            <div class="dc-levels">
-              <div class="dc-level"><span class="dc-level-label">Short Float</span><span class="dc-level-value ${sqCls}">${si.shortFloatPct.toFixed(1)}%</span></div>
-              <div class="dc-level"><span class="dc-level-label">Days to Cover</span><span class="dc-level-value ${si.shortRatio >= 5 ? 'negative' : si.shortRatio >= 3 ? 'warn' : ''}">${si.shortRatio?.toFixed(1) || '--'}d</span></div>
-              <div class="dc-level"><span class="dc-level-label">Shares Short</span><span class="dc-level-value">${si.sharesShort ? fmtShr(si.sharesShort) : '--'}</span></div>
-              <div class="dc-level"><span class="dc-level-label">Float</span><span class="dc-level-value">${si.sharesFloat ? fmtShr(si.sharesFloat) : '--'}</span></div>
-              <div class="dc-level"><span class="dc-level-label">Squeeze Risk</span><span class="dc-level-value ${sqCls}">${sqRisk}</span></div>
-            </div>
-            <div class="dc-levels" style="margin-top:4px">
-              <div class="dc-level"><span class="dc-level-label">Insider</span><span class="dc-level-value">${si.insiderOwnPct != null ? si.insiderOwnPct.toFixed(1) + '%' : '--'}</span></div>
-              <div class="dc-level"><span class="dc-level-label">Inst Own</span><span class="dc-level-value">${si.instOwnPct != null ? si.instOwnPct.toFixed(1) + '%' : '--'}</span></div>
-            </div>
-          </div>`;
-          })() : ''}
-          ${analysis?.institutional_summary ? `<div class="dc-exp-block">
-            <div class="dc-exp-title">Institutional Filings</div>
-            <div class="dc-exp-text" style="color:#f59e0b">${analysis.institutional_summary}</div>
-          </div>` : ''}
-          ${analysis?.strategy_fit ? `<div class="dc-exp-block">
-            <div class="dc-exp-title">Strategy Fit</div>
-            <div class="dc-exp-badges" style="margin-bottom:6px">
-              <span class="dc-badge ${analysis.strategy_fit.still_fits ? 'valid' : 'invalid'}">${analysis.strategy_fit.still_fits ? 'FITS' : 'DRIFTED'}</span>
-              ${analysis.strategy_fit.strategy_entry_met ? '<span class="dc-badge valid">ENTRY MET</span>' : ''}
-              ${analysis.strategy_fit.strategy_exit_triggered ? '<span class="dc-badge invalid">EXIT TRIGGERED</span>' : ''}
-            </div>
-            <div class="dc-exp-text">${analysis.strategy_fit.fit_notes || '--'}</div>
-          </div>` : ''}
-          ${tradeHtml}
-          ${catHtml}
-          ${macroHtml}
-          ${memHtml}
-          ${reviewHtml}
-          ${validationHtml}
-        </div>
-        <div style="font-size:0.68rem;color:#94a3b8;margin-top:8px">Last run: ${timeAgo(r?.created_at)}</div>
-      </div>
       ${confirmHtml}
     </div>
+  `;
+}
+
+// ── Drawer body builder ──────────────────────────────────────
+// Renders the full detail view that opens in the right-side drawer.
+
+function buildExpandedBody(check) {
+  const { r, market, opts, analysis } = parseCheckResult(check);
+  const review = analysis?._review || null;
+  const tfa = analysis?.timeframe_alignment;
+
+  const thesisValidBadge = r
+    ? `<span class="dc-badge ${r.thesis_valid ? 'valid' : 'invalid'}">${r.thesis_valid ? '✓ Valid' : '✗ Broken'}</span>`
+    : '';
+  const macroAlignBadge = r?.macro_alignment
+    ? `<span class="dc-badge ${r.macro_alignment}">${r.macro_alignment}</span>`
+    : '';
+  const alignQualBadge = tfa?.alignment_quality
+    ? `<span class="dc-badge align-${tfa.alignment_quality}">${tfa.alignment_quality} alignment</span>`
+    : '';
+
+  const levels = analysis?.key_levels;
+  const lvlTarget = levels ? (levels.target ?? levels.target_1 ?? null) : null;
+  const levelsHtml = levels ? `
+    <div class="dc-levels">
+      ${levels.entry != null ? `<div class="dc-level"><span class="dc-level-label">Entry</span><span class="dc-level-value">${fmtPrice(levels.entry)}</span></div>` : ''}
+      ${lvlTarget    != null ? `<div class="dc-level"><span class="dc-level-label">Target</span><span class="dc-level-value">${fmtPrice(lvlTarget)}</span></div>` : ''}
+      ${levels.stop  != null ? `<div class="dc-level"><span class="dc-level-label">Stop</span><span class="dc-level-value">${fmtPrice(levels.stop)}</span></div>` : ''}
+      ${levels.risk_reward != null ? `<div class="dc-level dc-level-rr"><span class="dc-level-label">R:R</span><span class="dc-level-value">${parseFloat(levels.risk_reward).toFixed(1)}x</span></div>` : ''}
+      ${levels.expected_hold_days != null ? `<div class="dc-level"><span class="dc-level-label">Hold</span><span class="dc-level-value">${levels.expected_hold_days}d</span></div>` : ''}
+    </div>
+    ${levels.entry_zone ? `<div class="dc-entry-zone">${levels.entry_zone}</div>` : ''}
+    ${levels.stop_basis ? `<div class="dc-stop-basis">Stop basis: ${levels.stop_basis}</div>` : ''}` : '';
+
+  const tfDetailHtml = tfa ? `
+    <div class="dc-exp-block">
+      <div class="dc-exp-title">Timeframe Alignment</div>
+      <div class="dc-tf-grid">
+        <div class="dc-tf-item ${tfClass(tfa.monthly)}"><span class="dc-tf-label">Monthly</span><span class="dc-tf-arrow">${tfArrow(tfa.monthly)}</span><span class="dc-tf-bias">${tfa.monthly || '--'}</span></div>
+        <div class="dc-tf-item ${tfClass(tfa.weekly)}"><span class="dc-tf-label">Weekly</span><span class="dc-tf-arrow">${tfArrow(tfa.weekly)}</span><span class="dc-tf-bias">${tfa.weekly || '--'}</span></div>
+        <div class="dc-tf-item ${tfClass(tfa.daily)}"><span class="dc-tf-label">Daily</span><span class="dc-tf-arrow">${tfArrow(tfa.daily)}</span><span class="dc-tf-bias">${tfa.daily || '--'}</span></div>
+      </div>
+      ${tfa.notes ? `<div class="dc-exp-text" style="margin-top:6px">${tfa.notes}</div>` : ''}
+    </div>` : '';
+
+  const ps = analysis?.position_sizing;
+  const psHtml = ps ? `
+    <div class="dc-exp-block">
+      <div class="dc-exp-title">Position Sizing</div>
+      <div class="dc-sizing-row">
+        ${ps.suggested_size ? `<span class="dc-size-badge size-${ps.suggested_size}">${ps.suggested_size}</span>` : ''}
+        ${ps.max_risk_pct ? `<span class="dc-size-risk">Risk ${ps.max_risk_pct}</span>` : ''}
+      </div>
+      ${ps.size_rationale ? `<div class="dc-exp-text">${ps.size_rationale}</div>` : ''}
+      ${ps.scale_in_plan ? `<div class="dc-scale-plan"><span class="dc-scale-label">Scale-in:</span> ${ps.scale_in_plan}</div>` : ''}
+    </div>` : '';
+
+  const ts = analysis?.trade_structure;
+  const tradeHtml = ts ? `
+    <div class="dc-exp-block">
+      <div class="dc-exp-title">Trade Structure</div>
+      <div class="dc-exp-text">
+        <strong>${ts.instrument || ''}</strong>
+        ${ts.specific_structure ? ` — ${ts.specific_structure}` : ''}
+      </div>
+      ${ts.entry_condition ? `<div class="dc-trade-cond"><span class="dc-trade-cond-label">Entry trigger:</span> ${ts.entry_condition}</div>` : ''}
+      ${ts.exit_rules ? `<div class="dc-trade-cond"><span class="dc-trade-cond-label">Exit rules:</span> ${ts.exit_rules}</div>` : ''}
+      ${ts.avoid_if ? `<div class="dc-trade-avoid"><span class="dc-trade-cond-label">Avoid if:</span> ${ts.avoid_if}</div>` : ''}
+    </div>` : '';
+
+  const cat = analysis?.catalysts;
+  const cal = market?.catalystCalendar;
+  const riskEvents = cat?.upcoming_risk_events || analysis?.risk_events || [];
+  const riskBadges = riskEvents.map(e => `<span class="dc-badge risk">${e}</span>`).join('');
+  const calendarLines = (() => {
+    if (!cal) return '';
+    const items = [];
+    if (cal.earnings) items.push(`<div class="dc-cat-line"><span class="dc-cat-icon">📊</span> Earnings: ${cal.earnings.date} (${cal.earnings.days}d)</div>`);
+    if (cal.exDividend) items.push(`<div class="dc-cat-line"><span class="dc-cat-icon">💰</span> Ex-Div: ${cal.exDividend.date} (${cal.exDividend.days}d)${cal.exDividend.amount ? ` — $${cal.exDividend.amount}` : ''}</div>`);
+    if (cal.split) items.push(`<div class="dc-cat-line"><span class="dc-cat-icon">🔀</span> Split: ${cal.split.date} (${cal.split.days}d)${cal.split.ratio ? ` ${cal.split.ratio}` : ''}</div>`);
+    return items.length ? `<div class="dc-cat-calendar">${items.join('')}</div>` : '';
+  })();
+  const catHtml = (cat || calendarLines) ? `
+    <div class="dc-exp-block">
+      <div class="dc-exp-title">Catalysts & Timing</div>
+      ${calendarLines}
+      ${cat?.catalyst_impact ? `<div class="dc-exp-text" style="margin-top:4px"><strong>Impact:</strong> ${cat.catalyst_impact}</div>` : ''}
+      ${cat?.timing_edge ? `<div class="dc-exp-text" style="margin-top:4px"><strong>Edge:</strong> ${cat.timing_edge}</div>` : ''}
+      ${cat?.news_assessment ? `<div class="dc-exp-text" style="margin-top:4px">${cat.news_assessment}</div>` : ''}
+      ${riskBadges ? `<div class="dc-exp-badges" style="margin-top:6px">${riskBadges}</div>` : ''}
+    </div>` : (riskBadges ? `<div class="dc-exp-block">
+      <div class="dc-exp-title">Risk Events</div>
+      <div class="dc-exp-badges">${riskBadges}</div>
+    </div>` : '');
+
+  const memHtml = analysis?.memory_relevance ? `
+    <div class="dc-exp-block">
+      <div class="dc-exp-title">Memory Context</div>
+      <div class="dc-exp-text">${analysis.memory_relevance}</div>
+    </div>` : '';
+
+  const reviewHtml = review ? (() => {
+    const actionCls = review.action === 'PASS' ? 'pass' : review.action === 'REJECT' ? 'reject' : 'flag';
+    const flagItems = review.flags ? Object.entries(review.flags)
+      .filter(([, v]) => v?.found)
+      .map(([k, v]) => `<div class="dc-review-flag-item"><span class="dc-review-flag-name">${k.replace(/_/g, ' ')}</span><span class="dc-review-flag-detail">${v.detail}</span></div>`)
+      .join('') : '';
+    return `
+    <div class="dc-exp-block dc-review-block dc-review-${actionCls}">
+      <div class="dc-exp-title">Counter-Check Review</div>
+      <div class="dc-review-header">
+        <span class="dc-review-grade dc-review-${actionCls}">${review.grade}</span>
+        <span class="dc-review-action dc-review-${actionCls}">${review.action}</span>
+        ${review.adjusted_confidence != null ? `<span class="dc-review-conf">Adj. confidence: ${(review.adjusted_confidence * 100).toFixed(0)}%</span>` : ''}
+      </div>
+      ${review.key_concern ? `<div class="dc-review-concern">${review.key_concern}</div>` : ''}
+      ${review.counter_thesis ? `<div class="dc-review-counter"><strong>Counter-thesis:</strong> ${review.counter_thesis}</div>` : ''}
+      ${flagItems ? `<div class="dc-review-flags">${flagItems}</div>` : ''}
+    </div>`;
+  })() : '';
+
+  const validationHtml = analysis?._validation ? `
+    <div class="dc-exp-block">
+      <div class="dc-exp-title">Validation Override</div>
+      <div class="dc-exp-text" style="color:#dc2626">Signal demoted from <strong>${analysis._validation.original_signal}</strong> → <strong>${analysis._validation.demoted_to}</strong></div>
+    </div>` : '';
+
+  const macroHtml = analysis?.macro_notes ? `
+    <div class="dc-exp-block">
+      <div class="dc-exp-title">Macro</div>
+      <div class="dc-exp-badges" style="margin-bottom:6px">${macroAlignBadge}</div>
+      <div class="dc-exp-text">${analysis.macro_notes}</div>
+    </div>` : '';
+
+  const shortInterestHtml = market?.shortInterest?.shortFloatPct != null ? (() => {
+    const si = market.shortInterest;
+    const sqRisk = si.shortFloatPct >= 20 ? 'HIGH' : si.shortFloatPct >= 10 ? 'MODERATE' : 'LOW';
+    const sqCls = sqRisk === 'HIGH' ? 'negative' : sqRisk === 'MODERATE' ? 'warn' : '';
+    const fmtShr = v => v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(0) + 'K' : v;
+    return `<div class="dc-exp-block">
+      <div class="dc-exp-title">Short Interest</div>
+      <div class="dc-levels">
+        <div class="dc-level"><span class="dc-level-label">Short Float</span><span class="dc-level-value ${sqCls}">${si.shortFloatPct.toFixed(1)}%</span></div>
+        <div class="dc-level"><span class="dc-level-label">Days to Cover</span><span class="dc-level-value ${si.shortRatio >= 5 ? 'negative' : si.shortRatio >= 3 ? 'warn' : ''}">${si.shortRatio?.toFixed(1) || '--'}d</span></div>
+        <div class="dc-level"><span class="dc-level-label">Shares Short</span><span class="dc-level-value">${si.sharesShort ? fmtShr(si.sharesShort) : '--'}</span></div>
+        <div class="dc-level"><span class="dc-level-label">Float</span><span class="dc-level-value">${si.sharesFloat ? fmtShr(si.sharesFloat) : '--'}</span></div>
+        <div class="dc-level"><span class="dc-level-label">Squeeze Risk</span><span class="dc-level-value ${sqCls}">${sqRisk}</span></div>
+      </div>
+      <div class="dc-levels" style="margin-top:4px">
+        <div class="dc-level"><span class="dc-level-label">Insider</span><span class="dc-level-value">${si.insiderOwnPct != null ? si.insiderOwnPct.toFixed(1) + '%' : '--'}</span></div>
+        <div class="dc-level"><span class="dc-level-label">Inst Own</span><span class="dc-level-value">${si.instOwnPct != null ? si.instOwnPct.toFixed(1) + '%' : '--'}</span></div>
+      </div>
+    </div>`;
+  })() : '';
+
+  const strategyFitHtml = analysis?.strategy_fit ? `
+    <div class="dc-exp-block">
+      <div class="dc-exp-title">Strategy Fit</div>
+      <div class="dc-exp-badges" style="margin-bottom:6px">
+        <span class="dc-badge ${analysis.strategy_fit.still_fits ? 'valid' : 'invalid'}">${analysis.strategy_fit.still_fits ? 'FITS' : 'DRIFTED'}</span>
+        ${analysis.strategy_fit.strategy_entry_met ? '<span class="dc-badge valid">ENTRY MET</span>' : ''}
+        ${analysis.strategy_fit.strategy_exit_triggered ? '<span class="dc-badge invalid">EXIT TRIGGERED</span>' : ''}
+      </div>
+      <div class="dc-exp-text">${analysis.strategy_fit.fit_notes || '--'}</div>
+    </div>` : '';
+
+  const institutionalHtml = analysis?.institutional_summary ? `
+    <div class="dc-exp-block">
+      <div class="dc-exp-title">Institutional Filings</div>
+      <div class="dc-exp-text" style="color:#f59e0b">${analysis.institutional_summary}</div>
+    </div>` : '';
+
+  return `
+    <div class="dc-exp-actions">
+      <button class="btn btn-sm" onclick="window.dcGoAnalyze('${check.ticker}')">📊 Analyze</button>
+      <button class="btn btn-sm" onclick="window.dcGoOptions('${check.ticker}')">📈 Options</button>
+      <button class="btn btn-sm" onclick="window.dcRunOptionsRec('${check.id}')" id="dc-optrec-btn-${check.id}">🎯 Options Rec</button>
+      <button class="btn btn-sm" onclick="window.dcOpenModal('${check.id}')">✎ Edit</button>
+      <button class="btn btn-sm dc-copy-llm-btn" id="dc-copy-btn-${check.id}" onclick="window.dcCopyForLLM('${check.id}')">📋 Copy for LLM</button>
+    </div>
+    <div class="dc-expanded-grid">
+      <div id="dc-optrec-${check.id}" class="dc-optrec-container"></div>
+      <div class="dc-exp-block">
+        <div class="dc-exp-title">Thesis</div>
+        <div class="dc-exp-badges" style="margin-bottom:8px">${thesisValidBadge}${alignQualBadge}</div>
+        <div class="dc-exp-text">${analysis?.thesis_notes || check.thesis}</div>
+      </div>
+      <div class="dc-exp-block">
+        <div class="dc-exp-title">Signal Reason</div>
+        <div class="dc-exp-text">${analysis?.signal_reason || '--'}</div>
+        ${levelsHtml}
+      </div>
+      ${tfDetailHtml}
+      ${psHtml}
+      <div class="dc-exp-block">
+        <div class="dc-exp-title">Technical</div>
+        <div class="dc-exp-text">${analysis?.technical_summary || '--'}</div>
+      </div>
+      <div class="dc-exp-block">
+        <div class="dc-exp-title">Options</div>
+        <div class="dc-exp-text">${analysis?.options_summary || '--'}</div>
+      </div>
+      ${shortInterestHtml}
+      ${institutionalHtml}
+      ${strategyFitHtml}
+      ${tradeHtml}
+      ${catHtml}
+      ${macroHtml}
+      ${memHtml}
+      ${reviewHtml}
+      ${validationHtml}
+    </div>
+    <div style="font-size:0.68rem;color:#94a3b8;margin-top:8px">Last run: ${timeAgo(r?.created_at)}</div>
+  `;
+}
+
+function buildDrawerSubtitle(check) {
+  const { r, analysis } = parseCheckResult(check);
+  const signal = r?.signal || null;
+  const score = r?.opportunity_score ?? null;
+  const sigCls = signalClass(signal);
+  const conviction = analysis?.conviction || null;
+  const stale = isStale(r?.created_at);
+  return `
+    <span class="dc-signal ${sigCls}" style="position:static;padding:2px 8px;font-size:0.7rem">${signal || 'NO DATA'}</span>
+    ${score != null ? `<span>Score <strong style="color:var(--tv-text-primary)">${score}</strong></span>` : ''}
+    ${conviction ? `<span class="dc-conv-badge ${convictionClass(conviction)}">${conviction}</span>` : ''}
+    ${stale && r ? '<span class="dc-stale-dot" title="Data >24h old"></span>' : ''}
+    <span>Last run: ${timeAgo(r?.created_at)}</span>
   `;
 }
 
@@ -571,14 +603,6 @@ export function renderDailyChecker() {
     return;
   }
   container.innerHTML = filtered.map(renderCard).join('');
-
-  // Load saved options recs for already-expanded cards
-  for (const check of filtered) {
-    const exp = document.getElementById(`dc-exp-${check.id}`);
-    if (exp?.classList.contains('open')) {
-      window.dcLoadOptionsRec(check.id);
-    }
-  }
 }
 
 // ── Load ──────────────────────────────────────────────────────
@@ -617,15 +641,16 @@ export async function loadDailyChecker() {
 // ── Window callbacks ──────────────────────────────────────────
 
 window.dcToggleExpand = function(id) {
-  const exp = document.getElementById(`dc-exp-${id}`);
-  const btn = document.getElementById(`dc-expand-${id}`);
-  if (!exp) return;
-  exp.classList.toggle('open');
-  btn?.classList.toggle('open', exp.classList.contains('open'));
-  // Load saved options rec when expanding
-  if (exp.classList.contains('open')) {
-    window.dcLoadOptionsRec(id);
-  }
+  const check = checksCache.find(c => c.id === id);
+  if (!check) return;
+  openDrawer({
+    id: DC_DRAWER_ID,
+    title: `${check.ticker} <span class="dc-dir-badge ${check.direction}" style="vertical-align:middle">${check.direction}</span>`,
+    subtitle: buildDrawerSubtitle(check),
+    content: buildExpandedBody(check)
+  });
+  // Load any saved options rec into the drawer's container
+  window.dcLoadOptionsRec(id);
 };
 
 window.dcSetFilter = function(filter) {
@@ -1080,14 +1105,6 @@ window.dcRunOptionsRec = async function(checkId) {
   const container = document.getElementById(`dc-optrec-${checkId}`);
   const btn = document.getElementById(`dc-optrec-btn-${checkId}`);
   if (!container) return;
-
-  // Expand card if not open
-  const exp = document.getElementById(`dc-exp-${checkId}`);
-  if (exp && !exp.classList.contains('open')) {
-    exp.classList.add('open');
-    const expandBtn = document.getElementById(`dc-expand-${checkId}`);
-    expandBtn?.classList.add('open');
-  }
 
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Running...'; }
   container.innerHTML = '<div class="dc-optrec-loading"><span class="dc-run-spinner"></span> Running 3-stage options analysis...</div>';
