@@ -1,6 +1,6 @@
 // VHunter Configuration
 export const CONFIG = {
-  PROXY_URL: 'https://vapi.heymira.co',
+  PROXY_URL: 'https://api.rome.markets',
   DEFAULT_TICKER: 'TSLA',
   HISTORY_DAYS: 90,
   CLAUDE_MODEL: 'claude-sonnet-4-5-20250929',

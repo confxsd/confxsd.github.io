@@ -12,8 +12,10 @@ AI-powered stock analysis terminal with technical indicators, options analytics,
 
 ### Backend (Cloudflare Worker)
 - **Location**: `/Users/serhat/Code/market/vhunter-proxy/`
-- **Deployed at**: https://api.rome.markets
-- **Tech**: CF Workers + D1 + KV + R2 + Durable Objects + Queues
+- **Deployed at**: `https://api.rome.markets` (custom domain, Cloudflare zone `rome.markets` on `blindsidenow@gmail.com`)
+- **Workers.dev fallback**: `https://vhunter-proxy.blindsidenow.workers.dev`
+- **Account**: `blindsidenow@gmail.com` (id `9da269cfd6196f2d0331f1a5cb8f1f85`)
+- **Tech**: CF Workers + D1 (hot, ~250 MB) + R2 (cold Parquet archive) + KV + Durable Objects + Queues
 
 ### ML Layer (Python)
 - **Location**: `/Users/serhat/Code/market/vhunter-ml/`
@@ -135,7 +137,8 @@ CONFIG = {
   PROXY_URL: 'https://api.rome.markets',
   DEFAULT_TICKER: 'TSLA',
   HISTORY_DAYS: 90,
-  CLAUDE_MODEL: 'claude-sonnet-4-20250514',
+  CLAUDE_MODEL: 'claude-sonnet-4-5-20250929',   // Sonnet 4.5 everywhere
+  CLAUDE_SMART_MODEL: 'claude-opus-4-20250514', // used when Smart toggle is on in chat
   CLAUDE_MAX_TOKENS: 1024
 }
 ```
