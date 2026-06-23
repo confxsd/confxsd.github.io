@@ -17,13 +17,19 @@
       background: #1a1a1a;
       display: flex;
       justify-content: center;
-      align-items: flex-start;
+      align-items: center;
       height: 100vh;
       height: 100svh;
       width: 100vw;
     }
     canvas {
       display: block;
+      /* Fill the full viewport height, keep the 9:16 aspect (auto width),
+         and stay centered; any horizontal overflow bleeds off (body clips it).
+         The postfx overlay tracks this rect each frame. */
+      height: 100vh;
+      height: 100svh;
+      width: auto;
     }
   </style>
 </head>
