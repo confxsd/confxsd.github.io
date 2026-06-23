@@ -26,10 +26,12 @@
       display: block;
       /* Fill the full viewport height, keep the 9:16 aspect (auto width),
          and stay centered; any horizontal overflow bleeds off (body clips it).
+         !important is required: p5 writes an inline pixel width/height on the
+         canvas, which would otherwise win over these rules and letterbox it.
          The postfx overlay tracks this rect each frame. */
-      height: 100vh;
-      height: 100svh;
-      width: auto;
+      height: 100vh !important;
+      height: 100svh !important;
+      width: auto !important;
     }
   </style>
 </head>
