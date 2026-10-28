@@ -27,6 +27,13 @@ a:focus-visible { outline: 2px solid var(--ink); outline-offset: 6px; }
 nav { margin-bottom: clamp(64px, 10vw, 112px); }
 .home-link { font-size: 14px; }
 header { margin-bottom: 48px; }
+.article-image { margin: 0 0 40px; }
+.article-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+}
 .publication-date {
   margin: 0;
   color: #76746f;
@@ -60,6 +67,7 @@ h1 {
 @media (max-width: 480px) {
   .reading-page { padding-top: 28px; }
   header { margin-bottom: 36px; }
+  .article-image { margin-bottom: 32px; }
 }
 @media print {
   nav, .skip-link { display: none; }

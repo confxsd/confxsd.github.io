@@ -1,6 +1,10 @@
 ---
 title: The History and The Future of Media
 date: 2026-10-28
+image: /articles/media-history.jpg
+image_alt: A woman holding a mirror in a sunlit ancient city square, surrounded by temples and market stalls.
+image_width: 1672
+image_height: 941
 description: "From sound and writing to film and AI: each medium moves something from inside the human mind into the world."
 ---
 
