@@ -10,11 +10,7 @@
     <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Funnel+Display"
-    />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Archivo"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&display=swap"
     />
     <style>
       :root {
@@ -61,11 +57,7 @@
         align-items: baseline;
       }
       h2 {
-        font-family: "Funnel Display", sans-serif;
-        font-size: 17px;
-        line-height: 1.5;
-        font-weight: 500;
-        letter-spacing: -0.01em;
+        font: inherit;
         color: #68665f;
         margin: 0;
       }
@@ -73,16 +65,14 @@
       #content li { min-width: 0; }
       #code ul { gap: 24px; }
       .card { display: block; text-decoration: none; }
-      .card-title { font-weight: 600; margin-bottom: 5px; line-height: 1.5; }
-      .card-description { color: #68665f; font-size: 15px; line-height: 1.65; }
+      .card-title { font-weight: 500; margin-bottom: 5px; }
+      .card-description { color: #68665f; }
       .card:hover .card-title {
         text-decoration: underline;
         text-decoration-color: var(--color-accent);
         text-decoration-thickness: 2px;
         text-underline-offset: 4px;
       }
-      #articles li { line-height: 1.65; }
-      #works { font-size: 15px; }
       @media (max-width: 600px) {
         main { padding: 32px 24px 64px; }
         #main { margin-bottom: 48px; }
