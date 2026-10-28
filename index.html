@@ -17,212 +17,82 @@
       href="https://fonts.googleapis.com/css2?family=Archivo"
     />
     <style>
-      /* Base styles with 8px grid system */
       :root {
-        --spacing-unit: 8px;
-        --max-width: 640px;
         --color-text: #1a1a1a;
-        --color-bg: rgb(254, 253, 251);
+        --color-bg: #fefdfb;
         --color-accent: #00ff41;
       }
-
-      * {
-        box-sizing: border-box;
-      }
-
+      * { box-sizing: border-box; }
       body {
         background: var(--color-bg);
-        padding: 0;
         margin: 0;
-        min-height: 100vh;
-        font-family:
-          "Archivo",
-          -apple-system,
-          system-ui,
-          sans-serif;
+        color: var(--color-text);
+        font-family: "Archivo", -apple-system, system-ui, sans-serif;
         font-size: 16px;
         line-height: 1.6;
-        color: var(--color-text);
+        -webkit-font-smoothing: antialiased;
       }
-
-      /* Typography scale */
-      h1 {
-        font-family: "Funnel Display", serif;
-        font-size: clamp(2rem, 5vw, 3rem);
-        line-height: 1.1;
-        letter-spacing: -0.02em;
-        margin: 0 0 calc(var(--spacing-unit) * 3) 0;
-        font-weight: 600;
-      }
-
-      h2 {
-        font-family: "Funnel Display", serif;
-        font-size: 1.5rem;
-        line-height: 1.3;
-        letter-spacing: -0.01em;
-        margin: calc(var(--spacing-unit) * 4) 0 calc(var(--spacing-unit) * 3) 0;
-        font-weight: 600;
-      }
-
-      p {
-        margin: 0 0 calc(var(--spacing-unit) * 3) 0;
-        font-size: 1rem;
-        line-height: 1.6;
-      }
-
+      ::selection { background: var(--color-accent); color: var(--color-text); }
       a {
-        color: var(--color-text);
-        transition: all 0.2s ease;
-        text-decoration: underline;
+        color: inherit;
         text-decoration-color: var(--color-accent);
         text-decoration-thickness: 1px;
+        text-underline-offset: 4px;
       }
-
-      a:hover {
-        cursor: pointer;
-        text-decoration: underline;
-        text-decoration-color: var(--color-accent);
-        text-decoration-thickness: 2px;
-        text-underline-offset: 3px;
-      }
-
-      /* Layout */
-      main {
-        display: flex;
-        flex-direction: column;
-        padding: calc(var(--spacing-unit) * 3) calc(var(--spacing-unit) * 3)
-          calc(var(--spacing-unit) * 12);
-      }
-
-      .container {
-        max-width: var(--max-width);
-        margin: 0 auto;
-        width: 100%;
-      }
-
-      header {
-        margin-bottom: calc(var(--spacing-unit) * 6);
-      }
-
-      header img {
-        width: 100%;
-        height: auto;
-        display: block;
-        margin-bottom: calc(var(--spacing-unit) * 4);
-      }
-
-      /* Sections */
-      section {
-        margin-bottom: calc(var(--spacing-unit) * 1);
-      }
-
-      section:first-child h2 {
-        margin-top: 0;
-      }
-
-      #main {
-        margin-bottom: calc(var(--spacing-unit) * 8);
-      }
-
-      #content {
-        display: flex;
-        flex-direction: column;
-        gap: calc(var(--spacing-unit));
-      }
-
-      /* Lists */
-      ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        gap: calc(var(--spacing-unit) * 2);
-      }
-
-      li {
-        font-size: 1rem;
-        line-height: 1.6;
-      }
-
-      /* Social links */
+      a:hover { text-decoration-thickness: 2px; }
+      a:focus-visible { outline: 2px solid currentColor; outline-offset: 5px; }
+      main { padding: 56px 32px 96px; }
+      .container { max-width: 760px; margin: 0 auto; }
+      #main { margin-bottom: 72px; }
+      #main p { margin: 0; }
+      ul { list-style: none; padding: 0; margin: 0; }
       #main ul {
-        flex-direction: row;
+        display: flex;
         flex-wrap: wrap;
-        gap: calc(var(--spacing-unit) * 3);
-        font-size: 0.875rem;
-        margin-top: calc(var(--spacing-unit) * 3);
+        gap: 12px 24px;
+        margin-top: 24px;
+        font-size: 14px;
       }
-
-      #main ul a {
+      #content { display: flex; flex-direction: column; gap: 52px; }
+      #content section {
+        display: grid;
+        grid-template-columns: 88px minmax(0, 1fr);
+        gap: 40px;
+        align-items: baseline;
+      }
+      h2 {
+        font-family: "Funnel Display", sans-serif;
+        font-size: 17px;
+        line-height: 1.5;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        color: #68665f;
+        margin: 0;
+      }
+      #content ul { display: flex; flex-direction: column; gap: 14px; }
+      #content li { min-width: 0; }
+      #code ul { gap: 24px; }
+      .card { display: block; text-decoration: none; }
+      .card-title { font-weight: 600; margin-bottom: 5px; line-height: 1.5; }
+      .card-description { color: #68665f; font-size: 15px; line-height: 1.65; }
+      .card:hover .card-title {
         text-decoration: underline;
         text-decoration-color: var(--color-accent);
-        text-decoration-thickness: 1px;
-      }
-
-      #main ul a:hover {
         text-decoration-thickness: 2px;
+        text-underline-offset: 4px;
       }
-
-      /* Project cards */
-      .card {
-        display: block;
-        border: none;
-        border-radius: 0.5rem;
-        padding: calc(var(--spacing-unit) * 2);
-        padding-left: 0.5em;
-        transition: all 0.2s ease;
-        text-decoration: none;
+      #articles li { line-height: 1.65; }
+      #works { font-size: 15px; }
+      @media (max-width: 600px) {
+        main { padding: 32px 24px 64px; }
+        #main { margin-bottom: 48px; }
+        #content { gap: 40px; }
+        #content section { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+        #main ul { gap: 12px 20px; }
       }
-
-      .card:hover {
-        border-color: var(--color-accent);
-        text-decoration: none;
-        transform: translateY(-2px);
-      }
-
-      .card-title {
-        font-weight: 600;
-        margin-bottom: calc(var(--spacing-unit) * 1);
-        color: var(--color-text);
-      }
-
-      .card-description {
-        color: rgba(26, 26, 26, 0.7);
-        font-size: 0.9375rem;
-        line-height: 1.5;
-      }
-
-      #code ul {
-        gap: calc(var(--spacing-unit) * 3);
-      }
-
-      /* Desktop adjustments */
-      @media screen and (min-width: 768px) {
-        main {
-          padding: calc(var(--spacing-unit) * 6) calc(var(--spacing-unit) * 4)
-            calc(var(--spacing-unit) * 16);
-        }
-
-        header {
-          margin-bottom: calc(var(--spacing-unit) * 8);
-        }
-
-        header img {
-          margin-bottom: calc(var(--spacing-unit) * 6);
-        }
-
-        #main {
-          margin-bottom: calc(var(--spacing-unit) * 12);
-        }
-
-        #main ul {
-          text-decoration: none;
-        }
-
-        #content {
-          gap: calc(var(--spacing-unit) * 4);
-        }
+      @media (prefers-reduced-motion: reduce) {
+        #animatedText .animate { transition: none; }
+        #animatedText .animate:hover { transform: none; }
       }
     </style>
 
@@ -267,18 +137,10 @@
             >
           </p>
           <ul>
-            <a href="https://github.com/confxsd">
-              <li>github</li>
-            </a>
-            <a href="https://www.linkedin.com/in/itsserhat">
-              <li>linkedin</li>
-            </a>
-            <a href="https://instagram.com/confxsd">
-              <li>instagram</li>
-            </a>
-            <a href="https://www.goodreads.com/confxsd">
-              <li>goodreads</li>
-            </a>
+            <li><a href="https://github.com/confxsd">github</a></li>
+            <li><a href="https://www.linkedin.com/in/itsserhat">linkedin</a></li>
+            <li><a href="https://instagram.com/confxsd">instagram</a></li>
+            <li><a href="https://www.goodreads.com/confxsd">goodreads</a></li>
           </ul>
         </section>
 
@@ -319,27 +181,6 @@
             </ul>
           </section>
 
-          <section id="works">
-            <h2>artworks</h2>
-            <ul>
-              <li>
-                color studies:
-                <a href="works/4-color-studies/2-wound/index.html">Wound</a>,
-                <a href="works/4-color-studies/3-fire/index.html">Fire</a>,
-                <a href="works/4-color-studies/4-spring/index.html">Spring</a>
-              </li>
-              <li>
-                politics:
-                <a href="works/7-politics-1">our beautiful pie</a>,
-                <a href="works/8-politics-2">flap flap!</a>,
-                <a href="works/9-politics-3">oh fortuna</a>
-              </li>
-              <a href="works/6-run-karma-run/index.html">
-                <li>run, karma. run!</li>
-              </a>
-            </ul>
-          </section>
-
           <section id="articles">
             <h2>articles</h2>
             <ul>
@@ -361,6 +202,25 @@
               <li>
                 <a href="https://confxsd.substack.com/p/what-is-wrong-with-digital-currencies">What's wrong with digital currencies?</a>
               </li>
+            </ul>
+          </section>
+
+          <section id="works">
+            <h2>artworks</h2>
+            <ul>
+              <li>
+                color studies:
+                <a href="works/4-color-studies/2-wound/index.html">Wound</a>,
+                <a href="works/4-color-studies/3-fire/index.html">Fire</a>,
+                <a href="works/4-color-studies/4-spring/index.html">Spring</a>
+              </li>
+              <li>
+                politics:
+                <a href="works/7-politics-1">our beautiful pie</a>,
+                <a href="works/8-politics-2">flap flap!</a>,
+                <a href="works/9-politics-3">oh fortuna</a>
+              </li>
+              <li><a href="works/6-run-karma-run/index.html">run, karma. run!</a></li>
             </ul>
           </section>
         </div>
