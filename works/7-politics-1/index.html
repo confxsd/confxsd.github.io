@@ -5,13 +5,16 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>our beautiful pie</title>
+  <title>politics: our beautiful pie</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-  <script src="script.js"></script>
+  <script src="script.js?v=156b2407ebc6"></script>
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
+      font-family: sans-serif;
+      font-weight: 400;
+      line-height: 2;
       cursor: none;
       overflow: hidden;
       background: #1a1a1a;
@@ -19,24 +22,50 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
-      height: 100svh;
+      height: 100dvh;
       width: 100vw;
     }
-    canvas {
+    /* Fit the 9:16 canvas inside the viewport (limited by height on wide
+       screens, by width on phones) and center it. The sketch renders a fixed
+       430x764 logical composition, so this only scales — proportions are the
+       same on every screen. height:auto keeps the canvas's intrinsic aspect
+       so it is never squashed when the width clamps. !important overrides
+       the inline width/height p5 sets on the element. The postfx overlay
+       follows automatically (it pins to this canvas's rect). */
+    .artwork { position: relative; line-height: 0; }
+    .artwork-title {
+      position: absolute;
+      left: 24px;
+      bottom: 24px;
+      z-index: 20;
+      padding: 6px 16px;
+      border-radius: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      font: 400 14px/normal sans-serif;
+      letter-spacing: 0.02em;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      pointer-events: none;
+    }
+    @media (max-width: 480px) {
+      .artwork-title { left: 16px; bottom: 16px; font-size: 13px; padding: 5px 14px; }
+    }
+    main canvas {
       display: block;
-      /* Fill the full viewport height, keep the 9:16 aspect (auto width),
-         and stay centered; any horizontal overflow bleeds off (body clips it).
-         !important is required: p5 writes an inline pixel width/height on the
-         canvas, which would otherwise win over these rules and letterbox it.
-         The postfx overlay tracks this rect each frame. */
-      height: 100vh !important;
-      height: 100svh !important;
-      width: auto !important;
+      width: min(100vw, calc(100vh * 9 / 16)) !important;
+      width: min(100vw, calc(100dvh * 9 / 16)) !important;
+      height: auto !important;
+      aspect-ratio: 9 / 16;
+      border-radius: 4px;
+      box-shadow: 0 0 60px rgba(0,0,0,0.5);
     }
   </style>
 </head>
 
 <body>
+  <main class="artwork"></main>
+  <span class="artwork-title">politics: our beautiful pie</span>
 </body>
 
 </html>
