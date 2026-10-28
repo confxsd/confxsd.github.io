@@ -1,0 +1,19 @@
+url: https://confxsd.github.io
+title: confxsd
+markdown: kramdown
+timezone: Europe/Istanbul
+collections:
+  articles:
+    output: true
+    permalink: /articles/:name/
+defaults:
+  - scope:
+      path: ""
+      type: articles
+    values:
+      layout: article
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor

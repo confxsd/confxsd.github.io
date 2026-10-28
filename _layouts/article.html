@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ page.title | escape }} · confxsd</title>
+    <meta name="description" content="{{ page.description | escape }}" />
+    <link rel="canonical" href="{{ page.url | absolute_url }}" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="{{ page.title | escape }}" />
+    <meta property="og:description" content="{{ page.description | escape }}" />
+    <meta property="og:url" content="{{ page.url | absolute_url }}" />
+    <meta property="og:site_name" content="confxsd" />
+    <meta property="article:published_time" content="{{ page.date | date_to_xmlschema }}" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="icon" href="{{ '/favicon.ico' | relative_url }}" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Funnel+Display:wght@500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ '/articles/article.css' | relative_url }}" />
+  </head>
+  <body>
+    <a class="skip-link" href="#article">Skip to article</a>
+    <div class="reading-page">
+      <nav aria-label="Site">
+        <a class="home-link" href="{{ '/' | relative_url }}#articles"><span aria-hidden="true">←</span> confxsd / articles</a>
+      </nav>
+      <main id="article">
+        <article>
+          <header>
+            <p class="eyebrow">Essay <span aria-hidden="true">/</span> <time datetime="{{ page.date | date: '%Y-%m-%d' }}">{{ page.date | date: '%B %-d, %Y' }}</time></p>
+            <h1>{{ page.title | escape }}</h1>
+            {% assign word_count = content | strip_html | number_of_words %}
+            {% assign reading_minutes = word_count | plus: 219 | divided_by: 220 %}
+            <p class="byline">Serhat <span aria-hidden="true">·</span> {{ reading_minutes }} min read</p>
+          </header>
+          <div class="prose">{{ content }}</div>
+        </article>
+      </main>
+      <footer>
+        <a href="{{ '/' | relative_url }}#articles">← All articles</a>
+        <a href="https://github.com/confxsd/confxsd.github.io/blob/main/{{ page.relative_path }}">View Markdown <span aria-hidden="true">↗</span></a>
+      </footer>
+    </div>
+  </body>
+</html>

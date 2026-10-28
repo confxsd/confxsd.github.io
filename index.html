@@ -1,3 +1,5 @@
+---
+---
 <!doctype html>
 <html lang="en">
   <head>
@@ -341,24 +343,24 @@
           <section id="articles">
             <h2>articles</h2>
             <ul>
-              <a
-                href="https://confxsd.substack.com/p/understanding-a-chronic-crisis-last"
-              >
-                <li>
+              {% assign articles = site.articles | sort: 'date' | reverse %}
+              {% for article in articles %}
+              <li>
+                <a href="{{ article.url | relative_url }}">{{ article.title | escape }}</a>
+              </li>
+              {% endfor %}
+              <li>
+                <a href="https://confxsd.substack.com/p/understanding-a-chronic-crisis-last">
                   Understanding a Chronic Crisis: Last 50 Years of Türkiye's
                   Economy
-                </li>
-              </a>
-              <a
-                href="https://confxsd.substack.com/p/web3-from-the-perspective-of-a-computer"
-              >
-                <li>Crypto-world from a computer engineer perspective</li>
-              </a>
-              <a
-                href="https://confxsd.substack.com/p/what-is-wrong-with-digital-currencies"
-              >
-                <li>What's wrong with digital currencies?</li>
-              </a>
+                </a>
+              </li>
+              <li>
+                <a href="https://confxsd.substack.com/p/web3-from-the-perspective-of-a-computer">Crypto-world from a computer engineer perspective</a>
+              </li>
+              <li>
+                <a href="https://confxsd.substack.com/p/what-is-wrong-with-digital-currencies">What's wrong with digital currencies?</a>
+              </li>
             </ul>
           </section>
         </div>
