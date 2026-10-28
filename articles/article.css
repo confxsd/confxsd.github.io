@@ -24,8 +24,6 @@ a {
 a:hover { text-decoration-color: currentColor; }
 a:focus-visible { outline: 2px solid var(--ink); outline-offset: 6px; }
 .reading-page { max-width: 728px; margin-inline: auto; padding: 40px 24px 32px; }
-nav { margin-bottom: clamp(64px, 10vw, 112px); }
-.home-link { font-size: 14px; }
 header { margin-bottom: 48px; }
 .article-image { margin: 0 0 40px; }
 .article-image img {
@@ -70,7 +68,7 @@ h1 {
   .article-image { margin-bottom: 32px; }
 }
 @media print {
-  nav, .skip-link { display: none; }
+  .skip-link { display: none; }
   .reading-page { max-width: none; padding: 0; }
   body { background: white; }
   h1 { font-size: 36pt; }
