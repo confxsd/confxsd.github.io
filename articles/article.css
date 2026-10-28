@@ -27,13 +27,12 @@ a:focus-visible { outline: 2px solid var(--ink); outline-offset: 6px; }
 nav { margin-bottom: clamp(64px, 10vw, 112px); }
 .home-link { font-size: 14px; }
 header { margin-bottom: 48px; }
-.eyebrow, .byline {
-  color: var(--muted);
-  font-size: 13px;
+.publication-date {
+  margin: 0;
+  color: #76746f;
+  font-size: 12px;
   line-height: 1.7;
 }
-.eyebrow { margin: 0 0 24px; }
-.eyebrow span, .byline span { margin-inline: 8px; }
 h1, h2, h3 { font-family: "Funnel Display", sans-serif; text-wrap: balance; }
 h1 {
   margin: 0 0 24px;
@@ -43,7 +42,6 @@ h1 {
   letter-spacing: -0.045em;
   font-weight: 500;
 }
-.byline { margin: 0; }
 .prose { font-size: clamp(17px, 2vw, 19px); line-height: 1.85; overflow-wrap: break-word; }
 .prose p { margin: 0 0 1.55em; }
 .prose > p:first-child { font-size: 1.1em; line-height: 1.75; }
@@ -57,17 +55,6 @@ h1 {
 .prose hr { border: 0; border-top: 1px solid #dcdad4; margin-block: 2em; }
 .prose table { display: block; overflow-x: auto; border-collapse: collapse; }
 .prose th, .prose td { padding: 8px 12px; border-bottom: 1px solid #dcdad4; text-align: left; }
-footer {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 24px;
-  border-top: 1px solid #dcdad4;
-  margin-top: 64px;
-  padding-top: 24px;
-  font-size: 13px;
-  color: var(--muted);
-}
 .skip-link { position: absolute; top: 8px; left: 24px; transform: translateY(-200%); }
 .skip-link:focus { transform: translateY(0); background: var(--paper); padding: 8px; }
 @media (max-width: 480px) {
@@ -75,7 +62,7 @@ footer {
   header { margin-bottom: 36px; }
 }
 @media print {
-  nav, footer, .skip-link { display: none; }
+  nav, .skip-link { display: none; }
   .reading-page { max-width: none; padding: 0; }
   body { background: white; }
   h1 { font-size: 36pt; }

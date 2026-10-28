@@ -28,19 +28,12 @@
       <main id="article">
         <article>
           <header>
-            <p class="eyebrow">Essay <span aria-hidden="true">/</span> <time datetime="{{ page.date | date: '%Y-%m-%d' }}">{{ page.date | date: '%B %-d, %Y' }}</time></p>
             <h1>{{ page.title | escape }}</h1>
-            {% assign word_count = content | strip_html | number_of_words %}
-            {% assign reading_minutes = word_count | plus: 219 | divided_by: 220 %}
-            <p class="byline">Serhat <span aria-hidden="true">·</span> {{ reading_minutes }} min read</p>
+            <p class="publication-date"><time datetime="{{ page.date | date: '%Y-%m-%d' }}">{{ page.date | date: '%B %-d, %Y' }}</time></p>
           </header>
           <div class="prose">{{ content }}</div>
         </article>
       </main>
-      <footer>
-        <a href="{{ '/' | relative_url }}#articles">← All articles</a>
-        <a href="https://github.com/confxsd/confxsd.github.io/blob/main/{{ page.relative_path }}">View Markdown <span aria-hidden="true">↗</span></a>
-      </footer>
     </div>
   </body>
 </html>

@@ -18,7 +18,7 @@ Write the article here in Markdown.
 ```
 
 GitHub Pages builds `/articles/my-next-essay/` and adds it to the homepage,
-newest first. The shared layout supplies the title, date, reading time, navigation,
+newest first. The shared layout supplies the title, date, navigation,
 and metadata. Existing Substack links remain in the archive.
 
 Commit and push to `main` when ready to publish. No JavaScript or external CMS is
